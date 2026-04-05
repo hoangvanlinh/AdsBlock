@@ -3,6 +3,74 @@
 (function(){
 if(location.hostname.indexOf('youtube.com')===-1)return;
 
+// ── EARLIEST: Intercept ytcfg BEFORE any YouTube script runs ─────
+// YouTube's inline scripts define window.ytcfg on first load.
+// By trapping the property NOW (document_start), we intercept it.
+(function(){
+  var _ENFL=['ENABLE_ENFORCEMENT_HTML5_PLAYER_RESPONSE',
+             'ENFORCEMENT_TRIGGER_URL','OPEN_ENFORCEMENT_TRIGGER',
+             'HTML5_ENFORCE_ALTN_SIGNAL_DETECTION',
+             'HTML5_AD_BLOCK_DETECTION_SIGNAL',
+             'HTML5_ENABLE_AD_BLOCK_DETECTION'];
+  var _BLOCK=['ad_blocker','adblock','enforcement','ad_break_heartbeat',
+              'ad_block','adblock_detection'];
+
+  function _patch(obj){
+    if(!obj||typeof obj!=='object')return;
+    _ENFL.forEach(function(k){try{delete obj[k];}catch(e){try{obj[k]=false;}catch(ee){}}});
+    if(obj.EXPERIMENT_FLAGS&&typeof obj.EXPERIMENT_FLAGS==='object'){
+      Object.keys(obj.EXPERIMENT_FLAGS).forEach(function(k){
+        var kl=k.toLowerCase();
+        for(var i=0;i<_BLOCK.length;i++)if(kl.indexOf(_BLOCK[i])!==-1){obj.EXPERIMENT_FLAGS[k]=false;break;}
+      });
+    }
+  }
+
+  // Intercept ytcfg before it's ever assigned
+  var _cfg=window.ytcfg;
+  function _applyHooks(c){
+    if(!c||c.__yab)return;
+    c.__yab=1;
+    if(typeof c.set==='function'){
+      var _s=c.set;
+      c.set=function(k,v){
+        try{typeof k==='object'?_patch(k):_patch({[k]:v});}catch(e){}
+        return _s.apply(this,arguments);
+      };
+    }
+    if(typeof c.get==='function'){
+      var _g=c.get;
+      c.get=function(k){
+        if(typeof k==='string'){
+          if(_ENFL.indexOf(k)!==-1)return false;
+          var kl=k.toLowerCase();
+          for(var i=0;i<_BLOCK.length;i++)if(kl.indexOf(_BLOCK[i])!==-1)return false;
+        }
+        return _g.apply(this,arguments);
+      };
+    }
+  }
+  if(_cfg)_applyHooks(_cfg);
+  try{Object.defineProperty(window,'ytcfg',{
+    configurable:true,enumerable:true,
+    get:function(){return _cfg;},
+    set:function(v){_cfg=v;_applyHooks(v);}
+  });}catch(e){}
+
+  // Also intercept yt.setConfig (alternate API)
+  var _yt=window.yt;
+  function _hookYt(y){
+    if(!y||y.__yab)return;y.__yab=1;
+    if(typeof y.setConfig==='function'){var _o=y.setConfig;y.setConfig=function(o){try{_patch(o);}catch(e){}return _o.apply(this,arguments);};}
+  }
+  if(_yt)_hookYt(_yt);
+  try{Object.defineProperty(window,'yt',{
+    configurable:true,enumerable:true,
+    get:function(){return _yt;},
+    set:function(v){_yt=v;_hookYt(v);}
+  });}catch(e){}
+})();
+
 // ── 0. IMMEDIATELY inject CSS to hide ads — before any rendering ──
 var css=document.createElement('style');
 css.id='__yt_ab_css__';
@@ -218,20 +286,38 @@ document.createElement=function(tag){
 
 // ── 8. Dismiss "Ad blocker detected" popup ──────────────────────
 function dP(){
-  var ss=['ytd-enforcement-message-view-model',
-          'tp-yt-paper-dialog:has(#dismiss-button)',
-          'ytd-popup-container tp-yt-paper-dialog'];
-  for(var i=0;i<ss.length;i++){
+  // Remove enforcement overlay / dialog
+  var rootSels=[
+    'ytd-enforcement-message-view-model',
+    'yt-playability-error-supported-renderers',
+    'tp-yt-paper-dialog:has(#dismiss-button)',
+    'ytd-popup-container tp-yt-paper-dialog',
+    '#error-screen ytd-enforcement-message-view-model'
+  ];
+  for(var i=0;i<rootSels.length;i++){
     try{
-      var p=document.querySelector(ss[i]);if(!p)continue;
-      var b=p.querySelector('#dismiss-button,.dismiss-button,button[aria-label*="dismiss"],button[aria-label*="Dismiss"],yt-button-renderer button,tp-yt-paper-button');
-      if(b){b.click();return;}
-      p.remove();
+      var el=document.querySelector(rootSels[i]);if(!el)continue;
+      var b=el.querySelector(
+        '#dismiss-button,.dismiss-button,'+
+        'button[aria-label*="dismiss"],button[aria-label*="Dismiss"],'+
+        'yt-button-renderer button,tp-yt-paper-button'
+      );
+      if(b){b.click();}else{el.remove();}
     }catch(e){}
   }
-  try{var o=document.querySelector('ytd-enforcement-message-view-model');if(o)o.remove();}catch(e){}
+  try{
+    var enf=document.querySelector('ytd-enforcement-message-view-model');
+    if(enf){
+      var anc=enf.closest('ytd-player-error-message-renderer,#error-screen,[class*="enforcement"]');
+      if(anc)anc.remove();else enf.remove();
+    }
+  }catch(e){}
+  try{
+    var pl=document.querySelector('#movie_player,#player-container');
+    if(pl){pl.style.removeProperty('display');pl.style.removeProperty('visibility');}
+  }catch(e){}
 }
-setInterval(dP,2000);
+setInterval(dP,500);
 
 (function sObs(){
   var t=document.body||document.documentElement;
@@ -241,8 +327,11 @@ setInterval(dP,2000);
       var ns=ms[i].addedNodes;
       for(var j=0;j<ns.length;j++){
         if(ns[j].nodeType!==1)continue;
-        if(ns[j].tagName==='TP-YT-PAPER-DIALOG'||ns[j].tagName==='YTD-ENFORCEMENT-MESSAGE-VIEW-MODEL')
-          setTimeout(dP,100);
+        var tag=ns[j].tagName;
+        if(tag==='TP-YT-PAPER-DIALOG'||
+           tag==='YTD-ENFORCEMENT-MESSAGE-VIEW-MODEL'||
+           tag==='YT-PLAYABILITY-ERROR-SUPPORTED-RENDERERS')
+          setTimeout(dP,50);
       }
     }
   }).observe(t,{childList:true,subtree:true});

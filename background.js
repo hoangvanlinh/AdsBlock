@@ -28,16 +28,10 @@ const DEFAULT_RULES = [
   { id: 20, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'quantserve.com',       resourceTypes: ['script','image','xmlhttprequest'] } },
 
   // YouTube ad serving endpoints
-  { id: 21, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/pagead/',          resourceTypes: ['script','image','xmlhttprequest','sub_frame','ping'] } },
-  { id: 22, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/get_midroll_info', resourceTypes: ['xmlhttprequest'] } },
-  { id: 23, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/ptracking',       resourceTypes: ['xmlhttprequest','image','ping'] } },
-  { id: 24, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/api/stats/ads',   resourceTypes: ['xmlhttprequest','image','ping'] } },
-  { id: 25, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/error_204*adformat', resourceTypes: ['xmlhttprequest','image','ping'] } },
-  { id: 26, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/api/stats/qoe*adformat', resourceTypes: ['xmlhttprequest','image','ping'] } },
-  // YouTube ad tracking pixels
-  { id: 28, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/pagead/interaction/', resourceTypes: ['xmlhttprequest','image','ping'] } },
-  { id: 29, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/pagead/viewthroughconversion/', resourceTypes: ['xmlhttprequest','image','ping'] } },
-  { id: 30, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'play.google.com/log',           resourceTypes: ['xmlhttprequest','ping'] } },
+  // NOTE: ALL youtube.com-specific network blocks are intentionally removed.
+  // Blocking youtube.com/* endpoints (pagead, get_midroll_info, ptracking, etc.)
+  // is exactly how YouTube detects ad blockers. Ad stripping is handled entirely
+  // client-side by content/yt-adblock.js (MAIN world) + ytcfg enforcement bypass.
 ];
 
 // ── Malware / phishing domain rules (static built-in) ─────────
