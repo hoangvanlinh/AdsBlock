@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AdBlock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="popup">
+
+    <!-- ── Header ── -->
+    <header class="header">
+      <div class="brand">
+        <span class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2Z"
+              fill="url(#g1)" />
+            <path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round" />
+            <defs>
+              <linearGradient id="g1" x1="3" y1="2" x2="21" y2="23"
+                gradientUnits="userSpaceOnUse">
+                <stop stop-color="#818cf8" />
+                <stop offset="1" stop-color="#06b6d4" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </span>
+        <span class="brand-name">AdBlock — Ads, Trackers</span>
+      </div>
+      <button class="icon-btn" id="openDashboard" title="Dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+      </button>
+    </header>
+
+    <!-- ── Hero toggle ── -->
+    <section class="hero">
+      <div class="toggle-ring" id="toggleRing">
+        <label class="toggle-wrap">
+          <input type="checkbox" id="mainToggle" checked />
+          <div class="toggle-track">
+            <div class="toggle-thumb"></div>
+          </div>
+        </label>
+      </div>
+      <p class="status-label" id="statusLabel">Protection <strong>ON</strong></p>
+      <p class="domain-label" id="domainLabel">example.com</p>
+    </section>
+
+    <!-- ── Stats row ── -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-icon red">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        <div>
+          <p class="stat-value" id="blockedCount">0</p>
+          <p class="stat-key">Blocked</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon orange">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </span>
+        <div>
+          <p class="stat-value" id="malwareCount">0</p>
+          <p class="stat-key">Malware</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon green">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8Z" />
+          </svg>
+        </span>
+        <div>
+          <p class="stat-value" id="speedGain">+0%</p>
+          <p class="stat-key">Speed</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon blue">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4l3 3" />
+          </svg>
+        </span>
+        <div>
+          <p class="stat-value" id="timeSaved">0m</p>
+          <p class="stat-key">Saved</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Quick Actions ── -->
+    <div class="allowlist-banner hidden" id="allowlistBanner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/>
+      </svg>
+      <span>This site is allowlisted</span>
+      <button class="banner-action" id="removeAllowlist">Remove</button>
+    </div>
+    <div class="actions">
+      <button class="action-btn" id="pauseSite">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="10" y1="15" x2="10" y2="9" />
+          <line x1="14" y1="15" x2="14" y2="9" />
+        </svg>
+        Pause on site
+      </button>
+      <button class="action-btn accent" id="focusMode">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83
+            M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+        </svg>
+        Focus mode
+      </button>
+    </div>
+
+    <!-- ── Privacy bar ── -->
+    <div class="privacy-bar">
+      <div class="privacy-label">
+        <span>Privacy score</span>
+        <span class="privacy-score" id="privacyScore">82</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="privacyBar" style="width: 82%"></div>
+      </div>
+    </div>
+
+    <!-- ── Footer ── -->
+    <footer class="footer">
+      <button class="text-btn" id="openSettings">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83
+            2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2
+            2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l
+            -.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65
+            1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65
+            1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65
+            0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65
+            0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83
+            2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2
+            2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+        </svg>
+        Settings
+      </button>
+      <span class="rule-chip" id="ruleChip" title="Active blocking rules loaded">… rules</span>
+      <button class="donate-btn" id="donateBtnPopup" title="Support development via PayPal">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M7.144 19.532l1.049-5.751c.11-.604.691-1.041 1.305-.998 2.006.135 6.787.158 8.002-4.149 1.488-5.2-3.288-7.038-6.5-7.038H6.524a1.3 1.3 0 0 0-1.283 1.085l-2.65 16.826a.58.58 0 0 0 .572.676h3.23a.87.87 0 0 0 .75-.651Z"/>
+          <path d="M18.204 8.52c-.08 4.788-4.395 6.168-8.168 5.898a.58.58 0 0 0-.62.501l-.915 5.035a.58.58 0 0 0 .572.676h2.782a1.3 1.3 0 0 0 1.283-1.085l.544-2.987c.11-.603.69-1.04 1.304-.998 2.56.173 5.29-.686 6.37-4.018.87-2.67-.207-4.285-3.152-3.022Z"/>
+        </svg>
+        Donate
+      </button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

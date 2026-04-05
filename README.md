@@ -41,8 +41,8 @@
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/AdsBlockParty/AdsBlockParty.git
-   cd AdsBlockParty
+   git clone https://github.com/hoangvanlinh/AdsBlock.git
+   cd AdsBlock
    ```
 
 2. Open Chrome and navigate to `chrome://extensions/`

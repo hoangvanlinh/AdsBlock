@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AdBlock — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+<!-- ───────── SIDEBAR ───────── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2Z"
+          fill="url(#sg1)" />
+        <path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round" />
+        <defs>
+          <linearGradient id="sg1" x1="3" y1="2" x2="21" y2="23" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#818cf8" />
+            <stop offset="1" stop-color="#06b6d4" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </span>
+    <span class="brand-name">AdBlock — Ads, Trackers</span>
+  </div>
+
+  <nav class="nav">
+    <a class="nav-item active" data-page="overview" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+      Overview
+    </a>
+    <a class="nav-item" data-page="rules" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>
+      </svg>
+      Rules
+    </a>
+    <a class="nav-item" data-page="allowlist" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/>
+      </svg>
+      Allowlist
+    </a>
+    <a class="nav-item" data-page="focus" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+      </svg>
+      Focus
+    </a>
+    <a class="nav-item" data-page="settings" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+      </svg>
+      Settings
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="protection-badge" id="sidebarBadge">
+      <span class="badge-dot"></span>
+      Protection ON
+    </div>
+    <button class="donate-btn" id="donateBtnSidebar" title="Support development via PayPal">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M7.144 19.532l1.049-5.751c.11-.604.691-1.041 1.305-.998 2.006.135 6.787.158 8.002-4.149 1.488-5.2-3.288-7.038-6.5-7.038H6.524a1.3 1.3 0 0 0-1.283 1.085l-2.65 16.826a.58.58 0 0 0 .572.676h3.23a.87.87 0 0 0 .75-.651Z"/>
+        <path d="M18.204 8.52c-.08 4.788-4.395 6.168-8.168 5.898a.58.58 0 0 0-.62.501l-.915 5.035a.58.58 0 0 0 .572.676h2.782a1.3 1.3 0 0 0 1.283-1.085l.544-2.987c.11-.603.69-1.04 1.304-.998 2.56.173 5.29-.686 6.37-4.018.87-2.67-.207-4.285-3.152-3.022Z"/>
+      </svg>
+      Buy me a coffee ☕
+    </button>
+  </div>
+</aside>
+
+<!-- ───────── MAIN ───────── -->
+<main class="main">
+
+  <!-- ━━━ PAGE: OVERVIEW ━━━ -->
+  <section class="page active" id="page-overview">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Overview</h1>
+        <p class="page-sub">Your protection dashboard</p>
+      </div>
+      <div class="header-actions">
+        <span class="date-chip" id="dateChip"></span>
+        <label class="toggle-pill">
+          <input type="checkbox" id="globalToggle" checked />
+          <span class="pill-track"><span class="pill-thumb"></span></span>
+          <span class="pill-label" id="globalLabel">ON</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Total Blocked</span>
+          <span class="kpi-icon red">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/>
+            </svg>
+          </span>
+        </div>
+        <p class="kpi-value" id="kpiBlocked">0</p>
+        <p class="kpi-delta up" id="kpiBlockedDelta">+0% today</p>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Trackers Stopped</span>
+          <span class="kpi-icon purple">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>
+            </svg>
+          </span>
+        </div>
+        <p class="kpi-value" id="kpiTrackers">0</p>
+        <p class="kpi-delta up" id="kpiTrackersDelta">+0% today</p>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Malware Blocked</span>
+          <span class="kpi-icon orange">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </span>
+        </div>
+        <p class="kpi-value" id="kpiMalware">0</p>
+        <p class="kpi-delta up" id="kpiMalwareDelta">threats stopped</p>
+        <p class="kpi-detail" id="kpiMalwareDetail" title="">No threats detected</p>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Bandwidth Saved</span>
+          <span class="kpi-icon cyan">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8Z"/>
+            </svg>
+          </span>
+        </div>
+        <p class="kpi-value" id="kpiBandwidth">0 KB</p>
+        <p class="kpi-delta up">avg per page</p>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Time Saved</span>
+          <span class="kpi-icon green">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
+          </span>
+        </div>
+        <p class="kpi-value" id="kpiTime">0m</p>
+        <p class="kpi-delta up">this session</p>
+      </div>
+    </div>
+
+    <!-- Chart + top domains -->
+    <div class="two-col">
+
+      <!-- Activity chart -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <h2 class="card-title">Blocked requests</h2>
+          <div class="chip-group" id="chartRange">
+            <button class="chip active" data-range="7">7d</button>
+            <button class="chip" data-range="14">14d</button>
+            <button class="chip" data-range="30">30d</button>
+          </div>
+        </div>
+        <div class="chart-area" id="chartArea">
+          <svg class="chart-svg" id="chartSvg" preserveAspectRatio="none"></svg>
+          <div class="chart-labels" id="chartLabels"></div>
+          <div class="chart-tooltip" id="chartTooltip"></div>
+        </div>
+      </div>
+
+      <!-- Top domains -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Top blocked domains</h2>
+          <button class="text-btn" id="seeAllDomains">See all</button>
+        </div>
+        <ul class="domain-list" id="domainList">
+          <!-- rendered by JS -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Privacy score -->
+    <div class="card privacy-card">
+      <div class="card-header">
+        <h2 class="card-title">Privacy score</h2>
+        <span class="score-badge" id="overallScore">82</span>
+      </div>
+      <div class="score-bars">
+        <div class="score-row" id="scoreRow-ads">
+          <span class="score-name">Ads blocked</span>
+          <div class="score-track"><div class="score-fill" id="scoreFill-ads" style="width:0%"></div></div>
+          <span class="score-pct" id="scorePct-ads">—</span>
+        </div>
+        <div class="score-row" id="scoreRow-trackers">
+          <span class="score-name">Trackers blocked</span>
+          <div class="score-track"><div class="score-fill" id="scoreFill-trackers" style="width:0%"></div></div>
+          <span class="score-pct" id="scorePct-trackers">—</span>
+        </div>
+        <div class="score-row" id="scoreRow-malware">
+          <span class="score-name">Malware blocked</span>
+          <div class="score-track"><div class="score-fill orange" id="scoreFill-malware" style="width:0%"></div></div>
+          <span class="score-pct" id="scorePct-malware">—</span>
+        </div>
+        <div class="score-row" id="scoreRow-referrer">
+          <span class="score-name">Referrer anonymization</span>
+          <div class="score-track"><div class="score-fill" id="scoreFill-referrer" style="width:0%"></div></div>
+          <span class="score-pct" id="scorePct-referrer">—</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ━━━ PAGE: RULES ━━━ -->
+  <section class="page" id="page-rules">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Rules</h1>
+        <p class="page-sub">Custom blocking & filter lists</p>
+      </div>
+      <button class="btn-primary" id="addRuleBtn">+ Add rule</button>
+    </div>
+
+    <!-- Add rule form (hidden by default) -->
+    <div class="card form-card hidden" id="ruleForm">
+      <h3 class="form-title">New Rule</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label class="field-label">Type</label>
+          <select class="field-input" id="ruleType">
+            <option value="keyword">Keyword</option>
+            <option value="domain">Domain</option>
+            <option value="css">CSS selector</option>
+            <option value="regex">Regex</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Pattern</label>
+          <input class="field-input" id="rulePattern" type="text" placeholder="e.g. ads.example.com" />
+        </div>
+        <div class="field">
+          <label class="field-label">Action</label>
+          <select class="field-input" id="ruleAction">
+            <option value="block">Block</option>
+            <option value="hide">Hide (CSS)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-ghost" id="cancelRule">Cancel</button>
+        <button class="btn-primary" id="saveRule">Save rule</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Active rules</h2>
+        <input class="search-input" id="ruleSearch" type="text" placeholder="Search rules…" />
+      </div>
+      <table class="data-table" id="rulesTable">
+        <thead>
+          <tr>
+            <th>Type</th><th>Pattern</th><th>Action</th><th>Hits</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="rulesBody">
+          <!-- rendered by JS -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ━━━ PAGE: ALLOWLIST ━━━ -->
+  <section class="page" id="page-allowlist">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Allowlist</h1>
+        <p class="page-sub">Sites that bypass all blocking</p>
+      </div>
+      <button class="btn-primary" id="addAllowBtn">+ Add site</button>
+    </div>
+
+    <div class="card form-card hidden" id="allowForm">
+      <div class="form-grid" style="grid-template-columns:1fr auto">
+        <input class="field-input" id="allowInput" type="text" placeholder="example.com" />
+        <button class="btn-primary" id="saveAllow">Add</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <ul class="allow-list" id="allowList">
+        <!-- rendered by JS -->
+      </ul>
+    </div>
+  </section>
+
+  <!-- ━━━ PAGE: FOCUS ━━━ -->
+  <section class="page" id="page-focus">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Focus mode</h1>
+        <p class="page-sub">Block distracting sites on a schedule</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Focus session</h2>
+          <label class="toggle-pill">
+            <input type="checkbox" id="focusToggle" />
+            <span class="pill-track"><span class="pill-thumb"></span></span>
+          </label>
+        </div>
+        <div class="focus-timer" id="focusTimer">00:00</div>
+        <p class="focus-sub">Session paused</p>
+        <div class="duration-grid">
+          <button class="dur-btn active" data-min="25">25m</button>
+          <button class="dur-btn" data-min="45">45m</button>
+          <button class="dur-btn" data-min="60">60m</button>
+          <button class="dur-btn" data-min="90">90m</button>
+          <div class="custom-dur">
+            <input type="number" id="customMin" class="custom-dur-input" min="1" max="480" placeholder="Custom">
+            <span class="custom-dur-unit">min</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Distraction list</h2>
+          <button class="btn-ghost" id="addDistraction">+ Add</button>
+        </div>
+        <ul class="allow-list" id="distractionList"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ━━━ PAGE: SETTINGS ━━━ -->
+  <section class="page" id="page-settings">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-sub">Customize AdBlock behavior</p>
+      </div>
+    </div>
+
+    <div class="settings-grid">
+      <div class="card settings-card">
+        <h3 class="settings-section">Blocking</h3>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Block ads</p>
+            <p class="setting-desc">Standard ad network blocking</p>
+          </div>
+          <label class="toggle-pill"><input type="checkbox" id="blockAdsToggle" checked /><span class="pill-track"><span class="pill-thumb"></span></span></label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Block trackers</p>
+            <p class="setting-desc">Block analytics & tracking scripts</p>
+          </div>
+          <label class="toggle-pill"><input type="checkbox" id="blockTrackersToggle" checked /><span class="pill-track"><span class="pill-thumb"></span></span></label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Cosmetic filtering</p>
+            <p class="setting-desc">Hide leftover ad placeholders via CSS</p>
+          </div>
+          <label class="toggle-pill"><input type="checkbox" id="cosmeticToggle" checked /><span class="pill-track"><span class="pill-thumb"></span></span></label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Block malware</p>
+            <p class="setting-desc">Block known malware domains</p>
+          </div>
+          <label class="toggle-pill"><input type="checkbox" id="blockMalwareToggle" checked /><span class="pill-track"><span class="pill-thumb"></span></span></label>
+        </div>
+      </div>
+
+      <div class="card settings-card">
+        <h3 class="settings-section">Privacy</h3>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Referrer anonymization</p>
+            <p class="setting-desc">Strip referrer headers on cross-origin requests</p>
+          </div>
+          <label class="toggle-pill"><input type="checkbox" id="referrerToggle" checked /><span class="pill-track"><span class="pill-thumb"></span></span></label>
+        </div>
+      </div>
+
+      <div class="card settings-card">
+        <h3 class="settings-section">Data</h3>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Collect statistics</p>
+            <p class="setting-desc">Local-only usage stats (never uploaded)</p>
+          </div>
+          <label class="toggle-pill"><input type="checkbox" id="statsToggle" checked /><span class="pill-track"><span class="pill-thumb"></span></span></label>
+        </div>
+        <div class="setting-row danger-row">
+          <div>
+            <p class="setting-name">Reset all data</p>
+            <p class="setting-desc">Clear rules, stats, and settings</p>
+          </div>
+          <button class="btn-danger" id="resetBtn">Reset</button>
+        </div>  
+        </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
