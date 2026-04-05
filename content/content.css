@@ -1,0 +1,167 @@
+/* ─────────────────────────────────────────────────────
+   AdBlock — Cosmetic Filter CSS
+   Injected at document_start on every page.
+   All rules are scoped to html.adblock-on so that
+   removing the class instantly pauses cosmetic filtering
+   without needing to reload the page.
+
+   IMPORTANT: No broad wildcard selectors like [class*="ad-"].
+   Those cause false positives on sites like YouTube where
+   legitimate elements contain "ad" in class/id names.
+   Every selector here targets a KNOWN ad provider element.
+───────────────────────────────────────────────────── */
+
+/* ── Google Ads / DFP (specific elements only) ── */
+html.adblock-on ins.adsbygoogle,
+html.adblock-on .adsbygoogle,
+html.adblock-on [id^="div-gpt-ad"],
+html.adblock-on [id^="google_ads_iframe"],
+html.adblock-on [id^="dfp-ad-"],
+html.adblock-on iframe[src*="googlesyndication.com"],
+html.adblock-on iframe[src*="doubleclick.net"],
+html.adblock-on iframe[src*="googleadservices.com"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ── YouTube-specific ad elements ── */
+html.adblock-on ytd-ad-slot-renderer,
+html.adblock-on ytd-in-feed-ad-layout-renderer,
+html.adblock-on ytd-banner-promo-renderer,
+html.adblock-on ytd-statement-banner-renderer,
+html.adblock-on ytd-promoted-sparkles-web-renderer,
+html.adblock-on ytd-promoted-video-renderer,
+html.adblock-on ytd-display-ad-renderer,
+html.adblock-on ytd-compact-promoted-video-renderer,
+html.adblock-on ytd-action-companion-ad-renderer,
+html.adblock-on ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"],
+html.adblock-on .ytp-ad-module,
+html.adblock-on .ytp-ad-overlay-container,
+html.adblock-on .ytp-ad-text-overlay,
+html.adblock-on .ytp-ad-skip-button-container,
+html.adblock-on .ytp-ad-player-overlay,
+html.adblock-on .ytp-ad-image-overlay,
+html.adblock-on .video-ads.ytp-ad-module,
+html.adblock-on #player-ads,
+html.adblock-on #masthead-ad,
+html.adblock-on #panels > ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"],
+html.adblock-on tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) {
+  display: none !important;
+}
+
+/* ── YouTube Premium upsell / promo elements ── */
+html.adblock-on ytd-mealbar-promo-renderer,
+html.adblock-on ytd-popup-container:has(ytd-mealbar-promo-renderer),
+html.adblock-on ytd-background-promo-renderer,
+html.adblock-on ytd-official-card-renderer,
+html.adblock-on tp-yt-paper-dialog:has(yt-premium-offer-renderer),
+html.adblock-on ytd-companion-slot-renderer:has([data-style-type="PREMIUM"]),
+html.adblock-on .ytd-mealbar-promo-renderer,
+html.adblock-on ytd-survey-notification-renderer,
+html.adblock-on #offer-module,
+html.adblock-on .ytp-paid-content-overlay,
+html.adblock-on .ytp-premium-yoodle,
+html.adblock-on ytd-rich-section-renderer:has(ytd-statement-banner-renderer),
+html.adblock-on ytd-enforcement-message-view-model,
+html.adblock-on tp-yt-paper-dialog:has(yt-upsell-dialog-renderer) {
+  display: none !important;
+}
+
+/* ── YouTube in-feed video ads (promoted videos in feed/search/sidebar) ── */
+html.adblock-on ytd-rich-item-renderer:has(ytd-ad-slot-renderer),
+html.adblock-on ytd-video-renderer[is-ad],
+html.adblock-on ytd-rich-item-renderer[is-ad],
+html.adblock-on ytd-reel-item-renderer[is-ad],
+html.adblock-on ytd-search-pyv-renderer,
+html.adblock-on ytd-promoted-sparkles-text-search-renderer,
+html.adblock-on ytd-movie-offer-module-renderer,
+html.adblock-on ytd-compact-movie-renderer[is-ad] {
+  display: none !important;
+}
+
+
+/* ── Outbrain / Taboola ── */
+html.adblock-on .OUTBRAIN,
+html.adblock-on [data-widget-id^="outbrain"],
+html.adblock-on div.ob-widget,
+html.adblock-on div.ob-smartfeed-wrapper,
+html.adblock-on .trc_related_container,
+html.adblock-on [id^="taboola-"],
+html.adblock-on .taboola-container {
+  display: none !important;
+}
+
+/* ── Amazon ads ── */
+html.adblock-on iframe[src*="amazon-adsystem.com"] {
+  display: none !important;
+}
+
+/* ── Criteo ── */
+html.adblock-on [id^="crt-"][id$="-wrapper"],
+html.adblock-on .criteo-ad {
+  display: none !important;
+}
+
+/* ── Ad provider iframes & embeds ── */
+html.adblock-on iframe[src*="adnxs.com"],
+html.adblock-on iframe[src*="media.net"],
+html.adblock-on iframe[src*="pubmatic.com"],
+html.adblock-on iframe[src*="openx.net"],
+html.adblock-on iframe[src*="rubiconproject.com"],
+html.adblock-on iframe[src*="advertising.com"] {
+  display: none !important;
+}
+
+/* ── Known ad class names (exact match with ^ or exact class) ── */
+/* IMPORTANT: These selectors use :not() to protect elements that contain
+   video players (<video>, <iframe>, <embed>). Streaming sites often use
+   class names like "ad-container" for layout that includes the video player. */
+html.adblock-on .ad-banner:not(:has(video, iframe, embed, object)),
+html.adblock-on .ad-wrapper:not(:has(video, iframe, embed, object)),
+html.adblock-on .ad-container:not(:has(video, iframe, embed, object)),
+html.adblock-on .ad-slot:not(:has(video, iframe, embed, object)),
+html.adblock-on .ad-unit:not(:has(video, iframe, embed, object)),
+html.adblock-on .ad-frame:not(:has(video, iframe, embed, object)),
+html.adblock-on .ad-leaderboard,
+html.adblock-on .ad-sidebar,
+html.adblock-on .ad-rectangle,
+html.adblock-on .ad-skyscraper,
+html.adblock-on [id="ad-banner"]:not(:has(video, iframe, embed, object)),
+html.adblock-on [id="ad-wrapper"]:not(:has(video, iframe, embed, object)),
+html.adblock-on [id="ad-container"]:not(:has(video, iframe, embed, object)),
+html.adblock-on [id="ad-slot"]:not(:has(video, iframe, embed, object)),
+html.adblock-on [id="ad-unit"]:not(:has(video, iframe, embed, object)) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* ── Sponsored / promoted content (specific attributes) ── */
+html.adblock-on [aria-label="Advertisement"],
+html.adblock-on [aria-label="Sponsored"],
+html.adblock-on [data-ad="true"],
+html.adblock-on li[data-promoted="true"],
+html.adblock-on .sponsored-post,
+html.adblock-on .promoted-content {
+  display: none !important;
+}
+
+/* ── Interstitials / popups ── */
+html.adblock-on .ad-modal,
+html.adblock-on .ad-popup,
+html.adblock-on .interstitial-ad {
+  display: none !important;
+}
+
+/* ── Prevent layout shift from collapsed ad spaces ── */
+[data-adblock-hidden="1"] {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
