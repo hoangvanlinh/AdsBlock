@@ -27,6 +27,12 @@
       "js": ["content/content.js"],
       "css": ["content/content.css"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content/yt-adblock.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
     }
   ],
   "options_ui": {

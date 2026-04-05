@@ -165,14 +165,16 @@ pauseSiteBtn.addEventListener('click', async () => {
       pauseSiteBtn.textContent = '⏸ Pause on site';
     }
     chrome.storage.local.set({ pausedDomains });
-    // Tell background to update declarativeNetRequest rules
-    chrome.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: pausing });
-    // Tell content script on the current tab to toggle cosmetic filtering immediately
-    chrome.tabs.sendMessage(tab.id, { type: 'PAUSE_DOMAIN', paused: pausing }).catch(() => {});
-    // Update hero UI to reflect paused/active state
-    mainToggle.checked = !pausing;
-    chrome.storage.local.get('enabled', ({ enabled = true }) => {
-      updateToggleUI(enabled, pausing);
+    // Tell background to update declarativeNetRequest rules — WAIT for it
+    // to finish before reloading, otherwise the old rules still block.
+    chrome.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: pausing }, () => {
+      // Update hero UI to reflect paused/active state
+      mainToggle.checked = !pausing;
+      chrome.storage.local.get('enabled', ({ enabled = true }) => {
+        updateToggleUI(enabled, pausing);
+      });
+      // Reload the tab AFTER rules are updated
+      chrome.tabs.reload(tab.id);
     });
   });
 });

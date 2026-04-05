@@ -26,6 +26,18 @@ const DEFAULT_RULES = [
   { id: 18, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'fullstory.com',        resourceTypes: ['script','xmlhttprequest'] } },
   { id: 19, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'clarity.ms',           resourceTypes: ['script','xmlhttprequest'] } },
   { id: 20, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'quantserve.com',       resourceTypes: ['script','image','xmlhttprequest'] } },
+
+  // YouTube ad serving endpoints
+  { id: 21, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/pagead/',          resourceTypes: ['script','image','xmlhttprequest','sub_frame','ping'] } },
+  { id: 22, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/get_midroll_info', resourceTypes: ['xmlhttprequest'] } },
+  { id: 23, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/ptracking',       resourceTypes: ['xmlhttprequest','image','ping'] } },
+  { id: 24, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/api/stats/ads',   resourceTypes: ['xmlhttprequest','image','ping'] } },
+  { id: 25, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/error_204*adformat', resourceTypes: ['xmlhttprequest','image','ping'] } },
+  { id: 26, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/api/stats/qoe*adformat', resourceTypes: ['xmlhttprequest','image','ping'] } },
+  // YouTube ad tracking pixels
+  { id: 28, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/pagead/interaction/', resourceTypes: ['xmlhttprequest','image','ping'] } },
+  { id: 29, priority: 1, action: { type: 'block' }, condition: { urlFilter: '||youtube.com/pagead/viewthroughconversion/', resourceTypes: ['xmlhttprequest','image','ping'] } },
+  { id: 30, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'play.google.com/log',           resourceTypes: ['xmlhttprequest','ping'] } },
 ];
 
 // ── Malware / phishing domain rules (static built-in) ─────────
@@ -77,6 +89,7 @@ const MALWARE_RULE_ID_END   = 199;
 const FOCUS_RULE_ID_START   = 2000;
 const REMOTE_MALWARE_RULE_ID_START = 3000; // for fetched blocklists
 const CUSTOM_RULE_ID_START = 4000;        // for user-created rules
+const PAUSE_ALLOW_RULE_ID_START = 6000;   // for pause/allowlist allow-all rules
 
 // Rule IDs 11-20 are trackers; 1-10 are ads; 100-199 are malware (static)
 const TRACKER_RULE_IDS = new Set([11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
@@ -185,19 +198,6 @@ async function buildActiveRulesFromStorage() {
 
   if (!enabled) return { enabled: false, allRules: [] };
 
-  const excludedDomains = [...new Set([...pausedDomains, ...allowedDomains])];
-  const applyExclusions = (rule) => {
-    if (!excludedDomains.length) return rule;
-    return {
-      ...rule,
-      condition: {
-        ...rule.condition,
-        excludedInitiatorDomains: excludedDomains,
-        excludedRequestDomains: excludedDomains,
-      },
-    };
-  };
-
   const AD_RULE_IDS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   const filteredDefaultRules = DEFAULT_RULES.filter(r => {
     if (AD_RULE_IDS.has(r.id) && !blockAds) return false;
@@ -205,17 +205,34 @@ async function buildActiveRulesFromStorage() {
     return true;
   });
 
-  const activeRules = filteredDefaultRules.map(applyExclusions);
-  const malwareActive = blockMalware ? MALWARE_RULES.map(applyExclusions) : [];
+  const activeRules = [...filteredDefaultRules];
+  const malwareActive = blockMalware ? [...MALWARE_RULES] : [];
   const { remoteMalwareRules = [] } = await chrome.storage.local.get('remoteMalwareRules');
-  const remoteActive = blockMalware ? remoteMalwareRules.map(applyExclusions) : [];
+  const remoteActive = blockMalware ? [...remoteMalwareRules] : [];
   const customBlockRules = await buildCustomBlockRules();
-  const customActive = customBlockRules.map(applyExclusions);
   const focusRules = await buildFocusRules(focusMode);
+
+  // Build allowAllRequests rules for paused + allowlisted domains.
+  // These have higher priority and override ALL blocking rules for
+  // requests originating from these domains. This is the only
+  // reliable way to fully pause blocking per-domain.
+  const excludedDomains = [...new Set([...pausedDomains, ...allowedDomains])];
+  const pauseAllowRules = excludedDomains.map((domain, i) => ({
+    id: PAUSE_ALLOW_RULE_ID_START + i,
+    priority: 10, // higher than all block rules (priority 1-2)
+    action: { type: 'allowAllRequests' },
+    condition: {
+      requestDomains: [domain],
+      resourceTypes: ['main_frame', 'sub_frame'],
+    },
+  }));
 
   return {
     enabled: true,
-    allRules: [...activeRules, ...malwareActive, ...remoteActive, ...customActive, ...focusRules],
+    allRules: [
+      ...activeRules, ...malwareActive, ...remoteActive,
+      ...customBlockRules, ...focusRules, ...pauseAllowRules,
+    ],
   };
 }
 

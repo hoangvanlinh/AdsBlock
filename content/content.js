@@ -22,6 +22,10 @@ const COSMETIC_SELECTORS = [
   'iframe[src*="googlesyndication"]',
 
   // YouTube-specific ad elements
+  // NOTE: Do NOT include .ytp-ad-module, .ytp-ad-overlay-container,
+  // .ytp-ad-player-overlay or any video-player ad containers here.
+  // Those must remain renderable so the JS ad skipper can mute + speed-skip.
+  // Using display:none on them causes a stuck black screen.
   'ytd-ad-slot-renderer',
   'ytd-in-feed-ad-layout-renderer',
   'ytd-banner-promo-renderer',
@@ -31,11 +35,6 @@ const COSMETIC_SELECTORS = [
   'ytd-display-ad-renderer',
   'ytd-compact-promoted-video-renderer',
   'ytd-action-companion-ad-renderer',
-  '.ytp-ad-module',
-  '.ytp-ad-overlay-container',
-  '.ytp-ad-text-overlay',
-  '.ytp-ad-image-overlay',
-  '.ytp-ad-player-overlay',
   '#player-ads',
   '#masthead-ad',
 
@@ -181,6 +180,7 @@ function extValid() {
 }
 
 // ── State ─────────────────────────────────────────────────────────
+const isYouTube = location.hostname.includes('youtube.com');
 let enabled = true;
 let cosmeticEnabled = true;
 let hiddenCount = 0;
@@ -358,6 +358,8 @@ function hideAds(root = document) {
         if (el.dataset.adblockHidden) return;
         // Protect video player elements from being hidden
         if (isVideoPlayerElement(el)) return;
+        // On YouTube, skip elements inside the video player
+        if (isYouTube && el.closest('.html5-video-player')) return;
         el.style.setProperty('display',    'none',   'important');
         el.style.setProperty('visibility', 'hidden', 'important');
         el.dataset.adblockHidden = '1';
@@ -388,6 +390,8 @@ function removeAdScripts(root = document) {
       if (AD_SCRIPT_HOSTS.some(h => host.endsWith(h))) {
         // Don't remove iframes that are likely video players
         if (el.tagName === 'IFRAME' && isVideoPlayerElement(el)) return;
+        // On YouTube, don't remove elements inside the video player
+        if (isYouTube && el.closest('.html5-video-player')) return;
         el.remove();
       }
     } catch { /* invalid URL */ }
@@ -413,6 +417,8 @@ function observeMutations() {
       if (mut.type === 'attributes' && mut.attributeName === 'src') {
         const el = mut.target;
         if (el.tagName === 'IFRAME') {
+          // On YouTube, don't hide iframes inside the video player
+          if (isYouTube && el.closest('.html5-video-player')) continue;
           try {
             const host = new URL(el.src).hostname;
             if (AD_SCRIPT_HOSTS.some(h => host.endsWith(h))) {
@@ -493,7 +499,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 // because they share the same domain (googlevideo.com) as real videos.
 // Strategy: detect ad → show overlay → skip instantly → seamless resume.
 (function initYouTubeAdSkipper() {
-  if (!location.hostname.includes('youtube.com')) return;
+  if (!isYouTube) return;
+
+  // Inject ad-hiding CSS IMMEDIATELY — don't wait for storage callback.
+  // The MAIN world script (yt-adblock.js) also injects CSS, but this
+  // is a safety net in case that file hasn't loaded yet.
+  injectYtAdCss();
 
   let ytAdObserver = null;
   let ytAdInterval = null;
@@ -507,7 +518,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   let _videoSrcObserver = null; // observe video src changes for early detection
   let _lastMainVideoSrc = '';   // remember the main video src
   let _forceSkipInterval = null; // track forceSkipAd interval to prevent duplicates
-  let _lastHideAdUiTime = 0;    // debounce hideAdUiElements calls
 
   // ── Ad video URL detection ─────────────────────────────────────
   // YouTube ad videos come from googlevideo.com but have distinct URL
@@ -532,177 +542,71 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 
   // ── Inject CSS to hide the ad overlay / countdown instantly ────
+  // ONLY hide non-essential UI overlays (badges, timers, text).
+  // The video <video> element is made invisible ONLY while ad-showing
+  // is active. When the ad ends, YouTube removes ad-showing and the
+  // video becomes visible again — no persistent black screen.
   function injectYtAdCss() {
     if (document.getElementById('__adblock_yt_ad__')) return;
     const s = document.createElement('style');
     s.id = '__adblock_yt_ad__';
     s.textContent = `
-      /* Hide ad overlay UI immediately so user never sees it */
-      html.adblock-on .ytp-ad-player-overlay,
-      html.adblock-on .ytp-ad-text-overlay,
-      html.adblock-on .ytp-ad-image-overlay,
-      html.adblock-on .ytp-ad-overlay-container,
-      html.adblock-on .ytp-ad-message-container,
-      html.adblock-on .ytp-ad-persistent-progress-bar-container,
-      html.adblock-on .ytp-ad-visit-advertiser-button,
-      html.adblock-on .ytp-ad-feedback-dialog-container,
-      html.adblock-on .video-ads.ytp-ad-module {
-        display: none !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-      }
-      /* Hide the ad video frame entirely */
+      /* Make ad video invisible while ad is playing.
+         Scoped to .ad-showing so it auto-restores when ad ends.
+         Do NOT use display:none — the video must still load/play
+         so our JS can seek/skip it. opacity:0 is safe. */
       html.adblock-on .html5-video-player.ad-showing video,
       html.adblock-on .html5-video-player.ad-interrupting video {
         opacity: 0 !important;
       }
-      /* Hide yellow ad progress bar */
-      html.adblock-on .ytp-ad-progress-list,
-      html.adblock-on .ytp-play-progress.ytp-ad-play-progress,
-      html.adblock-on .ytp-progress-bar[class*="ad"],
-      html.adblock-on .ytp-ad-persistent-progress-bar-container,
-      html.adblock-on .html5-video-player.ad-showing .ytp-progress-bar-container,
-      html.adblock-on .html5-video-player.ad-interrupting .ytp-progress-bar-container,
-      html.adblock-on .html5-video-player.ad-showing .ytp-chrome-bottom,
-      html.adblock-on .html5-video-player.ad-interrupting .ytp-chrome-bottom {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-      }
-      /* Hide ad countdown timer / "Ad · 0:15" / "Quảng cáo" badge */
+
+      /* Hide all ad overlay UI during ad */
+      html.adblock-on .html5-video-player.ad-showing .ytp-ad-player-overlay,
+      html.adblock-on .html5-video-player.ad-showing .ytp-ad-overlay-container,
+      html.adblock-on .html5-video-player.ad-interrupting .ytp-ad-player-overlay,
+      html.adblock-on .html5-video-player.ad-interrupting .ytp-ad-overlay-container,
+      html.adblock-on .ytp-ad-text-overlay,
+      html.adblock-on .ytp-ad-image-overlay,
+      html.adblock-on .ytp-ad-message-container,
+      html.adblock-on .ytp-ad-visit-advertiser-button,
+      html.adblock-on .ytp-ad-feedback-dialog-container,
       html.adblock-on .ytp-ad-duration-remaining,
       html.adblock-on .ytp-ad-simple-ad-badge,
       html.adblock-on .ytp-ad-preview-container,
       html.adblock-on .ytp-ad-preview-text,
-      html.adblock-on .ytp-ad-skip-button-container,
       html.adblock-on .ytp-ad-text,
       html.adblock-on .ytp-ad-badge-text,
-      html.adblock-on .ytp-ad-player-overlay-instream-info,
-      html.adblock-on .ytp-ad-action-interstitial,
-      html.adblock-on .ytp-ad-overlay-slot,
-      html.adblock-on .ytp-ad-info-dialog-container,
-      html.adblock-on .ytp-ad-hover-text-container,
-      html.adblock-on .ytp-ad-player-overlay-skip-or-preview,
-      html.adblock-on .ytp-ad-module .ytp-ad-player-overlay-layout,
       html.adblock-on .ytp-ad-badge,
+      html.adblock-on .ytp-ad-player-overlay-instream-info,
+      html.adblock-on .ytp-ad-hover-text-container,
       html.adblock-on [class*="ytp-ad-preview"],
       html.adblock-on [class*="ytp-ad-badge"],
       html.adblock-on [class*="ytp-ad-duration"] {
-        display: none !important;
         opacity: 0 !important;
-        visibility: hidden !important;
         pointer-events: none !important;
+      }
+
+      /* Hide ad progress bar during ad */
+      html.adblock-on .html5-video-player.ad-showing .ytp-chrome-bottom,
+      html.adblock-on .html5-video-player.ad-interrupting .ytp-chrome-bottom {
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      /* Keep skip button visible and clickable — needed for JS to click it */
+      html.adblock-on .ytp-ad-skip-button-container,
+      html.adblock-on .ytp-ad-skip-button-container * {
+        opacity: 1 !important;
+        pointer-events: auto !important;
       }
     `;
     (document.head || document.documentElement).appendChild(s);
   }
 
-  // ── Overlay removed ────────────────────────────────────────────
-  // No more black overlay. Ads are muted + sped through silently.
-  // This avoids the black screen problem entirely.
+  // ── Overlay cleanup (legacy) ─────────────────────────────────────
   function removeSkipOverlay(player) {
-    // Clean up any leftover overlays from previous version
     player?.querySelector('.__adblock_skip_overlay')?.remove();
     document.querySelectorAll('.__adblock_skip_overlay').forEach(el => el.remove());
-  }
-
-  // ── Forcefully hide all ad UI elements via JS ──────────────────
-  // CSS alone fails when YouTube uses inline styles or shadow DOM.
-  // This function brute-force hides every ad-related element.
-  function hideAdUiElements(player) {
-    if (!player) return;
-    // Debounce: don't run more than once per 200ms
-    const now = Date.now();
-    if (now - _lastHideAdUiTime < 200) return;
-    _lastHideAdUiTime = now;
-    const adUiSelectors = [
-      // Yellow progress bar & bottom controls during ad
-      '.ytp-chrome-bottom',
-      '.ytp-progress-bar-container',
-      '.ytp-progress-bar',
-      // Ad progress
-      '.ytp-ad-progress-list',
-      '.ytp-play-progress',
-      '.ytp-ad-persistent-progress-bar-container',
-      // Ad timer / badge / countdown
-      '.ytp-ad-duration-remaining',
-      '.ytp-ad-simple-ad-badge',
-      '.ytp-ad-preview-container',
-      '.ytp-ad-preview-text',
-      '.ytp-ad-text',
-      '.ytp-ad-badge-text',
-      '.ytp-ad-badge',
-      '.ytp-ad-player-overlay-instream-info',
-      '.ytp-ad-skip-button-container',
-      '.ytp-ad-player-overlay-skip-or-preview',
-      '.ytp-ad-player-overlay-layout',
-      '.ytp-ad-hover-text-container',
-      '.ytp-ad-info-dialog-container',
-      '.ytp-ad-action-interstitial',
-      '.ytp-ad-overlay-slot',
-      // Ad overlay
-      '.ytp-ad-player-overlay',
-      '.ytp-ad-text-overlay',
-      '.ytp-ad-image-overlay',
-      '.ytp-ad-overlay-container',
-      '.ytp-ad-message-container',
-      '.ytp-ad-visit-advertiser-button',
-      '.ytp-ad-feedback-dialog-container',
-      '.video-ads.ytp-ad-module',
-      '.ytp-ad-module',
-    ];
-    for (const sel of adUiSelectors) {
-      try {
-        player.querySelectorAll(sel).forEach(el => {
-          el.style.setProperty('display', 'none', 'important');
-          el.style.setProperty('opacity', '0', 'important');
-          el.style.setProperty('visibility', 'hidden', 'important');
-          el.style.setProperty('pointer-events', 'none', 'important');
-          el.style.setProperty('height', '0', 'important');
-          el.style.setProperty('overflow', 'hidden', 'important');
-        });
-      } catch { /* ignore */ }
-    }
-    // Also search in document root (some elements are outside the player)
-    try {
-      document.querySelectorAll('.ytp-ad-module, .video-ads, .ytp-ad-overlay-container').forEach(el => {
-        el.style.setProperty('display', 'none', 'important');
-      });
-    } catch { /* ignore */ }
-  }
-
-  // Restore ad UI elements visibility after ad ends
-  function restoreAdUiElements(player) {
-    if (!player) return;
-    // Only restore the controls bar — other ad elements should stay hidden
-    const controls = player.querySelector('.ytp-chrome-bottom');
-    if (controls) {
-      controls.style.removeProperty('display');
-      controls.style.removeProperty('opacity');
-      controls.style.removeProperty('visibility');
-      controls.style.removeProperty('pointer-events');
-      controls.style.removeProperty('height');
-      controls.style.removeProperty('overflow');
-    }
-    const progressBar = player.querySelector('.ytp-progress-bar-container');
-    if (progressBar) {
-      progressBar.style.removeProperty('display');
-      progressBar.style.removeProperty('opacity');
-      progressBar.style.removeProperty('visibility');
-      progressBar.style.removeProperty('pointer-events');
-      progressBar.style.removeProperty('height');
-      progressBar.style.removeProperty('overflow');
-    }
-    const progressBarInner = player.querySelector('.ytp-progress-bar');
-    if (progressBarInner) {
-      progressBarInner.style.removeProperty('display');
-      progressBarInner.style.removeProperty('opacity');
-      progressBarInner.style.removeProperty('visibility');
-      progressBarInner.style.removeProperty('pointer-events');
-      progressBarInner.style.removeProperty('height');
-      progressBarInner.style.removeProperty('overflow');
-    }
   }
 
   // ── Core skip logic — called whenever an ad is detected ────────
@@ -727,32 +631,29 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
     _adActive = true;
 
-    // 1. Hide all ad UI (timer, yellow bar, badges) via JS
-    hideAdUiElements(player);
-
-    // 2. Mute the ad immediately (no overlay — avoids black screen)
-    if (!_adMuted && !video.muted) {
+    // 1. Mute the ad immediately
+    if (!_adMuted) {
       _savedVolume = video.volume;
       video.volume = 0;
       video.muted = true;
       _adMuted = true;
     }
 
-    // 3. Click any available skip button (fastest path)
+    // 2. Click any available skip button (fastest path)
     const skipped = clickSkipButton(player);
 
-    // 4. If no skip button, force the ad to end via multiple strategies
+    // 3. If no skip button, force the ad to end
     if (!skipped) {
       forceSkipAd(video);
     }
 
-    // 5. Report the skipped ad to background for stats (only once per ad)
+    // 4. Report the skipped ad to background for stats (only once per ad)
     if (!_adReported && extValid()) {
       _adReported = true;
       chrome.runtime.sendMessage({ type: 'AD_SKIPPED', domain: location.hostname }).catch(() => {});
     }
 
-    // 6. Start recovery watchdog
+    // 5. Start recovery watchdog
     startBlackScreenWatchdog(player, video);
   }
 
@@ -787,24 +688,31 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       '.ytp-ad-overlay-close-button',
       '.ytp-ad-overlay-close-container',
     ];
+    // Search in both player and document (some buttons are outside the player)
+    const roots = [player, document];
     for (const sel of selectors) {
-      try {
-        const btn = player.querySelector(sel) || document.querySelector(sel);
-        if (btn && (btn.offsetParent !== null || btn.offsetWidth > 0)) {
+      for (const root of roots) {
+        try {
+          const btn = root.querySelector(sel);
+          if (!btn) continue;
+          // Force the button to be clickable
+          btn.style.setProperty('pointer-events', 'auto', 'important');
+          btn.style.setProperty('opacity', '1', 'important');
           btn.click();
-          // Also dispatch pointer events for YouTube's event handlers
           btn.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+          btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
           return true;
-        }
-      } catch { /* invalid selector */ }
+        } catch { /* invalid selector */ }
+      }
     }
     // Fallback: find any visible button with "skip" text
     try {
-      const allBtns = player.querySelectorAll('button, [role="button"]');
+      const allBtns = [...player.querySelectorAll('button, [role="button"]'),
+                        ...document.querySelectorAll('.ytp-ad-skip-button-container button')];
       for (const btn of allBtns) {
         const text = (btn.textContent || btn.innerText || '').toLowerCase();
-        if ((text.includes('skip') || text.includes('bỏ qua')) &&
-            btn.offsetParent !== null) {
+        if (text.includes('skip') || text.includes('bỏ qua') || text.includes('略過')) {
+          btn.style.setProperty('pointer-events', 'auto', 'important');
           btn.click();
           btn.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
           return true;
@@ -825,20 +733,19 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     }
     const d = video.duration;
     // Strategy 1: seek to end + max speed
+    try { video.playbackRate = 16; } catch { /* blocked */ }
     if (d && isFinite(d) && d > 0.1 && d < 300) {
-      try { video.playbackRate = 16; } catch { /* blocked */ }
       try { video.currentTime = d - 0.1; } catch { /* blocked */ }
-    } else {
-      // Duration not available yet — set max speed
-      try { video.playbackRate = 16; } catch { /* blocked */ }
     }
+    // Strategy 1b: also try muting via property (belt & suspenders)
+    try { video.volume = 0; video.muted = true; } catch { /* blocked */ }
 
     // Strategy 2: keep retrying seek in a tight loop
     // YouTube sometimes resets currentTime; this fights back
     let seekAttempts = 0;
     _forceSkipInterval = setInterval(() => {
       seekAttempts++;
-      if (seekAttempts > 20) { clearInterval(_forceSkipInterval); _forceSkipInterval = null; return; }
+      if (seekAttempts > 50) { clearInterval(_forceSkipInterval); _forceSkipInterval = null; return; }
 
       const player = document.querySelector('.html5-video-player');
       const isStillAd = player?.classList.contains('ad-showing') ||
@@ -857,7 +764,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         try { video.currentTime = dur - 0.1; } catch { /* blocked */ }
         try { video.playbackRate = 16; } catch { /* blocked */ }
       }
-    }, 200);
+    }, 50);
   }
 
   // ── Detect ad playing via multiple signals ─────────────────────
@@ -872,18 +779,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   // ── Restore video state after ad finishes ──────────────────────
   function restoreAfterAd(player) {
-    // Re-acquire player and video in case YouTube replaced them
     player = document.querySelector('.html5-video-player') || player;
     const video = player?.querySelector('video');
     if (!video) return;
 
-    // Remove the overlay
     removeSkipOverlay(player);
+    clearBlackScreenWatchdog();
 
-    // Restore controls bar visibility (hidden during ad)
-    restoreAdUiElements(player);
+    // Safety: ensure video is visible (CSS should handle this via
+    // .ad-showing scope, but force-remove in case of stale state)
+    video.style.removeProperty('opacity');
 
-    // Restore volume and unmute
+    // Restore volume
     if (_adMuted) {
       video.muted = false;
       video.volume = _savedVolume || 1;
@@ -891,55 +798,43 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     }
 
     // Restore playback rate
-    if (video.playbackRate !== (_savedPlaybackRate || 1)) {
-      video.playbackRate = _savedPlaybackRate || 1;
+    video.playbackRate = _savedPlaybackRate || 1;
+
+    // Restore controls bar visibility
+    const controls = player.querySelector('.ytp-chrome-bottom');
+    if (controls) {
+      controls.style.removeProperty('opacity');
+      controls.style.removeProperty('pointer-events');
     }
 
-    clearBlackScreenWatchdog();
-
-    // Resume playback once after ad — use a flag so it only happens once
-    _justRestoredFromAd = true;
-    const resumeVideo = player?.querySelector('video');
-    if (resumeVideo && resumeVideo.paused && !resumeVideo.ended) {
-      resumeVideo.play().catch(() => {});
+    // Resume if paused
+    if (video.paused && !video.ended) {
+      video.play().catch(() => {});
     }
-    // Clear the flag after a short delay so polling doesn't keep calling play
-    setTimeout(() => { _justRestoredFromAd = false; }, 1000);
   }
 
   // ── Black screen recovery ──────────────────────────────────────
-  // Aggressively monitors the post-ad transition to resume playback
-  // as fast as possible. Checks every 100ms.
   function startBlackScreenWatchdog(player, video) {
     clearBlackScreenWatchdog();
     let checks = 0;
     _blackScreenTimer = setInterval(() => {
       checks++;
 
-      // Re-acquire player + video in case YouTube replaced them
       const currentPlayer = document.querySelector('.html5-video-player') || player;
       const currentVideo = currentPlayer.querySelector('video') || video;
 
       const stillAd = currentPlayer.classList.contains('ad-showing') ||
-                       currentPlayer.classList.contains('ad-interrupting') ||
-                       detectAdPlaying(currentPlayer);
+                       currentPlayer.classList.contains('ad-interrupting');
       if (stillAd) {
         // Still in ad — keep trying to skip
         clickSkipButton(currentPlayer);
-        // Keep hiding ad UI (YouTube may re-render elements)
-        hideAdUiElements(currentPlayer);
-        // Only speed up if the video element is still the ad video,
-        // not the main content that may have loaded underneath.
         const d = currentVideo.duration;
         if (d && isFinite(d) && d > 0.1 && d < 300) {
-          // Ad videos are typically <5min. Only speed up short videos
-          // to avoid accidentally fast-forwarding the main content.
-          currentVideo.playbackRate = 16;
-          currentVideo.currentTime = d - 0.1;
+          try { currentVideo.currentTime = d - 0.1; } catch {}
+          try { currentVideo.playbackRate = 16; } catch {}
         }
-        // Safety: force-restore after 8s even if ad-showing persists
-        // (increased from 3s — mid-roll ads sometimes take longer)
-        if (checks > 80) {
+        // Safety: force-restore after 3s
+        if (checks > 30) {
           _adActive = false;
           _adReported = false;
           restoreAfterAd(currentPlayer);
@@ -947,8 +842,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         return;
       }
 
-      // Ad done — restore immediately, don't wait for time-advancing check.
-      // The overlay must be removed as soon as ad-showing is gone.
+      // Ad done — restore immediately
       _adActive = false;
       _adReported = false;
       restoreAfterAd(currentPlayer);
@@ -1100,7 +994,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         }
         _adActive = false;
       }
-    }, 500);
+    }, 250);
   }
 
   // ── Start / stop ──────────────────────────────────────────────
@@ -1134,15 +1028,20 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (player) removeSkipOverlay(player);
   }
 
-  // Start/stop based on enabled state
+  // Start skipper IMMEDIATELY — don't wait for storage callback.
+  // If the user has paused the domain, the TOGGLE/PAUSE message
+  // from init() will stop it shortly after.
+  startSkipper();
+
+  // Also check storage to stop if paused
   if (extValid()) {
     try {
       chrome.storage.local.get(['enabled', 'pausedDomains'], (result) => {
         try {
           if (chrome.runtime.lastError || !result) return;
           const { enabled: e = true, pausedDomains = [] } = result;
-          if (e && !pausedDomains.includes(location.hostname)) {
-            startSkipper();
+          if (!e || pausedDomains.includes(location.hostname)) {
+            stopSkipper();
           }
         } catch { /* extension context invalidated */ }
       });
