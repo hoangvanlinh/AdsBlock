@@ -38,19 +38,19 @@ html.adblock-on ytd-display-ad-renderer,
 html.adblock-on ytd-compact-promoted-video-renderer,
 html.adblock-on ytd-action-companion-ad-renderer,
 html.adblock-on ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"],
-html.adblock-on .ytp-ad-module,
-html.adblock-on .ytp-ad-overlay-container,
-html.adblock-on .ytp-ad-text-overlay,
-html.adblock-on .ytp-ad-skip-button-container,
-html.adblock-on .ytp-ad-player-overlay,
-html.adblock-on .ytp-ad-image-overlay,
-html.adblock-on .video-ads.ytp-ad-module,
 html.adblock-on #player-ads,
 html.adblock-on #masthead-ad,
 html.adblock-on #panels > ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"],
 html.adblock-on tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) {
   display: none !important;
 }
+
+/* Video ad module & overlays — handled entirely by JS ad skipper.
+   Do NOT add any CSS for elements inside .html5-video-player here.
+   Any hiding (display:none, opacity:0, visibility:hidden) prevents
+   the ad video from rendering, which blocks the skip logic and
+   causes a stuck black screen. The JS skipper mutes + speed-skips
+   the ad in <1 second — no CSS hiding needed. */
 
 /* ── YouTube Premium upsell / promo elements ── */
 html.adblock-on ytd-mealbar-promo-renderer,
