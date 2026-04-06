@@ -774,7 +774,7 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   updateBadgeForTab(tabId, tab.url);
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
     updateBadgeForTab(tabId, tab.url);
   }
