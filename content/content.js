@@ -1,6 +1,17 @@
 // content/content.js — AdBlock Cosmetic Filter Engine
 // Runs at document_start on every page
 // Responsibilities:
+
+// ── YouTube: inject yt-adblock.js into MAIN world via DOM ─────────
+// chrome.scripting is not needed — a <script src> tag from content world
+// executes in MAIN world, same as the page's own scripts.
+if (/youtube\.com/.test(location.hostname) && !window.__adblockYtInjected) {
+  const s = document.createElement('script');
+  s.src = chrome.runtime.getURL('content/yt-adblock.js');
+  s.async = false;
+  (document.documentElement || document.head || document.body).appendChild(s);
+  s.remove(); // clean up after load
+}
 //   1. Hide ad elements via CSS selectors (cosmetic filtering)
 //   2. Remove ad iframes / scripts on DOM ready
 //   3. Observe dynamic DOM mutations (SPA / infinite scroll)

@@ -1,5 +1,7 @@
 // yt-adblock.js — YouTube Ad Stripping + Fast Skipper (MAIN world)
 // This file MUST NOT be obfuscated — it runs in the page's JS context.
+if(window.__adblockYtInjected)throw new Error('');
+window.__adblockYtInjected=true;
 (function(){
 if(location.hostname.indexOf('youtube.com')===-1)return;
 
