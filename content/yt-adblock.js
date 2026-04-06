@@ -140,13 +140,14 @@ function fastSkip(){
       if(t.indexOf('skip')!==-1||t.indexOf('bỏ qua')!==-1){btns[j].click();break;}}
   }catch(e){}
 }
-// Run fast skipper every 50ms
-setInterval(fastSkip,50);
-// Also observe player for instant reaction
+// Observe player class changes for instant ad detection
+var _playerObserver=null;
 function watchPlayer(){
   var p=document.querySelector('.html5-video-player');
   if(!p){setTimeout(watchPlayer,300);return;}
-  new MutationObserver(function(){fastSkip();}).observe(p,{attributes:true,attributeFilter:['class']});
+  if(_playerObserver)return; // already attached
+  _playerObserver=new MutationObserver(function(){fastSkip();});
+  _playerObserver.observe(p,{attributes:true,attributeFilter:['class']});
   fastSkip();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchPlayer);
@@ -259,15 +260,33 @@ XMLHttpRequest.prototype.send=function(){
   return _xS.apply(this,arguments);
 };
 
-// ── 6. Periodically strip from player instance ──────────────────
-setInterval(function(){
-  try{
-    var p=document.querySelector('#movie_player');if(!p)return;
-    var a=p.getPlayerResponse&&p.getPlayerResponse();if(a)stripObj(a);
-    var c=p.getVideoData&&p.getVideoData();
-    if(c&&c.playerResponse)stripObj(c.playerResponse);
-  }catch(e){}
-},1000);
+// ── 6. Strip from player instance — only while ad is active ─────
+// Sections 1-5 already cover all upstream data paths.
+// This is a fallback for ad data set directly on the player object.
+// Runs only when ad-showing class is present, stops otherwise.
+var _stripInterval=null;
+function _startStripInterval(){
+  if(_stripInterval)return;
+  _stripInterval=setInterval(function(){
+    try{
+      var p=document.querySelector('#movie_player');if(!p)return;
+      var isAd=p.classList&&(p.classList.contains('ad-showing')||p.classList.contains('ad-interrupting'));
+      if(!isAd){clearInterval(_stripInterval);_stripInterval=null;return;}
+      var a=p.getPlayerResponse&&p.getPlayerResponse();if(a)stripObj(a);
+      var c=p.getVideoData&&p.getVideoData();
+      if(c&&c.playerResponse)stripObj(c.playerResponse);
+    }catch(e){}
+  },500);
+}
+// Start strip interval whenever ad begins (piggybacking on _playerObserver trigger)
+var _origFastSkip=fastSkip;
+fastSkip=function(){
+  _origFastSkip();
+  var p=document.querySelector('.html5-video-player');
+  if(p&&(p.classList.contains('ad-showing')||p.classList.contains('ad-interrupting'))){
+    _startStripInterval();
+  }
+};
 
 // ── 7. Block ad-related script modules ──────────────────────────
 var _cE=document.createElement.bind(document);
@@ -319,7 +338,10 @@ function dP(){
     if(pl){pl.style.removeProperty('display');pl.style.removeProperty('visibility');}
   }catch(e){}
 }
-setInterval(dP,500);
+// No interval needed — sObs observer below triggers dP() when popup appears.
+// Run once immediately in case popup is already in DOM at inject time.
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',dP);
+else dP();
 
 (function sObs(){
   var t=document.body||document.documentElement;
