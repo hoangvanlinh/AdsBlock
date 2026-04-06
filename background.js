@@ -754,13 +754,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 });
 
 // ── Tab tracking (pause-per-domain badge) ─────────────────────────
-chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  const tab = await chrome.tabs.get(tabId).catch(() => null);
-  if (!tab?.url) return;
-
+async function updateBadgeForTab(tabId, url) {
+  if (!url) return;
   let domain = '';
-  try { domain = new URL(tab.url).hostname; } catch { return; }
-
+  try { domain = new URL(url).hostname; } catch { return; }
   const { pausedDomains = [] } = await chrome.storage.local.get('pausedDomains');
   if (pausedDomains.includes(domain)) {
     chrome.action.setBadgeText({ text: '⏸', tabId });
@@ -768,6 +765,18 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   } else {
     chrome.action.setBadgeText({ text: '', tabId });
     chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0], tabId });
+  }
+}
+
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  if (!tab?.url) return;
+  updateBadgeForTab(tabId, tab.url);
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    updateBadgeForTab(tabId, tab.url);
   }
 });
 

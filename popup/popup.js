@@ -135,13 +135,35 @@ function updateToggleUI(active, paused = false, allowlisted = false) {
 // ── Main toggle ────────────────────────────────
 mainToggle.addEventListener('change', async () => {
   const on = mainToggle.checked;
-  chrome.storage.local.set({ enabled: on });
-  updateToggleUI(on);
-  // Tell background to update declarativeNetRequest rules
-  chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: on });
-  // Tell content script on active tab to toggle cosmetic filtering
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: on }).catch(() => {});
+
+  if (on) {
+    // If site was paused, clear the pause first
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const domain = tab?.url ? (() => { try { return new URL(tab.url).hostname; } catch { return ''; } })() : '';
+
+    chrome.storage.local.get(['pausedDomains'], ({ pausedDomains = [] }) => {
+      const wasPaused = domain && pausedDomains.includes(domain);
+      const updatedPaused = wasPaused ? pausedDomains.filter(d => d !== domain) : pausedDomains;
+
+      chrome.storage.local.set({ enabled: true, pausedDomains: updatedPaused });
+      updateToggleUI(true, false);
+      chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: true });
+
+      if (wasPaused) {
+        pauseSiteBtn.classList.remove('active');
+        pauseSiteBtn.textContent = '⏸ Pause on site';
+        chrome.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: false });
+      }
+
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: true }).catch(() => {});
+    });
+  } else {
+    chrome.storage.local.set({ enabled: false });
+    updateToggleUI(false);
+    chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: false });
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: false }).catch(() => {});
+  }
 });
 
 // ── Pause on site ──────────────────────────────
