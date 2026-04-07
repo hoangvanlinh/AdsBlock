@@ -121,6 +121,10 @@ function fastSkip(){
     try{v.playbackRate=16;}catch(e){}
     var d=v.duration;
     if(d&&isFinite(d)&&d>0.1&&d<300){try{v.currentTime=d-0.1;}catch(e){}}
+    // If no valid duration (ad media didn't load), dispatch 'ended' to unblock player
+    if(!d||!isFinite(d)||d<=0){
+      try{v.dispatchEvent(new Event('ended',{bubbles:true}));}catch(e){}
+    }
   }
   // Click skip button
   var sels=['.ytp-skip-ad-button','.ytp-ad-skip-button','.ytp-ad-skip-button-modern',
@@ -142,11 +146,72 @@ function fastSkip(){
 }
 // Observe player class changes for instant ad detection
 var _playerObserver=null;
+
+// ── Stuck-ad recovery ─────────────────────────────────────────────
+// For long videos (>1hr), midroll ads may be triggered but not load any
+// media (because we stripped adPlacements). The player stays in ad-showing
+// state with duration=NaN, while our CSS holds opacity:0 → black screen.
+// This timer detects the stuck state and force-exits it.
+var _stuckAdTimer=null, _stuckAdStart=0, _stuckAdLastTime=-1;
+function _clearStuckTimer(){
+  if(_stuckAdTimer){clearTimeout(_stuckAdTimer);_stuckAdTimer=null;}
+  _stuckAdStart=0;_stuckAdLastTime=-1;
+}
+function _checkStuckAd(){
+  _stuckAdTimer=null;
+  var p=document.querySelector('.html5-video-player');
+  if(!p){return;}
+  var isAd=p.classList.contains('ad-showing')||p.classList.contains('ad-interrupting');
+  if(!isAd){_clearStuckTimer();return;}
+  var v=p.querySelector('video');
+  var d=v?v.duration:NaN;
+  var ct=v?v.currentTime:0;
+  // If ad has valid duration and currentTime is progressing, not stuck
+  if(d&&isFinite(d)&&d>0.5&&ct!==_stuckAdLastTime){
+    _stuckAdLastTime=ct;
+    _stuckAdTimer=setTimeout(_checkStuckAd,2000);
+    return;
+  }
+  _stuckAdLastTime=ct;
+  var now=Date.now();
+  if(!_stuckAdStart)_stuckAdStart=now;
+  if(now-_stuckAdStart>2000){
+    // Force-exit stuck ad
+    try{var mp=document.querySelector('#movie_player');if(mp&&mp.cancelAd)mp.cancelAd();}catch(e){}
+    if(v){
+      try{v.dispatchEvent(new Event('ended',{bubbles:true}));}catch(e){}
+      if(d&&isFinite(d)&&d>0){try{v.currentTime=d;}catch(e){}}
+    }
+    // Last resort after 1.5s: forcibly remove ad class and restore video
+    setTimeout(function(){
+      var p2=document.querySelector('.html5-video-player');
+      if(!p2)return;
+      if(p2.classList.contains('ad-showing')||p2.classList.contains('ad-interrupting')){
+        try{p2.classList.remove('ad-showing','ad-interrupting');}catch(e){}
+        var v2=p2.querySelector('video');
+        if(v2){v2.muted=false;v2.volume=_savedVol||1;try{v2.playbackRate=1;}catch(e){}}
+      }
+    },1500);
+    _stuckAdStart=0;
+  }
+  _stuckAdTimer=setTimeout(_checkStuckAd,500);
+}
+
 function watchPlayer(){
   var p=document.querySelector('.html5-video-player');
   if(!p){setTimeout(watchPlayer,300);return;}
   if(_playerObserver)return; // already attached
-  _playerObserver=new MutationObserver(function(){fastSkip();});
+  _playerObserver=new MutationObserver(function(){
+    fastSkip();
+    var p2=document.querySelector('.html5-video-player');
+    var isAd=p2&&(p2.classList.contains('ad-showing')||p2.classList.contains('ad-interrupting'));
+    if(isAd&&!_stuckAdTimer){
+      if(!_stuckAdStart)_stuckAdStart=Date.now();
+      _stuckAdTimer=setTimeout(_checkStuckAd,2000);
+    } else if(!isAd){
+      _clearStuckTimer();
+    }
+  });
   _playerObserver.observe(p,{attributes:true,attributeFilter:['class']});
   fastSkip();
 }
@@ -154,17 +219,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 else watchPlayer();
 
 // ── 2. Strip ad data from objects ────────────────────────────────
+// Use [] / {} instead of delete so YouTube's player code doesn't crash
+// when it tries to iterate over these fields and finds undefined.
 var AK=['playerAds','adPlacements','adSlots','adBreakParams','adBreakHeartbeatParams'];
+var AK_ARR=['playerAds','adPlacements','adSlots'];
+var AK_OBJ=['adBreakParams','adBreakHeartbeatParams'];
 
 function stripObj(o){
   if(!o||typeof o!=='object')return o;
-  for(var i=0;i<AK.length;i++){if(AK[i] in o)delete o[AK[i]];}
-  if(o.playerConfig&&o.playerConfig.adRequestConfig)delete o.playerConfig.adRequestConfig;
-  // Also strip adSlots from adBreakHeartbeatParams if present
+  var i;
+  for(i=0;i<AK_ARR.length;i++){if(AK_ARR[i] in o)o[AK_ARR[i]]=[];}
+  for(i=0;i<AK_OBJ.length;i++){if(AK_OBJ[i] in o)o[AK_OBJ[i]]={};}
+  if(o.playerConfig&&o.playerConfig.adRequestConfig)o.playerConfig.adRequestConfig={};
   if(o.playerResponse){
-    for(var i2=0;i2<AK.length;i2++){if(AK[i2] in o.playerResponse)delete o.playerResponse[AK[i2]];}
+    for(i=0;i<AK_ARR.length;i++){if(AK_ARR[i] in o.playerResponse)o.playerResponse[AK_ARR[i]]=[];}
+    for(i=0;i<AK_OBJ.length;i++){if(AK_OBJ[i] in o.playerResponse)o.playerResponse[AK_OBJ[i]]={};}
     if(o.playerResponse.playerConfig&&o.playerResponse.playerConfig.adRequestConfig)
-      delete o.playerResponse.playerConfig.adRequestConfig;
+      o.playerResponse.playerConfig.adRequestConfig={};
   }
   return o;
 }
@@ -218,11 +289,13 @@ try{Object.defineProperty(window,'ytInitialData',{
   configurable:true,enumerable:true
 });}catch(e){}
 
-// ── 4. Intercept fetch() for player/next endpoints ──────────────
+// ── 4. Intercept fetch() for player/next/midroll endpoints ──────
 var _oF=window.fetch;
 window.fetch=function(input,init){
   var url=(input instanceof Request)?input.url:String(input||'');
-  if(url.indexOf('/youtubei/v1/player')===-1&&url.indexOf('/youtubei/v1/next')===-1)
+  if(url.indexOf('/youtubei/v1/player')===-1&&
+     url.indexOf('/youtubei/v1/next')===-1&&
+     url.indexOf('/get_midroll_info')===-1)
     return _oF.apply(this,arguments);
   return _oF.apply(this,arguments).then(function(r){
     var c=r.clone();
