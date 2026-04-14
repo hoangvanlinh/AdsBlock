@@ -55,7 +55,13 @@
 
 ### From Chrome Web Store
 
-Coming soon.
+Install directly from the Chrome Web Store:
+
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/adblock-%E2%80%94-ads-trackers/emdofgiggmkkncojffpebiaegdmdkgio">
+    <img src="https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Install from Chrome Web Store">
+  </a>
+</p>
 
 ## Project Structure
 
