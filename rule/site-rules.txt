@@ -1,0 +1,83 @@
+# site-rules.txt — editable site rule map
+# Format:
+# [section]
+# key = value1 | value2 | value3
+
+[global]
+direct_hide_selectors = ins.adsbygoogle | .adsbygoogle | [id^="div-gpt-ad"] | [id^="google_ads_iframe"] | [id^="dfp-ad-"] | iframe[src*="googleadservices"] | iframe[src*="doubleclick.net"] | iframe[src*="googlesyndication"] | .OUTBRAIN | div.ob-widget | div.ob-smartfeed-wrapper | [data-widget-id^="outbrain"] | .trc_related_container | [id^="taboola-"] | .taboola-container | iframe[src*="amazon-adsystem"] | .criteo-ad | [id^="crt-"][id$="-wrapper"] | iframe[src*="adnxs.com"] | iframe[src*="media.net"] | iframe[src*="pubmatic.com"] | iframe[src*="openx.net"] | iframe[src*="rubiconproject.com"] | .ad-banner | .ad-wrapper | .ad-container | .ad-slot | .ad-unit | .ad-frame | .ad-leaderboard | .ad-sidebar | .ad-rectangle | #ad-banner | #ad-wrapper | #ad-container | [aria-label="Advertisement"] | [aria-label="Sponsored"] | [data-ad="true"] | li[data-promoted="true"] | .sponsored-post | .promoted-content | .ad-modal | .ad-popup | .interstitial-ad
+ad_script_hosts = googlesyndication.com | doubleclick.net | googleadservices.com | adnxs.com | outbrain.com | taboola.com | amazon-adsystem.com | media.net | criteo.com | advertising.com | pubmatic.com | openx.net | rubiconproject.com | casalemedia.com | sovrn.com
+ad_patterns = doubleclick | googlesyndication | googleadservices | adnxs | outbrain | taboola | amazon-adsystem | media.net | criteo | advertising.com | pubmatic | openx.net | rubiconproject
+tracker_patterns = google-analytics | analytics.google | facebook.com/tr | hotjar | mixpanel | segment.io | amplitude | fullstory | clarity.ms | quantserve
+malware_patterns = coinhive | coin-hive | jsecoin | crypto-loot | authedmine | cryptonight | minero.cc
+
+[youtube]
+direct_hide_selectors = ytd-ad-slot-renderer | ytd-in-feed-ad-layout-renderer | ytd-banner-promo-renderer | ytd-statement-banner-renderer | ytd-promoted-sparkles-web-renderer | ytd-promoted-video-renderer | ytd-display-ad-renderer | ytd-compact-promoted-video-renderer | ytd-action-companion-ad-renderer | ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | #player-ads | #masthead-ad | #panels > ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) | ytd-mealbar-promo-renderer | ytd-popup-container:has(ytd-mealbar-promo-renderer) | ytd-background-promo-renderer | ytd-official-card-renderer | tp-yt-paper-dialog:has(yt-premium-offer-renderer) | ytd-companion-slot-renderer:has([data-style-type="PREMIUM"]) | .ytd-mealbar-promo-renderer | ytd-survey-notification-renderer | #offer-module | .ytp-paid-content-overlay | .ytp-premium-yoodle | ytd-rich-section-renderer:has(ytd-statement-banner-renderer) | ytd-enforcement-message-view-model | tp-yt-paper-dialog:has(yt-upsell-dialog-renderer) | ytd-rich-item-renderer:has(ytd-ad-slot-renderer) | ytd-video-renderer[is-ad] | ytd-rich-item-renderer[is-ad] | ytd-reel-item-renderer[is-ad] | ytd-search-pyv-renderer | ytd-promoted-sparkles-text-search-renderer | ytd-movie-offer-module-renderer | ytd-compact-movie-renderer[is-ad]
+
+[facebook]
+labels = sponsored | đượctàitrợ | patrocinado | sponsorisé | gesponsert | sponsorizzato | gesponsord | sponsorowane | sponsorlu | sponsorizat | χορηγούμενη | спонсировано | مُموَّل | ممول | ได้รับการสนับสนุน | ได้รับการสนับสนุนโดย | bersponsor | ditaja | 広告 | 赞助内容 | 贊助 | 赞助 | 후원광고
+link_patterns = /ads/about | /ads/preferences | /help/ads | /business/help
+feed_selectors = [role="feed"] [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-pagelet*="VideoFeed"] [role="article"] | div[data-pagelet*="Reels"] [role="article"]
+market_selectors = div[aria-label="Marketplace"] [role="article"] | div[data-pagelet*="Marketplace"] [role="article"]
+right_rail_selectors = div[data-pagelet="RightRail"] > div | div[data-pagelet*="RightRail"] > div | div[aria-label="Right rail"] > div
+context_selectors = header | h3 | h4 | [role="heading"] | div[dir="auto"] | span[dir="auto"] | a[aria-label]
+attr_keys = aria-label
+
+[reddit]
+labels = promoted | sponsored | advertisement
+link_patterns = utm_name=promoted | /promoted | promoted=true
+post_selectors = shreddit-ad-post | shreddit-post[post-type="promoted"] | shreddit-post | article[data-testid="post-container"] | div[data-testid="post-container"] | div.thing | div[data-promoted="true"]
+ad_host_selectors = shreddit-dynamic-ad-link | a[rel*="sponsored"] | [aria-label^="Advertisement:"] | [aria-label^="Promoted:"]
+context_selectors = faceplate-screen-reader-content | [slot="credit-bar"] | header | shreddit-post-flair | span | a
+attr_keys = post-type | recommendation-source | slot | data-promoted | aria-label | click-location
+hide_closest = shreddit-ad-post | shreddit-post | article[data-testid="post-container"] | div[data-testid="post-container"] | div.thing
+
+[instagram]
+labels = sponsored | paidpartnership
+selectors = article | main article
+context_selectors = header | a | span | div
+link_patterns = /ads/ | /about-ads
+
+[tiktok]
+labels = sponsored | advertisement | promoted
+selectors = div[data-e2e="recommend-list-item-container"] | div[data-e2e="search_top-item"] | div[data-e2e="video-feed-item"] | article
+context_selectors = span | a | div
+attr_keys = aria-label
+
+[x]
+labels = promoted | sponsored
+selectors = article[data-testid="tweet"] | div[data-testid="placementTracking"]
+context_selectors = [data-testid="socialContext"] | div[dir="ltr"] | span
+link_patterns = /ads/
+hide_closest = article[data-testid="tweet"] | div[data-testid="cellInnerDiv"]
+
+[linkedin]
+labels = promoted | sponsored
+selectors = div.feed-shared-update-v2 | div[data-id^="urn:li:activity"] | li.scaffold-finite-scroll__content
+context_selectors = [aria-label] | .update-components-actor__sub-description | span[aria-hidden="true"]
+attr_keys = aria-label
+link_patterns = linkedin.com/ad/ | /ad/
+
+[pinterest]
+labels = promoted | sponsored
+selectors = [data-test-id="pin"] | div[data-grid-item="true"] | div[data-test-id="closeup-image"]
+context_selectors = [aria-label] | span | a
+link_patterns = promoted
+
+[quora]
+labels = promoted | sponsored | advertisement
+selectors = div.puppeteer_test_feed_item | div[class*="FeedStory"] | div.q-box
+context_selectors = span | a
+link_patterns = promoted | ads
+
+[amazon]
+labels = sponsored | sponsoredad
+selectors = [data-component-type="s-search-result"] | [data-component-type="sp-sponsored-result"]
+context_selectors = .puis-sponsored-label-text | .s-sponsored-label-text | [aria-label] | [data-component-type="sp-sponsored-result"]
+attr_keys = data-component-type | cel_widget_id | data-cel-widget | aria-label
+paths = /s
+query_keys = k | field-keywords
+
+[google]
+direct_hide_selectors = #tads | #tadsb | #bottomads | #rhsads | div[data-text-ad] | div[data-ta-slot] | .commercial-unit-desktop-top | .commercial-unit-desktop-rhs
+paths = /search | /webhp
+query_keys = q
