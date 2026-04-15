@@ -1,82 +1,157 @@
 // background.js — AdBlock Service Worker (Manifest V3)
 // Handles: network blocking (declarativeNetRequest) + message routing
 
-// ── Default rules (EasyList-style keyword patterns) ───────────────
-const DEFAULT_RULES = [
-  // Ad networks
-  { id: 1,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'doubleclick.net',      resourceTypes: ['script','image','xmlhttprequest','sub_frame'] } },
-  { id: 2,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'googlesyndication.com', resourceTypes: ['script','image','xmlhttprequest','sub_frame'] } },
-  { id: 3,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'googleadservices.com',  resourceTypes: ['script','image','xmlhttprequest'] } },
-  { id: 4,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'adnxs.com',             resourceTypes: ['script','image','xmlhttprequest'] } },
-  { id: 5,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'outbrain.com',          resourceTypes: ['script','image','xmlhttprequest'] } },
-  { id: 6,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'taboola.com',           resourceTypes: ['script','image','xmlhttprequest','sub_frame'] } },
-  { id: 7,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'ads.yahoo.com',         resourceTypes: ['script','image','xmlhttprequest'] } },
-  { id: 8,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'amazon-adsystem.com',   resourceTypes: ['script','image','xmlhttprequest'] } },
-  { id: 9,  priority: 1, action: { type: 'block' }, condition: { urlFilter: 'media.net',             resourceTypes: ['script','image','xmlhttprequest'] } },
-  { id: 10, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'criteo.com',            resourceTypes: ['script','image','xmlhttprequest'] } },
+const RULES_REMOTE_URL = 'https://raw.githubusercontent.com/hoangvanlinh/AdsBlock/refs/heads/main/rule/site-rules.txt';
+const RULES_LOCAL_PATH = 'rule/site-rules.txt';
+const RULES_CACHE_TEXT_KEY = 'siteRulesCacheText';
+const RULES_CACHE_TIME_KEY = 'siteRulesCacheTime';
+const RULES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
-  // Trackers
-  { id: 11, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'google-analytics.com', resourceTypes: ['script','xmlhttprequest','ping'] } },
-  { id: 12, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'analytics.google.com', resourceTypes: ['script','xmlhttprequest','ping'] } },
-  { id: 13, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'facebook.com/tr',      resourceTypes: ['xmlhttprequest','image','ping'] } },
-  { id: 14, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'hotjar.com',           resourceTypes: ['script','xmlhttprequest'] } },
-  { id: 15, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'mixpanel.com',         resourceTypes: ['script','xmlhttprequest'] } },
-  { id: 16, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'segment.com',          resourceTypes: ['script','xmlhttprequest'] } },
-  { id: 17, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'amplitude.com',        resourceTypes: ['script','xmlhttprequest'] } },
-  { id: 18, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'fullstory.com',        resourceTypes: ['script','xmlhttprequest'] } },
-  { id: 19, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'clarity.ms',           resourceTypes: ['script','xmlhttprequest'] } },
-  { id: 20, priority: 1, action: { type: 'block' }, condition: { urlFilter: 'quantserve.com',       resourceTypes: ['script','image','xmlhttprequest'] } },
+const FALLBACK_RULE_CONFIG = {
+  adNetworkPatterns: ['doubleclick.net', 'googlesyndication.com', 'googleadservices.com', 'adnxs.com', 'outbrain.com', 'taboola.com', 'ads.yahoo.com', 'amazon-adsystem.com', 'media.net', 'criteo.com'],
+  trackerNetworkPatterns: ['google-analytics.com', 'analytics.google.com', 'facebook.com/tr', 'hotjar.com', 'mixpanel.com', 'segment.com', 'amplitude.com', 'fullstory.com', 'clarity.ms', 'quantserve.com'],
+  malwareNetworkDomains: ['malware-check.disconnect.me', 'phishing.example.net', 'dl.free-counter.co.uk', 'naifrede.com', 'clafrfrede.com', 'coinhive.com', 'coin-hive.com', 'jsecoin.com', 'crypto-loot.com', 'authedmine.com', '0-internal.paypal.com.de', 'apple-icloud.org.uk', 'login-microsoft-office.com', 'secure-login-bank.com', 'netflix-account.com', 'installcore.net', 'softonic-analytics.net', 'bonzi.software', 'adf.ly', 'sh.st', 'ad-maven.com', 'propellerads.com', 'rig-exploit.com', 'exploit-kit-check.net', 'mspy.com', 'flexispy.com', 'virus-alert-windows.com', 'your-pc-is-infected.com', 'push-notification.tools', 'notification-service.club'],
+  adPatterns: ['doubleclick', 'googlesyndication', 'googleadservices', 'adnxs', 'outbrain', 'taboola', 'amazon-adsystem', 'media.net', 'criteo', 'advertising.com', 'pubmatic', 'openx.net', 'rubiconproject'],
+  trackerPatterns: ['google-analytics.com', 'analytics.google.com', 'facebook.com/tr', 'hotjar.com', 'mixpanel.com', 'segment.com', 'amplitude.com', 'fullstory.com', 'clarity.ms', 'quantserve.com'],
+  malwarePatterns: ['coinhive', 'coin-hive', 'jsecoin', 'crypto-loot', 'authedmine', 'cryptonight', 'minero.cc'],
+};
 
-  // YouTube ad serving endpoints
-  // NOTE: ALL youtube.com-specific network blocks are intentionally removed.
-  // Blocking youtube.com/* endpoints (pagead, get_midroll_info, ptracking, etc.)
-  // is exactly how YouTube detects ad blockers. Ad stripping is handled entirely
-  // client-side by content/yt-adblock.js (MAIN world) + ytcfg enforcement bypass.
-];
+let DEFAULT_RULES = [];
+let MALWARE_RULES = [];
+let TRACKER_RULE_IDS = new Set();
+let MALWARE_RULE_IDS = new Set();
+let _ruleConfigPromise = null;
 
-// ── Malware / phishing domain rules (static built-in) ─────────
-// Sources: URLhaus (abuse.ch), Phishing Army, Steven Black, SANS ISC
-const MALWARE_RULES = [
-  { id: 101, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['malware-check.disconnect.me'], resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest','image'] } },
-  { id: 102, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['phishing.example.net'],       resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest','image'] } },
-  // Known malware distribution domains (from URLhaus/abuse.ch)
-  { id: 103, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['dl.free-counter.co.uk'],     resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest','image'] } },
-  { id: 104, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['naifrede.com'],              resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest','image'] } },
-  { id: 105, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['clafrfrede.com'],            resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest','image'] } },
-  // Crypto mining
-  { id: 106, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['coinhive.com'],              resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  { id: 107, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['coin-hive.com'],             resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  { id: 108, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['jsecoin.com'],               resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  { id: 109, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['crypto-loot.com'],           resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  { id: 110, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['authedmine.com'],            resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  // Phishing / scam
-  { id: 111, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['0-internal.paypal.com.de'],  resourceTypes: ['main_frame','sub_frame'] } },
-  { id: 112, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['apple-icloud.org.uk'],       resourceTypes: ['main_frame','sub_frame'] } },
-  { id: 113, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['login-microsoft-office.com'],resourceTypes: ['main_frame','sub_frame'] } },
-  { id: 114, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['secure-login-bank.com'],     resourceTypes: ['main_frame','sub_frame'] } },
-  { id: 115, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['netflix-account.com'],       resourceTypes: ['main_frame','sub_frame'] } },
-  // Adware / PUP distribution
-  { id: 116, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['installcore.net'],           resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  { id: 117, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['softonic-analytics.net'],    resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  { id: 118, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['bonzi.software'],            resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  // Malvertising redirect chains
-  { id: 119, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['adf.ly'],                    resourceTypes: ['main_frame','sub_frame','script'] } },
-  { id: 120, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['sh.st'],                     resourceTypes: ['main_frame','sub_frame','script'] } },
-  { id: 121, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['ad-maven.com'],              resourceTypes: ['main_frame','sub_frame','script'] } },
-  { id: 122, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['propellerads.com'],          resourceTypes: ['main_frame','sub_frame','script'] } },
-  // Exploit kits
-  { id: 123, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['rig-exploit.com'],           resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  { id: 124, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['exploit-kit-check.net'],     resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  // Spyware / keylogger domains
-  { id: 125, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['mspy.com'],                  resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  { id: 126, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['flexispy.com'],              resourceTypes: ['main_frame','sub_frame','script','xmlhttprequest'] } },
-  // Tech-support scam
-  { id: 127, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['virus-alert-windows.com'],   resourceTypes: ['main_frame','sub_frame'] } },
-  { id: 128, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['your-pc-is-infected.com'],   resourceTypes: ['main_frame','sub_frame'] } },
-  // Browser locker / notification spam
-  { id: 129, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['push-notification.tools'],   resourceTypes: ['main_frame','sub_frame','script'] } },
-  { id: 130, priority: 2, action: { type: 'block' }, condition: { requestDomains: ['notification-service.club'], resourceTypes: ['main_frame','sub_frame','script'] } },
-];
+function parseRuleText(text) {
+  const out = {};
+  let section = '';
+  const lines = String(text || '').split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line || line[0] === '#' || line[0] === ';') continue;
+    if (line[0] === '[' && line[line.length - 1] === ']') {
+      section = line.slice(1, -1).trim().toLowerCase();
+      if (section && !out[section]) out[section] = {};
+      continue;
+    }
+    if (!section) continue;
+    const eq = line.indexOf('=');
+    if (eq === -1) continue;
+    const key = line.slice(0, eq).trim().toLowerCase();
+    const value = line.slice(eq + 1).trim();
+    if (!key) continue;
+    out[section][key] = value ? value.split('|').map(part => part.trim()).filter(Boolean) : [];
+  }
+  return out;
+}
+
+async function getCachedRuleText() {
+  try {
+    const cached = await chrome.storage.local.get([RULES_CACHE_TEXT_KEY, RULES_CACHE_TIME_KEY]);
+    if (!cached[RULES_CACHE_TEXT_KEY]) return null;
+    return {
+      text: cached[RULES_CACHE_TEXT_KEY],
+      time: Number(cached[RULES_CACHE_TIME_KEY] || 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function setCachedRuleText(text) {
+  if (!text) return;
+  try {
+    await chrome.storage.local.set({
+      [RULES_CACHE_TEXT_KEY]: text,
+      [RULES_CACHE_TIME_KEY]: Date.now(),
+    });
+  } catch {}
+}
+
+function isFreshRuleCache(entry) {
+  return !!(entry && entry.text && entry.time && (Date.now() - entry.time) < RULES_CACHE_TTL_MS);
+}
+
+async function fetchRemoteRuleText() {
+  const res = await fetch(RULES_REMOTE_URL, { cache: 'no-store' });
+  if (!res.ok) throw new Error('remote rules unavailable');
+  const text = await res.text();
+  if (!text) throw new Error('empty remote rules');
+  await setCachedRuleText(text);
+  return text;
+}
+
+async function fetchLocalRuleText() {
+  const res = await fetch(chrome.runtime.getURL(RULES_LOCAL_PATH), { cache: 'no-store' });
+  return res.ok ? res.text() : '';
+}
+
+function buildDefaultRulesFromConfig(config) {
+  const adTypes = ['script', 'image', 'xmlhttprequest', 'sub_frame'];
+  const trackerTypes = ['script', 'image', 'xmlhttprequest', 'ping'];
+  const adRules = config.adNetworkPatterns.map((pattern, index) => ({
+    id: 1 + index,
+    priority: 1,
+    action: { type: 'block' },
+    condition: { urlFilter: pattern, resourceTypes: adTypes },
+  }));
+  const trackerRules = config.trackerNetworkPatterns.map((pattern, index) => ({
+    id: 11 + index,
+    priority: 1,
+    action: { type: 'block' },
+    condition: { urlFilter: pattern, resourceTypes: trackerTypes },
+  }));
+  return adRules.concat(trackerRules);
+}
+
+function buildMalwareRulesFromConfig(config) {
+  const malwareTypes = ['main_frame', 'sub_frame', 'script', 'xmlhttprequest', 'image'];
+  return config.malwareNetworkDomains.map((domain, index) => ({
+    id: 101 + index,
+    priority: 2,
+    action: { type: 'block' },
+    condition: { requestDomains: [domain], resourceTypes: malwareTypes },
+  }));
+}
+
+async function ensureRuleDefinitionsLoaded() {
+  if (DEFAULT_RULES.length && MALWARE_RULES.length) return;
+  if (!_ruleConfigPromise) {
+    _ruleConfigPromise = (async () => {
+      const cached = await getCachedRuleText();
+      let text = '';
+      if (isFreshRuleCache(cached)) {
+        text = cached.text;
+      } else {
+        try {
+          text = await fetchRemoteRuleText();
+        } catch {
+          text = (cached && cached.text) || await fetchLocalRuleText();
+        }
+      }
+      const parsed = parseRuleText(text);
+      const global = parsed.global || {};
+      const config = {
+        adNetworkPatterns: global.ad_network_patterns?.length ? global.ad_network_patterns : FALLBACK_RULE_CONFIG.adNetworkPatterns,
+        trackerNetworkPatterns: global.tracker_network_patterns?.length ? global.tracker_network_patterns : FALLBACK_RULE_CONFIG.trackerNetworkPatterns,
+        malwareNetworkDomains: global.malware_network_domains?.length ? global.malware_network_domains : FALLBACK_RULE_CONFIG.malwareNetworkDomains,
+        adPatterns: global.ad_patterns?.length ? global.ad_patterns : FALLBACK_RULE_CONFIG.adPatterns,
+        trackerPatterns: global.tracker_patterns?.length ? global.tracker_patterns : FALLBACK_RULE_CONFIG.trackerPatterns,
+        malwarePatterns: global.malware_patterns?.length ? global.malware_patterns : FALLBACK_RULE_CONFIG.malwarePatterns,
+      };
+      DEFAULT_RULES = buildDefaultRulesFromConfig(config);
+      MALWARE_RULES = buildMalwareRulesFromConfig(config);
+      TRACKER_RULE_IDS = new Set(DEFAULT_RULES.filter(rule => rule.id >= 11).map(rule => rule.id));
+      MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
+      AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
+      TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...config.trackerPatterns);
+      MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...config.malwarePatterns);
+    })().finally(() => {
+      _ruleConfigPromise = null;
+    });
+  }
+  await _ruleConfigPromise;
+}
 
 const MALWARE_RULE_ID_START = 100;
 const MALWARE_RULE_ID_END   = 199;
@@ -84,10 +159,6 @@ const FOCUS_RULE_ID_START   = 2000;
 const REMOTE_MALWARE_RULE_ID_START = 3000; // for fetched blocklists
 const CUSTOM_RULE_ID_START = 4000;        // for user-created rules
 const PAUSE_ALLOW_RULE_ID_START = 6000;   // for pause/allowlist allow-all rules
-
-// Rule IDs 11-20 are trackers; 1-10 are ads; 100-199 are malware (static)
-const TRACKER_RULE_IDS = new Set([11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-const MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(r => r.id));
 
 // ── Privacy score calculation ─────────────────────────────────────
 // Pure function — duplicated in popup.js and dashboard.js too.
@@ -183,6 +254,7 @@ let activeStatsRules = [];
 let statsRulesInitialized = false;
 
 async function buildActiveRulesFromStorage() {
+  await ensureRuleDefinitionsLoaded();
   const {
     enabled, pausedDomains = [], allowedDomains = [], focusMode = false,
     blockAds = true, blockTrackers = true, blockMalware = true,
@@ -192,7 +264,7 @@ async function buildActiveRulesFromStorage() {
 
   if (!enabled) return { enabled: false, allRules: [] };
 
-  const AD_RULE_IDS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  const AD_RULE_IDS = new Set(DEFAULT_RULES.filter(r => !TRACKER_RULE_IDS.has(r.id)).map(r => r.id));
   const filteredDefaultRules = DEFAULT_RULES.filter(r => {
     if (AD_RULE_IDS.has(r.id) && !blockAds) return false;
     if (TRACKER_RULE_IDS.has(r.id) && !blockTrackers) return false;
@@ -346,23 +418,11 @@ function recalcDerived(s) {
   s.speedGain  = s.totalSeen > 0 ? Math.round((s.blocked / s.totalSeen) * 100) : 0;
 }
 
-const AD_KEYWORDS = [
-  'doubleclick', 'googlesyndication', 'adnxs', 'outbrain', 'taboola',
-  'amazon-adsystem', 'media.net', 'criteo', 'advertising.com',
-  'pubmatic', 'openx.net', 'rubiconproject', '/ads/', '/ad/',
-];
+const AD_KEYWORDS = FALLBACK_RULE_CONFIG.adPatterns.slice();
 
-const TRACKER_KEYWORDS = [
-  'google-analytics', 'analytics.google.com', 'facebook.com/tr',
-  'hotjar', 'mixpanel', 'segment.io', 'amplitude', 'fullstory',
-  'clarity.ms', 'quantserve',
-];
+const TRACKER_KEYWORDS = FALLBACK_RULE_CONFIG.trackerPatterns.slice();
 
-const MALWARE_KEYWORDS = [
-  'coinhive', 'coin-hive', 'jsecoin', 'crypto-loot', 'authedmine',
-  'cryptonight', 'minero.cc', 'miner.bundledload',
-  'exploit-kit', '.exe.download',
-];
+const MALWARE_KEYWORDS = FALLBACK_RULE_CONFIG.malwarePatterns.slice();
 
 // ── Remote malware blocklist updater ──────────────────────────────
 // Fetches community blocklists every 24 hours (or on install)
@@ -662,7 +722,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       }
 
       case 'AD_SKIPPED': {
-        // Sent by content.js YouTube ad skipper when a video ad is skipped.
+        // Sent by content.js as a bridge for MAIN-world yt-adblock.js when a video ad is skipped.
         const { collectStats: collectAS = true } = await chrome.storage.local.get('collectStats');
         if (!collectAS) { sendResponse({ ok: true }); break; }
 
@@ -684,9 +744,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       }
 
       case 'GET_CLASSIFIER_LISTS': {
+        await ensureRuleDefinitionsLoaded();
         // Derive classifier patterns directly from actual DNR rule definitions.
         // content.js uses these to classify observed DOM resources for stats.
-        const AD_IDS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        const AD_IDS = new Set(DEFAULT_RULES.filter(r => !TRACKER_RULE_IDS.has(r.id)).map(r => r.id));
         const adPatterns = DEFAULT_RULES
           .filter(r => AD_IDS.has(r.id) && r.condition.urlFilter)
           .map(r => r.condition.urlFilter);
@@ -729,6 +790,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       }
 
       case 'GET_MALWARE_STATUS': {
+        await ensureRuleDefinitionsLoaded();
         const { malwareListLastUpdate = 0, malwareListCount = 0 } = await chrome.storage.local.get(['malwareListLastUpdate', 'malwareListCount']);
         sendResponse({ lastUpdate: malwareListLastUpdate, count: malwareListCount + MALWARE_RULES.length });
         break;

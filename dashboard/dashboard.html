@@ -42,7 +42,7 @@
         <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
         <rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>
       </svg>
-      Rules
+      Custom Rules
     </a>
     <a class="nav-item" data-page="allowlist" href="#">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -234,8 +234,8 @@
   <section class="page" id="page-rules">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Rules</h1>
-        <p class="page-sub">Custom blocking & filter lists</p>
+        <h1 class="page-title">Custom Rules</h1>
+        <p class="page-sub">User-defined blocking and cosmetic filter rules</p>
       </div>
       <button class="btn-primary" id="addRuleBtn">+ Add rule</button>
     </div>
@@ -273,13 +273,13 @@
 
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Active rules</h2>
-        <input class="search-input" id="ruleSearch" type="text" placeholder="Search rules…" />
+        <h2 class="card-title">Saved custom rules</h2>
+        <input class="search-input" id="ruleSearch" type="text" placeholder="Search custom rules…" />
       </div>
       <table class="data-table" id="rulesTable">
         <thead>
           <tr>
-            <th>Type</th><th>Pattern</th><th>Action</th><th>Hits</th><th>Status</th><th></th>
+            <th>Type</th><th>Pattern</th><th>Action</th><th>Stored hits</th><th>Status</th><th></th>
           </tr>
         </thead>
         <tbody id="rulesBody">

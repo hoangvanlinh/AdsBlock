@@ -101,11 +101,22 @@ css.textContent=
 
 // ── 1. Fast ad skipper — direct player API access ────────────────
 var _savedVol=1,_wasMuted=false;
+var _reportedCurrentAd=false;
+
+function reportAdSkipped(){
+  try{
+    document.dispatchEvent(new CustomEvent('__adblock_yt_ad_skipped__',{
+      detail:{domain:location.hostname,url:location.href}
+    }));
+  }catch(e){}
+}
+
 function fastSkip(){
   var p=document.querySelector('.html5-video-player');
   if(!p)return;
   var isAd=p.classList.contains('ad-showing')||p.classList.contains('ad-interrupting');
   if(!isAd){
+    _reportedCurrentAd=false;
     // Ad ended — restore
     if(_wasMuted){
       var rv=p.querySelector('video');
@@ -113,6 +124,10 @@ function fastSkip(){
       _wasMuted=false;
     }
     return;
+  }
+  if(!_reportedCurrentAd){
+    _reportedCurrentAd=true;
+    reportAdSkipped();
   }
   var v=p.querySelector('video');
   if(v){

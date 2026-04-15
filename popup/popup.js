@@ -249,16 +249,16 @@ document.getElementById('donateBtnPopup')?.addEventListener('click', () => {
 // ── Init ───────────────────────────────────────
 loadState();
 
-// Show how many blocking rules are actually loaded
+// Show how many network blocking rules are actually loaded
 chrome.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {
   const chip = document.getElementById('ruleChip');
   if (!chip) return;
   if (chrome.runtime.lastError || !res) {
-    chip.textContent = 'rules: ?';
+    chip.textContent = 'network rules: ?';
     chip.classList.add('zero');
     return;
   }
   const n = res.count ?? 0;
-  chip.textContent = `${n} rules active`;
+  chip.textContent = `${n} network rules loaded`;
   chip.classList.toggle('zero', n === 0);
 });
