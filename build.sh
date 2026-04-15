@@ -44,11 +44,15 @@ cp "$PROJECT_DIR/icons/"*.png "$BUILD_DIR/icons/"
 
 # Copy CSS files
 mkdir -p "$BUILD_DIR/content"
+mkdir -p "$BUILD_DIR/rule"
 mkdir -p "$BUILD_DIR/dashboard"
 mkdir -p "$BUILD_DIR/popup"
 cp "$PROJECT_DIR/content/content.css" "$BUILD_DIR/content/"
 # Copy yt-adblock.js WITHOUT obfuscation (runs in MAIN world, must stay readable)
 cp "$PROJECT_DIR/content/yt-adblock.js" "$BUILD_DIR/content/"
+cp "$PROJECT_DIR/content/site-rules-loader.js" "$BUILD_DIR/content/"
+cp "$PROJECT_DIR/rule/site-rules.txt" "$BUILD_DIR/rule/"
+cp "$PROJECT_DIR/content/site-block.js" "$BUILD_DIR/content/"
 cp "$PROJECT_DIR/dashboard/dashboard.css" "$BUILD_DIR/dashboard/"
 cp "$PROJECT_DIR/popup/popup.css" "$BUILD_DIR/popup/"
 
@@ -60,10 +64,13 @@ cp "$PROJECT_DIR/popup/popup.html" "$BUILD_DIR/popup/"
 if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   cp "$PROJECT_DIR/manifest.firefox.json" "$FIREFOX_BUILD_DIR/manifest.json"
   cp "$PROJECT_DIR/LICENSE" "$FIREFOX_BUILD_DIR/" 2>/dev/null || true
-  mkdir -p "$FIREFOX_BUILD_DIR/icons" "$FIREFOX_BUILD_DIR/content" "$FIREFOX_BUILD_DIR/dashboard" "$FIREFOX_BUILD_DIR/popup"
+  mkdir -p "$FIREFOX_BUILD_DIR/icons" "$FIREFOX_BUILD_DIR/content" "$FIREFOX_BUILD_DIR/rule" "$FIREFOX_BUILD_DIR/dashboard" "$FIREFOX_BUILD_DIR/popup"
   cp "$PROJECT_DIR/icons/"*.png "$FIREFOX_BUILD_DIR/icons/"
   cp "$PROJECT_DIR/content/content.css" "$FIREFOX_BUILD_DIR/content/"
   cp "$PROJECT_DIR/content/yt-adblock.js" "$FIREFOX_BUILD_DIR/content/"
+  cp "$PROJECT_DIR/content/site-rules-loader.js" "$FIREFOX_BUILD_DIR/content/"
+  cp "$PROJECT_DIR/rule/site-rules.txt" "$FIREFOX_BUILD_DIR/rule/"
+  cp "$PROJECT_DIR/content/site-block.js" "$FIREFOX_BUILD_DIR/content/"
   cp "$PROJECT_DIR/dashboard/dashboard.css" "$FIREFOX_BUILD_DIR/dashboard/"
   cp "$PROJECT_DIR/popup/popup.css" "$FIREFOX_BUILD_DIR/popup/"
   cp "$PROJECT_DIR/dashboard/dashboard.html" "$FIREFOX_BUILD_DIR/dashboard/"
@@ -90,6 +97,8 @@ OBFUSCATOR_OPTS=(
 JS_FILES=(
     "background.js"
     "content/content.js"
+    "content/site-rules-loader.js"
+  "content/site-block.js"
     "dashboard/dashboard.js"
     "popup/popup.js"
 )

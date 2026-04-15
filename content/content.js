@@ -17,13 +17,10 @@ if (/youtube\.com/.test(location.hostname) && !window.__adblockYtInjected) {
 //   3. Observe dynamic DOM mutations (SPA / infinite scroll)
 //   4. Listen for messages from background to toggle per-domain
 
-// ── Cosmetic selector list ─────────────────────────────────────────
-// IMPORTANT: No broad [class*="ad-"] or [id*="ad-"] wildcards!
-// Those cause false positives on YouTube, Facebook, etc. where
-// legitimate UI elements contain "ad" in class/id names.
-// Every selector must target a KNOWN ad provider element specifically.
-const COSMETIC_SELECTORS = [
-  // Google Ads / DFP (specific elements)
+// Shared selectors and classifier patterns primarily live in rule/site-rules.txt.
+// Keep a minimal fallback in code so the engine still works if config loading
+// is unavailable or delayed.
+const FALLBACK_COSMETIC_SELECTORS = [
   'ins.adsbygoogle', '.adsbygoogle',
   '[id^="div-gpt-ad"]',
   '[id^="google_ads_iframe"]',
@@ -31,97 +28,57 @@ const COSMETIC_SELECTORS = [
   'iframe[src*="googleadservices"]',
   'iframe[src*="doubleclick.net"]',
   'iframe[src*="googlesyndication"]',
-
-  // YouTube-specific ad elements
-  // NOTE: Do NOT include .ytp-ad-module, .ytp-ad-overlay-container,
-  // .ytp-ad-player-overlay or any video-player ad containers here.
-  // Those must remain renderable so the JS ad skipper can mute + speed-skip.
-  // Using display:none on them causes a stuck black screen.
-  'ytd-ad-slot-renderer',
-  'ytd-in-feed-ad-layout-renderer',
-  'ytd-banner-promo-renderer',
-  'ytd-statement-banner-renderer',
-  'ytd-promoted-sparkles-web-renderer',
-  'ytd-promoted-video-renderer',
-  'ytd-display-ad-renderer',
-  'ytd-compact-promoted-video-renderer',
-  'ytd-action-companion-ad-renderer',
-  '#player-ads',
-  '#masthead-ad',
-
-  // YouTube Premium upsell / promo elements
-  'ytd-mealbar-promo-renderer',
-  'ytd-background-promo-renderer',
-  'ytd-official-card-renderer',
-  'ytd-survey-notification-renderer',
-  '.ytd-mealbar-promo-renderer',
-  'ytd-enforcement-message-view-model',
-  '#offer-module',
-  '.ytp-paid-content-overlay',
-  '.ytp-premium-yoodle',
-
-  // YouTube in-feed video ads (promoted videos in feed/search/sidebar)
-  'ytd-rich-item-renderer:has(ytd-ad-slot-renderer)',
-  'ytd-video-renderer[is-ad]',
-  'ytd-rich-item-renderer[is-ad]',
-  'ytd-reel-item-renderer[is-ad]',
-  'ytd-search-pyv-renderer',
-  'ytd-promoted-sparkles-text-search-renderer',
-  'ytd-movie-offer-module-renderer',
-  'ytd-compact-movie-renderer[is-ad]',
-
-
-  // Outbrain / Taboola
-  '.OUTBRAIN', 'div.ob-widget', 'div.ob-smartfeed-wrapper',
-  '[data-widget-id^="outbrain"]',
-  '.trc_related_container',
-  '[id^="taboola-"]', '.taboola-container',
-
-  // Amazon ads
-  'iframe[src*="amazon-adsystem"]',
-
-  // Criteo
-  '.criteo-ad',
-  '[id^="crt-"][id$="-wrapper"]',
-
-  // Ad provider iframes
-  'iframe[src*="adnxs.com"]',
-  'iframe[src*="media.net"]',
-  'iframe[src*="pubmatic.com"]',
-  'iframe[src*="openx.net"]',
-  'iframe[src*="rubiconproject.com"]',
-
-  // Known ad class names (exact class, not wildcard)
-  '.ad-banner', '.ad-wrapper', '.ad-container',
-  '.ad-slot', '.ad-unit', '.ad-frame',
-  '.ad-leaderboard', '.ad-sidebar', '.ad-rectangle',
-  '#ad-banner', '#ad-wrapper', '#ad-container',
-
-  // Sponsored / promoted content (specific attributes)
-  '[aria-label="Advertisement"]',
-  '[aria-label="Sponsored"]',
-  '[data-ad="true"]',
-  'li[data-promoted="true"]',
-  '.sponsored-post', '.promoted-content',
-
-  // Interstitials
-  '.ad-modal', '.ad-popup', '.interstitial-ad',
 ];
 
-// ── Ad script / network hostnames to block via mutation ───────────
-const AD_SCRIPT_HOSTS = [
+const FALLBACK_AD_SCRIPT_HOSTS = [
   'googlesyndication.com', 'doubleclick.net', 'googleadservices.com',
-  'adnxs.com', 'outbrain.com', 'taboola.com', 'amazon-adsystem.com',
-  'media.net', 'criteo.com', 'advertising.com', 'pubmatic.com',
-  'openx.net', 'rubiconproject.com', 'casalemedia.com', 'sovrn.com',
 ];
+
+let _cosmeticSelectors = FALLBACK_COSMETIC_SELECTORS.slice();
+let _adScriptHosts = FALLBACK_AD_SCRIPT_HOSTS.slice();
 
 // ── Resource classification for stats ────────────────────────────
 // Populated dynamically from background.js rule patterns on init.
 // Fallback defaults active until background responds.
-let _adPatterns      = ['doubleclick', 'googlesyndication', 'googleadservices', 'adnxs', 'outbrain', 'taboola', 'amazon-adsystem', 'media.net', 'criteo', 'advertising.com', 'pubmatic', 'openx.net', 'rubiconproject'];
-let _trackerPatterns = ['google-analytics', 'analytics.google', 'facebook.com/tr', 'hotjar', 'mixpanel', 'segment.io', 'amplitude', 'fullstory', 'clarity.ms', 'quantserve'];
-let _malwarePatterns = ['coinhive', 'coin-hive', 'jsecoin', 'crypto-loot', 'authedmine', 'cryptonight', 'minero.cc'];
+let _adPatterns      = ['doubleclick', 'googlesyndication', 'googleadservices'];
+let _trackerPatterns = ['google-analytics', 'analytics.google', 'facebook.com/tr'];
+let _malwarePatterns = ['coinhive', 'coin-hive', 'jsecoin'];
+
+function applyGlobalConfig(cfg) {
+  if (!cfg) return;
+  if (Array.isArray(cfg.direct_hide_selectors) && cfg.direct_hide_selectors.length) {
+    _cosmeticSelectors = cfg.direct_hide_selectors.slice();
+  }
+  if (Array.isArray(cfg.ad_script_hosts) && cfg.ad_script_hosts.length) {
+    _adScriptHosts = cfg.ad_script_hosts.slice();
+  }
+  if (Array.isArray(cfg.ad_patterns) && cfg.ad_patterns.length) {
+    _adPatterns = cfg.ad_patterns.slice();
+  }
+  if (Array.isArray(cfg.tracker_patterns) && cfg.tracker_patterns.length) {
+    _trackerPatterns = cfg.tracker_patterns.slice();
+  }
+  if (Array.isArray(cfg.malware_patterns) && cfg.malware_patterns.length) {
+    _malwarePatterns = cfg.malware_patterns.slice();
+  }
+}
+
+const _globalConfigReady = new Promise((resolve) => {
+  if (!(window.__adblockRuleLoader && window.__adblockRuleLoader.load)) {
+    resolve();
+    return;
+  }
+  window.__adblockRuleLoader.load('global', {
+    direct_hide_selectors: FALLBACK_COSMETIC_SELECTORS,
+    ad_script_hosts: FALLBACK_AD_SCRIPT_HOSTS,
+    ad_patterns: _adPatterns,
+    tracker_patterns: _trackerPatterns,
+    malware_patterns: _malwarePatterns,
+  }, (cfg) => {
+    applyGlobalConfig(cfg);
+    resolve();
+  });
+});
 
 function classifyUrl(url) {
   if (!url) return null;
@@ -242,10 +199,12 @@ function init() {
         if (!document.documentElement.classList.contains('adblock-on')) {
           injectBaseCss();
         }
-        hideAds();
-        loadClassifierLists();   // fetch real rule patterns from background
-        removeAdScripts();       // seeds initial stats from existing elements
-        observeMutations();
+        _globalConfigReady.finally(() => {
+          hideAds();
+          loadClassifierLists();   // fetch real rule patterns from background
+          removeAdScripts();       // seeds initial stats from existing elements
+          observeMutations();
+        });
       } catch { /* extension context invalidated */ }
     });
   } catch { /* extension context invalidated */ }
@@ -363,7 +322,7 @@ function hideAds(root = document) {
   if (!enabled || !cosmeticEnabled) return;
 
   let count = 0;
-  for (const sel of COSMETIC_SELECTORS) {
+  for (const sel of _cosmeticSelectors) {
     try {
       root.querySelectorAll(sel).forEach(el => {
         if (el.dataset.adblockHidden) return;
@@ -398,7 +357,7 @@ function removeAdScripts(root = document) {
       // Record for stats regardless of whether we physically remove it
       // (DNR already blocked the request; we just observe the attempt)
       recordResource(rawUrl);
-      if (AD_SCRIPT_HOSTS.some(h => host.endsWith(h))) {
+      if (_adScriptHosts.some(h => host.endsWith(h))) {
         // Don't remove iframes that are likely video players
         if (el.tagName === 'IFRAME' && isVideoPlayerElement(el)) return;
         // On YouTube, don't remove elements inside the video player
@@ -434,7 +393,7 @@ function observeMutations() {
       if (isYouTube && el.closest('.html5-video-player')) continue;
       try {
         const host = new URL(el.src).hostname;
-        if (AD_SCRIPT_HOSTS.some(h => host.endsWith(h))) {
+        if (_adScriptHosts.some(h => host.endsWith(h))) {
           el.style.setProperty('display', 'none', 'important');
         }
       } catch { /* ignore */ }
@@ -519,8 +478,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.type === 'RULES_CHANGED') {
     // Re-inject custom CSS rules when user modifies rules
-    injectCustomCssRules();
-    sendResponse({ ok: true });
+    _globalConfigReady.finally(() => {
+      injectCustomCssRules();
+      hideAds();
+      sendResponse({ ok: true });
+    });
+    return true;
   }
 });
 
@@ -530,4 +493,5 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 // content.js injects that file at the top of this script via a <script> tag.
 // yt-adblock.js handles: setInterval polling, MutationObserver, forceSkipAd,
 // clickSkipButton, restoreAfterAd, blackscreen watchdog, CSS injection.
-// Keeping duplicate logic here doubled CPU/RAM usage on YouTube tabs.
+// YouTube cosmetic selectors now live in rule/site-rules.txt and are
+// applied by content/site-block.js so the shared content engine stays generic.

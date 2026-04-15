@@ -27,6 +27,7 @@
 - **Malware Protection** — Blocks known malicious domains (cryptominers, phishing) with auto-updating blocklists
 - **Cosmetic Filtering** — Hides ad elements in the DOM via CSS + JS without breaking page layouts
 - **YouTube Ad Skipper** — Automatically mutes and fast-forwards pre-roll/mid-roll video ads
+- **Multi-Site Native Ad Blocking** — Uses one generic blocker plus site rules for YouTube cosmetic ads, Facebook, Reddit, Instagram, TikTok, X/Twitter, LinkedIn, Pinterest, Quora, Amazon, and Google Search ads
 - **Focus Mode** — Block distracting sites with a built-in Pomodoro timer
 - **Privacy Score** — Real-time privacy rating based on ads, trackers, malware, and referrer protection
 - **Per-Site Controls** — Pause blocking on specific sites, manage allowlists
@@ -71,9 +72,13 @@ ablock/
 ├── background.js           # Service worker — DNR rules, stats, malware lists, alarms
 ├── build.sh                # Build script (packages dist for Chrome & Firefox)
 ├── content/
-│   ├── content.js          # Content script — cosmetic filtering plus YouTube/social feed blocking helpers
+│   ├── content.js          # Content script — shared cosmetic engine plus YouTube bootstrap
 │   ├── content.css         # Cosmetic filter CSS rules
-│   └── yt-adblock.js       # YouTube ad skipper (runs in MAIN world)
+│   ├── site-rules-loader.js # Shared parser for remote/local text-based site rules
+│   ├── site-block.js       # Generic site-specific blocker driven by site rules
+│   └── yt-adblock.js       # YouTube anti-adblock and skipper engine (runs in MAIN world)
+├── rule/
+│   └── site-rules.txt      # Local fallback for the remote rule map
 ├── popup/
 │   ├── popup.html          # Browser action popup UI
 │   ├── popup.js            # Popup logic — toggle, stats, pause, focus mode
@@ -103,6 +108,16 @@ YouTube video ads share the same domain as real videos, so network blocking can'
 3. Clicks skip buttons or fast-forwards to the end (`playbackRate = 16`)
 4. Hides all ad UI (timer, progress bar, badges) via inline styles
 5. Restores normal playback when the ad ends
+
+YouTube uses a hybrid model: `rule/site-rules.txt` provides cosmetic selectors for feed, sidebar, and promo surfaces, while `content/yt-adblock.js` keeps the page-runtime hooks needed for anti-adblock bypass, ad-response stripping, and player recovery.
+
+### Multi-Site Native Ad Blocking
+
+The extension uses one generic site blocker driven by `rule/site-rules.txt` for YouTube cosmetic surfaces, Facebook, Reddit, Instagram, TikTok, X/Twitter, LinkedIn, Pinterest, Quora, Amazon, and Google Search. Site-specific behavior comes from rule sections like labels, selectors, direct-hide selectors, context selectors, ad host selectors, link patterns, and closest-hide targets.
+
+### Editable Site Rules
+
+The generic site blocker now loads labels, selectors, and link patterns from the remote rule URL first, with `rule/site-rules.txt` as a local fallback through a shared loader. The shared content engine also reads global defaults from that file for cosmetic selectors, ad script hosts, and fallback classifier patterns. You can tune many of the blocker heuristics by editing that text file in the repository or by updating the remote rule source.
 
 
 
