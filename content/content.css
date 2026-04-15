@@ -107,6 +107,17 @@ html.adblock-on .interstitial-ad {
   display: none !important;
 }
 
+/* ── Facebook right-rail & feed sponsored content ──
+   attributionsrc is a Facebook-only ad attribution attribute (Privacy Sandbox).
+   Combined with the fb-specific wrapper, this is ad-only and fires immediately
+   via CSS (no RAF delay), preventing any visible flash. ── */
+html.adblock-on div[data-visualcompletion="ignore-late-mutation"]:has(a[attributionsrc]),
+html.adblock-on [role="article"]:has([data-ad-rendering-role]),
+html.adblock-on div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
 /* ── Prevent layout shift from collapsed ad spaces ── */
 [data-adblock-hidden="1"] {
   display: none !important;
