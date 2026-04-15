@@ -381,18 +381,16 @@ document.getElementById('seeAllDomains')?.addEventListener('click', () => {
 });
 
 /* ── Rules page ───────────────────────────────── */
-const SAMPLE_RULES = [
-  { id: 1, type: 'domain',  pattern: 'ads.google.com',    action: 'block',  hits: 142, active: true },
-  { id: 2, type: 'keyword', pattern: 'banner',            action: 'hide',   hits: 78,  active: true },
-  { id: 3, type: 'css',     pattern: '.ad-container',     action: 'hide',   hits: 214, active: true },
-  { id: 4, type: 'regex',   pattern: '/track(er)?\\.',    action: 'block',  hits: 55,  active: false },
-];
-
 function renderRules(rules) {
   const tbody = document.getElementById('rulesBody');
   if (!tbody) return;
   tbody.innerHTML = '';
+  if (!rules.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-4);padding:14px 10px">No custom rules yet.</td></tr>';
+    return;
+  }
   rules.forEach(rule => {
+    const storedHits = Number(rule.hits || 0);
     const tr = document.createElement('tr');
     tr.dataset.id = rule.id;
     tr.innerHTML = `
@@ -402,7 +400,7 @@ function renderRules(rules) {
         <input class="pattern-input field-input hidden" value="${escHtml(rule.pattern)}" style="font-family:monospace;font-size:12px;height:28px;padding:2px 8px" />
       </td>
       <td>${escHtml(rule.action)}</td>
-      <td style="color:var(--text-3)">${rule.hits.toLocaleString()}</td>
+      <td style="color:var(--text-3)" title="Stored value only; not live runtime rule telemetry">${storedHits.toLocaleString()}</td>
       <td>
         <button class="toggle-rule status-dot${rule.active ? '' : ' off'}" data-id="${rule.id}" title="${rule.active ? 'Disable rule' : 'Enable rule'}">
           ${rule.active ? 'Active' : 'Disabled'}
@@ -426,7 +424,7 @@ let currentRules = [];
 
 function loadRules() {
   chrome.storage.local.get('rules', ({ rules }) => {
-    currentRules = (rules && rules.length) ? rules : [...SAMPLE_RULES];
+    currentRules = Array.isArray(rules) ? rules : [];
     renderRules(currentRules);
   });
 }
