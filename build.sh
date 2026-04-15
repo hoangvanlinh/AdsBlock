@@ -19,6 +19,9 @@ OBFUSCATE="${2:-true}"
 # Export obfuscated source tree: "true" or "false" (default)
 EXPORT_OBFUSCATED_SRC="${3:-false}"
 
+# Debug mode: "true" loads local rule/site-rules.txt instead of remote/cache
+DEBUG="${4:-false}"
+
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -183,6 +186,15 @@ for js in "${JS_FILES[@]}"; do
       fi
     fi
 done
+
+# ── Step 3.5: Debug mode — patch DEBUG_LOCAL=true ─────────────────
+if [[ "$DEBUG" == "true" ]]; then
+  echo -e "${YELLOW}[3.5/4] Debug mode: patching DEBUG_LOCAL=true in loader...${NC}"
+  sed -i '' 's/var DEBUG_LOCAL=false/var DEBUG_LOCAL=true/' "$BUILD_DIR/content/site-rules-loader.js" 2>/dev/null || true
+  if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
+    sed -i '' 's/var DEBUG_LOCAL=false/var DEBUG_LOCAL=true/' "$FIREFOX_BUILD_DIR/content/site-rules-loader.js" 2>/dev/null || true
+  fi
+fi
 
 echo -e "${YELLOW}[4/4] Creating ZIP archive...${NC}"
 cd "$BUILD_DIR"

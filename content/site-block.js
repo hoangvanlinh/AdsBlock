@@ -221,19 +221,106 @@ function schedule(root){
 function startObserver(){
   if(_observer)return;
   _observer=new MutationObserver(function(muts){
-    if(!_enabled)return;
+    if(!_enabled||!_config)return;
+    var directSelectors=flattenSelectors(_config,DIRECT_HIDE_KEYS);
     for(var i=0;i<muts.length;i++){
-      for(var j=0;j<muts[i].addedNodes.length;j++){
-        if(muts[i].addedNodes[j].nodeType!==1)continue;
-        schedule(muts[i].addedNodes[j]);
+      var mut=muts[i];
+      // Fast path: direct_hide_selectors — hide immediately without RAF
+      if(mut.type==='childList'){
+        for(var j=0;j<mut.addedNodes.length;j++){
+          var node=mut.addedNodes[j];
+          if(node.nodeType!==1)continue;
+          // Check node itself
+          if(directSelectors.length){
+            for(var s=0;s<directSelectors.length;s++){
+              try{
+                if(node.matches(directSelectors[s])){hide(node);break;}
+              }catch(e){}
+            }
+          }
+          // Check descendants inside the added node
+          if(directSelectors.length&&node.querySelectorAll){
+            var found=collect(node,directSelectors);
+            for(var f=0;f<found.length;f++)hide(found[f]);
+          }
+          // Full scan for candidate/host selectors (deferred via RAF)
+          schedule(node);
+        }
+      } else if(mut.type==='attributes'){
+        // Attribute change may make an existing element become an ad
+        var target=mut.target;
+        if(target&&target.nodeType===1){
+          if(directSelectors.length){
+            for(var s2=0;s2<directSelectors.length;s2++){
+              try{if(target.matches(directSelectors[s2])){hide(target);break;}}catch(e){}
+            }
+          }
+          schedule(target);
+        }
       }
     }
   });
-  _observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','slot','click-location','post-type','data-promoted','data-component-type','cel_widget_id','data-cel-widget']});
+  _observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','slot','click-location','post-type','data-promoted','data-component-type','cel_widget_id','data-cel-widget','promoted','ad-type','placement']});
 }
 
 function stopObserver(){
   if(_observer){_observer.disconnect();_observer=null;}
+}
+
+// Shadow DOM support — observe each shadow root for direct_hide_selectors
+var _shadowObservers=new WeakMap();
+
+function observeShadowRoot(shadow){
+  if(!shadow||_shadowObservers.has(shadow))return;
+  var obs=new MutationObserver(function(muts){
+    if(!_enabled||!_config)return;
+    var directSelectors=flattenSelectors(_config,DIRECT_HIDE_KEYS);
+    for(var i=0;i<muts.length;i++){
+      for(var j=0;j<muts[i].addedNodes.length;j++){
+        var node=muts[i].addedNodes[j];
+        if(node.nodeType!==1)continue;
+        // Fast hide for direct_hide_selectors inside shadow root
+        for(var s=0;s<directSelectors.length;s++){
+          try{if(node.matches(directSelectors[s])){hide(node);break;}}catch(e){}
+        }
+        if(node.querySelectorAll){
+          var found=collect(node,directSelectors);
+          for(var f=0;f<found.length;f++)hide(found[f]);
+        }
+        // Scan also runs full candidate check
+        scan(node);
+        // Recurse into nested shadow roots
+        if(node.shadowRoot)observeShadowRoot(node.shadowRoot);
+      }
+    }
+  });
+  obs.observe(shadow,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','slot','promoted','ad-type','placement']});
+  _shadowObservers.set(shadow,obs);
+  // Scan what's already in this shadow root
+  scan(shadow);
+  // Watch for nested shadow roots already present
+  try{
+    shadow.querySelectorAll('*').forEach(function(el){
+      if(el.shadowRoot)observeShadowRoot(el.shadowRoot);
+    });
+  }catch(e){}
+}
+
+function attachShadowListeners(){
+  // Listen for shadow-hook.js events (MAIN world patches attachShadow)
+  document.addEventListener('__adblock_shadow_attached__',function(e){
+    var host=e&&e.detail&&e.detail.host;
+    if(!host)return;
+    Promise.resolve().then(function(){
+      if(host.shadowRoot)observeShadowRoot(host.shadowRoot);
+    });
+  });
+  // Walk shadow roots already in page at boot time
+  try{
+    document.querySelectorAll('*').forEach(function(el){
+      if(el.shadowRoot)observeShadowRoot(el.shadowRoot);
+    });
+  }catch(e){}
 }
 
 function sync(cb){
@@ -241,7 +328,7 @@ function sync(cb){
   try{chrome.storage.local.get(['enabled','pausedDomains','cosmeticFiltering'],function(res){
     var paused=(res.pausedDomains||[]).indexOf(location.hostname)!==-1;
     _enabled=(res.enabled!==false)&&res.cosmeticFiltering!==false&&!paused;
-    if(_enabled){schedule(document);startObserver();}
+    if(_enabled){schedule(document);startObserver();attachShadowListeners();}
     else stopObserver();
     if(cb)cb({ok:true});
   });}catch(e){}

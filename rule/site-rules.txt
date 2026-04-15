@@ -18,70 +18,88 @@ direct_hide_selectors = ytd-ad-slot-renderer | ytd-in-feed-ad-layout-renderer | 
 
 [facebook]
 labels = sponsored | đượctàitrợ | patrocinado | sponsorisé | gesponsert | sponsorizzato | gesponsord | sponsorowane | sponsorlu | sponsorizat | χορηγούμενη | спонсировано | مُموَّل | ممول | ได้รับการสนับสนุน | ได้รับการสนับสนุนโดย | bersponsor | ditaja | 広告 | 赞助内容 | 贊助 | 赞助 | 후원광고
-link_patterns = /ads/about | /ads/preferences | /help/ads | /business/help
 feed_selectors = [role="feed"] [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-pagelet*="VideoFeed"] [role="article"] | div[data-pagelet*="Reels"] [role="article"]
 market_selectors = div[aria-label="Marketplace"] [role="article"] | div[data-pagelet*="Marketplace"] [role="article"]
-right_rail_selectors = div[data-pagelet="RightRail"] > div | div[data-pagelet*="RightRail"] > div | div[aria-label="Right rail"] > div
-context_selectors = header | h3 | h4 | [role="heading"] | div[dir="auto"] | span[dir="auto"] | a[aria-label]
+right_rail_selectors = div[data-pagelet="RightRail"] > div | div[data-pagelet*="RightRail"] > div | div[data-visualcompletion="ignore-late-mutation"]
+# direct_hide_selectors for facebook handled by content.css
+ad_host_selectors = a[aria-label^="Sponsored"] | a[aria-label^="Sponsorisé"] | a[aria-label^="Gesponsert"] | a[aria-label^="Patrocinado"] | a[aria-label^="Sponsorizzato"] | a[aria-label^="Gesponsord"] | a[aria-label^="Sponsorowane"] | a[aria-label^="Sponsorlu"] | a[aria-label^="Bersponsor"] | a[aria-label^="Ditaja"] | span[aria-label^="Sponsored"]
+innertext_selectors = [role="feed"] [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-visualcompletion="ignore-late-mutation"] h3
+innertext_labels = Sponsored
+context_selectors = a[aria-label] | h3 | header | [role="heading"] | span[dir="auto"]
 attr_keys = aria-label
+hide_closest = [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-visualcompletion="ignore-late-mutation"]
 
 [reddit]
 labels = promoted | sponsored | advertisement
 link_patterns = utm_name=promoted | /promoted | promoted=true
-direct_hide_selectors = shreddit-ad-post | shreddit-ad-post[promoted] | shreddit-ad-post[ad-type] | shreddit-ad-post[outbound-link-url] | shreddit-ad-post[placement="feed"] | shreddit-dynamic-ad-link[aria-label^="Advertisement:"] | shreddit-dynamic-ad-link[aria-label^="Promoted:"] | shreddit-dynamic-ad-link[slot*="ad-link"] | shreddit-dynamic-ad-link[slot*="ad"]
-post_selectors = shreddit-ad-post | shreddit-post[post-type="promoted"] | shreddit-post | article[data-testid="post-container"] | div[data-testid="post-container"] | div.thing | div[data-promoted="true"]
+direct_hide_selectors = shreddit-ad-post | shreddit-comments-page-ad | shreddit-dynamic-ad-link[aria-label^="Advertisement:"] | shreddit-dynamic-ad-link[aria-label^="Promoted:"] | shreddit-dynamic-ad-link[slot*="ad"]
+post_selectors = shreddit-post[post-type="promoted"] | div[data-promoted="true"]
+innertext_selectors = article[data-testid="post-container"] | div[data-testid="post-container"] | shreddit-post
+innertext_labels = Promoted
 ad_host_selectors = shreddit-dynamic-ad-link | a[rel*="sponsored"] | [aria-label^="Advertisement:"] | [aria-label^="Promoted:"]
 context_selectors = faceplate-screen-reader-content | [slot="credit-bar"] | header | shreddit-post-flair | span | a
-attr_keys = post-type | recommendation-source | slot | data-promoted | aria-label | click-location | promoted | ad-type | placement | outbound-link-url | data-ad-click-location
+attr_keys = post-type | recommendation-source | slot | data-promoted | aria-label | click-location
 hide_closest = shreddit-ad-post | shreddit-post | article[data-testid="post-container"] | div[data-testid="post-container"] | div.thing
 
 [instagram]
 labels = sponsored | paidpartnership
-selectors = article | main article
-context_selectors = header | a | span | div
-link_patterns = /ads/ | /about-ads
+innertext_selectors = article
+innertext_labels = Sponsored
+context_selectors = header | a[role="link"] | span
+hide_closest = article
 
 [tiktok]
 labels = sponsored | advertisement | promoted
-selectors = div[data-e2e="recommend-list-item-container"] | div[data-e2e="search_top-item"] | div[data-e2e="video-feed-item"] | article
-context_selectors = span | a | div
+selectors = div[data-e2e="recommend-list-item-container"] | div[data-e2e="search_top-item"] | div[data-e2e="video-feed-item"]
+innertext_selectors = div[data-e2e="recommend-list-item-container"] | div[data-e2e="video-feed-item"]
+innertext_labels = Sponsored | Ad
+context_selectors = span | a | strong
 attr_keys = aria-label
+hide_closest = div[data-e2e="recommend-list-item-container"] | div[data-e2e="video-feed-item"] | div[data-e2e="search_top-item"]
 
 [x]
 labels = promoted | sponsored
-selectors = article[data-testid="tweet"] | div[data-testid="placementTracking"]
+direct_hide_selectors = div[data-testid="placementTracking"]
+innertext_selectors = article[data-testid="tweet"]
+innertext_labels = Promoted
 context_selectors = [data-testid="socialContext"] | div[dir="ltr"] | span
-link_patterns = /ads/
-hide_closest = article[data-testid="tweet"] | div[data-testid="cellInnerDiv"]
+hide_closest = div[data-testid="cellInnerDiv"] | article[data-testid="tweet"]
 
 [linkedin]
 labels = promoted | sponsored
-selectors = div.feed-shared-update-v2 | div[data-id^="urn:li:activity"] | li.scaffold-finite-scroll__content
-context_selectors = [aria-label] | .update-components-actor__sub-description | span[aria-hidden="true"]
+selectors = div[data-id^="urn:li:activity"]
+innertext_selectors = div[data-id^="urn:li:activity"] | li.scaffold-finite-scroll__content
+innertext_labels = Promoted
+context_selectors = .update-components-actor__sub-description | span[aria-hidden="true"] | [aria-label]
 attr_keys = aria-label
-link_patterns = linkedin.com/ad/ | /ad/
+hide_closest = li.scaffold-finite-scroll__content | div[data-id^="urn:li:activity"]
 
 [pinterest]
 labels = promoted | sponsored
-selectors = [data-test-id="pin"] | div[data-grid-item="true"] | div[data-test-id="closeup-image"]
-context_selectors = [aria-label] | span | a
-link_patterns = promoted
+innertext_selectors = [data-test-id="pin"] | div[data-grid-item="true"]
+innertext_labels = Promoted
+context_selectors = [aria-label] | span
+hide_closest = [data-test-id="pin"] | div[data-grid-item="true"]
 
 [quora]
 labels = promoted | sponsored | advertisement
-selectors = div.puppeteer_test_feed_item | div[class*="FeedStory"] | div.q-box
+selectors = div.puppeteer_test_feed_item | div[class*="FeedStory"]
+innertext_selectors = div.puppeteer_test_feed_item | div[class*="FeedStory"]
+innertext_labels = Promoted by
 context_selectors = span | a
-link_patterns = promoted | ads
+hide_closest = div.puppeteer_test_feed_item | div[class*="FeedStory"]
 
 [amazon]
 labels = sponsored | sponsoredad
-selectors = [data-component-type="s-search-result"] | [data-component-type="sp-sponsored-result"]
-context_selectors = .puis-sponsored-label-text | .s-sponsored-label-text | [aria-label] | [data-component-type="sp-sponsored-result"]
+direct_hide_selectors = [data-component-type="sp-sponsored-result"]
+selectors = [data-component-type="s-search-result"]
+context_selectors = .puis-sponsored-label-text | .s-sponsored-label-text
 attr_keys = data-component-type | cel_widget_id | data-cel-widget | aria-label
+hide_closest = [data-component-type="s-search-result"] | [data-component-type="sp-sponsored-result"]
 paths = /s
 query_keys = k | field-keywords
 
 [google]
-direct_hide_selectors = #tads | #tadsb | #bottomads | #rhsads | div[data-text-ad] | div[data-ta-slot] | .commercial-unit-desktop-top | .commercial-unit-desktop-rhs
-paths = /search | /webhp
+direct_hide_selectors = #tads | #tadsb | #bottomads | #rhsads | div[data-text-ad] | div[data-ta-slot] | .commercial-unit-desktop-top | .commercial-unit-desktop-rhs | #tvcap | div[data-sokoban-feature] | .ads-ad | li.g:has([data-text-ad])
+paths = /search
 query_keys = q

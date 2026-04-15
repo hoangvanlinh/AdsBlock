@@ -3,6 +3,7 @@
 if(window.__adblockRuleLoader)return;
 
 var _parsed=null,_loading=null;
+var DEBUG_LOCAL=false; // patched to true by build.sh when 4th arg is "true"
 var REMOTE_RULES_URL='https://raw.githubusercontent.com/hoangvanlinh/AdsBlock/refs/heads/main/rule/site-rules.txt';
 var LOCAL_RULES_PATH='rule/site-rules.txt';
 var CACHE_KEY_TEXT='siteRulesCacheText';
@@ -36,7 +37,10 @@ function mergeDefaults(defaults, overrides){
   for(key in defaults){
     if(!Object.prototype.hasOwnProperty.call(defaults,key))continue;
     cfg[key]=Array.isArray(defaults[key])?defaults[key].slice():defaults[key];
-    if(overrides&&Array.isArray(overrides[key])&&overrides[key].length)cfg[key]=overrides[key].slice();
+  }
+  for(key in overrides){
+    if(!Object.prototype.hasOwnProperty.call(overrides,key))continue;
+    if(Array.isArray(overrides[key])&&overrides[key].length)cfg[key]=overrides[key].slice();
   }
   return cfg;
 }
@@ -97,16 +101,17 @@ function fetchLocalRules(){
 function loadParsed(callback){
   if(_parsed){callback(_parsed);return;}
   if(!_loading){
-    _loading=getCachedRules()
-      .then(function(cached){
-        if(isFreshCache(cached))return cached.text;
-        return fetchRemoteRules().catch(function(){
-          if(cached&&cached.text)return cached.text;
-          return fetchLocalRules();
-        });
-      })
-      .then(function(text){_parsed=parseRules(text);return _parsed;})
-      .catch(function(){_parsed={};return _parsed;});
+    _loading=(DEBUG_LOCAL
+      ? fetchLocalRules()
+      : getCachedRules().then(function(cached){
+          if(isFreshCache(cached))return cached.text;
+          return fetchRemoteRules().catch(function(){
+            if(cached&&cached.text)return cached.text;
+            return fetchLocalRules();
+          });
+        })
+    ).then(function(text){_parsed=parseRules(text);return _parsed;})
+     .catch(function(){_parsed={};return _parsed;});
   }
   _loading.then(callback);
 }
