@@ -28,6 +28,7 @@ attr_keys = aria-label
 [reddit]
 labels = promoted | sponsored | advertisement
 link_patterns = utm_name=promoted | /promoted | promoted=true
+direct_hide_selectors = shreddit-dynamic-ad-link[aria-label^="Advertisement:"] | shreddit-dynamic-ad-link[aria-label^="Promoted:"] | shreddit-dynamic-ad-link[slot*="ad-link"] | shreddit-dynamic-ad-link[slot*="ad"]
 post_selectors = shreddit-ad-post | shreddit-post[post-type="promoted"] | shreddit-post | article[data-testid="post-container"] | div[data-testid="post-container"] | div.thing | div[data-promoted="true"]
 ad_host_selectors = shreddit-dynamic-ad-link | a[rel*="sponsored"] | [aria-label^="Advertisement:"] | [aria-label^="Promoted:"]
 context_selectors = faceplate-screen-reader-content | [slot="credit-bar"] | header | shreddit-post-flair | span | a

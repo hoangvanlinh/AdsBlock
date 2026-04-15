@@ -106,22 +106,44 @@ function contextText(root,cfg){
   return '';
 }
 
-function shadowHasAdSignal(el,cfg){
-  if(!el||!el.shadowRoot)return false;
+function collectShadowHosts(root){
+  var out=[],seen=new Set(),nodes=[],i;
+  if(!root)return out;
+  if(root.nodeType===1)nodes.push(root);
+  if(root.querySelectorAll){
+    try{root.querySelectorAll('*').forEach(function(el){nodes.push(el);});}catch(e){}
+  }
+  for(i=0;i<nodes.length;i++){
+    if(!nodes[i]||!nodes[i].shadowRoot||seen.has(nodes[i]))continue;
+    seen.add(nodes[i]);
+    out.push(nodes[i]);
+  }
+  return out;
+}
+
+function shadowRootHasAdSignal(shadow,cfg){
+  if(!shadow)return false;
   try{
-    var shadow=el.shadowRoot;
     var labels=cfg.labels||[];
     var patterns=cfg.link_patterns||[];
-    var shadowLinks=shadow.querySelectorAll('a[href],a[aria-label],[aria-label]');
+    var shadowLinks=shadow.querySelectorAll('a[href],a[aria-label],[aria-label],[slot="credit-bar"],faceplate-screen-reader-content');
     for(var i=0;i<shadowLinks.length;i++){
-      var href=normalizeText(shadowLinks[i].getAttribute('href'));
-      var aria=compactText(shadowLinks[i].getAttribute('aria-label'));
-      var rel=compactText(shadowLinks[i].getAttribute('rel'));
+      var href=normalizeText(shadowLinks[i].getAttribute&&shadowLinks[i].getAttribute('href'));
+      var aria=compactText(shadowLinks[i].getAttribute&&shadowLinks[i].getAttribute('aria-label'));
+      var rel=compactText(shadowLinks[i].getAttribute&&shadowLinks[i].getAttribute('rel'));
+      var text=compactText(shadowLinks[i].textContent);
       if(rel.indexOf('sponsored')!==-1)return true;
-      if(matchesAny(aria,labels))return true;
+      if(matchesAny(aria,labels)||matchesAny(text,labels))return true;
       for(var j=0;j<patterns.length;j++)if(href.indexOf(normalizeText(patterns[j]))!==-1)return true;
     }
   }catch(e){}
+  return false;
+}
+
+function shadowHasAdSignal(el,cfg){
+  if(!el)return false;
+  var hosts=collectShadowHosts(el);
+  for(var i=0;i<hosts.length;i++)if(shadowRootHasAdSignal(hosts[i].shadowRoot,cfg))return true;
   return false;
 }
 
