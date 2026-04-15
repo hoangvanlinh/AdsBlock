@@ -23,11 +23,10 @@
 ## Features
 
 - **Ad Blocking** — Blocks ad requests via `declarativeNetRequest` (Google Ads, DFP, Outbrain, Taboola, Amazon Ads, Criteo, and more)
-- **Tracker Blocking** — Stops tracking scripts from Google Analytics, Facebook Pixel, Hotjar, Mixpanel, Amplitude, etc.
+- **Tracker Blocking** — Stops tracking scripts from Google Analytics, Hotjar, Mixpanel, Amplitude, and more
 - **Malware Protection** — Blocks known malicious domains (cryptominers, phishing) with auto-updating blocklists
 - **Cosmetic Filtering** — Hides ad elements in the DOM via CSS + JS without breaking page layouts
 - **YouTube Ad Skipper** — Automatically mutes and fast-forwards pre-roll/mid-roll video ads
-- **Facebook Sponsored Post Blocker** — Detects and hides sponsored posts in your feed, even with Facebook's CSS obfuscation tricks
 - **Focus Mode** — Block distracting sites with a built-in Pomodoro timer
 - **Privacy Score** — Real-time privacy rating based on ads, trackers, malware, and referrer protection
 - **Per-Site Controls** — Pause blocking on specific sites, manage allowlists
@@ -72,7 +71,7 @@ ablock/
 ├── background.js           # Service worker — DNR rules, stats, malware lists, alarms
 ├── build.sh                # Build script (packages dist for Chrome & Firefox)
 ├── content/
-│   ├── content.js          # Content script — cosmetic filtering, YouTube/Facebook ad blockers
+│   ├── content.js          # Content script — cosmetic filtering plus YouTube/social feed blocking helpers
 │   ├── content.css         # Cosmetic filter CSS rules
 │   └── yt-adblock.js       # YouTube ad skipper (runs in MAIN world)
 ├── popup/
@@ -105,14 +104,7 @@ YouTube video ads share the same domain as real videos, so network blocking can'
 4. Hides all ad UI (timer, progress bar, badges) via inline styles
 5. Restores normal playback when the ad ends
 
-### Facebook Sponsored Post Blocker
 
-Facebook obfuscates "Sponsored" labels using split-character `<span>` elements, hidden decoy characters, and CSS flex reordering. The extension uses 5 detection methods:
-1. Ad-related `<a href>` patterns (`/ads/about`)
-2. `aria-label` matching
-3. Visible text scanning
-4. Simple split-character span detection
-5. **CSS-obfuscated flex reorder detection** — reads `getComputedStyle()` to filter hidden chars and sort visible ones by CSS `order`, reconstructing the actual displayed text
 
 ### Focus Mode
 
@@ -141,7 +133,7 @@ Contributions are welcome! Here's how to get started:
 ### Guidelines
 
 - Keep changes focused — one feature or fix per PR
-- Test on YouTube, Facebook, and a few general sites before submitting
+- Test on YouTube and a few general sites before submitting
 - Don't add broad CSS wildcard selectors (e.g. `[class*="ad"]`) — they cause false positives
 - All blocking logic should be scoped so it can be toggled per-site
 
