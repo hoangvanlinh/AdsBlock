@@ -7,12 +7,17 @@ BUILD_DIR="$PROJECT_DIR/dist"
 ZIP_NAME="adblock-extension.zip"
 FIREFOX_BUILD_DIR="$PROJECT_DIR/dist-firefox"
 FIREFOX_ZIP_NAME="adblock-extension-firefox.zip"
+OBFUSCATED_SRC_DIR="$PROJECT_DIR/src-obfuscated"
+OBFUSCATED_SRC_FIREFOX_DIR="$PROJECT_DIR/src-obfuscated-firefox"
 
 # Target: "chrome" (default), "firefox", or "all"
 TARGET="${1:-chrome}"
 
 # Obfuscate: "true" (default) or "false" to skip obfuscation
 OBFUSCATE="${2:-true}"
+
+# Export obfuscated source tree: "true" or "false" (default)
+EXPORT_OBFUSCATED_SRC="${3:-false}"
 
 # Colors
 GREEN='\033[0;32m'
@@ -25,6 +30,14 @@ mkdir -p "$BUILD_DIR"
 if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   rm -rf "$FIREFOX_BUILD_DIR"
   mkdir -p "$FIREFOX_BUILD_DIR"
+fi
+if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
+  rm -rf "$OBFUSCATED_SRC_DIR"
+  mkdir -p "$OBFUSCATED_SRC_DIR"
+  if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
+    rm -rf "$OBFUSCATED_SRC_FIREFOX_DIR"
+    mkdir -p "$OBFUSCATED_SRC_FIREFOX_DIR"
+  fi
 fi
 
 # Check if javascript-obfuscator is installed (only when obfuscation is enabled)
@@ -77,6 +90,38 @@ if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   cp "$PROJECT_DIR/popup/popup.html" "$FIREFOX_BUILD_DIR/popup/"
 fi
 
+if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
+  cp "$PROJECT_DIR/manifest.json" "$OBFUSCATED_SRC_DIR/"
+  cp "$PROJECT_DIR/LICENSE" "$OBFUSCATED_SRC_DIR/" 2>/dev/null || true
+  mkdir -p "$OBFUSCATED_SRC_DIR/icons" "$OBFUSCATED_SRC_DIR/content" "$OBFUSCATED_SRC_DIR/rule" "$OBFUSCATED_SRC_DIR/dashboard" "$OBFUSCATED_SRC_DIR/popup"
+  cp "$PROJECT_DIR/icons/"*.png "$OBFUSCATED_SRC_DIR/icons/"
+  cp "$PROJECT_DIR/content/content.css" "$OBFUSCATED_SRC_DIR/content/"
+  cp "$PROJECT_DIR/content/yt-adblock.js" "$OBFUSCATED_SRC_DIR/content/"
+  cp "$PROJECT_DIR/content/site-rules-loader.js" "$OBFUSCATED_SRC_DIR/content/"
+  cp "$PROJECT_DIR/rule/site-rules.txt" "$OBFUSCATED_SRC_DIR/rule/"
+  cp "$PROJECT_DIR/content/site-block.js" "$OBFUSCATED_SRC_DIR/content/"
+  cp "$PROJECT_DIR/dashboard/dashboard.css" "$OBFUSCATED_SRC_DIR/dashboard/"
+  cp "$PROJECT_DIR/popup/popup.css" "$OBFUSCATED_SRC_DIR/popup/"
+  cp "$PROJECT_DIR/dashboard/dashboard.html" "$OBFUSCATED_SRC_DIR/dashboard/"
+  cp "$PROJECT_DIR/popup/popup.html" "$OBFUSCATED_SRC_DIR/popup/"
+
+  if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
+    cp "$PROJECT_DIR/manifest.firefox.json" "$OBFUSCATED_SRC_FIREFOX_DIR/manifest.json"
+    cp "$PROJECT_DIR/LICENSE" "$OBFUSCATED_SRC_FIREFOX_DIR/" 2>/dev/null || true
+    mkdir -p "$OBFUSCATED_SRC_FIREFOX_DIR/icons" "$OBFUSCATED_SRC_FIREFOX_DIR/content" "$OBFUSCATED_SRC_FIREFOX_DIR/rule" "$OBFUSCATED_SRC_FIREFOX_DIR/dashboard" "$OBFUSCATED_SRC_FIREFOX_DIR/popup"
+    cp "$PROJECT_DIR/icons/"*.png "$OBFUSCATED_SRC_FIREFOX_DIR/icons/"
+    cp "$PROJECT_DIR/content/content.css" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
+    cp "$PROJECT_DIR/content/yt-adblock.js" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
+    cp "$PROJECT_DIR/content/site-rules-loader.js" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
+    cp "$PROJECT_DIR/rule/site-rules.txt" "$OBFUSCATED_SRC_FIREFOX_DIR/rule/"
+    cp "$PROJECT_DIR/content/site-block.js" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
+    cp "$PROJECT_DIR/dashboard/dashboard.css" "$OBFUSCATED_SRC_FIREFOX_DIR/dashboard/"
+    cp "$PROJECT_DIR/popup/popup.css" "$OBFUSCATED_SRC_FIREFOX_DIR/popup/"
+    cp "$PROJECT_DIR/dashboard/dashboard.html" "$OBFUSCATED_SRC_FIREFOX_DIR/dashboard/"
+    cp "$PROJECT_DIR/popup/popup.html" "$OBFUSCATED_SRC_FIREFOX_DIR/popup/"
+  fi
+fi
+
 echo -e "${YELLOW}[3/4] Obfuscating JavaScript files...${NC}"
 
 OBFUSCATOR_OPTS=(
@@ -114,12 +159,28 @@ for js in "${JS_FILES[@]}"; do
                 --output "$FIREFOX_BUILD_DIR/$js" \
                 "${OBFUSCATOR_OPTS[@]}"
         fi
+      if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
+        javascript-obfuscator "$PROJECT_DIR/$js" \
+          --output "$OBFUSCATED_SRC_DIR/$js" \
+          "${OBFUSCATOR_OPTS[@]}"
+        if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
+          javascript-obfuscator "$PROJECT_DIR/$js" \
+            --output "$OBFUSCATED_SRC_FIREFOX_DIR/$js" \
+            "${OBFUSCATOR_OPTS[@]}"
+        fi
+      fi
     else
         echo "  Copying $js (no obfuscation)..."
         cp "$PROJECT_DIR/$js" "$BUILD_DIR/$js"
         if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
             cp "$PROJECT_DIR/$js" "$FIREFOX_BUILD_DIR/$js"
         fi
+      if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
+        cp "$PROJECT_DIR/$js" "$OBFUSCATED_SRC_DIR/$js"
+        if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
+          cp "$PROJECT_DIR/$js" "$OBFUSCATED_SRC_FIREFOX_DIR/$js"
+        fi
+      fi
     fi
 done
 
@@ -141,4 +202,10 @@ if [[ "$TARGET" == "chrome" || "$TARGET" == "all" ]]; then
 fi
 if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   echo "   Firefox ZIP: $PROJECT_DIR/$FIREFOX_ZIP_NAME  ($(du -h "$PROJECT_DIR/$FIREFOX_ZIP_NAME" | cut -f1))"
+fi
+if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
+  echo "   Obfuscated source: $OBFUSCATED_SRC_DIR"
+  if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
+    echo "   Obfuscated source (Firefox): $OBFUSCATED_SRC_FIREFOX_DIR"
+  fi
 fi

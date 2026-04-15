@@ -11,11 +11,20 @@
 
 <p align="center">
   <a href="#features">Features</a> •
+  <a href="https://prostores.top/">Website</a> •
   <a href="#install">Install</a> •
   <a href="#project-structure">Structure</a> •
   <a href="#how-it-works">How It Works</a> •
   <a href="#contributing">Contributing</a> •
   <a href="#donate">Donate</a>
+</p>
+
+<p align="center">
+  Project website: <a href="https://prostores.top/">prostores.top</a>
+</p>
+
+<p align="center">
+  Available for full project work: frontend, backend, and end-to-end product development.
 </p>
 
 ---
