@@ -721,8 +721,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         break;
       }
 
+      case 'AD_BLOCKED':
       case 'AD_SKIPPED': {
-        // Sent by content.js as a bridge for MAIN-world yt-adblock.js when a video ad is skipped.
+        // Sent by content.js as a bridge for MAIN-world yt-adblock.js when an ad
+        // is stripped before render or when a visible video ad is skipped.
         const { collectStats: collectAS = true } = await chrome.storage.local.get('collectStats');
         if (!collectAS) { sendResponse({ ok: true }); break; }
 
@@ -732,13 +734,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           asStats[asDomain] = { blocked: 0, adsBlocked: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
         }
         const asS = asStats[asDomain];
-        asS.adsBlocked += 1;
-        asS.totalSeen  += 1;
+        const delta = Math.max(1, Number(msg.count || 1));
+        asS.adsBlocked += delta;
+        asS.totalSeen  += delta;
         asS.blocked     = asS.adsBlocked + asS.trackersBlocked + asS.malwareBlocked;
         recalcDerived(asS);
         await chrome.storage.local.set({ stats: asStats });
 
-        await updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
+        await updateDailyStats({ blocked: delta, ads: delta, trackers: 0, malware: 0 });
         sendResponse({ ok: true });
         break;
       }

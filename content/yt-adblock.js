@@ -102,10 +102,49 @@ css.textContent=
 // ── 1. Fast ad skipper — direct player API access ────────────────
 var _savedVol=1,_wasMuted=false;
 var _reportedCurrentAd=false;
+var _blockedPayloadMarkers=Object.create(null);
 
 function reportAdSkipped(){
   try{
     document.dispatchEvent(new CustomEvent('__adblock_yt_ad_skipped__',{
+      detail:{domain:location.hostname,url:location.href}
+    }));
+  }catch(e){}
+}
+
+function _cleanupBlockedPayloadMarkers(now){
+  for(var key in _blockedPayloadMarkers){
+    if(now-_blockedPayloadMarkers[key]>15000)delete _blockedPayloadMarkers[key];
+  }
+}
+
+function _hasAdPayload(o){
+  if(!o||typeof o!=='object')return false;
+  for(var i=0;i<AK.length;i++)if(AK[i] in o)return true;
+  return false;
+}
+
+function _buildBlockedPayloadMarker(o){
+  var source=o&&o.playerResponse&&typeof o.playerResponse==='object'?o.playerResponse:o;
+  var parts=[location.pathname,location.search],i;
+  for(i=0;i<AK.length;i++){
+    if(!(AK[i] in source))continue;
+    var value=source[AK[i]];
+    if(Array.isArray(value))parts.push(AK[i]+':'+value.length);
+    else if(value&&typeof value==='object')parts.push(AK[i]+':'+Object.keys(value).sort().slice(0,6).join(','));
+    else parts.push(AK[i]+':1');
+  }
+  return parts.join('|');
+}
+
+function reportBlockedPayload(o){
+  try{
+    var now=Date.now();
+    _cleanupBlockedPayloadMarkers(now);
+    var marker=_buildBlockedPayloadMarker(o);
+    if(_blockedPayloadMarkers[marker])return;
+    _blockedPayloadMarkers[marker]=now;
+    document.dispatchEvent(new CustomEvent('__adblock_yt_ad_blocked__',{
       detail:{domain:location.hostname,url:location.href}
     }));
   }catch(e){}
@@ -242,6 +281,7 @@ var AK_OBJ=['adBreakParams','adBreakHeartbeatParams'];
 
 function stripObj(o){
   if(!o||typeof o!=='object')return o;
+  if(_hasAdPayload(o)||(o.playerResponse&&_hasAdPayload(o.playerResponse)))reportBlockedPayload(o);
   var i;
   for(i=0;i<AK_ARR.length;i++){if(AK_ARR[i] in o)o[AK_ARR[i]]=[];}
   for(i=0;i<AK_OBJ.length;i++){if(AK_OBJ[i] in o)o[AK_OBJ[i]]={};}
