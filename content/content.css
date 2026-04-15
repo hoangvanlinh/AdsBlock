@@ -117,7 +117,18 @@ html.adblock-on .ad_frame_protection_outer,
 html.adblock-on .ad_frame_protection_top,
 html.adblock-on .ad_frame_protection_bottom,
 html.adblock-on .ad_frame_protection_left,
-html.adblock-on .ad_frame_protection_right {
+html.adblock-on .ad_frame_protection_right,
+html.adblock-on .ad_wrapper_protection,
+html.adblock-on .eclick_ad_holder {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* ── Hide parent article/container when it contains an ad frame ── */
+/* Catches native ad units (e.g. eclick on vnexpress) injected into news cards */
+html.adblock-on article:has(.ad_frame_protection),
+html.adblock-on article:has(.ad_wrapper_protection),
+html.adblock-on article:has(.eclick_ad_holder) {
   display: none !important;
   visibility: hidden !important;
 }
