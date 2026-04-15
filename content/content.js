@@ -12,6 +12,26 @@ if (/youtube\.com/.test(location.hostname) && !window.__adblockYtInjected) {
   (document.documentElement || document.head || document.body).appendChild(s);
   s.remove(); // clean up after load
 }
+
+document.addEventListener('__adblock_yt_ad_skipped__', (event) => {
+  if (!extValid()) return;
+  const detail = event.detail || {};
+  chrome.runtime.sendMessage({
+    type: 'AD_SKIPPED',
+    domain: detail.domain || location.hostname,
+    url: detail.url || location.href,
+  }).catch(() => {});
+});
+
+document.addEventListener('__adblock_yt_ad_blocked__', (event) => {
+  if (!extValid()) return;
+  const detail = event.detail || {};
+  chrome.runtime.sendMessage({
+    type: 'AD_BLOCKED',
+    domain: detail.domain || location.hostname,
+    url: detail.url || location.href,
+  }).catch(() => {});
+});
 //   1. Hide ad elements via CSS selectors (cosmetic filtering)
 //   2. Remove ad iframes / scripts on DOM ready
 //   3. Observe dynamic DOM mutations (SPA / infinite scroll)
