@@ -107,6 +107,21 @@ html.adblock-on .interstitial-ad {
   display: none !important;
 }
 
+/* ── Ad frame protection overlays (dynamic JS load delay workaround) ── */
+html.adblock-on .ad_frame_protection,
+html.adblock-on .ad_frame_protection_wrapper,
+html.adblock-on .ad_frame_protection_container,
+html.adblock-on .ad_frame_protection_overlay,
+html.adblock-on .ad_frame_protection_inner,
+html.adblock-on .ad_frame_protection_outer,
+html.adblock-on .ad_frame_protection_top,
+html.adblock-on .ad_frame_protection_bottom,
+html.adblock-on .ad_frame_protection_left,
+html.adblock-on .ad_frame_protection_right {
+  display: none !important;
+  visibility: hidden !important;
+}
+
 /* ── Facebook right-rail & feed sponsored content ──
    attributionsrc is a Facebook-only ad attribution attribute (Privacy Sandbox).
    Combined with the fb-specific wrapper, this is ad-only and fires immediately
