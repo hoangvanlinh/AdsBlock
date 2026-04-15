@@ -67,11 +67,14 @@ Install directly from the Chrome Web Store:
 
 ```
 ablock/
-├── manifest.json           # Extension manifest (MV3)
+├── manifest.json           # Extension manifest (MV3, Chrome)
+├── manifest.firefox.json   # Extension manifest (Firefox)
 ├── background.js           # Service worker — DNR rules, stats, malware lists, alarms
+├── build.sh                # Build script (packages dist for Chrome & Firefox)
 ├── content/
 │   ├── content.js          # Content script — cosmetic filtering, YouTube/Facebook ad blockers
-│   └── content.css         # Cosmetic filter CSS rules
+│   ├── content.css         # Cosmetic filter CSS rules
+│   └── yt-adblock.js       # YouTube ad skipper (runs in MAIN world)
 ├── popup/
 │   ├── popup.html          # Browser action popup UI
 │   ├── popup.js            # Popup logic — toggle, stats, pause, focus mode
@@ -80,8 +83,7 @@ ablock/
 │   ├── dashboard.html      # Full-page dashboard / options page
 │   ├── dashboard.js        # Dashboard logic — charts, rules, allowlist, settings
 │   └── dashboard.css       # Dashboard styles
-├── icons/                  # Extension icons (16/48/128, on/off states)
-└── privacy-policy.html     # Privacy policy page
+└── icons/                  # Extension icons (16/48/128, on/off states)
 ```
 
 ## How It Works
@@ -121,7 +123,6 @@ Blocks configurable distraction domains (social media, etc.) with a countdown ti
 | Permission | Why |
 |---|---|
 | `storage` | Save settings, stats, and rules locally |
-| `tabs` | Read current tab URL for per-site controls |
 | `declarativeNetRequest` | Block network requests (ads, trackers, malware) |
 | `alarms` | Periodic malware list updates |
 | `<all_urls>` | Content script injection on all pages |
