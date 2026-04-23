@@ -5,15 +5,27 @@
 // ── YouTube: inject yt-adblock.js into MAIN world via DOM ─────────
 // chrome.scripting is not needed — a <script src> tag from content world
 // executes in MAIN world, same as the page's own scripts.
-if (/youtube\.com/.test(location.hostname) && !window.__adblockYtInjected) {
+// Always inject at document_start so ytcfg is intercepted early.
+// yt-adblock.js itself checks _ytEnabled before doing any blocking.
+if (/youtube\.com/.test(location.hostname) && !window[Symbol.for('_yt_pb')]) {
   const s = document.createElement('script');
   s.src = chrome.runtime.getURL('content/yt-adblock.js');
   s.async = false;
   (document.documentElement || document.head || document.body).appendChild(s);
   s.remove(); // clean up after load
+  // Send initial protection state to yt-adblock.js after script loads.
+  // Use a microtask-safe approach: script is sync so it runs before this.
+  chrome.storage.local.get(['enabled', 'pausedDomains'], (r) => {
+    const host = location.hostname;
+    const e = r.enabled !== false;
+    const paused = (r.pausedDomains || []).includes(host);
+    if (!e || paused) {
+      document.dispatchEvent(new CustomEvent('_ytpb_off'));
+    }
+  });
 }
 
-document.addEventListener('__adblock_yt_ad_skipped__', (event) => {
+document.addEventListener('_ytpb1', (event) => {
   if (!extValid()) return;
   const detail = event.detail || {};
   chrome.runtime.sendMessage({
@@ -23,7 +35,7 @@ document.addEventListener('__adblock_yt_ad_skipped__', (event) => {
   }).catch(() => {});
 });
 
-document.addEventListener('__adblock_yt_ad_blocked__', (event) => {
+document.addEventListener('_ytpb2', (event) => {
   if (!extValid()) return;
   const detail = event.detail || {};
   chrome.runtime.sendMessage({
@@ -462,8 +474,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       enableCosmeticCss();
       hideAds();
       observeMutations();
+      document.dispatchEvent(new CustomEvent('_ytpb_on'));
     } else {
       disableCosmeticCss();
+      document.dispatchEvent(new CustomEvent('_ytpb_off'));
     }
     sendResponse({ ok: true });
   }
@@ -472,11 +486,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.paused) {
       enabled = false;
       disableCosmeticCss();
+      document.dispatchEvent(new CustomEvent('_ytpb_off'));
     } else {
       enabled = true;
       enableCosmeticCss();
       hideAds();
       observeMutations();
+      document.dispatchEvent(new CustomEvent('_ytpb_on'));
     }
     sendResponse({ ok: true });
   }

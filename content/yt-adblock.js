@@ -1,21 +1,41 @@
 // yt-adblock.js — YouTube Ad Stripping + Fast Skipper (MAIN world)
 // This file MUST NOT be obfuscated — it runs in the page's JS context.
-if(window.__adblockYtInjected)throw new Error('');
-window.__adblockYtInjected=true;
+var _YK=Symbol.for('_yt_pb');
+if(window[_YK])throw new Error('');
+window[_YK]=1;
+// _ytEnabled: starts true, flipped by _ytpb_off/_ytpb_on events from content.js
+var _ytEnabled=true;
 (function(){
 if(location.hostname.indexOf('youtube.com')===-1)return;
+
+// ── Anti-detection: spoof Function.prototype.toString ──────────
+var _nTS=Function.prototype.toString;
+var _nMap=new WeakMap();
+var _newTS=function(){if(_nMap.has(this))return _nMap.get(this);return _nTS.call(this);};
+_nMap.set(_newTS,_nTS.call(_nTS));
+Function.prototype.toString=_newTS;
+function _n(fn,orig){_nMap.set(fn,_nTS.call(orig));return fn;}
 
 // ── EARLIEST: Intercept ytcfg BEFORE any YouTube script runs ─────
 // YouTube's inline scripts define window.ytcfg on first load.
 // By trapping the property NOW (document_start), we intercept it.
 (function(){
+  var _sy=Symbol();
   var _ENFL=['ENABLE_ENFORCEMENT_HTML5_PLAYER_RESPONSE',
              'ENFORCEMENT_TRIGGER_URL','OPEN_ENFORCEMENT_TRIGGER',
              'HTML5_ENFORCE_ALTN_SIGNAL_DETECTION',
              'HTML5_AD_BLOCK_DETECTION_SIGNAL',
-             'HTML5_ENABLE_AD_BLOCK_DETECTION'];
+             'HTML5_ENABLE_AD_BLOCK_DETECTION',
+             'HTML5_PLAYER_NETWORK_THIRD_PARTY_AD_BLOCK_DETECTION',
+             'PLAYER_HEARTBEAT_AD_BLOCK_DETECTION_API',
+             'HTML5_AD_BLOCK_DETECTION_SIGNAL_ENABLED',
+             'ENABLE_AD_BLOCK_DETECTION_SIGNAL',
+             'HTML5_ENABLE_CLIENT_SIDE_AD_BLOCK_DETECTION',
+             'WEB_ENABLE_AD_BLOCK_DETECTION',
+             'ENFORCEMENT_DIALOG_V2'];
   var _BLOCK=['ad_blocker','adblock','enforcement','ad_break_heartbeat',
-              'ad_block','adblock_detection'];
+              'ad_block','adblock_detection','bowser_interruption',
+              'interruption_dialog','ad_break_notification'];
 
   function _patch(obj){
     if(!obj||typeof obj!=='object')return;
@@ -31,25 +51,25 @@ if(location.hostname.indexOf('youtube.com')===-1)return;
   // Intercept ytcfg before it's ever assigned
   var _cfg=window.ytcfg;
   function _applyHooks(c){
-    if(!c||c.__yab)return;
-    c.__yab=1;
+    if(!c||c[_sy])return;
+    c[_sy]=1;
     if(typeof c.set==='function'){
       var _s=c.set;
-      c.set=function(k,v){
-        try{typeof k==='object'?_patch(k):_patch({[k]:v});}catch(e){}
+      c.set=_n(function(k,v){
+        if(_ytEnabled)try{typeof k==='object'?_patch(k):_patch({[k]:v});}catch(e){}
         return _s.apply(this,arguments);
-      };
+      },_s);
     }
     if(typeof c.get==='function'){
       var _g=c.get;
-      c.get=function(k){
-        if(typeof k==='string'){
+      c.get=_n(function(k){
+        if(_ytEnabled&&typeof k==='string'){
           if(_ENFL.indexOf(k)!==-1)return false;
           var kl=k.toLowerCase();
           for(var i=0;i<_BLOCK.length;i++)if(kl.indexOf(_BLOCK[i])!==-1)return false;
         }
         return _g.apply(this,arguments);
-      };
+      },_g);
     }
   }
   if(_cfg)_applyHooks(_cfg);
@@ -62,8 +82,8 @@ if(location.hostname.indexOf('youtube.com')===-1)return;
   // Also intercept yt.setConfig (alternate API)
   var _yt=window.yt;
   function _hookYt(y){
-    if(!y||y.__yab)return;y.__yab=1;
-    if(typeof y.setConfig==='function'){var _o=y.setConfig;y.setConfig=function(o){try{_patch(o);}catch(e){}return _o.apply(this,arguments);};}
+    if(!y||y[_sy])return;y[_sy]=1;
+    if(typeof y.setConfig==='function'){var _o=y.setConfig;y.setConfig=_n(function(o){if(_ytEnabled)try{_patch(o);}catch(e){}return _o.apply(this,arguments);},_o);}
   }
   if(_yt)_hookYt(_yt);
   try{Object.defineProperty(window,'yt',{
@@ -75,7 +95,7 @@ if(location.hostname.indexOf('youtube.com')===-1)return;
 
 // ── 0. IMMEDIATELY inject CSS to hide ads — before any rendering ──
 var css=document.createElement('style');
-css.id='__yt_ab_css__';
+css.id='_ytpbs';
 css.textContent=
   '.html5-video-player.ad-showing video,'+
   '.html5-video-player.ad-interrupting video{opacity:0!important}'+
@@ -98,6 +118,8 @@ css.textContent=
   '.ytp-ad-skip-button-container,.ytp-ad-skip-button-container *{'+
   'opacity:1!important;pointer-events:auto!important}';
 (document.head||document.documentElement).prepend(css);
+function _removeCss(){var el=document.getElementById('_ytpbs');if(el)el.remove();}
+function _addCss(){if(!document.getElementById('_ytpbs'))(document.head||document.documentElement).prepend(css);}
 
 // ── 1. Fast ad skipper — direct player API access ────────────────
 var _savedVol=1,_wasMuted=false;
@@ -106,7 +128,7 @@ var _blockedPayloadMarkers=Object.create(null);
 
 function reportAdSkipped(){
   try{
-    document.dispatchEvent(new CustomEvent('__adblock_yt_ad_skipped__',{
+    document.dispatchEvent(new CustomEvent('_ytpb1',{
       detail:{domain:location.hostname,url:location.href}
     }));
   }catch(e){}
@@ -144,13 +166,14 @@ function reportBlockedPayload(o){
     var marker=_buildBlockedPayloadMarker(o);
     if(_blockedPayloadMarkers[marker])return;
     _blockedPayloadMarkers[marker]=now;
-    document.dispatchEvent(new CustomEvent('__adblock_yt_ad_blocked__',{
+    document.dispatchEvent(new CustomEvent('_ytpb2',{
       detail:{domain:location.hostname,url:location.href}
     }));
   }catch(e){}
 }
 
 function fastSkip(){
+  if(!_ytEnabled)return;
   var p=document.querySelector('.html5-video-player');
   if(!p)return;
   var isAd=p.classList.contains('ad-showing')||p.classList.contains('ad-interrupting');
@@ -172,12 +195,13 @@ function fastSkip(){
   if(v){
     if(!_wasMuted){_savedVol=v.volume;_wasMuted=true;}
     v.muted=true;v.volume=0;
-    try{v.playbackRate=16;}catch(e){}
+    try{v.playbackRate = Math.min(8, v.playbackRate + 2);}catch(e){}
     var d=v.duration;
     if(d&&isFinite(d)&&d>0.1&&d<300){try{v.currentTime=d-0.1;}catch(e){}}
     // If no valid duration (ad media didn't load), dispatch 'ended' to unblock player
     if(!d||!isFinite(d)||d<=0){
       try{v.dispatchEvent(new Event('ended',{bubbles:true}));}catch(e){}
+      try{var _mp0=document.querySelector('#movie_player');if(_mp0&&_mp0.cancelAd)_mp0.cancelAd();}catch(e){}
     }
   }
   // Click skip button
@@ -229,26 +253,33 @@ function _checkStuckAd(){
   _stuckAdLastTime=ct;
   var now=Date.now();
   if(!_stuckAdStart)_stuckAdStart=now;
-  if(now-_stuckAdStart>2000){
+  if(now-_stuckAdStart>300){
     // Force-exit stuck ad
     try{var mp=document.querySelector('#movie_player');if(mp&&mp.cancelAd)mp.cancelAd();}catch(e){}
     if(v){
       try{v.dispatchEvent(new Event('ended',{bubbles:true}));}catch(e){}
       if(d&&isFinite(d)&&d>0){try{v.currentTime=d;}catch(e){}}
     }
-    // Last resort after 1.5s: forcibly remove ad class and restore video
-    setTimeout(function(){
-      var p2=document.querySelector('.html5-video-player');
-      if(!p2)return;
-      if(p2.classList.contains('ad-showing')||p2.classList.contains('ad-interrupting')){
-        try{p2.classList.remove('ad-showing','ad-interrupting');}catch(e){}
-        var v2=p2.querySelector('video');
-        if(v2){v2.muted=false;v2.volume=_savedVol||1;try{v2.playbackRate=1;}catch(e){}}
+    // Immediately bypass our own opacity:0 CSS if still stuck
+    var p2=document.querySelector('.html5-video-player');
+    if(p2&&(p2.classList.contains('ad-showing')||p2.classList.contains('ad-interrupting'))){
+      var v2=p2.querySelector('video');
+      if(v2){
+        v2.style.setProperty('opacity','1','important');
+        v2.muted=false;v2.volume=_savedVol||1;
+        try{v2.playbackRate=1;}catch(e){}
+        var _cleanOp=setInterval(function(){
+          var p3=document.querySelector('.html5-video-player');
+          if(!p3||(!p3.classList.contains('ad-showing')&&!p3.classList.contains('ad-interrupting'))){
+            if(v2)v2.style.removeProperty('opacity');
+            clearInterval(_cleanOp);
+          }
+        },150);
       }
-    },1500);
+    }
     _stuckAdStart=0;
   }
-  _stuckAdTimer=setTimeout(_checkStuckAd,500);
+  _stuckAdTimer=setTimeout(_checkStuckAd,300);
 }
 
 function watchPlayer(){
@@ -257,11 +288,10 @@ function watchPlayer(){
   if(_playerObserver)return; // already attached
   _playerObserver=new MutationObserver(function(){
     fastSkip();
-    var p2=document.querySelector('.html5-video-player');
-    var isAd=p2&&(p2.classList.contains('ad-showing')||p2.classList.contains('ad-interrupting'));
+    var isAd=p.classList.contains('ad-showing')||p.classList.contains('ad-interrupting');
     if(isAd&&!_stuckAdTimer){
       if(!_stuckAdStart)_stuckAdStart=Date.now();
-      _stuckAdTimer=setTimeout(_checkStuckAd,2000);
+      _stuckAdTimer=setTimeout(_checkStuckAd,400);
     } else if(!isAd){
       _clearStuckTimer();
     }
@@ -279,18 +309,44 @@ var AK=['playerAds','adPlacements','adSlots','adBreakParams','adBreakHeartbeatPa
 var AK_ARR=['playerAds','adPlacements','adSlots'];
 var AK_OBJ=['adBreakParams','adBreakHeartbeatParams'];
 
+function _stripEnforcement(pr){
+  if(!pr||typeof pr!=='object')return;
+  if(pr.playabilityStatus){
+    var ps=pr.playabilityStatus;
+    var isEnforcement=ps.errorScreen&&(
+      ps.errorScreen.enforcementMessageRenderer||
+      ps.errorScreen.playerErrorMessageRenderer
+    );
+    // Only strip enforcement overlays, not legitimate playability errors.
+    // Also require streamingData to exist before marking as OK —
+    // without streams, setting OK causes "video interrupted".
+    if(isEnforcement&&pr.streamingData){
+      delete ps.errorScreen;
+      if(ps.status==='ERROR'||ps.status==='UNPLAYABLE')ps.status='OK';
+      delete ps.reason;
+    } else if(isEnforcement){
+      // No streamingData: just remove the UI overlay, don't touch status
+      delete ps.errorScreen;
+      delete ps.reason;
+    }
+  }
+  // Do NOT touch heartbeatParams — YouTube uses it to keep video session alive
+  // Do NOT touch daiConfig — affects video delivery for live/premium content
+  if(pr.adBreakLockupViewModel)delete pr.adBreakLockupViewModel;
+  if(pr.playerConfig&&pr.playerConfig.adRequestConfig)pr.playerConfig.adRequestConfig={};
+}
+
 function stripObj(o){
   if(!o||typeof o!=='object')return o;
   if(_hasAdPayload(o)||(o.playerResponse&&_hasAdPayload(o.playerResponse)))reportBlockedPayload(o);
   var i;
   for(i=0;i<AK_ARR.length;i++){if(AK_ARR[i] in o)o[AK_ARR[i]]=[];}
   for(i=0;i<AK_OBJ.length;i++){if(AK_OBJ[i] in o)o[AK_OBJ[i]]={};}
-  if(o.playerConfig&&o.playerConfig.adRequestConfig)o.playerConfig.adRequestConfig={};
+  _stripEnforcement(o);
   if(o.playerResponse){
     for(i=0;i<AK_ARR.length;i++){if(AK_ARR[i] in o.playerResponse)o.playerResponse[AK_ARR[i]]=[];}
     for(i=0;i<AK_OBJ.length;i++){if(AK_OBJ[i] in o.playerResponse)o.playerResponse[AK_OBJ[i]]={};}
-    if(o.playerResponse.playerConfig&&o.playerResponse.playerConfig.adRequestConfig)
-      o.playerResponse.playerConfig.adRequestConfig={};
+    _stripEnforcement(o.playerResponse);
   }
   return o;
 }
@@ -299,7 +355,7 @@ function stripObj(o){
 // YouTube's inline scripts, fetch responses, and XHR all go through
 // JSON.parse. This is the most reliable interception point.
 var _JP=JSON.parse;
-JSON.parse=function(){
+JSON.parse=_n(function(){
   var r=_JP.apply(this,arguments);
   if(r&&typeof r==='object'){
     // Only strip if it looks like a YouTube player response
@@ -308,23 +364,23 @@ JSON.parse=function(){
     if(!hasAd&&r.playerResponse){
       for(var i2=0;i2<AK.length;i2++){if(AK[i2] in r.playerResponse){hasAd=true;break;}}
     }
-    if(hasAd)stripObj(r);
+    if(hasAd&&_ytEnabled)stripObj(r);
   }
   return r;
-};
+},_JP);
 
 // ── 2. Intercept Response.prototype.json — fetch API path ────────
 var _RJ=Response.prototype.json;
-Response.prototype.json=function(){
+Response.prototype.json=_n(function(){
   return _RJ.apply(this,arguments).then(function(r){
     if(r&&typeof r==='object'){
       var hasAd=false;
       for(var i=0;i<AK.length;i++){if(AK[i] in r){hasAd=true;break;}}
-      if(hasAd)stripObj(r);
+      if(hasAd&&_ytEnabled)stripObj(r);
     }
     return r;
   });
-};
+},_RJ);
 
 // ── 3. Intercept ytInitialPlayerResponse property ────────────────
 // Belt-and-suspenders: also intercept the global variable assignment
@@ -333,7 +389,7 @@ var _pr=window.ytInitialPlayerResponse;
 if(_pr)stripObj(_pr);
 try{Object.defineProperty(window,'ytInitialPlayerResponse',{
   get:function(){return _pr;},
-  set:function(v){if(v&&typeof v==='object')stripObj(v);_pr=v;},
+  set:function(v){if(v&&typeof v==='object'&&_ytEnabled)stripObj(v);_pr=v;},
   configurable:true,enumerable:true
 });}catch(e){}
 
@@ -344,35 +400,83 @@ try{Object.defineProperty(window,'ytInitialData',{
   configurable:true,enumerable:true
 });}catch(e){}
 
+// ── 3b. Block navigator.sendBeacon for ad/enforcement pings ─────
+var _oSB=navigator.sendBeacon.bind(navigator);
+navigator.sendBeacon=_n(function(url,data){
+  if(!_ytEnabled)return _oSB.apply(navigator,arguments);
+  var s=typeof url==='string'?url:'';
+  if(s.indexOf('pagead')!==-1||s.indexOf('doubleclick')!==-1||
+     s.indexOf('adservice')!==-1)return true;
+  if(s.indexOf('/log_event')!==-1||s.indexOf('/ptracking')!==-1){
+    try{
+      var raw=typeof data==='string'?data:null;
+      if(!raw&&data instanceof Blob){return _oSB.apply(navigator,arguments);}
+      var d=raw?JSON.parse(raw):data;
+      if(d&&d.eventType&&typeof d.eventType==='string'&&
+         d.eventType.toLowerCase().indexOf('ad')!==-1)return true;
+    }catch(e){}
+  }
+  return _oSB.apply(navigator,arguments);
+},navigator.sendBeacon);
+
 // ── 4. Intercept fetch() for player/next/midroll endpoints ──────
+var _AD_TRACK_RE=/\/pagead\/|viewthroughconversion|doubleclick\.net|adservice\.google|\/ptracking|\/ad_status/;
+var _FAKE_OK=new Response(null,{status:204,statusText:'No Content'});
 var _oF=window.fetch;
-window.fetch=function(input,init){
+window.fetch=_n(function(input,init){
   var url=(input instanceof Request)?input.url:String(input||'');
+  // Silently succeed ad tracking/conversion pings — prevents CORS errors
+  // and prevents YouTube's catch() handler from detecting ad block.
+  if(_ytEnabled&&_AD_TRACK_RE.test(url))return Promise.resolve(_FAKE_OK.clone?_FAKE_OK.clone():new Response(null,{status:204,statusText:'No Content'}));
   if(url.indexOf('/youtubei/v1/player')===-1&&
      url.indexOf('/youtubei/v1/next')===-1&&
      url.indexOf('/get_midroll_info')===-1)
     return _oF.apply(this,arguments);
-  return _oF.apply(this,arguments).then(function(r){
-    var c=r.clone();
-    return c.text().then(function(t){
-      try{
-        var j=_JP.call(JSON,t);// use original JSON.parse, then strip
-        stripObj(j);
-        return new Response(JSON.stringify(j),{status:r.status,statusText:r.statusText,headers:r.headers});
-      }catch(e){}
+  if(!_ytEnabled)return _oF.apply(this,arguments);
+  return _oF.apply(this, arguments).then(function(r){
+    // chỉ xử lý nếu là JSON
+    var ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) return r;
+
+    return r.json().then(function(j){
+      if (j && typeof j === 'object') {
+        var hasAd = false;
+        for (var i = 0; i < AK.length; i++) {
+          if (AK[i] in j || (j.playerResponse && AK[i] in j.playerResponse)) {
+            hasAd = true;
+            break;
+          }
+        }
+        if (hasAd) stripObj(j);
+      }
+
+      var newRes = new Response(JSON.stringify(j), {
+        status: r.status,
+        statusText: r.statusText,
+        headers: r.headers
+      });
+
+      // copy thêm một số property (best effort)
+      try { Object.defineProperty(newRes, 'url', { value: r.url }); } catch(e){}
+
+      return newRes;
+    }).catch(function(){
       return r;
-    }).catch(function(){return r;});
+    });
   });
-};
+
+},_oF);
 
 // ── 5. Intercept XMLHttpRequest for player/midroll ──────────────
 var _xO=XMLHttpRequest.prototype.open,_xS=XMLHttpRequest.prototype.send;
-XMLHttpRequest.prototype.open=function(m,url){
-  this._u=typeof url==='string'?url:'';
+var _xhrU=new WeakMap();
+XMLHttpRequest.prototype.open=_n(function(m,url){
+  _xhrU.set(this,typeof url==='string'?url:'');
   return _xO.apply(this,arguments);
-};
-XMLHttpRequest.prototype.send=function(){
-  if(this._u&&(this._u.indexOf('/youtubei/v1/player')!==-1||this._u.indexOf('/get_midroll_info')!==-1)){
+},_xO);
+XMLHttpRequest.prototype.send=_n(function(){
+  var _u=_xhrU.get(this)||'';
+  if(_ytEnabled&&_u&&(_u.indexOf('/youtubei/v1/player')!==-1||_u.indexOf('/get_midroll_info')!==-1)){
     this.addEventListener('readystatechange',function(){
       if(this.readyState===4&&this.status===200){
         try{
@@ -386,7 +490,7 @@ XMLHttpRequest.prototype.send=function(){
     });
   }
   return _xS.apply(this,arguments);
-};
+},_xS);
 
 // ── 6. Strip from player instance — only while ad is active ─────
 // Sections 1-5 already cover all upstream data paths.
@@ -417,31 +521,36 @@ fastSkip=function(){
 };
 
 // ── 7. Block ad-related script modules ──────────────────────────
-var _cE=document.createElement.bind(document);
-document.createElement=function(tag){
+var _cE_orig=document.createElement;
+var _cE=_cE_orig.bind(document);
+document.createElement=_n(function(tag){
   var el=_cE(tag);
   if(tag.toLowerCase()==='script'){
     var _sA=el.setAttribute.bind(el);
-    el.setAttribute=function(n,v){
-      if(n==='src'&&typeof v==='string'&&
+    el.setAttribute=_n(function(n,v){
+      if(_ytEnabled&&n==='src'&&typeof v==='string'&&
          (v.indexOf('/ad_')!==-1||v.indexOf('pagead')!==-1||
           v.indexOf('adservice')!==-1||v.indexOf('/ads/')!==-1))
         return _sA.call(this,n,'about:blank');
       return _sA.apply(this,arguments);
-    };
+    },Element.prototype.setAttribute);
   }
   return el;
-};
+},_cE_orig);
 
 // ── 8. Dismiss "Ad blocker detected" popup ──────────────────────
 function dP(){
-  // Remove enforcement overlay / dialog
+  if(!_ytEnabled)return;
   var rootSels=[
     'ytd-enforcement-message-view-model',
     'yt-playability-error-supported-renderers',
     'tp-yt-paper-dialog:has(#dismiss-button)',
     'ytd-popup-container tp-yt-paper-dialog',
-    '#error-screen ytd-enforcement-message-view-model'
+    '#error-screen ytd-enforcement-message-view-model',
+    'yt-upsell-dialog-renderer',
+    'ytd-mealbar-promo-renderer',
+    '[component-name="EnforcementMessageViewModel"]',
+    'ytd-player-error-message-renderer'
   ];
   for(var i=0;i<rootSels.length;i++){
     try{
@@ -454,16 +563,52 @@ function dP(){
       if(b){b.click();}else{el.remove();}
     }catch(e){}
   }
+  // ── "Bạn đang gặp sự cố gây gián đoạn?" confirm dialog ─────────
+  // YouTube shows yt-confirm-dialog-renderer with Yes/No buttons.
+  // Click the cancel/No button to dismiss without triggering detection.
   try{
-    var enf=document.querySelector('ytd-enforcement-message-view-model');
+    var cd=document.querySelector('yt-confirm-dialog-renderer,ytd-confirm-dialog-renderer');
+    if(cd){
+      // Try cancel button first (second button = "Không"/No/Cancel)
+      var btns=cd.querySelectorAll('yt-button-renderer,tp-yt-paper-button,button');
+      // "Không" is typically the last/right button (cancel)
+      var dismissed=false;
+      for(var bi=btns.length-1;bi>=0;bi--){
+        var bt=btns[bi];
+        var txt=(bt.textContent||'').trim().toLowerCase();
+        if(txt==='không'||txt==='no'||txt==='cancel'||txt==='dismiss'||
+           bt.id==='cancel-button'||bt.getAttribute('id')==='cancel'){
+          bt.click();dismissed=true;break;
+        }
+      }
+      // If no cancel found, remove the whole dialog container
+      if(!dismissed){
+        var ancd=cd.closest('ytd-popup-container,tp-yt-paper-dialog,.ytd-popup-container')||cd;
+        ancd.remove();
+      }
+    }
+  }catch(e){}
+  try{
+    var enf=document.querySelector('ytd-enforcement-message-view-model,[component-name="EnforcementMessageViewModel"]');
     if(enf){
-      var anc=enf.closest('ytd-player-error-message-renderer,#error-screen,[class*="enforcement"]');
+      var anc=enf.closest('ytd-player-error-message-renderer,#error-screen,[class*="enforcement"],ytd-popup-container');
       if(anc)anc.remove();else enf.remove();
     }
   }catch(e){}
   try{
+    // Hide the #error-screen overlay inside player if it contains enforcement
+    var es=document.querySelector('#error-screen');
+    if(es&&es.querySelector('ytd-enforcement-message-view-model,[component-name="EnforcementMessageViewModel"]'))
+      es.style.setProperty('display','none','important');
+  }catch(e){}
+  try{
     var pl=document.querySelector('#movie_player,#player-container');
-    if(pl){pl.style.removeProperty('display');pl.style.removeProperty('visibility');}
+    if(pl){
+      pl.style.removeProperty('display');pl.style.removeProperty('visibility');
+      var pv=pl.querySelector('video');
+      if(pv&&!pl.classList.contains('ad-showing')&&!pl.classList.contains('ad-interrupting'))
+        pv.style.removeProperty('opacity');
+    }
   }catch(e){}
 }
 // No interval needed — sObs observer below triggers dP() when popup appears.
@@ -474,18 +619,90 @@ else dP();
 (function sObs(){
   var t=document.body||document.documentElement;
   if(!t){document.addEventListener('DOMContentLoaded',sObs);return;}
+  var _dPt=0;
   new MutationObserver(function(ms){
-    for(var i=0;i<ms.length;i++){
+    outer:for(var i=0;i<ms.length;i++){
       var ns=ms[i].addedNodes;
       for(var j=0;j<ns.length;j++){
         if(ns[j].nodeType!==1)continue;
         var tag=ns[j].tagName;
         if(tag==='TP-YT-PAPER-DIALOG'||
            tag==='YTD-ENFORCEMENT-MESSAGE-VIEW-MODEL'||
-           tag==='YT-PLAYABILITY-ERROR-SUPPORTED-RENDERERS')
-          setTimeout(dP,50);
+           tag==='YT-PLAYABILITY-ERROR-SUPPORTED-RENDERERS'||
+           tag==='YT-UPSELL-DIALOG-RENDERER'||
+           tag==='YTD-MEALBAR-PROMO-RENDERER'||
+           tag==='YTD-PLAYER-ERROR-MESSAGE-RENDERER'||
+           tag==='YT-CONFIRM-DIALOG-RENDERER'||
+           tag==='YTD-CONFIRM-DIALOG-RENDERER'||
+           (ns[j].getAttribute&&ns[j].getAttribute('component-name')==='EnforcementMessageViewModel')){
+          if(!_dPt)_dPt=setTimeout(function(){_dPt=0;dP();},50);
+          break outer;
+        }
       }
     }
   }).observe(t,{childList:true,subtree:true});
 })();
+
+// ── 9. Intercept player enforcement API (belt-and-suspenders) ───
+(function(){
+  var _mpSym=Symbol.for('_yt_pb_mp');
+  function _hookMP(mp){
+    if(!mp||mp[_mpSym])return;
+    mp[_mpSym]=1;
+    ['setPlayabilityStatus','updatePlayabilityStatus'].forEach(function(fn){
+      if(typeof mp[fn]!=='function')return;
+      var _orig=mp[fn];
+      mp[fn]=function(s){
+        if(!_ytEnabled)return _orig.apply(this,arguments);
+        if(s&&typeof s==='object'&&
+           (s.status==='ERROR'||s.status==='UNPLAYABLE')&&
+           s.errorScreen&&(s.errorScreen.enforcementMessageRenderer||
+             s.errorScreen.playerErrorMessageRenderer))return;
+        return _orig.apply(this,arguments);
+      };
+    });
+  }
+  var _mpT=document.body||document.documentElement;
+  function _startMpObs(t){
+    new MutationObserver(function(){
+      var mp=document.querySelector('#movie_player');
+      if(mp)_hookMP(mp);
+    }).observe(t,{childList:true,subtree:true});
+  }
+  if(_mpT)_startMpObs(_mpT);
+  else document.addEventListener('DOMContentLoaded',function(){
+    _startMpObs(document.body||document.documentElement);
+  });
+})();
+
+// ── 10. Toggle ON/OFF from content.js ────────────────────────────
+function _teardown(){
+  // Stop observers and intervals
+  if(_playerObserver){_playerObserver.disconnect();_playerObserver=null;}
+  _clearStuckTimer();
+  if(_stripInterval){clearInterval(_stripInterval);_stripInterval=null;}
+  // Restore video opacity/volume in case we muted/hid it
+  try{
+    var p=document.querySelector('.html5-video-player');
+    if(p){
+      var v=p.querySelector('video');
+      if(v){v.muted=false;v.volume=_savedVol||1;v.style.removeProperty('opacity');try{v.playbackRate=1;}catch(e){}}
+    }
+  }catch(e){}
+  _removeCss();
+}
+function _restart(){
+  _addCss();
+  watchPlayer();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',dP);
+  else dP();
+}
+document.addEventListener('_ytpb_off',function(){
+  _ytEnabled=false;
+  _teardown();
+});
+document.addEventListener('_ytpb_on',function(){
+  _ytEnabled=true;
+  _restart();
+});
 })();
