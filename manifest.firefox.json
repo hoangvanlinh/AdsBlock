@@ -13,7 +13,10 @@
     }
   },
   "permissions": ["storage", "declarativeNetRequest", "alarms"],
-  "host_permissions": ["<all_urls>"],
+    "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
@@ -33,22 +36,23 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
       "js": ["content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
       "css": ["content/content.css"],
       "run_at": "document_start"
-    },
-    {
-      "matches": ["*://*.youtube.com/*"],
-      "js": ["content/yt-adblock.js"],
-      "run_at": "document_start",
-      "world": "MAIN"
     }
   ],
   "web_accessible_resources": [
     {
       "resources": ["rule/site-rules.txt"],
-      "matches": ["<all_urls>"]
+      "matches": ["http://*/*", "https://*/*"]
+    },
+    {
+      "resources": ["content/yt-adblock.js"],
+      "matches": ["*://*.youtube.com/*"]
     }
   ],
   "options_ui": {

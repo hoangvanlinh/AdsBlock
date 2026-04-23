@@ -4,7 +4,10 @@
   "version": "1.0.3",
   "description": "Block ads, trackers, and known malicious domains with simple site controls and focus tools.",
   "permissions": ["storage", "declarativeNetRequest", "alarms"],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
@@ -23,7 +26,10 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
       "js": ["content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
       "css": ["content/content.css"],
       "run_at": "document_start"
@@ -31,12 +37,12 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content/yt-adblock.js", "rule/site-rules.txt"],
-      "matches": ["*://*.youtube.com/*"]
+      "resources": ["rule/site-rules.txt"],
+      "matches": ["http://*/*", "https://*/*"]
     },
     {
-      "resources": ["rule/site-rules.txt"],
-      "matches": ["<all_urls>"]
+      "resources": ["content/yt-adblock.js"],
+      "matches": ["*://*.youtube.com/*"]
     }
   ],
   "options_ui": {
