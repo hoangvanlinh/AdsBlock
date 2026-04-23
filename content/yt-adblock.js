@@ -116,7 +116,13 @@ css.textContent=
   '.html5-video-player.ad-interrupting .ytp-chrome-bottom{'+
   'opacity:0!important;pointer-events:none!important}'+
   '.ytp-ad-skip-button-container,.ytp-ad-skip-button-container *{'+
-  'opacity:1!important;pointer-events:auto!important}';
+  'opacity:1!important;pointer-events:auto!important}'+
+  'ytd-rich-item-renderer:has(ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer,ytd-promoted-sparkles-web-renderer,ytd-promoted-video-renderer,ytd-display-ad-renderer,ytd-compact-promoted-video-renderer),'+
+  'ytd-rich-item-renderer[is-ad],ytd-video-renderer[is-ad],ytd-reel-item-renderer[is-ad],'+
+  '#player-ads,#masthead-ad,ytd-banner-promo-renderer,ytd-statement-banner-renderer,'+
+  'ytd-rich-section-renderer:has(ytd-statement-banner-renderer,ytd-banner-promo-renderer,ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer),'+
+  'ytd-rich-grid-row:has(ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer){'+
+  'display:none!important;visibility:hidden!important}';
 (document.head||document.documentElement).prepend(css);
 function _removeCss(){var el=document.getElementById('_ytpbs');if(el)el.remove();}
 function _addCss(){if(!document.getElementById('_ytpbs'))(document.head||document.documentElement).prepend(css);}
@@ -705,4 +711,40 @@ document.addEventListener('_ytpb_on',function(){
   _ytEnabled=true;
   _restart();
 });
+// ── 11. Re-attach after YouTube SPA navigation ──────────────────
+// YouTube fires yt-navigate-finish on every SPA page transition.
+// The old .html5-video-player element is replaced — _playerObserver
+// is attached to the detached element and fires nothing. Must reset.
+// CRITICAL: YouTube strips injected <style> tags from <head> during
+// SPA navigation. _addCss() must be called to re-inject the hide rules.
+var _lastNavTs=0;
+function _onNavFinish(){
+  if(!_ytEnabled)return;
+  var t=Date.now();if(t-_lastNavTs<200)return;_lastNavTs=t;
+  _addCss();
+  if(_playerObserver){_playerObserver.disconnect();_playerObserver=null;}
+  _clearStuckTimer();
+  _reportedCurrentAd=false;
+  _wasMuted=false;
+  _stuckAdStart=0;
+  watchPlayer();
+  dP();
+}
+document.addEventListener('yt-navigate-finish',_onNavFinish);
+window.addEventListener('yt-navigate-finish',_onNavFinish);
+document.addEventListener('yt-page-data-updated',function(){if(_ytEnabled)_addCss();});
+// ── Guard: re-inject _ytpbs if YouTube strips it from <head> ─────
+(function(){
+  function _gH(){
+    if(!document.head)return;
+    new MutationObserver(function(){
+      if(_ytEnabled&&!document.getElementById('_ytpbs'))
+        (document.head||document.documentElement).prepend(css);
+    }).observe(document.head,{childList:true});
+  }
+  if(document.head)_gH();
+  else new MutationObserver(function(ms,obs){
+    if(document.head){obs.disconnect();_gH();}
+  }).observe(document.documentElement,{childList:true});
+})();
 })();
