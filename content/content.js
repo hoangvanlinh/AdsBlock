@@ -249,10 +249,15 @@ function disableCosmeticCss() {
   document.getElementById('__adblock_base__')?.remove();
   // Stop observing DOM mutations
   disconnectObserver();
-  // Unhide any elements already hidden by JS (hideAds)
+  // Unhide any elements already hidden by JS (site-block.js / collapseParentIfEmpty)
   document.querySelectorAll('[data-adblock-hidden]').forEach(el => {
     el.style.removeProperty('display');
     el.style.removeProperty('visibility');
+    el.style.removeProperty('height');
+    el.style.removeProperty('min-height');
+    el.style.removeProperty('margin');
+    el.style.removeProperty('padding');
+    el.style.removeProperty('overflow');
     delete el.dataset.adblockHidden;
   });
 }

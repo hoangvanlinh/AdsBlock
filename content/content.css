@@ -27,6 +27,30 @@ html.adblock-on iframe[src*="googleadservices.com"] {
   overflow: hidden !important;
 }
 
+/* ── YouTube feed ad wrappers — CSS :has() fires at paint time, no JS race ── */
+html.adblock-on ytd-rich-item-renderer:has(ytd-in-feed-ad-layout-renderer),
+html.adblock-on ytd-rich-item-renderer:has(ytd-ad-slot-renderer),
+html.adblock-on ytd-rich-item-renderer:has(ytd-promoted-sparkles-web-renderer),
+html.adblock-on ytd-rich-item-renderer:has(ytd-promoted-video-renderer),
+html.adblock-on ytd-rich-item-renderer:has(ytd-display-ad-renderer),
+html.adblock-on ytd-rich-item-renderer:has(ytd-compact-promoted-video-renderer),
+html.adblock-on ytd-rich-item-renderer[is-ad],
+html.adblock-on ytd-video-renderer[is-ad],
+html.adblock-on ytd-reel-item-renderer[is-ad],
+html.adblock-on #player-ads,
+html.adblock-on #masthead-ad,
+html.adblock-on ytd-banner-promo-renderer,
+html.adblock-on ytd-statement-banner-renderer,
+html.adblock-on ytd-rich-section-renderer:has(ytd-statement-banner-renderer),
+html.adblock-on ytd-rich-section-renderer:has(ytd-banner-promo-renderer),
+html.adblock-on ytd-rich-section-renderer:has(ytd-in-feed-ad-layout-renderer),
+html.adblock-on ytd-rich-section-renderer:has(ytd-ad-slot-renderer),
+html.adblock-on ytd-rich-grid-row:has(ytd-in-feed-ad-layout-renderer),
+html.adblock-on ytd-rich-grid-row:has(ytd-ad-slot-renderer) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
 /* Video ad module & overlays — handled entirely by JS ad skipper.
    Do NOT add any CSS for elements inside .html5-video-player here.
    Any hiding (display:none, opacity:0, visibility:hidden) prevents

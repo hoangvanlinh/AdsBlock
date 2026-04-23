@@ -179,11 +179,41 @@ function isAdCandidate(el,cfg){
   return false;
 }
 
+function collapseParentIfEmpty(el){
+  var parent=el&&el.parentElement;
+  if(!parent||parent===document.body||parent===document.documentElement)return;
+  var hasVisible=false;
+  for(var i=0;i<parent.children.length;i++){
+    var c=parent.children[i];
+    if(c.style.display!=='none'&&!c.dataset.adblockHidden){hasVisible=true;break;}
+  }
+  if(!hasVisible){
+    parent.style.setProperty('display','none','important');
+    parent.style.setProperty('height','0','important');
+    parent.style.setProperty('min-height','0','important');
+    parent.style.setProperty('margin','0','important');
+    parent.style.setProperty('padding','0','important');
+    parent.style.setProperty('overflow','hidden','important');
+    parent.dataset.adblockHidden='1';
+  }
+}
+
+// removeEl — fully removes element from DOM (used for known/direct ad selectors)
+// After removal checks one level up to collapse empty parent containers.
+function removeEl(el){
+  if(!el)return false;
+  var parent=el.parentElement;
+  el.remove();
+  if(parent)collapseParentIfEmpty({parentElement:parent});
+  return true;
+}
+
 function hide(el){
-  if(!el||el.dataset.siteAdblockHidden)return false;
+  if(!el||el.dataset.adblockHidden)return false;
   el.style.setProperty('display','none','important');
   el.style.setProperty('visibility','hidden','important');
-  el.dataset.siteAdblockHidden='1';
+  el.dataset.adblockHidden='1';
+  collapseParentIfEmpty(el);
   return true;
 }
 
@@ -191,7 +221,7 @@ function scan(root){
   if(!_enabled||!_config||!isEligiblePage(_config))return;
   var count=0;
   var direct=collect(root,flattenSelectors(_config,DIRECT_HIDE_KEYS));
-  for(var d=0;d<direct.length;d++)if(hide(direct[d]))count++;
+  for(var d=0;d<direct.length;d++)if(removeEl(direct[d]))count++;
   var candidates=collect(root,flattenSelectors(_config,CANDIDATE_KEYS));
   for(var i=0;i<candidates.length;i++){
     if(!isAdCandidate(candidates[i],_config))continue;
@@ -234,14 +264,14 @@ function startObserver(){
           if(directSelectors.length){
             for(var s=0;s<directSelectors.length;s++){
               try{
-                if(node.matches(directSelectors[s])){hide(node);break;}
+                if(node.matches(directSelectors[s])){removeEl(node);break;}
               }catch(e){}
             }
           }
           // Check descendants inside the added node
           if(directSelectors.length&&node.querySelectorAll){
             var found=collect(node,directSelectors);
-            for(var f=0;f<found.length;f++)hide(found[f]);
+            for(var f=0;f<found.length;f++)removeEl(found[f]);
           }
           // Full scan for candidate/host selectors (deferred via RAF)
           schedule(node);
@@ -252,7 +282,7 @@ function startObserver(){
         if(target&&target.nodeType===1){
           if(directSelectors.length){
             for(var s2=0;s2<directSelectors.length;s2++){
-              try{if(target.matches(directSelectors[s2])){hide(target);break;}}catch(e){}
+              try{if(target.matches(directSelectors[s2])){removeEl(target);break;}}catch(e){}
             }
           }
           schedule(target);
@@ -281,11 +311,11 @@ function observeShadowRoot(shadow){
         if(node.nodeType!==1)continue;
         // Fast hide for direct_hide_selectors inside shadow root
         for(var s=0;s<directSelectors.length;s++){
-          try{if(node.matches(directSelectors[s])){hide(node);break;}}catch(e){}
+          try{if(node.matches(directSelectors[s])){removeEl(node);break;}}catch(e){}
         }
         if(node.querySelectorAll){
           var found=collect(node,directSelectors);
-          for(var f=0;f<found.length;f++)hide(found[f]);
+          for(var f=0;f<found.length;f++)removeEl(found[f]);
         }
         // Scan also runs full candidate check
         scan(node);
@@ -344,6 +374,18 @@ function boot(){
 }
 
 boot();
+
+// Re-scan entire document after YouTube SPA navigation.
+// MutationObserver catches individual nodes but may miss elements rendered
+// during large DOM replacements. A delayed full scan fills the gap.
+var _navScanT=0;
+function _onSpaNav(){
+  if(!_enabled||!_config)return;
+  if(_navScanT)clearTimeout(_navScanT);
+  _navScanT=setTimeout(function(){_navScanT=0;scan(document);},500);
+}
+document.addEventListener('yt-navigate-finish',_onSpaNav);
+document.addEventListener('yt-page-data-updated',_onSpaNav);
 
 chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
   if(msg.type==='TOGGLE'||msg.type==='PAUSE_DOMAIN'||msg.type==='COSMETIC_TOGGLE'){
