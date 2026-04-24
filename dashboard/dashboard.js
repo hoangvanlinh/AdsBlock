@@ -281,23 +281,26 @@ function renderChart() {
     const areaPath = linePath + ` L${points[n - 1].x},${h} L${points[0].x},${h} Z`;
 
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    svg.innerHTML = `
-      <defs>
-        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="rgba(129,140,248,.35)"/>
-          <stop offset="100%" stop-color="rgba(6,182,212,.02)"/>
-        </linearGradient>
-      </defs>
-      <path d="${areaPath}" fill="url(#areaGrad)" />
-      <path d="${linePath}" fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-      <defs>
-        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#818cf8"/>
-          <stop offset="100%" stop-color="#06b6d4"/>
-        </linearGradient>
-      </defs>
-      ${points.map((p, i) => `<circle class="chart-dot" cx="${p.x}" cy="${p.y}" r="3.5" fill="#818cf8" stroke="#0d0e14" stroke-width="2" opacity=".7" data-i="${i}"/>`).join('')}
-    `;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const _NS = 'http://www.w3.org/2000/svg';
+    const _mkEl = (tag, attrs) => { const el = document.createElementNS(_NS, tag); Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v)); return el; };
+    const defs1 = document.createElementNS(_NS, 'defs');
+    const areaGrad = _mkEl('linearGradient', {id:'areaGrad',x1:'0',y1:'0',x2:'0',y2:'1'});
+    areaGrad.append(_mkEl('stop',{'offset':'0%','stop-color':'rgba(129,140,248,.35)'}), _mkEl('stop',{'offset':'100%','stop-color':'rgba(6,182,212,.02)'}));
+    defs1.append(areaGrad);
+    const pathArea = _mkEl('path', {d: areaPath, fill:'url(#areaGrad)'});
+    const pathLine = _mkEl('path', {d: linePath, fill:'none', stroke:'url(#lineGrad)', 'stroke-width':'2.5', 'stroke-linecap':'round', 'stroke-linejoin':'round'});
+    const defs2 = document.createElementNS(_NS, 'defs');
+    const lineGrad = _mkEl('linearGradient', {id:'lineGrad',x1:'0',y1:'0',x2:'1',y2:'0'});
+    lineGrad.append(_mkEl('stop',{'offset':'0%','stop-color':'#818cf8'}), _mkEl('stop',{'offset':'100%','stop-color':'#06b6d4'}));
+    defs2.append(lineGrad);
+    svg.append(defs1, pathArea, pathLine, defs2);
+    points.forEach((p, i) => {
+      const c = _mkEl('circle', {cx:p.x, cy:p.y, r:'3.5', fill:'#818cf8', stroke:'#0d0e14', 'stroke-width':'2', opacity:'.7'});
+      c.classList.add('chart-dot');
+      c.dataset.i = i;
+      svg.append(c);
+    });
 
     // Labels — show subset to avoid crowding
     labelsEl.innerHTML = '';
@@ -366,11 +369,13 @@ function renderDomainList(stats) {
     const pct = (blocked / maxVal) * 100;
     const li = document.createElement('li');
     li.className = 'domain-item';
-    li.innerHTML = `
-      <span class="domain-rank">${i + 1}</span>
-      <span class="domain-name">${domain}</span>
-      <div class="domain-bar-mini"><div class="domain-bar-fill" style="width:${pct}%"></div></div>
-      <span class="domain-count">${blocked}</span>`;
+    const _rank = document.createElement('span'); _rank.className = 'domain-rank'; _rank.textContent = i + 1;
+    const _name = document.createElement('span'); _name.className = 'domain-name'; _name.textContent = domain;
+    const _barMini = document.createElement('div'); _barMini.className = 'domain-bar-mini';
+    const _barFill = document.createElement('div'); _barFill.className = 'domain-bar-fill'; _barFill.style.width = `${pct}%`;
+    _barMini.appendChild(_barFill);
+    const _cnt = document.createElement('span'); _cnt.className = 'domain-count'; _cnt.textContent = blocked;
+    li.append(_rank, _name, _barMini, _cnt);
     list.appendChild(li);
   });
 }
@@ -393,29 +398,29 @@ function renderRules(rules) {
     const storedHits = Number(rule.hits || 0);
     const tr = document.createElement('tr');
     tr.dataset.id = rule.id;
-    tr.innerHTML = `
-      <td><span class="rule-type-badge ${escHtml(rule.type)}">${escHtml(rule.type)}</span></td>
-      <td class="pattern-cell">
-        <span class="pattern-text" style="font-family:monospace;font-size:12px;color:var(--text-1)">${escHtml(rule.pattern)}</span>
-        <input class="pattern-input field-input hidden" value="${escHtml(rule.pattern)}" style="font-family:monospace;font-size:12px;height:28px;padding:2px 8px" />
-      </td>
-      <td>${escHtml(rule.action)}</td>
-      <td style="color:var(--text-3)" title="Stored value only; not live runtime rule telemetry">${storedHits.toLocaleString()}</td>
-      <td>
-        <button class="toggle-rule status-dot${rule.active ? '' : ' off'}" data-id="${rule.id}" title="${rule.active ? 'Disable rule' : 'Enable rule'}">
-          ${rule.active ? 'Active' : 'Disabled'}
-        </button>
-      </td>
-      <td style="display:flex;gap:4px;align-items:center">
-        <button class="icon-btn-sm edit-rule" data-id="${rule.id}" title="Edit pattern">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"/>
-          </svg>
-        </button>
-        <button class="icon-btn-sm save-rule hidden" data-id="${rule.id}" title="Save" style="color:var(--green)">✓</button>
-        <button class="icon-btn-sm delete-rule" data-id="${rule.id}" title="Delete">✕</button>
-      </td>`;
+    const _td1 = document.createElement('td');
+    const _badge = document.createElement('span'); _badge.className = `rule-type-badge ${escHtml(rule.type)}`; _badge.textContent = rule.type;
+    _td1.appendChild(_badge);
+    const _td2 = document.createElement('td'); _td2.className = 'pattern-cell';
+    const _pt = document.createElement('span'); _pt.className = 'pattern-text'; _pt.style.cssText = 'font-family:monospace;font-size:12px;color:var(--text-1)'; _pt.textContent = rule.pattern;
+    const _pi = document.createElement('input'); _pi.className = 'pattern-input field-input hidden'; _pi.value = rule.pattern; _pi.style.cssText = 'font-family:monospace;font-size:12px;height:28px;padding:2px 8px';
+    _td2.append(_pt, _pi);
+    const _td3 = document.createElement('td'); _td3.textContent = rule.action;
+    const _td4 = document.createElement('td'); _td4.style.color = 'var(--text-3)'; _td4.title = 'Stored value only; not live runtime rule telemetry'; _td4.textContent = storedHits.toLocaleString();
+    const _td5 = document.createElement('td');
+    const _toggleBtn = document.createElement('button'); _toggleBtn.className = `toggle-rule status-dot${rule.active ? '' : ' off'}`; _toggleBtn.dataset.id = rule.id; _toggleBtn.title = rule.active ? 'Disable rule' : 'Enable rule'; _toggleBtn.textContent = rule.active ? 'Active' : 'Disabled';
+    _td5.appendChild(_toggleBtn);
+    const _td6 = document.createElement('td'); _td6.style.cssText = 'display:flex;gap:4px;align-items:center';
+    const _editBtn = document.createElement('button'); _editBtn.className = 'icon-btn-sm edit-rule'; _editBtn.dataset.id = rule.id; _editBtn.title = 'Edit pattern';
+    const _svgNS = 'http://www.w3.org/2000/svg';
+    const _svgIcon = document.createElementNS(_svgNS, 'svg'); _svgIcon.setAttribute('width','12'); _svgIcon.setAttribute('height','12'); _svgIcon.setAttribute('viewBox','0 0 24 24'); _svgIcon.setAttribute('fill','none'); _svgIcon.setAttribute('stroke','currentColor'); _svgIcon.setAttribute('stroke-width','2'); _svgIcon.setAttribute('stroke-linecap','round');
+    const _sp1 = document.createElementNS(_svgNS, 'path'); _sp1.setAttribute('d','M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7');
+    const _sp2 = document.createElementNS(_svgNS, 'path'); _sp2.setAttribute('d','M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z');
+    _svgIcon.append(_sp1, _sp2); _editBtn.appendChild(_svgIcon);
+    const _saveBtn = document.createElement('button'); _saveBtn.className = 'icon-btn-sm save-rule hidden'; _saveBtn.dataset.id = rule.id; _saveBtn.title = 'Save'; _saveBtn.style.color = 'var(--green)'; _saveBtn.textContent = '✓';
+    const _delBtn = document.createElement('button'); _delBtn.className = 'icon-btn-sm delete-rule'; _delBtn.dataset.id = rule.id; _delBtn.title = 'Delete'; _delBtn.textContent = '✕';
+    _td6.append(_editBtn, _saveBtn, _delBtn);
+    tr.append(_td1, _td2, _td3, _td4, _td5, _td6);
     tbody.appendChild(tr);
   });
 }
@@ -530,9 +535,9 @@ function renderAllowList() {
   allowedDomains.forEach(domain => {
     const li = document.createElement('li');
     li.className = 'allow-item';
-    li.innerHTML = `
-      <span class="allow-domain">${escHtml(domain)}</span>
-      <button class="icon-btn-sm remove-allow" data-domain="${escHtml(domain)}">✕</button>`;
+    const _ds = document.createElement('span'); _ds.className = 'allow-domain'; _ds.textContent = domain;
+    const _rb = document.createElement('button'); _rb.className = 'icon-btn-sm remove-allow'; _rb.dataset.domain = domain; _rb.textContent = '✕';
+    li.append(_ds, _rb);
     list.appendChild(li);
   });
 }
@@ -580,11 +585,13 @@ function updateTimerDisplay() {
 function renderDistractionList() {
   const ul = document.getElementById('distractionList');
   if (!ul) return;
-  ul.innerHTML = distractionDomains.map(d => `
-    <li class="allow-item">
-      <span class="allow-domain">${escHtml(d)}</span>
-      <button class="icon-btn-sm remove-distraction" data-domain="${escHtml(d)}">✕</button>
-    </li>`).join('');
+  ul.replaceChildren(...distractionDomains.map(d => {
+    const _li = document.createElement('li'); _li.className = 'allow-item';
+    const _sp = document.createElement('span'); _sp.className = 'allow-domain'; _sp.textContent = d;
+    const _btn = document.createElement('button'); _btn.className = 'icon-btn-sm remove-distraction'; _btn.dataset.domain = d; _btn.textContent = '✕';
+    _li.append(_sp, _btn);
+    return _li;
+  }));
 }
 
 function saveDistractionDomains() {
