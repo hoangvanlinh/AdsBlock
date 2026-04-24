@@ -221,7 +221,7 @@ function scan(root){
   if(!_enabled||!_config||!isEligiblePage(_config))return;
   var count=0;
   var direct=collect(root,flattenSelectors(_config,DIRECT_HIDE_KEYS));
-  for(var d=0;d<direct.length;d++)if(removeEl(direct[d]))count++;
+  for(var d=0;d<direct.length;d++)if(hide(direct[d]))count++;
   var candidates=collect(root,flattenSelectors(_config,CANDIDATE_KEYS));
   for(var i=0;i<candidates.length;i++){
     if(!isAdCandidate(candidates[i],_config))continue;
@@ -264,14 +264,14 @@ function startObserver(){
           if(directSelectors.length){
             for(var s=0;s<directSelectors.length;s++){
               try{
-                if(node.matches(directSelectors[s])){removeEl(node);break;}
+                if(node.matches(directSelectors[s])){hide(node);break;}
               }catch(e){}
             }
           }
           // Check descendants inside the added node
           if(directSelectors.length&&node.querySelectorAll){
             var found=collect(node,directSelectors);
-            for(var f=0;f<found.length;f++)removeEl(found[f]);
+            for(var f=0;f<found.length;f++)hide(found[f]);
           }
           // Full scan for candidate/host selectors (deferred via RAF)
           schedule(node);
@@ -282,7 +282,7 @@ function startObserver(){
         if(target&&target.nodeType===1){
           if(directSelectors.length){
             for(var s2=0;s2<directSelectors.length;s2++){
-              try{if(target.matches(directSelectors[s2])){removeEl(target);break;}}catch(e){}
+              try{if(target.matches(directSelectors[s2])){hide(target);break;}}catch(e){}
             }
           }
           schedule(target);
@@ -311,11 +311,11 @@ function observeShadowRoot(shadow){
         if(node.nodeType!==1)continue;
         // Fast hide for direct_hide_selectors inside shadow root
         for(var s=0;s<directSelectors.length;s++){
-          try{if(node.matches(directSelectors[s])){removeEl(node);break;}}catch(e){}
+          try{if(node.matches(directSelectors[s])){hide(node);break;}}catch(e){}
         }
         if(node.querySelectorAll){
           var found=collect(node,directSelectors);
-          for(var f=0;f<found.length;f++)removeEl(found[f]);
+          for(var f=0;f<found.length;f++)hide(found[f]);
         }
         // Scan also runs full candidate check
         scan(node);
