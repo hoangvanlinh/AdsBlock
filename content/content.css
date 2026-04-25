@@ -168,6 +168,91 @@ html.adblock-on div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) {
   visibility: hidden !important;
 }
 
+
+/* ── Extended ad network iframes (global) ── */
+html.adblock-on iframe[src*="xandr.com"],
+html.adblock-on iframe[src*="adsrvr.org"],
+html.adblock-on iframe[src*="smartadserver.com"],
+html.adblock-on iframe[src*="adform.net"],
+html.adblock-on iframe[src*="33across.com"],
+html.adblock-on iframe[src*="sharethrough.com"],
+html.adblock-on iframe[src*="mgid.com"],
+html.adblock-on iframe[src*="teads.tv"],
+html.adblock-on iframe[src*="undertone.com"],
+html.adblock-on iframe[src*="yieldmo.com"],
+html.adblock-on iframe[src*="improvedigital.com"],
+html.adblock-on iframe[src*="smartclip.net"] {
+  display: none !important;
+}
+
+/* ── Native / in-feed ad units ── */
+html.adblock-on [id^="yandex_rtb_"],
+html.adblock-on [id^="sas_"],
+html.adblock-on [id^="mgid-"],
+html.adblock-on [id^="rc-widget-"],
+html.adblock-on .rc-widget,
+html.adblock-on [id^="seedtag-"],
+html.adblock-on [data-str-native-key],
+html.adblock-on [id^="teads-"],
+html.adblock-on [id^="prebid-"],
+html.adblock-on [data-prebid] {
+  display: none !important;
+}
+
+/* ── Admicro / VCCorp (Vietnam) ── */
+html.adblock-on [id^="adnzone_"],
+html.adblock-on [id^="ssppagebid_"],
+html.adblock-on [data-admssprqid],
+html.adblock-on [data-ssp^="sspbid_"],
+html.adblock-on *:has(> [data-admssprqid]),
+html.adblock-on *:has(> [id^="adnzone_"]),
+html.adblock-on [id^="placement-"][revenue],
+html.adblock-on iframe[src*="admicro.vn"],
+html.adblock-on iframe[src*="adx.admicro"],
+html.adblock-on [id^="ads_top_"],
+html.adblock-on [id^="ads_bottom_"],
+html.adblock-on [id^="dfp_"],
+html.adblock-on [id^="vm-placement-"],
+html.adblock-on iframe[src*="vccorp.vn"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* ── Other Vietnamese ad networks (AdPlay, Adtima, mfast, Adskeeper) ── */
+html.adblock-on iframe[src*="adplay.vn"],
+html.adblock-on iframe[src*="adtima.vn"],
+html.adblock-on iframe[src*="mfast.vn"],
+html.adblock-on [id^="adskeeper-"],
+html.adblock-on iframe[src*="adskeeper.com"] {
+  display: none !important;
+}
+
+/* ── Affiliate network iframes ── */
+html.adblock-on iframe[src*="shareasale.com"],
+html.adblock-on iframe[src*="awin1.com"],
+html.adblock-on iframe[src*="jdoqocy.com"],
+html.adblock-on iframe[src*="tradedoubler.com"],
+html.adblock-on iframe[src*="admitad.com"],
+html.adblock-on iframe[src*="impact.com"],
+html.adblock-on iframe[src*="skimlinks.com"],
+html.adblock-on iframe[src*="viglink.com"],
+html.adblock-on iframe[src*="partnerize.com"],
+html.adblock-on iframe[src*="howl.me"] {
+  display: none !important;
+}
+
+/* ── Affiliate ad widgets ── */
+html.adblock-on .skimlinks-widget,
+html.adblock-on [data-skimlinks-widget],
+html.adblock-on .viglink-widget,
+html.adblock-on [id^="admitad-widget-"],
+html.adblock-on .howl-widget,
+html.adblock-on [data-howl],
+html.adblock-on .awin-banner,
+html.adblock-on [data-awin] {
+  display: none !important;
+}
+
 /* ── Prevent layout shift from collapsed ad spaces ── */
 [data-adblock-hidden="1"] {
   display: none !important;
