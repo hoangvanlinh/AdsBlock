@@ -2,6 +2,33 @@
 // Runs at document_start on every page
 // Responsibilities:
 
+// ── FAST PATH: synchronous CSS inject (frame 0, before any async) ──────
+// Inject adblock-on + critical inline style immediately, before storage
+// callback fires (~10-50ms). If domain is paused, the class is removed
+// in the async check below. "Inject first, remove if needed" is faster
+// than "wait then inject" for the 99% case where adblock is active.
+(function earlyInject() {
+  document.documentElement.classList.add('adblock-on');
+  if (document.getElementById('__adblock_base__')) return;
+  const s = document.createElement('style');
+  s.id = '__adblock_base__';
+  s.textContent =
+    'html.adblock-on ins.adsbygoogle,' +
+    'html.adblock-on .adsbygoogle,' +
+    'html.adblock-on [id^="div-gpt-ad"],' +
+    'html.adblock-on [id^="google_ads_iframe"],' +
+    'html.adblock-on iframe[src*="doubleclick.net"],' +
+    'html.adblock-on iframe[src*="googlesyndication"],' +
+    'html.adblock-on iframe[src*="googleadservices"],' +
+    'html.adblock-on [data-google-query-id],' +
+    'html.adblock-on [id^="adnzone_"],' +
+    'html.adblock-on [data-admssprqid],' +
+    'html.adblock-on [id^="taboola-"],' +
+    'html.adblock-on .OUTBRAIN' +
+    '{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important}';
+  document.documentElement.appendChild(s);
+})();
+
 // ── YouTube: inject yt-adblock.js into MAIN world via DOM ─────────
 // chrome.scripting is not needed — a <script src> tag from content world
 // executes in MAIN world, same as the page's own scripts.
@@ -69,6 +96,20 @@ const FALLBACK_AD_SCRIPT_HOSTS = [
 let _cosmeticSelectors = FALLBACK_COSMETIC_SELECTORS.slice();
 let _adScriptHosts = FALLBACK_AD_SCRIPT_HOSTS.slice();
 
+// ── Cached joined selector string ────────────────────────────────
+// querySelectorAll with a joined selector is ~10x faster than N separate calls.
+// Rebuilt only when _cosmeticSelectors changes (applyGlobalConfig / init).
+let _joinedSelector = _buildJoinedSelector(FALLBACK_COSMETIC_SELECTORS);
+
+function _buildJoinedSelector(selectors) {
+  // Validate each selector; skip any that throw so one bad rule can't break all.
+  const valid = [];
+  for (const s of selectors) {
+    try { document.querySelector(s); valid.push(s); } catch { /* invalid — skip */ }
+  }
+  return valid.join(',');
+}
+
 // ── Resource classification for stats ────────────────────────────
 // Populated dynamically from background.js rule patterns on init.
 // Fallback defaults active until background responds.
@@ -80,6 +121,7 @@ function applyGlobalConfig(cfg) {
   if (!cfg) return;
   if (Array.isArray(cfg.direct_hide_selectors) && cfg.direct_hide_selectors.length) {
     _cosmeticSelectors = cfg.direct_hide_selectors.slice();
+    _joinedSelector = _buildJoinedSelector(_cosmeticSelectors); // rebuild cache
   }
   if (Array.isArray(cfg.ad_script_hosts) && cfg.ad_script_hosts.length) {
     _adScriptHosts = cfg.ad_script_hosts.slice();
@@ -185,8 +227,8 @@ let enabled = true;
 let cosmeticEnabled = true;
 let hiddenCount = 0;
 
-// Check storage FIRST before injecting any CSS.
-// This prevents the flash-block-then-unblock on paused domains.
+// Check storage — only to REMOVE adblock-on if disabled/paused.
+// The class was already injected synchronously by earlyInject above.
 if (extValid()) {
   try {
     chrome.storage.local.get(['enabled', 'pausedDomains', 'cosmeticFiltering'], (result) => {
@@ -195,12 +237,13 @@ if (extValid()) {
         const { enabled: e = true, pausedDomains = [], cosmeticFiltering = true } = result;
         const host = location.hostname;
         if (!e || pausedDomains.includes(host) || !cosmeticFiltering) {
-          // Paused, disabled, or cosmetic off — do NOT inject cosmetic CSS
           enabled = false;
+          document.documentElement.classList.remove('adblock-on');
+          document.getElementById('__adblock_base__')?.remove();
           return;
         }
-        // Active — inject CSS immediately
-        injectBaseCss();
+        // Already active — just ensure custom user rules are injected
+        injectCustomCssRules();
       } catch { /* extension context invalidated */ }
     });
   } catch { /* extension context invalidated */ }
@@ -269,28 +312,8 @@ function enableCosmeticCss() {
 
 // ── Inject base cosmetic CSS (blocks paint) ─────────────────────
 function injectBaseCss() {
-  // Add html.adblock-on — this activates all html.adblock-on rules in content.css
+  // earlyInject() already ran synchronously — just ensure class is present
   document.documentElement.classList.add('adblock-on');
-
-  // Guard: don't inject twice
-  if (document.getElementById('__adblock_base__')) return;
-
-  // Inline style for the most critical selectors (scoped to html.adblock-on)
-  const style = document.createElement('style');
-  style.id = '__adblock_base__';
-  style.textContent = `
-    html.adblock-on ins.adsbygoogle,
-    html.adblock-on [id^="div-gpt-ad"],
-    html.adblock-on iframe[src*="doubleclick.net"],
-    html.adblock-on iframe[src*="googlesyndication"] {
-      display: none !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
-  `;
-  (document.head || document.documentElement).appendChild(style);
-
-  // Inject user custom CSS hide rules
   injectCustomCssRules();
 }
 
@@ -354,28 +377,67 @@ function isVideoPlayerElement(el) {
   return false;
 }
 
-// ── Hide ad elements in DOM ───────────────────────────────────────
+// ── Batch parent collapse via RAF ────────────────────────────────
+const _COLLAPSE_SKIP_TAGS = new Set(['SCRIPT','STYLE','LINK','META','NOSCRIPT','TEMPLATE','BR','WBR']);
+let _collapsePending = new Set();
+let _collapseRafId = null;
+
+function _flushCollapse() {
+  _collapseRafId = null;
+  const nodes = _collapsePending;
+  _collapsePending = new Set();
+  for (const el of nodes) _collapseWalk(el);
+}
+
+function _collapseWalk(el) {
+  let node = el;
+  while (true) {
+    const parent = node.parentElement;
+    if (!parent || parent === document.body || parent === document.documentElement) break;
+    if (parent.dataset.adblockHidden) break;
+    if (isVideoPlayerElement(parent)) break;
+    let visible = 0;
+    for (const child of parent.children) {
+      if (_COLLAPSE_SKIP_TAGS.has(child.tagName)) continue;
+      if (child.dataset.adblockHidden) continue;
+      if (child.style.display === 'none' || child.style.visibility === 'hidden') continue;
+      visible++;
+    }
+    if (visible > 0) break;
+    parent.style.setProperty('display',    'none',   'important');
+    parent.style.setProperty('visibility', 'hidden', 'important');
+    parent.style.setProperty('height',     '0',      'important');
+    parent.style.setProperty('min-height', '0',      'important');
+    parent.style.setProperty('margin',     '0',      'important');
+    parent.style.setProperty('padding',    '0',      'important');
+    parent.style.setProperty('overflow',   'hidden', 'important');
+    parent.dataset.adblockHidden = '1';
+    node = parent;
+  }
+}
+
+function _scheduleCollapse(el) {
+  _collapsePending.add(el);
+  if (!_collapseRafId) _collapseRafId = requestAnimationFrame(_flushCollapse);
+}
+
+// ── Hide ad elements in DOM — single querySelectorAll call ───────
 function hideAds(root = document) {
-  if (!enabled || !cosmeticEnabled) return;
+  if (!enabled || !cosmeticEnabled || !_joinedSelector) return;
 
   let count = 0;
-  for (const sel of _cosmeticSelectors) {
-    try {
-      root.querySelectorAll(sel).forEach(el => {
-        if (el.dataset.adblockHidden) return;
-        // Protect video player elements from being hidden
-        if (isVideoPlayerElement(el)) return;
-        // On YouTube, skip elements inside the video player
-        if (isYouTube && el.closest('.html5-video-player')) return;
-        el.style.setProperty('display',    'none',   'important');
-        el.style.setProperty('visibility', 'hidden', 'important');
-        el.dataset.adblockHidden = '1';
-        count++;
-      });
-    } catch {
-      // ignore invalid selector
-    }
-  }
+  try {
+    (root === document ? document : root).querySelectorAll(_joinedSelector).forEach(el => {
+      if (el.dataset.adblockHidden) return;
+      if (isVideoPlayerElement(el)) return;
+      if (isYouTube && el.closest('.html5-video-player')) return;
+      el.style.setProperty('display',    'none',   'important');
+      el.style.setProperty('visibility', 'hidden', 'important');
+      el.dataset.adblockHidden = '1';
+      _scheduleCollapse(el);
+      count++;
+    });
+  } catch { /* joined selector parse error — extremely rare */ }
 
   hiddenCount += count;
   if (count > 0 && extValid()) {
