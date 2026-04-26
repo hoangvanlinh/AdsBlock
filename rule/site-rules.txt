@@ -57,13 +57,6 @@ context_selectors = span | a | strong
 attr_keys = aria-label
 hide_closest = div[data-e2e="recommend-list-item-container"] | div[data-e2e="video-feed-item"] | div[data-e2e="search_top-item"]
 
-[x]
-labels = promoted | sponsored
-direct_hide_selectors = div[data-testid="placementTracking"]
-innertext_selectors = article[data-testid="tweet"]
-innertext_labels = Promoted
-context_selectors = [data-testid="socialContext"] | div[dir="ltr"] | span
-hide_closest = div[data-testid="cellInnerDiv"] | article[data-testid="tweet"]
 
 [linkedin]
 labels = promoted | sponsored
