@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AdBlock — Ads, Trackers",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Block ads, trackers, and known malicious domains with simple site controls and focus tools.",
   "permissions": ["storage", "declarativeNetRequest", "alarms"],
   "host_permissions": [
@@ -38,6 +38,10 @@
   "web_accessible_resources": [
     {
       "resources": ["rule/site-rules.txt"],
+      "matches": ["http://*/*", "https://*/*"]
+    },
+    {
+      "resources": ["content/anti-detect.js"],
       "matches": ["http://*/*", "https://*/*"]
     },
     {
