@@ -12,8 +12,8 @@ facebook.com = facebook
 reddit.com = reddit
 instagram.com = instagram
 tiktok.com = tiktok
-# x.com = x
-# twitter.com = x
+x.com = x
+twitter.com = x
 linkedin.com = linkedin
 pinterest.com = pinterest
 quora.com = quora
@@ -81,6 +81,17 @@ innertext_labels = Sponsored | Ad
 context_selectors = span | a | strong
 attr_keys = aria-label
 hide_closest = div[data-e2e="recommend-list-item-container"] | div[data-e2e="video-feed-item"] | div[data-e2e="search_top-item"]
+
+
+[x]
+# X.com (Twitter) — ads link to /i/about/ads; use :has() for reliable detection
+labels = promoted
+direct_hide_selectors = div[data-testid="cellInnerDiv"]:has(a[href="/i/about/ads"]) | div[data-testid="cellInnerDiv"]:has([data-testid="placementTracking"])
+# Fallback label-based matching for clients that may not support :has()
+feed_selectors = article[data-testid="tweet"] | div[data-testid="cellInnerDiv"]
+context_selectors = a[href="/i/about/ads"] | span[data-testid="app-text-transition-container"] | span
+attr_keys = aria-label
+hide_closest = div[data-testid="cellInnerDiv"]
 
 
 [linkedin]
