@@ -440,7 +440,6 @@ window.fetch=_n(function(input,init){
     return _oF.apply(this,arguments);
   if(!_ytEnabled)return _oF.apply(this,arguments);
   return _oF.apply(this, arguments).then(function(r){
-    // chỉ xử lý nếu là JSON
     var ct = r.headers.get('content-type') || '';
     if (!ct.includes('application/json')) return r;
 
@@ -455,14 +454,11 @@ window.fetch=_n(function(input,init){
         }
         if (hasAd) stripObj(j);
       }
-
       var newRes = new Response(JSON.stringify(j), {
         status: r.status,
         statusText: r.statusText,
         headers: r.headers
       });
-
-      // copy thêm một số property (best effort)
       try { Object.defineProperty(newRes, 'url', { value: r.url }); } catch(e){}
 
       return newRes;
@@ -569,7 +565,7 @@ function dP(){
       if(b){b.click();}else{el.remove();}
     }catch(e){}
   }
-  // ── "Bạn đang gặp sự cố gây gián đoạn?" confirm dialog ─────────
+ // ── Confirm dialog ("Are you having issues?") ─────────────────
   // YouTube shows yt-confirm-dialog-renderer with Yes/No buttons.
   // Click the cancel/No button to dismiss without triggering detection.
   try{
@@ -577,7 +573,7 @@ function dP(){
     if(cd){
       // Try cancel button first (second button = "Không"/No/Cancel)
       var btns=cd.querySelectorAll('yt-button-renderer,tp-yt-paper-button,button');
-      // "Không" is typically the last/right button (cancel)
+       // Cancel is typically the last button on the right
       var dismissed=false;
       for(var bi=btns.length-1;bi>=0;bi--){
         var bt=btns[bi];
