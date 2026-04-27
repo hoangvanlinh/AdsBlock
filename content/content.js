@@ -29,6 +29,37 @@
   document.documentElement.appendChild(s);
 })();
 
+// ── Inject anti-detect.js into MAIN world on all pages ─────────────
+// Fakes XHR / fetch / sendBeacon for known ad network hosts so their
+// SDKs receive synthetic 200 OK instead of status=0 (network error),
+// preventing "ad blocker detected" code paths from triggering.
+if (!window[Symbol.for('_adblock_antidetect')]) {
+  const _ad = document.createElement('script');
+  _ad.src = chrome.runtime.getURL('content/anti-detect.js');
+  _ad.async = false;
+  (document.documentElement || document.head || document.body).appendChild(_ad);
+  _ad.remove();
+}
+// Dispatch dynamic host list from site-rules.txt to MAIN world
+// anti-detect.js listens for __adblock_ad_hosts__ and rebuilds its regex
+// This runs after site-rules-loader.js has set window.__adblockRuleLoader
+function _dispatchAdHosts() {
+  if (!(window.__adblockRuleLoader && window.__adblockRuleLoader.load)) return;
+  window.__adblockRuleLoader.load('global', {}, function (cfg) {
+    const hosts = (cfg.ad_script_hosts || [])
+      .concat(cfg.ad_network_patterns || [])
+      .filter(function (h, i, a) { return h && a.indexOf(h) === i; });
+    if (hosts.length) {
+      document.dispatchEvent(new CustomEvent('__adblock_ad_hosts__', { detail: hosts }));
+    }
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _dispatchAdHosts);
+} else {
+  _dispatchAdHosts();
+}
+
 // ── YouTube: inject yt-adblock.js into MAIN world via DOM ─────────
 // chrome.scripting is not needed — a <script src> tag from content world
 // executes in MAIN world, same as the page's own scripts.
