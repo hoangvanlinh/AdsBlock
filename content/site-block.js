@@ -1,29 +1,13 @@
 // site-block.js — generic native ad blocker driven by rule/site-rules.txt
 (function(){
 var hostname=location.hostname;
-var siteKey=resolveSiteKey(hostname);
-if(!siteKey)return;
+var siteKey='';
 
 var _enabled=true,_observer=null,_hidden=0,_raf=0,_config=null;
 var DEFAULT_ATTR_KEYS=['aria-label','data-promoted','post-type','recommendation-source','slot','click-location','data-component-type','cel_widget_id','data-cel-widget'];
 var CANDIDATE_KEYS=['selectors','feed_selectors','market_selectors','right_rail_selectors','post_selectors'];
 var HOST_KEYS=['ad_host_selectors'];
 var DIRECT_HIDE_KEYS=['direct_hide_selectors'];
-
-function resolveSiteKey(host){
-  if(/(^|\.)youtube\.com$/.test(host))return 'youtube';
-  if(/(^|\.)facebook\.com$/.test(host))return 'facebook';
-  if(/(^|\.)reddit\.com$/.test(host))return 'reddit';
-  if(/(^|\.)instagram\.com$/.test(host))return 'instagram';
-  if(/(^|\.)tiktok\.com$/.test(host))return 'tiktok';
-  if(/(^|\.)x\.com$|(^|\.)twitter\.com$/.test(host))return 'x';
-  if(/(^|\.)linkedin\.com$/.test(host))return 'linkedin';
-  if(/(^|\.)pinterest\.com$/.test(host))return 'pinterest';
-  if(/(^|\.)quora\.com$/.test(host))return 'quora';
-  if(host.indexOf('amazon.')!==-1)return 'amazon';
-  if(host.indexOf('google.')!==-1)return 'google';
-  return '';
-}
 
 function extValid(){
   try{return !!(chrome.runtime&&chrome.runtime.getManifest());}
@@ -364,12 +348,83 @@ function sync(cb){
   });}catch(e){}
 }
 
+// Resolve hostname against dynamic [host_patterns] section.
+// Patterns can be:
+//   plain hostname  — "vnexpress.net"  matches vnexpress.net and *.vnexpress.net
+//   wildcard TLD    — "amazon.*"       matches amazon.com, amazon.co.uk, amazon.de, etc.
+function _resolveFromPatterns(patterns,host){
+  for(var pat in patterns){
+    if(!Object.prototype.hasOwnProperty.call(patterns,pat))continue;
+    var targetKey=(patterns[pat]&&patterns[pat][0])||'';
+    if(!targetKey)continue;
+    try{
+      var re;
+      if(pat.slice(-2)==='.*'){
+        // Wildcard TLD: "amazon.*" → matches (^|\.)amazon\. followed by anything
+        var base=pat.slice(0,-2).replace(/[.+?^${}()|[\]\\]/g,'\\$&');
+        re=new RegExp('(^|\\.)'+base+'\\.');
+      } else {
+        var escaped=pat.replace(/[.+?^${}()|[\]\\]/g,'\\$&');
+        re=new RegExp('(^|\\.)'+escaped+'$');
+      }
+      if(re.test(host))return targetKey;
+    }catch(e){}
+  }
+  return '';
+}
+
+// Merge two config objects: array fields are concatenated (deduped),
+// scalar fields from overlay override base.
+function _mergeConfigs(base,overlay){
+  var cfg={},key;
+  for(key in base){
+    if(!Object.prototype.hasOwnProperty.call(base,key))continue;
+    cfg[key]=Array.isArray(base[key])?base[key].slice():base[key];
+  }
+  for(key in overlay){
+    if(!Object.prototype.hasOwnProperty.call(overlay,key))continue;
+    if(Array.isArray(overlay[key])&&overlay[key].length){
+      if(Array.isArray(cfg[key])){
+        // Concatenate, dedupe — preserves global selectors + adds site-specific ones
+        var seen=new Set(cfg[key]);
+        for(var i=0;i<overlay[key].length;i++){
+          if(!seen.has(overlay[key][i])){seen.add(overlay[key][i]);cfg[key].push(overlay[key][i]);}
+        }
+      } else {
+        cfg[key]=overlay[key].slice();
+      }
+    } else if(overlay[key]!==undefined&&!Array.isArray(overlay[key])){
+      cfg[key]=overlay[key];
+    }
+  }
+  return cfg;
+}
+
 function boot(){
   if(!(window.__adblockRuleLoader&&window.__adblockRuleLoader.load))return;
-  window.__adblockRuleLoader.load(siteKey,{},function(cfg){
-    _config=cfg||{};
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
-    else sync();
+  // Always load [global] as the base config, then merge site-specific on top.
+  window.__adblockRuleLoader.load('global',{},function(globalCfg){
+    var base=globalCfg||{};
+    function _apply(siteCfg){
+      _config=_mergeConfigs(base,siteCfg||{});
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
+      else sync();
+    }
+    if(siteKey){
+      // Previously resolved site — merge its config on top of global
+      window.__adblockRuleLoader.load(siteKey,{},function(siteCfg){_apply(siteCfg);});
+    } else {
+      // Try [host_patterns] for dynamic sites
+      window.__adblockRuleLoader.load('host_patterns',{},function(patterns){
+        var resolved=_resolveFromPatterns(patterns,hostname);
+        if(resolved){
+          siteKey=resolved;
+          window.__adblockRuleLoader.load(siteKey,{},function(siteCfg){_apply(siteCfg);});
+        } else {
+          _apply({}); // no site-specific config — global selectors only
+        }
+      });
+    }
   });
 }
 
