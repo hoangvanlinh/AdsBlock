@@ -1,10 +1,35 @@
+
+
+# ── Dynamic host → siteKey mapping ────────────────────────────────────────────
+# Add any site here without touching JavaScript code.
+# Format:  hostname = sitekey
+# The sitekey must match a [section] name below.
+# Subdomains are matched automatically (e.g. "vnexpress.net" also matches
+# "m.vnexpress.net", "video.vnexpress.net", etc.)
+[host_patterns]
+youtube.com = youtube
+facebook.com = facebook
+reddit.com = reddit
+instagram.com = instagram
+tiktok.com = tiktok
+# x.com = x
+# twitter.com = x
+linkedin.com = linkedin
+pinterest.com = pinterest
+quora.com = quora
+amazon.* = amazon
+google.* = google
+vnexpress.net = vnexpress
+tuoitre.vn = tuoitre
+#dantri.com.vn = dantri
+
 # site-rules.txt — editable site rule map
 # Format:
 # [section]
 # key = value1 | value2 | value3
 
 [global]
-direct_hide_selectors = ins.adsbygoogle | .adsbygoogle | [id^="div-gpt-ad"] | [id^="google_ads_iframe"] | [id^="dfp-ad-"] | iframe[src*="googleadservices"] | iframe[src*="doubleclick.net"] | iframe[src*="googlesyndication"] | .OUTBRAIN | div.ob-widget | div.ob-smartfeed-wrapper | [data-widget-id^="outbrain"] | .trc_related_container | [id^="taboola-"] | .taboola-container | iframe[src*="amazon-adsystem"] | .criteo-ad | [id^="crt-"][id$="-wrapper"] | iframe[src*="adnxs.com"] | iframe[src*="media.net"] | iframe[src*="pubmatic.com"] | iframe[src*="openx.net"] | iframe[src*="rubiconproject.com"] | .ad-banner | .ad-wrapper | .ad-container | .ad-slot | .ad-unit | .ad-frame | .ad-leaderboard | .ad-sidebar | .ad-rectangle | #ad-banner | #ad-wrapper | #ad-container | [aria-label="Advertisement"] | [aria-label="Sponsored"] | [data-ad="true"] | li[data-promoted="true"] | .sponsored-post | .promoted-content | .ad-modal | .ad-popup | .interstitial-ad | [data-google-query-id] | [data-google-container-id] | .snigel_ad | .snigel_desktop | .snigel_mobile | [class*="advertising_slot_"] | [data-id^="nn_"] | iframe[src*="xandr.com"] | iframe[src*="adsrvr.org"] | iframe[src*="smartadserver.com"] | iframe[src*="adform.net"] | iframe[src*="33across.com"] | iframe[src*="sharethrough.com"] | iframe[src*="mgid.com"] | iframe[src*="teads.tv"] | iframe[src*="undertone.com"] | iframe[src*="yieldmo.com"] | iframe[src*="improvedigital.com"] | iframe[src*="smartclip.net"] | [id^="yandex_rtb_"] | [id^="sas_"] | [id^="mgid-"] | [id^="rc-widget-"] | .rc-widget | [id^="seedtag-"] | [data-str-native-key] | [id^="teads-"] | [id^="prebid-"] | [data-prebid] | [id^="adnzone_"] | [id^="ssppagebid_"] | [data-admssprqid] | [data-ssp^="sspbid_"] | *:has(> [data-admssprqid]) | *:has(> [id^="adnzone_"]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | [id^="ads_top_"] | [id^="ads_bottom_"] | [id^="dfp_"] | [id^="vm-placement-"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | iframe[src*="mfast.vn"] | [id^="adskeeper-"] | iframe[src*="adskeeper.com"] | .skimlinks-widget | [data-skimlinks-widget] | .viglink-widget | [id^="admitad-widget-"] | .howl-widget | [data-howl] | .awin-banner | [data-awin] | iframe[src*="shareasale.com"] | iframe[src*="awin1.com"] | iframe[src*="jdoqocy.com"] | iframe[src*="tradedoubler.com"] | iframe[src*="admitad.com"] | iframe[src*="impact.com"] | iframe[src*="skimlinks.com"] | iframe[src*="viglink.com"] | iframe[src*="partnerize.com"] | iframe[src*="howl.me"]
+direct_hide_selectors = ins.adsbygoogle | .adsbygoogle | [id^="div-gpt-ad"] | [id^="google_ads_iframe"] | [id^="dfp-ad-"] | iframe[src*="googleadservices"] | iframe[src*="doubleclick.net"] | iframe[src*="googlesyndication"] | .OUTBRAIN | div.ob-widget | div.ob-smartfeed-wrapper | [data-widget-id^="outbrain"] | .trc_related_container | [id^="taboola-"] | .taboola-container | iframe[src*="amazon-adsystem"] | .criteo-ad | [id^="crt-"][id$="-wrapper"] | iframe[src*="adnxs.com"] | iframe[src*="media.net"] | iframe[src*="pubmatic.com"] | iframe[src*="openx.net"] | iframe[src*="rubiconproject.com"] | .ad-banner | .ad-wrapper | .ad-container | .ad-slot | .ad-unit | .ad-frame | .ad-leaderboard | .ad-sidebar | .ad-rectangle | #ad-banner | #ad-wrapper | #ad-container | [aria-label="Advertisement"] | [aria-label="Sponsored"] | [data-ad="true"] | li[data-promoted="true"] | .sponsored-post | .promoted-content | .ad-modal | .ad-popup | .interstitial-ad | [data-google-query-id] | [data-google-container-id] | .snigel_ad | .snigel_desktop | .snigel_mobile | [class*="advertising_slot_"] | [data-id^="nn_"] | iframe[src*="xandr.com"] | iframe[src*="adsrvr.org"] | iframe[src*="smartadserver.com"] | iframe[src*="adform.net"] | iframe[src*="33across.com"] | iframe[src*="sharethrough.com"] | iframe[src*="mgid.com"] | iframe[src*="teads.tv"] | iframe[src*="undertone.com"] | iframe[src*="yieldmo.com"] | iframe[src*="improvedigital.com"] | iframe[src*="smartclip.net"] | [id^="yandex_rtb_"] | [id^="sas_"] | [id^="mgid-"] | [id^="rc-widget-"] | .rc-widget | [id^="seedtag-"] | [data-str-native-key] | [id^="teads-"] | [id^="prebid-"] | [data-prebid] | [id^="adnzone_"] | [id^="ssppagebid_"] | [data-admssprqid] | [data-ssp^="sspbid_"] | *:has(> [data-admssprqid]) | *:has(> [id^="adnzone_"]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | [id^="ads_top_"] | [id^="ads_bottom_"] | [id^="dfp_"] | [id^="vm-placement-"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | iframe[src*="mfast.vn"] | [id^="adskeeper-"] | iframe[src*="adskeeper.com"] | .skimlinks-widget | [data-skimlinks-widget] | .viglink-widget | [id^="admitad-widget-"] | .howl-widget | [data-howl] | .awin-banner | [data-awin] | iframe[src*="shareasale.com"] | iframe[src*="awin1.com"] | iframe[src*="jdoqocy.com"] | iframe[src*="tradedoubler.com"] | iframe[src*="admitad.com"] | iframe[src*="impact.com"] | iframe[src*="skimlinks.com"] | iframe[src*="viglink.com"] | iframe[src*="partnerize.com"] | iframe[src*="howl.me"] || .ads-banner
 ad_script_hosts = googlesyndication.com | doubleclick.net | googleadservices.com | adnxs.com | outbrain.com | taboola.com | amazon-adsystem.com | media.net | criteo.com | advertising.com | pubmatic.com | openx.net | rubiconproject.com | casalemedia.com | sovrn.com | xandr.com | adsrvr.org | smartadserver.com | adform.net | 33across.com | sharethrough.com | mgid.com | teads.tv | undertone.com | yieldmo.com | improvedigital.com | smartclip.net | snigel.com | seedtag.com | admicro.vn | adx.admicro.vn | vccorp.vn | adplay.vn | adtima.vn | mfast.vn | adskeeper.com | skimlinks.com | viglink.com | admitad.com | impact.com | partnerize.com | awin1.com | shareasale.com | tradedoubler.com
 ad_network_patterns = doubleclick.net | googlesyndication.com | googleadservices.com | adnxs.com | outbrain.com | taboola.com | ads.yahoo.com | amazon-adsystem.com | media.net | criteo.com
 ad_patterns = doubleclick | googlesyndication | googleadservices | adnxs | outbrain | taboola | amazon-adsystem | media.net | criteo | advertising.com | pubmatic | openx.net | rubiconproject | xandr | adsrvr | smartadserver | adform | 33across | sharethrough | mgid | teads | undertone | yieldmo | improvedigital | smartclip | snigel | seedtag | admicro | vccorp | adplay | adtima | mfast | adskeeper | skimlinks | viglink | admitad
@@ -96,3 +121,13 @@ query_keys = k | field-keywords
 direct_hide_selectors = #tads | #tadsb | #bottomads | #rhsads | div[data-text-ad] | div[data-ta-slot] | .commercial-unit-desktop-top | .commercial-unit-desktop-rhs | #tvcap | div[data-sokoban-feature] | .ads-ad | li.g:has([data-text-ad])
 paths = /search
 query_keys = q
+
+# ── VNExpress ────────────────────────────────────────────────────────────────
+[vnexpress]
+# Admicro/VCCorp ad zones specific to vnexpress.net
+direct_hide_selectors = .box-tinquangcao | .tinquangcao | .block-ads | [class*="quang-cao"] | [class*="quangcao"] | .banner-ads | .ads-300 | .ads-728 | .ads-970 | .sidebar-ads | div[id^="zone_"] | div[id^="admzone_"] | .article-footer-ads | .article-top-ads | .article-middle-ads | .float-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | .box-video-ads
+
+# ── Tuổi Trẻ ────────────────────────────────────────────────────────────────
+[tuoitre]
+# Admicro/VCCorp + Tuổi Trẻ first-party ad zones
+direct_hide_selectors = #LeaderBoardTop | [class*="quang-cao"] | [class*="quangcao"] | [id*="quang-cao"] | [id*="quangcao"] | div[id^="zone_"] | div[id^="admzone_"] | div[id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | .box-ads | .banner-ads | .ads-container | .ads-box | .sidebar-ads | .article-ads | .content-ads | .float-ads | .sticky-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | [id^="placement-"][revenue] | [data-admssprqid] | *:has(>[data-admssprqid])
