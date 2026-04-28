@@ -39,6 +39,14 @@ if (!window[Symbol.for('_adblock_antidetect')]) {
   _ad.async = false;
   (document.documentElement || document.head || document.body).appendChild(_ad);
   _ad.remove();
+  // Send initial protection state to anti-detect.js after it loads.
+  // Default is _enabled=false in anti-detect.js; dispatches _ytpb_on/off
+  // (same event as yt-adblock.js) to toggle state in all MAIN world scripts.
+  chrome.storage.local.get(['enabled', 'pausedDomains'], (r) => {
+    const _host = location.hostname;
+    const _active = r.enabled !== false && !(r.pausedDomains || []).includes(_host);
+    document.dispatchEvent(new CustomEvent(_active ? '_ytpb_on' : '_ytpb_off'));
+  });
 }
 // Dispatch dynamic host list from site-rules.txt to MAIN world
 // anti-detect.js listens for __adblock_ad_hosts__ and rebuilds its regex
@@ -77,8 +85,14 @@ if (/youtube\.com/.test(location.hostname) && !window[Symbol.for('_yt_pb')]) {
     const host = location.hostname;
     const e = r.enabled !== false;
     const paused = (r.pausedDomains || []).includes(host);
-    if (!e || paused) {
+    const active = e && !paused;
+    // Write to localStorage so yt-adblock.js can read state synchronously
+    // on the NEXT (or current) page load — avoids async race at document_start.
+    try { localStorage.setItem('_ytpb_state', active ? '1' : '0'); } catch (_e) {}
+    if (!active) {
       document.dispatchEvent(new CustomEvent('_ytpb_off'));
+    } else {
+      document.dispatchEvent(new CustomEvent('_ytpb_on'));
     }
   });
 }
@@ -568,6 +582,7 @@ function disconnectObserver() {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'TOGGLE') {
     enabled = msg.enabled;
+    try { localStorage.setItem('_ytpb_state', enabled ? '1' : '0'); } catch (_e) {}
     if (enabled) {
       enableCosmeticCss();
       hideAds();
@@ -583,10 +598,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'PAUSE_DOMAIN') {
     if (msg.paused) {
       enabled = false;
+      try { localStorage.setItem('_ytpb_state', '0'); } catch (_e) {}
       disableCosmeticCss();
       document.dispatchEvent(new CustomEvent('_ytpb_off'));
     } else {
       enabled = true;
+      try { localStorage.setItem('_ytpb_state', '1'); } catch (_e) {}
       enableCosmeticCss();
       hideAds();
       observeMutations();

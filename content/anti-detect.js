@@ -19,6 +19,12 @@
   if (window[_G]) return;
   window[_G] = true;
 
+  // ── Protection ON/OFF gate ───────────────────────────────────────
+  // content.js dispatches _ytpb_off / _ytpb_on (same event used by
+  // yt-adblock.js) to toggle protection state across all MAIN world scripts.
+  var _enabled = false;
+  document.addEventListener('_ytpb_off', function () { _enabled = false; });
+  document.addEventListener('_ytpb_on',  function () { _enabled = true; });
   // ── Ad network host regex ────────────────────────────────────────
   // Static fallback — active immediately before site-rules.txt loads.
   // Covers all hosts in rule/site-rules.txt [global] ad_script_hosts +
@@ -61,7 +67,7 @@
   var _xS = XMLHttpRequest.prototype.send;
   var _fakeXhr = new WeakSet();
   XMLHttpRequest.prototype.open = function (method, url) {
-    if (_isAdUrl(url)) { _fakeXhr.add(this); return; }
+    if (_enabled && _isAdUrl(url)) { _fakeXhr.add(this); return; }
     return _xO.apply(this, arguments);
   };
   XMLHttpRequest.prototype.send = function () {
@@ -89,7 +95,7 @@
   var _oFetch = window.fetch;
   window.fetch = function (input, init) {
     var u = (input instanceof Request) ? input.url : String(input || '');
-    if (_isAdUrl(u)) {
+    if (_enabled && _isAdUrl(u)) {
       return Promise.resolve(new Response('', {
         status: 200, statusText: 'OK',
         headers: { 'Content-Type': 'text/plain' }
@@ -101,7 +107,7 @@
   // ── 3. sendBeacon fake ───────────────────────────────────────────
   var _oBeacon = navigator.sendBeacon.bind(navigator);
   navigator.sendBeacon = function (url) {
-    if (_isAdUrl(url)) return true;
+    if (_enabled && _isAdUrl(url)) return true;
     return _oBeacon.apply(navigator, arguments);
   };
 
@@ -115,7 +121,7 @@
       Object.defineProperty(HTMLImageElement.prototype, 'src', {
         get: _iDesc.get,
         set: function (val) {
-          if (_isAdUrl(val)) {
+          if (_enabled && _isAdUrl(val)) {
             var img = this;
             setTimeout(function () { try { img.dispatchEvent(new Event('load')); } catch (e) {} }, 0);
             return;
@@ -130,7 +136,7 @@
   // ── 5. window.open fake ──────────────────────────────────────────
   var _oOpen = window.open;
   window.open = function (url) {
-    if (url && _isAdUrl(url)) return null;
+    if (url && _enabled && _isAdUrl(url)) return null;
     return _oOpen.apply(this, arguments);
   };
 
@@ -142,7 +148,7 @@
     var _oGCS = window.getComputedStyle;
     window.getComputedStyle = function (el, pseudo) {
       var style = _oGCS.call(window, el, pseudo);
-      if (!_isBaitEl(el)) return style;
+      if (!_enabled || !_isBaitEl(el)) return style;
       return new Proxy(style, {
         get: function (target, prop) {
           if (prop === 'display')    return 'block';
@@ -170,7 +176,7 @@
     var _oGBCR = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = function () {
       var r = _oGBCR.call(this);
-      if (r.width === 0 && r.height === 0 && _isBaitEl(this)) {
+      if (_enabled && r.width === 0 && r.height === 0 && _isBaitEl(this)) {
         return DOMRect.fromRect({ x: r.x, y: r.y, width: 1, height: 1 });
       }
       return r;
@@ -186,7 +192,7 @@
     var t = ev.target;
     if (!t || t === window) return;
     var src = t.src || t.getAttribute && t.getAttribute('src') || '';
-    if (!_isAdUrl(src)) return;
+    if (!_enabled || !_isAdUrl(src)) return;
     ev.stopImmediatePropagation();
     ev.preventDefault();
     if (t.tagName === 'SCRIPT') {
@@ -252,14 +258,14 @@
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
       get: function () {
         var v = _gOH.call(this);
-        return (v === 0 && _isBaitEl(this)) ? 1 : v;
+        return (_enabled && v === 0 && _isBaitEl(this)) ? 1 : v;
       },
       configurable: true
     });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
       get: function () {
         var v = _gOW.call(this);
-        return (v === 0 && _isBaitEl(this)) ? 1 : v;
+        return (_enabled && v === 0 && _isBaitEl(this)) ? 1 : v;
       },
       configurable: true
     });

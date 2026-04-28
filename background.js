@@ -407,7 +407,39 @@ function todayKey() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-async function updateDailyStats(delta) {
+// ── Serialized stats writer ─────────────────────────────────────
+// All reads-then-writes on 'stats'/'dailyStats' go through this chain
+// to prevent concurrent reads returning stale data and overwriting each other.
+let _statsWriteChain = Promise.resolve();
+
+function _enqueueStatWrite(fn) {
+  _statsWriteChain = _statsWriteChain
+    .then(fn)
+    .catch(e => console.warn('[AdBlock] stat write error:', e));
+}
+
+async function _writeDomainStatDelta(domain, delta) {
+  const { stats = {} } = await chrome.storage.local.get('stats');
+  if (!stats[domain]) {
+    stats[domain] = { blocked: 0, adsBlocked: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
+  }
+  const s = stats[domain];
+  s.totalSeen       += delta.totalSeen       || 0;
+  s.adsBlocked      += delta.adsBlocked      || 0;
+  s.trackersBlocked += delta.trackersBlocked || 0;
+  s.malwareBlocked  += delta.malwareBlocked  || 0;
+  s.blocked = s.adsBlocked + s.trackersBlocked + s.malwareBlocked;
+  recalcDerived(s);
+  // Cap per-domain stats to 200 domains
+  const domainKeys = Object.keys(stats).filter(k => k !== '_global');
+  if (domainKeys.length > 200) {
+    domainKeys.sort((a, b) => (stats[a].totalSeen || 0) - (stats[b].totalSeen || 0));
+    for (const k of domainKeys.slice(0, domainKeys.length - 200)) delete stats[k];
+  }
+  await chrome.storage.local.set({ stats });
+}
+
+async function _writeDailyStatDelta(delta) {
   const key = todayKey();
   const { dailyStats = {} } = await chrome.storage.local.get('dailyStats');
   if (!dailyStats[key]) dailyStats[key] = { blocked: 0, ads: 0, trackers: 0, malware: 0 };
@@ -415,12 +447,13 @@ async function updateDailyStats(delta) {
   dailyStats[key].ads      += delta.ads      || 0;
   dailyStats[key].trackers += delta.trackers || 0;
   dailyStats[key].malware  += delta.malware  || 0;
-
-  // Keep only last 30 days
   const keys = Object.keys(dailyStats).sort();
   while (keys.length > 30) { delete dailyStats[keys.shift()]; }
-
   await chrome.storage.local.set({ dailyStats });
+}
+
+function updateDailyStats(delta) {
+  _enqueueStatWrite(() => _writeDailyStatDelta(delta));
 }
 
 function recalcDerived(s) {
@@ -700,62 +733,33 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         const { collectStats = true } = await chrome.storage.local.get('collectStats');
         if (!collectStats) { sendResponse({ ok: true }); break; }
 
-        const { stats = {} } = await chrome.storage.local.get('stats');
         const domain = msg.domain || '_global';
-        if (!stats[domain]) {
-          stats[domain] = { blocked: 0, adsBlocked: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
-        }
-        const s = stats[domain];
         const d = msg.delta || {};
-        s.totalSeen      += d.seen     || 0;
-        s.adsBlocked     += d.ads      || 0;
-        s.trackersBlocked += d.trackers || 0;
-        s.malwareBlocked  += d.malware  || 0;
-        s.blocked = s.adsBlocked + s.trackersBlocked + s.malwareBlocked;
-        recalcDerived(s);
-
-        // Cap per-domain stats to 200 domains to prevent unbounded storage growth
-        const domainKeys = Object.keys(stats).filter(k => k !== '_global');
-        if (domainKeys.length > 200) {
-          // Remove oldest/lowest-traffic domains
-          domainKeys.sort((a, b) => (stats[a].totalSeen || 0) - (stats[b].totalSeen || 0));
-          const toRemove = domainKeys.slice(0, domainKeys.length - 200);
-          for (const k of toRemove) delete stats[k];
-        }
-
-        await chrome.storage.local.set({ stats });
-
-        // Also update daily chart data
-        await updateDailyStats({
+        _enqueueStatWrite(() => _writeDomainStatDelta(domain, {
+          totalSeen:       d.seen     || 0,
+          adsBlocked:      d.ads      || 0,
+          trackersBlocked: d.trackers || 0,
+          malwareBlocked:  d.malware  || 0,
+        }));
+        updateDailyStats({
           blocked:  (d.ads || 0) + (d.trackers || 0) + (d.malware || 0),
           ads:      d.ads      || 0,
           trackers: d.trackers || 0,
           malware:  d.malware  || 0,
         });
-
         sendResponse({ ok: true });
         break;
       }
 
       case 'COSMETIC_HIDDEN': {
-        // Sent by content.js when cosmetic filtering hides ad elements.
+        // Sent by content.js / site-block.js when cosmetic filtering hides ad elements.
         const { collectStats: collectCH = true } = await chrome.storage.local.get('collectStats');
         if (!collectCH) { sendResponse({ ok: true }); break; }
 
-        const { stats: chStats = {} } = await chrome.storage.local.get('stats');
         const chDomain = (msg.url ? new URL(msg.url).hostname : null) || '_global';
-        if (!chStats[chDomain]) {
-          chStats[chDomain] = { blocked: 0, adsBlocked: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
-        }
-        const chS = chStats[chDomain];
         const hiddenCount = msg.count || 0;
-        chS.adsBlocked += hiddenCount;
-        chS.totalSeen  += hiddenCount;
-        chS.blocked     = chS.adsBlocked + chS.trackersBlocked + chS.malwareBlocked;
-        recalcDerived(chS);
-        await chrome.storage.local.set({ stats: chStats });
-
-        await updateDailyStats({ blocked: hiddenCount, ads: hiddenCount, trackers: 0, malware: 0 });
+        _enqueueStatWrite(() => _writeDomainStatDelta(chDomain, { adsBlocked: hiddenCount, totalSeen: hiddenCount }));
+        updateDailyStats({ blocked: hiddenCount, ads: hiddenCount, trackers: 0, malware: 0 });
         sendResponse({ ok: true });
         break;
       }
@@ -767,20 +771,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         const { collectStats: collectAS = true } = await chrome.storage.local.get('collectStats');
         if (!collectAS) { sendResponse({ ok: true }); break; }
 
-        const { stats: asStats = {} } = await chrome.storage.local.get('stats');
         const asDomain = msg.domain || '_global';
-        if (!asStats[asDomain]) {
-          asStats[asDomain] = { blocked: 0, adsBlocked: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
-        }
-        const asS = asStats[asDomain];
-        const delta = Math.max(1, Number(msg.count || 1));
-        asS.adsBlocked += delta;
-        asS.totalSeen  += delta;
-        asS.blocked     = asS.adsBlocked + asS.trackersBlocked + asS.malwareBlocked;
-        recalcDerived(asS);
-        await chrome.storage.local.set({ stats: asStats });
-
-        await updateDailyStats({ blocked: delta, ads: delta, trackers: 0, malware: 0 });
+        const asDelta = Math.max(1, Number(msg.count || 1));
+        _enqueueStatWrite(() => _writeDomainStatDelta(asDomain, { adsBlocked: asDelta, totalSeen: asDelta }));
+        updateDailyStats({ blocked: asDelta, ads: asDelta, trackers: 0, malware: 0 });
         sendResponse({ ok: true });
         break;
       }
