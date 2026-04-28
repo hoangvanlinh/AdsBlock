@@ -3,8 +3,10 @@
 var _YK=Symbol.for('_yt_pb');
 if(window[_YK])throw new Error('');
 window[_YK]=1;
-// _ytEnabled: starts true, flipped by _ytpb_off/_ytpb_on events from content.js
-var _ytEnabled=true;
+// _ytEnabled: read synchronously from localStorage cache written by content.js.
+// Defaults to true (blocking on) on first install or if cache is missing.
+// content.js updates this cache whenever protection state changes.
+var _ytEnabled = localStorage.getItem('_ytpb_state') !== '0';
 (function(){
 if(location.hostname.indexOf('youtube.com')===-1)return;
 
@@ -123,7 +125,7 @@ css.textContent=
   'ytd-rich-section-renderer:has(ytd-statement-banner-renderer,ytd-banner-promo-renderer,ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer),'+
   'ytd-rich-grid-row:has(ytd-in-feed-ad-layout-renderer,ytd-ad-slot-renderer){'+
   'display:none!important;visibility:hidden!important}';
-(document.head||document.documentElement).prepend(css);
+// CSS NOT injected here — _restart() calls _addCss() once _ytpb_on fires.
 function _removeCss(){var el=document.getElementById('_ytpbs');if(el)el.remove();}
 function _addCss(){if(!document.getElementById('_ytpbs'))(document.head||document.documentElement).prepend(css);}
 
@@ -305,8 +307,7 @@ function watchPlayer(){
   _playerObserver.observe(p,{attributes:true,attributeFilter:['class']});
   fastSkip();
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchPlayer);
-else watchPlayer();
+// watchPlayer() deferred — called by _restart() when _ytpb_on fires.
 
 // ── 2. Strip ad data from objects ────────────────────────────────
 // Use [] / {} instead of delete so YouTube's player code doesn't crash
@@ -614,9 +615,7 @@ function dP(){
   }catch(e){}
 }
 // No interval needed — sObs observer below triggers dP() when popup appears.
-// Run once immediately in case popup is already in DOM at inject time.
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',dP);
-else dP();
+// dP() deferred — called by _restart() when _ytpb_on fires.
 
 (function sObs(){
   var t=document.body||document.documentElement;
@@ -695,7 +694,8 @@ function _teardown(){
 }
 function _restart(){
   _addCss();
-  watchPlayer();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchPlayer);
+  else watchPlayer();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',dP);
   else dP();
 }
