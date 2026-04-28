@@ -498,12 +498,6 @@ async function getRemoteMalwareRuleBudget() {
     return REMOTE_FALLBACK_MAX_DOMAINS;
   }
 }
-function getRootDomain(domain) {
-  const parts = domain.split('.');
-  if (parts.length <= 2) return domain;
-  return parts.slice(-2).join('.');
-}
-
 async function fetchMalwareBlocklists() {
   const allDomains = new Set();
   for (const source of BLOCKLIST_SOURCES) {
@@ -521,7 +515,7 @@ async function fetchMalwareBlocklists() {
           domain = domain.split(/\s+/)[1];
         }
         if (!domain || domain === 'localhost' || domain.includes('/') || !domain.includes('.')) continue;
-        allDomains.add(getRootDomain(domain.toLowerCase()));
+        allDomains.add(domain.toLowerCase());
       }
     } catch (e) {
       console.warn(`[AdBlock] Failed to fetch ${source.name}:`, e.message);
