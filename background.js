@@ -100,19 +100,20 @@ function buildDefaultRulesFromConfig(config) {
     action: { type: 'block' },
     condition: { urlFilter: pattern, resourceTypes: adTypes, excludedInitiatorDomains: ytExclude },
   }));
+  const trackerStart = adRules.length + 1;
   const trackerRules = config.trackerNetworkPatterns.map((pattern, index) => ({
-    id: 11 + index,
+    id: trackerStart + index,
     priority: 1,
     action: { type: 'block' },
     condition: { urlFilter: pattern, resourceTypes: trackerTypes, excludedInitiatorDomains: ytExclude },
   }));
-  return adRules.concat(trackerRules);
+  return { adRules, trackerRules };
 }
 
-function buildMalwareRulesFromConfig(config) {
+function buildMalwareRulesFromConfig(config, trackerStart) {
   const malwareTypes = ['main_frame', 'sub_frame', 'script', 'xmlhttprequest', 'image'];
   return config.malwareNetworkDomains.map((domain, index) => ({
-    id: 101 + index,
+    id: trackerStart + index,
     priority: 2,
     action: { type: 'block' },
     condition: { requestDomains: [domain], resourceTypes: malwareTypes },
@@ -144,9 +145,10 @@ async function ensureRuleDefinitionsLoaded() {
         trackerPatterns: global.tracker_patterns?.length ? global.tracker_patterns : FALLBACK_RULE_CONFIG.trackerPatterns,
         malwarePatterns: global.malware_patterns?.length ? global.malware_patterns : FALLBACK_RULE_CONFIG.malwarePatterns,
       };
-      DEFAULT_RULES = buildDefaultRulesFromConfig(config);
-      MALWARE_RULES = buildMalwareRulesFromConfig(config);
-      TRACKER_RULE_IDS = new Set(DEFAULT_RULES.filter(rule => rule.id >= 11).map(rule => rule.id));
+      const { adRules, trackerRules } = buildDefaultRulesFromConfig(config);
+      DEFAULT_RULES = [...adRules, ...trackerRules];
+      MALWARE_RULES = buildMalwareRulesFromConfig(config, DEFAULT_RULES.length +1);
+      TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
       MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
       TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...config.trackerPatterns);
@@ -250,7 +252,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 
   await applyNetworkRules();
   await applyPrivacySettings();
-  maybeUpdateMalwareLists();
+  await maybeUpdateMalwareLists();
 });
 
 chrome.runtime.onStartup.addListener(() => {
@@ -505,12 +507,7 @@ async function fetchMalwareBlocklists() {
     rules.push({
       id: id++,
       priority: 2,
-      action: {
-        type: 'redirect',
-        redirect: {
-          url: 'data:text/plain,'
-        }
-      },
+      action: { type: 'block' },
       condition: {
         requestDomains: [domain],
         // Exclude sub_frame to avoid blocking embedded video players (iframes)
