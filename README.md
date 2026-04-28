@@ -34,11 +34,11 @@
 - **Ad Blocking** — Blocks ad requests via `declarativeNetRequest` (Google Ads, DFP, Outbrain, Taboola, Amazon Ads, Criteo, and more)
 - **Tracker Blocking** — Stops tracking scripts from Google Analytics, Hotjar, Mixpanel, Amplitude, and more
 - **Malware Protection** — Blocks known malicious domains (cryptominers, phishing) with auto-updating blocklists
-- **Cosmetic Filtering** — Hides ad elements in the DOM via CSS + JS without breaking page layouts
+- **Cosmetic Filtering** — Hides ad elements in the DOM via CSS + JS with minimal impact on page layout
 - **YouTube Ad Skipper** — Automatically mutes and fast-forwards pre-roll/mid-roll video ads
-- **Multi-Site Native Ad Blocking** — Uses one generic blocker plus site rules for YouTube cosmetic ads, Facebook, Reddit, Instagram, TikTok, X/Twitter, LinkedIn, Pinterest, Quora, Amazon, and Google Search ads
+- **Multi-Site Native Ad Blocking** — Uses one generic blocker plus site rules for YouTube cosmetic ads, Facebook, Reddit, Instagram, TikTok, X/Twitter, LinkedIn, Pinterest, Quora, Amazon, Google Search, VnExpress, and Tuổi Trẻ
 - **Focus Mode** — Block distracting sites with a built-in Pomodoro timer
-- **Privacy Score** — Real-time privacy rating based on ads, trackers, malware, and referrer protection
+- **Privacy Score** — Privacy rating based on ads blocked, trackers blocked, malware, and referrer protection
 - **Per-Site Controls** — Pause blocking on specific sites, manage allowlists
 - **Custom Rules** — Add your own domain/keyword/CSS/regex blocking rules
 - **Dashboard** — Glassmorphism dark UI with daily stats, charts, domain breakdown, and settings
@@ -83,6 +83,7 @@ ablock/
 ├── content/
 │   ├── content.js          # Content script — shared cosmetic engine plus YouTube bootstrap
 │   ├── content.css         # Cosmetic filter CSS rules
+│   ├── anti-detect.js      # Ad-block detector bypass — fakes XHR/fetch/bait elements in MAIN world
 │   ├── site-rules-loader.js # Shared parser for remote/local text-based site rules
 │   ├── site-block.js       # Generic site-specific blocker driven by site rules
 │   └── yt-adblock.js       # YouTube anti-adblock and skipper engine (runs in MAIN world)
@@ -122,11 +123,15 @@ YouTube uses a hybrid model: `rule/site-rules.txt` provides cosmetic selectors f
 
 ### Multi-Site Native Ad Blocking
 
-The extension uses one generic site blocker driven by `rule/site-rules.txt` for YouTube cosmetic surfaces, Facebook, Reddit, Instagram, TikTok, X/Twitter, LinkedIn, Pinterest, Quora, Amazon, and Google Search. Site-specific behavior comes from rule sections like labels, selectors, direct-hide selectors, context selectors, ad host selectors, link patterns, and closest-hide targets.
+The extension uses one generic site blocker driven by `rule/site-rules.txt` for YouTube cosmetic surfaces, Facebook, Reddit, Instagram, TikTok, X/Twitter, LinkedIn, Pinterest, Quora, Amazon, Google Search, VnExpress, and Tuổi Trẻ. Site-specific behavior comes from rule sections like labels, selectors, direct-hide selectors, context selectors, ad host selectors, link patterns, and closest-hide targets.
+
+Ad network coverage also includes major mobile ad SDKs: Xiaomi, Samsung, Apple iAd, Unity Ads, OPPO/Realme, TikTok Ads, Yandex, and others — blocking their request endpoints via `declarativeNetRequest`.
 
 ### Editable Site Rules
 
-The generic site blocker now loads labels, selectors, and link patterns from the remote rule URL first, with `rule/site-rules.txt` as a local fallback through a shared loader. The shared content engine also reads global defaults from that file for cosmetic selectors, ad script hosts, and fallback classifier patterns. You can tune many of the blocker heuristics by editing that text file in the repository or by updating the remote rule source.
+The generic site blocker loads labels, selectors, and link patterns from the remote rule URL first, with `rule/site-rules.txt` as a local fallback through a shared loader. The shared content engine reads global defaults from that file for cosmetic selectors, ad script hosts, and classifier patterns. You can tune blocker heuristics by editing that file or updating the remote rule source.
+
+Remote community malware blocklists (URLhaus, Phishing Army) are filtered using the **exact domain** from each entry — subdomains like `sub.example.com` are blocked precisely without over-blocking the root `example.com` or sibling domains.
 
 
 
@@ -141,11 +146,13 @@ Blocks configurable distraction domains (social media, etc.) with a countdown ti
 | `storage` | Save settings, stats, and rules locally |
 | `declarativeNetRequest` | Block network requests (ads, trackers, malware) |
 | `alarms` | Periodic malware list updates |
-| `<all_urls>` | Content script injection on all pages |
+| `http://*/*`, `https://*/*` | Content script injection on all pages |
 
 ## Contributing
 
-Contributions are welcome! Here's how to get started:
+Contributions are welcome! For questions, bug reports, or project inquiries, reach out at **hoangvanlinh421@gmail.com**.
+
+Here's how to get started:
 
 1. **Fork** this repository
 2. Create a feature branch: `git checkout -b feature/my-feature`
