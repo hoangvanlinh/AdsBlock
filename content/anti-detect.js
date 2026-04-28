@@ -8,11 +8,9 @@
 //  5.  window.open fake     — block ad popup windows
 //  6.  getComputedStyle     — return visible styles for bait ad elements
 //  7.  getBoundingClientRect— return 1×1 for hidden bait elements
-//  8.  Performance timing   — filter ad-network resource entries
-//  9.  PerformanceObserver  — wrap callback to remove ad entries
-// 10.  Error capture        — intercept onerror on blocked ad scripts/imgs
-// 11.  Global stubs         — populate SDK globals so checks don't fail
-// 12.  MutationObserver     — patch bait elements inserted after load
+//  8.  Error capture        — intercept onerror on blocked ad scripts/imgs
+//  9.  Global stubs         — populate SDK globals so checks don't fail
+// 10.  MutationObserver     — patch bait elements inserted after load
 (function () {
   'use strict';
 
@@ -179,53 +177,7 @@
     };
   } catch (e) {}
 
-  // ── 8. Performance resource timing filter ────────────────────────
-  // Detectors enumerate resource entries looking for ad-network URLs
-  // that have transferSize=0 (blocked) or are entirely absent.
-  try {
-    var _oGET = performance.getEntriesByType.bind(performance);
-    performance.getEntriesByType = function (type) {
-      var entries = _oGET(type);
-      if (type !== 'resource') return entries;
-      return entries.filter(function (e) { return !_isAdUrl(e.name); });
-    };
-    var _oGEN = performance.getEntriesByName.bind(performance);
-    performance.getEntriesByName = function (name, type) {
-      if (_isAdUrl(name)) return [];
-      return _oGEN(name, type);
-    };
-    var _oGE = performance.getEntries.bind(performance);
-    performance.getEntries = function () {
-      return _oGE().filter(function (e) { return !_isAdUrl(e.name || ''); });
-    };
-  } catch (e) {}
-
-  // ── 9. PerformanceObserver filter ────────────────────────────────
-  // Wrap the callback so ad-network resource entries never reach the page.
-  try {
-    var _OrigPO = window.PerformanceObserver;
-    function _PO(cb) {
-      return new _OrigPO(function (list, obs) {
-        var wrap = {
-          getEntries: function () {
-            return list.getEntries().filter(function (e) { return !_isAdUrl(e.name || ''); });
-          },
-          getEntriesByType: function (t) {
-            return list.getEntriesByType(t).filter(function (e) { return !_isAdUrl(e.name || ''); });
-          },
-          getEntriesByName: function (n) {
-            return _isAdUrl(n) ? [] : list.getEntriesByName(n);
-          }
-        };
-        cb(wrap, obs);
-      });
-    }
-    _PO.prototype = _OrigPO.prototype;
-    _PO.supportedEntryTypes = _OrigPO.supportedEntryTypes;
-    window.PerformanceObserver = _PO;
-  } catch (e) {}
-
-  // ── 10. Error capture — blocked ad scripts/images ───────────────
+  // ── 8. Error capture — blocked ad scripts/images ───────────────
   // When DNR blocks a <script src="ad-cdn.com/..."> the browser fires
   // 'error' on it. Ad detectors (FuckAdBlock et al.) listen for this.
   // We intercept in capture phase (before page handlers) and fire 'load'
@@ -242,7 +194,7 @@
     }
   }, true /* capture */);
 
-  // ── 11. Global stubs ─────────────────────────────────────────────
+  // ── 9. Global stubs ─────────────────────────────────────────────
   // Ad SDKs check their own globals exist before declaring "we loaded fine".
   // Provide minimal stubs so those checks don't throw or fall into
   // "blocked" code paths.
@@ -289,7 +241,7 @@
     }
   } catch (e) {}
 
-  // ── 12. MutationObserver — bait element dimension reset ──────────
+  // ── 10. MutationObserver — bait element dimension reset ──────────
   // Some detectors add bait elements, wait a frame, then read dimensions.
   // Ensure bait elements always report non-zero offsetHeight/Width.
   var _oBOH = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
