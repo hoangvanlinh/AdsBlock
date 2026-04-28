@@ -161,9 +161,13 @@ async function ensureRuleDefinitionsLoaded() {
 const MALWARE_RULE_ID_START = 100;
 const MALWARE_RULE_ID_END   = 199;
 const FOCUS_RULE_ID_START   = 2000;
-const REMOTE_MALWARE_RULE_ID_START = 3000; // for fetched blocklists
-const CUSTOM_RULE_ID_START = 4000;        // for user-created rules
-const PAUSE_ALLOW_RULE_ID_START = 6000;   // for pause/allowlist allow-all rules
+const REMOTE_MALWARE_RULE_ID_START = 100000; // for fetched blocklists
+const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
+const PAUSE_ALLOW_RULE_ID_START = 300000;    // for pause/allowlist allow-all rules
+
+function isRemoteMalwareRuleId(ruleId) {
+  return ruleId >= REMOTE_MALWARE_RULE_ID_START && ruleId < CUSTOM_RULE_ID_START;
+}
 
 // ── Privacy score calculation ─────────────────────────────────────
 // Pure function — duplicated in popup.js and dashboard.js too.
@@ -438,7 +442,32 @@ const BLOCKLIST_SOURCES = [
   { url: 'https://phishing.army/download/phishing_army_blocklist.txt', name: 'Phishing Army' },
 ];
 
-const REMOTE_MAX_DOMAINS = 500; // cap to stay within declarativeNetRequest limits
+const REMOTE_FALLBACK_MAX_DOMAINS = 500;
+
+async function getRemoteMalwareRuleBudget() {
+  try {
+    const dnr = chrome.declarativeNetRequest;
+    if (!(dnr && dnr.getDynamicRules)) return REMOTE_FALLBACK_MAX_DOMAINS;
+
+    const [existingRules, activeState] = await Promise.all([
+      dnr.getDynamicRules(),
+      buildActiveRulesFromStorage(),
+    ]);
+    const availableCount = typeof dnr.getAvailableDynamicRuleCount === 'function'
+      ? await dnr.getAvailableDynamicRuleCount()
+      : REMOTE_FALLBACK_MAX_DOMAINS;
+    const totalCapacity = existingRules.length + Math.max(0, Number(availableCount || 0));
+    const baseRuleCount = (activeState.allRules || []).filter(rule => !isRemoteMalwareRuleId(rule.id)).length;
+    return Math.max(0, totalCapacity - baseRuleCount);
+  } catch {
+    return REMOTE_FALLBACK_MAX_DOMAINS;
+  }
+}
+function getRootDomain(domain) {
+  const parts = domain.split('.');
+  if (parts.length <= 2) return domain;
+  return parts.slice(-2).join('.');
+}
 
 async function fetchMalwareBlocklists() {
   const allDomains = new Set();
@@ -457,23 +486,31 @@ async function fetchMalwareBlocklists() {
           domain = domain.split(/\s+/)[1];
         }
         if (!domain || domain === 'localhost' || domain.includes('/') || !domain.includes('.')) continue;
-        allDomains.add(domain.toLowerCase());
-        if (allDomains.size >= REMOTE_MAX_DOMAINS) break;
+        allDomains.add(getRootDomain(domain.toLowerCase()));
       }
     } catch (e) {
       console.warn(`[AdBlock] Failed to fetch ${source.name}:`, e.message);
     }
-    if (allDomains.size >= REMOTE_MAX_DOMAINS) break;
   }
+
+  const remoteBudget = await getRemoteMalwareRuleBudget();
+  const selectedDomains = remoteBudget > 0
+    ? Array.from(allDomains).slice(0, remoteBudget)
+    : [];
 
   // Convert to declarativeNetRequest rules
   const rules = [];
   let id = REMOTE_MALWARE_RULE_ID_START;
-  for (const domain of allDomains) {
+  for (const domain of selectedDomains) {
     rules.push({
       id: id++,
       priority: 2,
-      action: { type: 'block' },
+      action: {
+        type: 'redirect',
+        redirect: {
+          url: 'data:text/plain,'
+        }
+      },
       condition: {
         requestDomains: [domain],
         // Exclude sub_frame to avoid blocking embedded video players (iframes)
@@ -520,7 +557,7 @@ chrome.alarms?.onAlarm.addListener(async (alarm) => {
 
 // ── Privacy: Referrer anonymization ───────────────────────────────
 // Uses declarativeNetRequest to strip cross-origin Referer to origin only.
-const REFERRER_RULE_ID = 5000;
+const REFERRER_RULE_ID = 400000;
 
 async function applyReferrerAnonymization(enabled) {
   const existing = await chrome.declarativeNetRequest.getDynamicRules();
