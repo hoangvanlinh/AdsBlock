@@ -33,7 +33,8 @@
 // Fakes XHR / fetch / sendBeacon for known ad network hosts so their
 // SDKs receive synthetic 200 OK instead of status=0 (network error),
 // preventing "ad blocker detected" code paths from triggering.
-if (!window[Symbol.for('_adblock_antidetect')]) {
+// Only inject on real HTML pages — skip text/plain, JSON, XML, etc.
+if (!window[Symbol.for('_adblock_antidetect')] && document.contentType === 'text/html') {
   const _ad = document.createElement('script');
   _ad.src = chrome.runtime.getURL('content/anti-detect.js');
   _ad.async = false;
