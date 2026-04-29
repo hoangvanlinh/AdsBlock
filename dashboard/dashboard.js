@@ -3,27 +3,31 @@
 /* ── Privacy score (mirrors background.js calculatePrivacyScore) ── */
 function calculatePrivacyScore(domainStats = {}, settings = {}) {
   const total = domainStats.totalSeen || 0;
-  const protectionActive = settings.enabled !== false && !settings.paused;
+  const protectionActive = settings.enabled !== false;
+  // Respect individual feature toggles (default ON if not set)
+  const adsActive      = protectionActive && settings.blockAds      !== false;
+  const trackersActive = protectionActive && settings.blockTrackers !== false;
+  const malwareActive  = protectionActive && settings.blockMalware  !== false;
 
-  let adsScore = protectionActive ? 50 : 0;
+  let adsScore = adsActive ? 50 : 0;
   if (total > 0) {
     const expected = Math.max(total * 0.15, 1);
-    adsScore = protectionActive
+    adsScore = adsActive
       ? Math.min(100, Math.round(((domainStats.adsBlocked || 0) / expected) * 100))
       : 0;
   }
 
-  let trackersScore = protectionActive ? 50 : 0;
+  let trackersScore = trackersActive ? 50 : 0;
   if (total > 0) {
     const expected = Math.max(total * 0.10, 1);
-    trackersScore = protectionActive
+    trackersScore = trackersActive
       ? Math.min(100, Math.round(((domainStats.trackersBlocked || 0) / expected) * 100))
       : 0;
   }
 
   const referrerScore = settings.referrerAnonymization !== false ? 85 : 20;
-  let malwareScore = protectionActive ? 70 : 0;
-  if ((domainStats.malwareBlocked || 0) > 0) malwareScore = 100;
+  let malwareScore = malwareActive ? 70 : 0;
+  if (malwareActive && (domainStats.malwareBlocked || 0) > 0) malwareScore = 100;
 
   const score = Math.round(
     adsScore * 0.30 + trackersScore * 0.25 + malwareScore * 0.20 + referrerScore * 0.25
@@ -50,7 +54,8 @@ function renderPrivacyScore(stats, settings) {
   };
   const domainEntries = Object.values(stats);
   for (const s of domainEntries) {
-    aggregate.adsBlocked      += s.adsBlocked      || 0;
+    // stats stores ad blocks as `blocked`, not `adsBlocked`
+    aggregate.adsBlocked      += s.blocked         || 0;
     aggregate.trackersBlocked += s.trackersBlocked || 0;
     aggregate.malwareBlocked  += s.malwareBlocked  || 0;
     aggregate.totalSeen       += s.totalSeen       || 0;
@@ -130,8 +135,9 @@ globalToggle?.addEventListener('change', () => {
 /* ── Load overview stats ──────────────────────── */
 function loadOverviewStats() {
   chrome.storage.local.get(
-    ['stats', 'enabled', 'referrerAnonymization', 'dailyStats'],
-    ({ stats = {}, enabled = true, referrerAnonymization = true, dailyStats = {} }) => {
+    ['stats', 'enabled', 'referrerAnonymization', 'dailyStats', 'blockAds', 'blockTrackers', 'blockMalware'],
+    ({ stats = {}, enabled = true, referrerAnonymization = true, dailyStats = {},
+       blockAds = true, blockTrackers = true, blockMalware = true }) => {
       globalToggle && (globalToggle.checked = enabled);
       syncProtectionUI(enabled);
 
@@ -197,7 +203,7 @@ function loadOverviewStats() {
 
       renderChart();
       renderDomainList(stats);
-      renderPrivacyScore(stats, { enabled, referrerAnonymization });
+      renderPrivacyScore(stats, { enabled, referrerAnonymization, blockAds, blockTrackers, blockMalware });
     }
   );
 }
