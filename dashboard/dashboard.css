@@ -896,6 +896,23 @@ body::before {
 
 .danger-row .setting-name { color: var(--red); }
 
+.setting-col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.rules-url-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.rules-url-row .field-input { flex: 1; min-width: 0; }
+.rules-file-status {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
 /* ── Scrollbar ── */
 .main::-webkit-scrollbar { width: 5px; }
 .main::-webkit-scrollbar-track { background: transparent; }

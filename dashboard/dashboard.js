@@ -841,6 +841,7 @@ loadRules();
 loadAllowList();
 loadBlockingSettings();
 loadPrivacySettings();
+loadRulesSourceSettings();
 
 /* ── Donate ────────────────────────────────────── */
 // Replace the URL with your actual PayPal.me or donate link
@@ -896,4 +897,111 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes.stats) {
     loadOverviewStats();
   }
+});
+
+/* ── Rule Source settings ─────────────────────── */
+const RULES_CACHE_KEY_TEXT = 'siteRulesCacheText';
+const RULES_CACHE_KEY_TIME = 'siteRulesCacheTime';
+
+function setResetUrlVisible(hasUrl) {
+  const btn = document.getElementById('resetRulesUrl');
+  if (!btn) return;
+  if (hasUrl) btn.classList.remove('hidden');
+  else btn.classList.add('hidden');
+}
+
+function setLocalFileActiveRow(filename) {
+  const row = document.getElementById('rulesFileActiveRow');
+  const status = document.getElementById('rulesFileStatus');
+  if (!row) return;
+  if (filename) {
+    if (status) { status.textContent = `Active: ${escHtml(filename)}`; status.style.color = 'var(--green)'; }
+    row.classList.remove('hidden');
+  } else {
+    row.classList.add('hidden');
+  }
+}
+
+function loadRulesSourceSettings() {
+  chrome.storage.local.get(['customRulesUrl', 'localRulesFileName'], ({ customRulesUrl, localRulesFileName }) => {
+    const input = document.getElementById('rulesUrlInput');
+    if (input) input.value = customRulesUrl || '';
+    setResetUrlVisible(!!customRulesUrl);
+    setLocalFileActiveRow(localRulesFileName || null);
+  });
+}
+
+function showRulesStatus(msg, ok = true) {
+  const el = document.getElementById('rulesFileStatus');
+  if (el) {
+    el.textContent = msg;
+    el.style.color = ok ? 'var(--green)' : 'var(--red)';
+  }
+}
+
+document.getElementById('saveRulesUrl')?.addEventListener('click', () => {
+  const url = document.getElementById('rulesUrlInput')?.value.trim();
+  // Clear cache + local file (mutually exclusive with remote URL)
+  chrome.storage.local.remove([RULES_CACHE_KEY_TEXT, RULES_CACHE_KEY_TIME, 'localRulesFileName'], () => {
+    setLocalFileActiveRow(null);
+    if (url) {
+      chrome.storage.local.set({ customRulesUrl: url }, () => {
+        setResetUrlVisible(true);
+        showRulesStatus('URL saved. Rules will reload on next page load.');
+      });
+    } else {
+      chrome.storage.local.remove('customRulesUrl', () => {
+        setResetUrlVisible(false);
+        showRulesStatus('Reset to default URL. Cache cleared.');
+      });
+    }
+  });
+});
+
+document.getElementById('resetRulesFile')?.addEventListener('click', () => {
+  chrome.storage.local.remove(['localRulesFileName', RULES_CACHE_KEY_TEXT, RULES_CACHE_KEY_TIME], () => {
+    setLocalFileActiveRow(null);
+  });
+});
+
+document.getElementById('resetRulesUrl')?.addEventListener('click', () => {
+  const input = document.getElementById('rulesUrlInput');
+  if (input) input.value = '';
+  chrome.storage.local.remove(['customRulesUrl', RULES_CACHE_KEY_TEXT, RULES_CACHE_KEY_TIME], () => {
+    setResetUrlVisible(false);
+    showRulesStatus('Reset to default. Cache cleared.');
+  });
+});
+
+document.getElementById('rulesFileBtn')?.addEventListener('click', () => {
+  document.getElementById('rulesFileInput')?.click();
+});
+
+document.getElementById('rulesFileInput')?.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const text = ev.target?.result;
+    if (!text) { showRulesStatus('File is empty.', false); return; }
+    // Store as cache with far-future timestamp so it stays active until manually reset
+    const FAR_FUTURE = Date.now() + 10 * 365 * 24 * 60 * 60 * 1000;
+    chrome.storage.local.set({
+      [RULES_CACHE_KEY_TEXT]: text,
+      [RULES_CACHE_KEY_TIME]: FAR_FUTURE,
+      localRulesFileName: file.name,
+    }, () => {
+      setLocalFileActiveRow(file.name);
+      // Clear remote URL (mutually exclusive with local file)
+      chrome.storage.local.remove('customRulesUrl', () => {
+        setResetUrlVisible(false);
+        const urlInput = document.getElementById('rulesUrlInput');
+        if (urlInput) urlInput.value = '';
+      });
+    });
+  };
+  reader.onerror = () => showRulesStatus('Failed to read file.', false);
+  reader.readAsText(file);
+  // Reset file input so the same file can be re-selected
+  e.target.value = '';
 });

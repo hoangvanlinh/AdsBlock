@@ -82,15 +82,25 @@ function isFreshCache(entry){
 }
 
 function fetchRemoteRules(){
-  return fetch(REMOTE_RULES_URL,{cache:'no-store'})
-    .then(function(res){
-      if(res.ok)return res.text();
-      throw new Error('remote rules unavailable');
-    })
-    .then(function(text){
-      if(!text)throw new Error('empty remote rules');
-      return setCachedRules(text).then(function(){return text;});
-    });
+  var urlPromise=new Promise(function(resolve){
+    if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(REMOTE_RULES_URL);return;}
+    try{
+      chrome.storage.local.get('customRulesUrl',function(res){
+        resolve((res&&res.customRulesUrl)||REMOTE_RULES_URL);
+      });
+    }catch(e){resolve(REMOTE_RULES_URL);}
+  });
+  return urlPromise.then(function(url){
+    return fetch(url,{cache:'no-store'})
+      .then(function(res){
+        if(res.ok)return res.text();
+        throw new Error('remote rules unavailable');
+      })
+      .then(function(text){
+        if(!text)throw new Error('empty remote rules');
+        return setCachedRules(text).then(function(){return text;});
+      });
+  });
 }
 
 function fetchLocalRules(){
