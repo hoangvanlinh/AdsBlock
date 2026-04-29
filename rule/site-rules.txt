@@ -46,12 +46,14 @@ labels = sponsored | đượctàitrợ | patrocinado | sponsorisé | gesponsert 
 feed_selectors = [role="feed"] [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-pagelet*="VideoFeed"] [role="article"] | div[data-pagelet*="Reels"] [role="article"]
 market_selectors = div[aria-label="Marketplace"] [role="article"] | div[data-pagelet*="Marketplace"] [role="article"]
 right_rail_selectors = div[data-pagelet="RightRail"] > div | div[data-pagelet*="RightRail"] > div | div[data-visualcompletion="ignore-late-mutation"]
-# direct_hide_selectors for facebook handled by content.css
-ad_host_selectors = a[aria-label^="Sponsored"] | a[aria-label^="Sponsorisé"] | a[aria-label^="Gesponsert"] | a[aria-label^="Patrocinado"] | a[aria-label^="Sponsorizzato"] | a[aria-label^="Gesponsord"] | a[aria-label^="Sponsorowane"] | a[aria-label^="Sponsorlu"] | a[aria-label^="Bersponsor"] | a[aria-label^="Ditaja"] | span[aria-label^="Sponsored"]
+# FB ads use data-ad-rendering-role / data-ad-comet-preview as internal markers.
+# :has() catches carousel/video/photo ad posts regardless of CSS-obfuscated "Sponsored" text.
+direct_hide_selectors = [role="feed"] [role="article"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has([data-ad-comet-preview]) | div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role])
+ad_host_selectors = a[aria-label^="Sponsored"] | a[aria-label^="Sponsorisé"] | a[aria-label^="Gesponsert"] | a[aria-label^="Patrocinado"] | a[aria-label^="Sponsorizzato"] | a[aria-label^="Gesponsord"] | a[aria-label^="Sponsorowane"] | a[aria-label^="Sponsorlu"] | a[aria-label^="Bersponsor"] | a[aria-label^="Ditaja"] | span[aria-label^="Sponsored"] | a[attributionsrc*="privacy_sandbox/comet/register/source"]
 innertext_selectors = [role="feed"] [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-visualcompletion="ignore-late-mutation"] h3
 innertext_labels = Sponsored
-context_selectors = a[aria-label] | h3 | header | [role="heading"] | span[dir="auto"]
-attr_keys = aria-label
+context_selectors = a[aria-label] | h3 | header | [role="heading"] | span[dir="auto"] | [data-ad-rendering-role]
+attr_keys = aria-label | data-ad-rendering-role | data-ad-comet-preview | data-ad-preview
 hide_closest = [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-visualcompletion="ignore-late-mutation"]
 
 [reddit]
