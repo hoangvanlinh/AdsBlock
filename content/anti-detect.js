@@ -23,8 +23,8 @@
   // content.js dispatches _ytpb_off / _ytpb_on (same event used by
   // yt-adblock.js) to toggle protection state across all MAIN world scripts.
   var _enabled = false;
-  document.addEventListener('_ytpb_off', function () { _enabled = false; });
-  document.addEventListener('_ytpb_on',  function () { _enabled = true; });
+  document.addEventListener('_ytpb_off', function () { _enabled = false; _uninstallWrappers(); });
+  document.addEventListener('_ytpb_on',  function () { _enabled = true;  _installWrappers(); });
   // ── Ad network host regex ────────────────────────────────────────
   // Static fallback — active immediately before site-rules.txt loads.
   // Covers all hosts in rule/site-rules.txt [global] ad_script_hosts +
@@ -92,17 +92,19 @@
   };
 
   // ── 2. fetch() fake ──────────────────────────────────────────────
+  // Wrapper is installed/removed dynamically via _installWrappers/_uninstallWrappers
+  // so anti-detect never appears in the call stack when protection is off.
   var _oFetch = window.fetch;
-  window.fetch = function (input, init) {
+  function _fetchWrapper(input, init) {
     var u = (input instanceof Request) ? input.url : String(input || '');
-    if (_enabled && _isAdUrl(u)) {
+    if (_isAdUrl(u)) {
       return Promise.resolve(new Response('', {
         status: 200, statusText: 'OK',
         headers: { 'Content-Type': 'text/plain' }
       }));
     }
     return _oFetch.apply(this, arguments);
-  };
+  }
 
   // ── 3. sendBeacon fake ───────────────────────────────────────────
   var _oBeacon = navigator.sendBeacon.bind(navigator);
@@ -110,6 +112,17 @@
     if (_enabled && _isAdUrl(url)) return true;
     return _oBeacon.apply(navigator, arguments);
   };
+
+  // ── fetch install/uninstall ──────────────────────────────────────
+  // Install the fetch wrapper only when protection is ON so anti-detect.js
+  // never appears in the call stack for unrelated network/CORS errors.
+  function _installWrappers() {
+    if (window.fetch !== _fetchWrapper) window.fetch = _fetchWrapper;
+  }
+  function _uninstallWrappers() {
+    if (window.fetch === _fetchWrapper) window.fetch = _oFetch;
+  }
+  // _enabled starts false — wrappers are installed when _ytpb_on fires.
 
   // ── 4. Image pixel tracking fake ────────────────────────────────
   // Ad SDKs fire impression/conversion pixels via new Image().src = url.
