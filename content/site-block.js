@@ -8,6 +8,9 @@ var DEFAULT_ATTR_KEYS=['aria-label','data-promoted','post-type','recommendation-
 var CANDIDATE_KEYS=['selectors','feed_selectors','market_selectors','right_rail_selectors','post_selectors'];
 var HOST_KEYS=['ad_host_selectors'];
 var DIRECT_HIDE_KEYS=['direct_hide_selectors'];
+// Selector caches — rebuilt once when _config changes, reused on every scan/mutation
+var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[];
+var _cachedDirectStr='', _cachedCandidateStr='', _cachedHostStr='';
 
 function extValid(){
   try{return !!(chrome.runtime&&chrome.runtime.getManifest());}
@@ -50,6 +53,30 @@ function flattenSelectors(cfg,keys){
     }
   }
   return out;
+}
+
+// collectFast — single querySelectorAll with a pre-joined selector string.
+// ~10-50x faster than calling querySelectorAll once per selector.
+function collectFast(root,selectorStr){
+  if(!root||!selectorStr)return[];
+  var out=[];
+  try{
+    if(root.nodeType===1&&root.matches(selectorStr))out.push(root);
+    if(root.querySelectorAll)root.querySelectorAll(selectorStr).forEach(function(el){out.push(el);});
+  }catch(e){}
+  return out;
+}
+
+// _rebuildSelectorCache — compute and cache flattened+joined selector strings from _config.
+// Called once after _config is assigned so scan() and the observer don't recompute per call.
+function _rebuildSelectorCache(){
+  if(!_config){_cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';return;}
+  _cachedDirect=flattenSelectors(_config,DIRECT_HIDE_KEYS);
+  _cachedCandidates=flattenSelectors(_config,CANDIDATE_KEYS);
+  _cachedHosts=flattenSelectors(_config,HOST_KEYS);
+  _cachedDirectStr=_cachedDirect.join(',');
+  _cachedCandidateStr=_cachedCandidates.join(',');
+  _cachedHostStr=_cachedHosts.join(',');
 }
 
 function matchesAny(value,patterns){
@@ -204,15 +231,15 @@ function hide(el){
 function scan(root){
   if(!_enabled||!_config||!isEligiblePage(_config))return;
   var count=0;
-  var direct=collect(root,flattenSelectors(_config,DIRECT_HIDE_KEYS));
+  var direct=collectFast(root,_cachedDirectStr);
   for(var d=0;d<direct.length;d++)if(hide(direct[d]))count++;
-  var candidates=collect(root,flattenSelectors(_config,CANDIDATE_KEYS));
+  var candidates=collectFast(root,_cachedCandidateStr);
   for(var i=0;i<candidates.length;i++){
     if(!isAdCandidate(candidates[i],_config))continue;
     var target=nearestHideTarget(candidates[i],_config)||candidates[i];
     if(hide(target))count++;
   }
-  var hosts=collect(root,flattenSelectors(_config,HOST_KEYS));
+  var hosts=collectFast(root,_cachedHostStr);
   for(var j=0;j<hosts.length;j++){
     if(!isAdCandidate(hosts[j],_config))continue;
     var hostTarget=nearestHideTarget(hosts[j],_config)||hosts[j];
@@ -236,25 +263,20 @@ function startObserver(){
   if(_observer)return;
   _observer=new MutationObserver(function(muts){
     if(!_enabled||!_config)return;
-    var directSelectors=flattenSelectors(_config,DIRECT_HIDE_KEYS);
     for(var i=0;i<muts.length;i++){
       var mut=muts[i];
-      // Fast path: direct_hide_selectors — hide immediately without RAF
+      // Fast path: direct_hide_selectors — single matches/querySelectorAll with pre-joined string
       if(mut.type==='childList'){
         for(var j=0;j<mut.addedNodes.length;j++){
           var node=mut.addedNodes[j];
           if(node.nodeType!==1)continue;
-          // Check node itself
-          if(directSelectors.length){
-            for(var s=0;s<directSelectors.length;s++){
-              try{
-                if(node.matches(directSelectors[s])){hide(node);break;}
-              }catch(e){}
-            }
+          // Check node itself — one matches() call covers all direct selectors
+          if(_cachedDirectStr){
+            try{if(node.matches(_cachedDirectStr))hide(node);}catch(e){}
           }
-          // Check descendants inside the added node
-          if(directSelectors.length&&node.querySelectorAll){
-            var found=collect(node,directSelectors);
+          // Check descendants — one querySelectorAll covers all direct selectors
+          if(_cachedDirectStr&&node.querySelectorAll){
+            var found=collectFast(node,_cachedDirectStr);
             for(var f=0;f<found.length;f++)hide(found[f]);
           }
           // Full scan for candidate/host selectors (deferred via RAF)
@@ -264,17 +286,24 @@ function startObserver(){
         // Attribute change may make an existing element become an ad
         var target=mut.target;
         if(target&&target.nodeType===1){
-          if(directSelectors.length){
-            for(var s2=0;s2<directSelectors.length;s2++){
-              try{if(target.matches(directSelectors[s2])){hide(target);break;}}catch(e){}
-            }
+          if(_cachedDirectStr){
+            try{if(target.matches(_cachedDirectStr))hide(target);}catch(e){}
           }
+          // Ad-signal attrs (data-ad-rendering-role etc.) are set on a CHILD element
+          // after the article is in the DOM — check nearest article ancestor immediately
+          // var _mn=mut.attributeName||'';
+          // if((_mn==='data-ad-rendering-role'||_mn==='data-ad-comet-preview'||_mn==='data-ad-preview')&&target.closest){
+          //   var _art=target.closest('[role="article"],[data-pagelet*="FeedUnit"]');
+          //   if(_art&&_cachedDirectStr){
+          //     try{if(_art.matches(_cachedDirectStr))hide(_art);}catch(e){}
+          //   }
+          // }
           schedule(target);
         }
       }
     }
   });
-  _observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','slot','click-location','post-type','data-promoted','data-component-type','cel_widget_id','data-cel-widget','promoted','ad-type','placement']});
+  _observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','slot','click-location','post-type','data-promoted','data-component-type','cel_widget_id','data-cel-widget','promoted','ad-type','placement','data-ad-rendering-role','data-ad-comet-preview','data-ad-preview']});
 }
 
 function stopObserver(){
@@ -407,6 +436,7 @@ function boot(){
     var base=globalCfg||{};
     function _apply(siteCfg){
       _config=_mergeConfigs(base,siteCfg||{});
+      _rebuildSelectorCache();
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
       else sync();
     }
