@@ -107,11 +107,24 @@
   }
 
   // ── 3. sendBeacon fake ───────────────────────────────────────────
-  var _oBeacon = navigator.sendBeacon.bind(navigator);
-  navigator.sendBeacon = function (url) {
-    if (_enabled && _isAdUrl(url)) return true;
-    return _oBeacon.apply(navigator, arguments);
-  };
+  // var _oBeacon = navigator.sendBeacon.bind(navigator);
+  // navigator.sendBeacon = function (url) {
+  //   if (_enabled && _isAdUrl(url)) return true;
+  //   return _oBeacon.apply(navigator, arguments);
+  // };
+  const desc = Object.getOwnPropertyDescriptor(Navigator.prototype, 'sendBeacon');
+  const _oBeacon = desc.value;
+
+  Object.defineProperty(Navigator.prototype, 'sendBeacon', {
+    value: function (url, data) {
+      try {
+        if (_enabled && _isAdUrl(url)) return true;
+        return _oBeacon.call(this, url, data);
+      } catch (e) {
+        return true;
+      }
+    }
+  });
 
   // ── fetch install/uninstall ──────────────────────────────────────
   // Install the fetch wrapper only when protection is ON so anti-detect.js
