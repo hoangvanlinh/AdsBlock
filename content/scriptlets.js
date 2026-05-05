@@ -71,18 +71,17 @@
   }
 
   function setConstant(chain, raw) {
-    if (!chain) return;
+    if (!chain || !_scriptletsEnabled) return;
     var value = _parseVal(raw);
     var parts = _strSplit.call(chain, '.');
     var leaf  = parts.pop();
 
     function lock(obj, key) {
+      var origVal = obj[key];
       try {
         Object.defineProperty(obj, key, {
-          get: function () { return value; },
-          set: function () {
-            //try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
-          },
+          get: function () { return _scriptletsEnabled ? value : origVal; },
+          set: function (v) { if (!_scriptletsEnabled) origVal = v; },
           configurable: false, enumerable: true
         });
       } catch (e) { try { obj[key] = value; } catch (ee) {} }
@@ -533,6 +532,7 @@
       }
     }
     proxyApplyFn('fetch', function fetch(context) {
+      if (!_scriptletsEnabled) return context.reflect();
       const { callArgs } = context;
       const details = collateFetchArgumentsFn(...callArgs);
       if (propsToMatch === '' && responseBody === '') return context.reflect();
@@ -570,6 +570,7 @@
       try { xhr.dispatchEvent(new Event(type)); } catch(e) {}
     };
     proxyApplyFn('XMLHttpRequest.prototype.open', function(context) {
+      if (!_scriptletsEnabled) return context.reflect();
       const { thisArg, callArgs } = context;
       xhrInstances.delete(thisArg);
       const [method, url, ...args] = callArgs;
@@ -594,6 +595,7 @@
       return context.reflect();
     });
     proxyApplyFn('XMLHttpRequest.prototype.send', function(context) {
+      if (!_scriptletsEnabled) return context.reflect();
       const { thisArg } = context;
       const xhrDetails = xhrInstances.get(thisArg);
       if (xhrDetails === undefined) return context.reflect();
@@ -677,6 +679,7 @@
       });
     });
     proxyApplyFn('XMLHttpRequest.prototype.getResponseHeader', function(context) {
+      if (!_scriptletsEnabled) return context.reflect();
       const { thisArg } = context;
       const xhrDetails = xhrInstances.get(thisArg);
       if (xhrDetails === undefined || thisArg.readyState < thisArg.HEADERS_RECEIVED) return context.reflect();
@@ -686,6 +689,7 @@
       return null;
     });
     proxyApplyFn('XMLHttpRequest.prototype.getAllResponseHeaders', function(context) {
+      if (!_scriptletsEnabled) return context.reflect();
       const { thisArg } = context;
       const xhrDetails = xhrInstances.get(thisArg);
       if (xhrDetails === undefined || thisArg.readyState < thisArg.HEADERS_RECEIVED) return context.reflect();
@@ -798,6 +802,7 @@
     const extraArgs = safe.getExtraArgs(Array.from(arguments), 2);
     const propNeedles = parsePropertiesToMatchFn(extraArgs.propsToMatch, 'url');
     const applyHandler = function (target, thisArg, args) {
+      if (!_scriptletsEnabled) return Reflect.apply(target, thisArg, args);
       const fetchPromise = Reflect.apply(target, thisArg, args);
       if (propNeedles.size !== 0) {
         const props = collateFetchArgumentsFn(...args);
@@ -841,6 +846,7 @@
     const xhrInstances = new WeakMap();
     self.XMLHttpRequest = class extends self.XMLHttpRequest {
       open(method, url, ...args) {
+        if (!_scriptletsEnabled) return super.open(method, url, ...args);
         const xhrDetails = { method, url };
         let outcome = 'match';
         if (propNeedles.size !== 0) {
@@ -889,8 +895,9 @@
   // before any page script can capture the original reference.
   // Rules are registered later (on async rules load) via noWindowOpenIf().
   var _noWinOpenRules = [];
+  var _scriptletsEnabled = true;
   proxyApplyFn('open', function (context) {
-    if (_noWinOpenRules.length === 0) return context.reflect();
+    if (!_scriptletsEnabled || _noWinOpenRules.length === 0) return context.reflect();
     const { callArgs } = context;
     const haystack = callArgs.join(' ');
     const noopFunc = function () {};
@@ -1232,7 +1239,14 @@
   // Bridge: content.js dispatches '__adblock_scriptlet_rules__' after async rule load.
   // Content script and MAIN world share DOM events — standard cross-world pattern.
   window.addEventListener('__adblock_scriptlet_rules__', function(ev) {
+    _scriptletsEnabled = true;
     try { _applyScriptletRules(ev.detail); } catch (e) {}
+  });
+
+  // When protection is toggled OFF or domain paused, disable all scriptlet logic.
+  window.addEventListener('__adblock_scriptlet_disable__', function() {
+    _scriptletsEnabled = false;
+    _noWinOpenRules.length = 0;
   });
 
 

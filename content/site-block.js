@@ -387,7 +387,7 @@ function sync(cb){
     var paused=(res.pausedDomains||[]).indexOf(location.hostname)!==-1;
     _enabled=(res.enabled!==false)&&res.cosmeticFiltering!==false&&!paused;
     if(_enabled){schedule(document);startObserver();attachShadowListeners();}
-    else stopObserver();
+    else{stopObserver();try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_disable__'));}catch(_e){}}
     if(cb)cb({ok:true});
   });}catch(e){}
 }
@@ -502,7 +502,7 @@ document.addEventListener('yt-navigate-finish',_onSpaNav);
 document.addEventListener('yt-page-data-updated',_onSpaNav);
 
 window.addEventListener('__adblock_blocked__',function(e){
-  if(!extValid())return;
+  if(!extValid()||!_enabled)return;
   var url=location.href;
   chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
 });
