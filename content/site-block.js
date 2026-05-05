@@ -500,8 +500,12 @@ function _onSpaNav(){
 }
 document.addEventListener('yt-navigate-finish',_onSpaNav);
 document.addEventListener('yt-page-data-updated',_onSpaNav);
-// Resume scan when tab becomes visible again — from uBO visibility patterns.
-document.addEventListener('visibilitychange',function(){if(!document.hidden&&_enabled&&_config)schedule(document);});
+
+window.addEventListener('__adblock_blocked__',function(e){
+  if(!extValid())return;
+  var url=location.href;
+  chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
+});
 
 chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
   if(msg.type==='TOGGLE'||msg.type==='PAUSE_DOMAIN'||msg.type==='COSMETIC_TOGGLE'){

@@ -80,7 +80,9 @@
       try {
         Object.defineProperty(obj, key, {
           get: function () { return value; },
-          set: function () {},
+          set: function () {
+            //try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+          },
           configurable: false, enumerable: true
         });
       } catch (e) { try { obj[key] = value; } catch (ee) {} }
@@ -819,6 +821,7 @@
             type: { value: responseBefore.type },
             url: { value: responseBefore.url },
           });
+          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
           return responseAfter;
         }).catch(() => responseBefore);
       }).catch(() => fetchPromise);
@@ -871,6 +874,7 @@
         xhrDetails.response = typeof objAfter === 'object'
           ? (typeof innerResponse === 'string' ? safe.JSON_stringify(objAfter) : objAfter)
           : innerResponse;
+        try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
         return xhrDetails.response;
       }
       get responseText() {
@@ -890,12 +894,14 @@
     const { callArgs } = context;
     const haystack = callArgs.join(' ');
     const noopFunc = function () {};
+     const _blockedUrl = callArgs[0] || '';
     for (var _ri = 0; _ri < _noWinOpenRules.length; _ri++) {
       const rule = _noWinOpenRules[_ri];
       if (rule.re.test(haystack) !== rule.match) continue;
       // Matched — apply the rule's blocking strategy
       if (rule.delay === '') return null;
       if (rule.decoy === 'blank') {
+        try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: _blockedUrl } })); } catch (_e) {}
         callArgs[0] = 'about:blank';
         const r = context.reflect();
         setTimeout(() => { try { r.close(); } catch (e) {} }, rule.ms);
@@ -1159,7 +1165,10 @@
         if (typeof fn === 'function') fnStr = fn.toString();
         else if (typeof fn === 'string') fnStr = fn;
       } catch(e) {}
-      if (_matchAll || rePattern.test(fnStr)) return; // block
+      if (_matchAll || rePattern.test(fnStr)) {
+          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+        return;
+      } // block
       return context.reflect();
     });
   }
