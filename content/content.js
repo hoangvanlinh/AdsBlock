@@ -43,42 +43,6 @@ if (!window[Symbol.for('_adblock_scriptlets')] && document.contentType === 'text
   _sc.remove();
 }
 
-function _dispatchAdHosts() {
-  if (!(window.__adblockRuleLoader && window.__adblockRuleLoader.load)) return;
-  window.__adblockRuleLoader.load('global', {}, function (cfg) {
-    const hosts = (cfg.ad_script_hosts || [])
-      .concat(cfg.ad_network_patterns || [])
-      .filter(function (h, i, a) { return h && a.indexOf(h) === i; });
-    if (hosts.length) {
-      document.dispatchEvent(new CustomEvent('__adblock_ad_hosts__', { detail: hosts }));
-    }
-  });
-}
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', _dispatchAdHosts);
-} else {
-  _dispatchAdHosts();
-}
-
-document.addEventListener('_ytpb1', (event) => {
-  if (!extValid()) return;
-  const detail = event.detail || {};
-  chrome.runtime.sendMessage({
-    type: 'AD_SKIPPED',
-    domain: detail.domain || location.hostname,
-    url: detail.url || location.href,
-  }).catch(() => {});
-});
-
-document.addEventListener('_ytpb2', (event) => {
-  if (!extValid()) return;
-  const detail = event.detail || {};
-  chrome.runtime.sendMessage({
-    type: 'AD_BLOCKED',
-    domain: detail.domain || location.hostname,
-    url: detail.url || location.href,
-  }).catch(() => {});
-});
 //   1. Hide ad elements via CSS selectors (cosmetic filtering)
 //   2. Remove ad iframes / scripts on DOM ready
 //   3. Observe dynamic DOM mutations (SPA / infinite scroll)
@@ -97,12 +61,7 @@ const FALLBACK_COSMETIC_SELECTORS = [
   'iframe[src*="googlesyndication"]',
 ];
 
-const FALLBACK_AD_SCRIPT_HOSTS = [
-  'googlesyndication.com', 'doubleclick.net', 'googleadservices.com',
-];
-
 let _cosmeticSelectors = FALLBACK_COSMETIC_SELECTORS.slice();
-let _adScriptHosts = FALLBACK_AD_SCRIPT_HOSTS.slice();
 
 // ── Cached joined selector string ────────────────────────────────
 // querySelectorAll with a joined selector is ~10x faster than N separate calls.
@@ -119,8 +78,8 @@ function _buildJoinedSelector(selectors) {
 }
 
 // ── Resource classification for stats ────────────────────────────
-// Populated dynamically from background.js rule patterns on init.
-// Fallback defaults active until background responds.
+// Seeded from site-rules.txt [global] ad_network_patterns / tracker_network_patterns.
+// Fallback defaults active until config loads.
 let _adPatterns      = ['doubleclick', 'googlesyndication', 'googleadservices'];
 let _trackerPatterns = ['google-analytics', 'analytics.google', 'facebook.com/tr'];
 let _malwarePatterns = ['coinhive', 'coin-hive', 'jsecoin'];
@@ -129,19 +88,17 @@ function applyGlobalConfig(cfg) {
   if (!cfg) return;
   if (Array.isArray(cfg.direct_hide_selectors) && cfg.direct_hide_selectors.length) {
     _cosmeticSelectors = cfg.direct_hide_selectors.slice();
-    _joinedSelector = _buildJoinedSelector(_cosmeticSelectors); // rebuild cache
+    _joinedSelector = _buildJoinedSelector(_cosmeticSelectors);
   }
-  if (Array.isArray(cfg.ad_script_hosts) && cfg.ad_script_hosts.length) {
-    _adScriptHosts = cfg.ad_script_hosts.slice();
+  // Use ad_network_patterns / tracker_network_patterns for URL stats classification
+  if (Array.isArray(cfg.ad_network_patterns) && cfg.ad_network_patterns.length) {
+    _adPatterns = cfg.ad_network_patterns.slice();
   }
-  if (Array.isArray(cfg.ad_patterns) && cfg.ad_patterns.length) {
-    _adPatterns = cfg.ad_patterns.slice();
+  if (Array.isArray(cfg.tracker_network_patterns) && cfg.tracker_network_patterns.length) {
+    _trackerPatterns = cfg.tracker_network_patterns.slice();
   }
-  if (Array.isArray(cfg.tracker_patterns) && cfg.tracker_patterns.length) {
-    _trackerPatterns = cfg.tracker_patterns.slice();
-  }
-  if (Array.isArray(cfg.malware_patterns) && cfg.malware_patterns.length) {
-    _malwarePatterns = cfg.malware_patterns.slice();
+  if (Array.isArray(cfg.malware_network_domains) && cfg.malware_network_domains.length) {
+    _malwarePatterns = cfg.malware_network_domains.slice();
   }
 }
 
@@ -152,10 +109,6 @@ const _globalConfigReady = new Promise((resolve) => {
   }
   window.__adblockRuleLoader.load('global', {
     direct_hide_selectors: FALLBACK_COSMETIC_SELECTORS,
-    ad_script_hosts: FALLBACK_AD_SCRIPT_HOSTS,
-    ad_patterns: _adPatterns,
-    tracker_patterns: _trackerPatterns,
-    malware_patterns: _malwarePatterns,
   }, (cfg) => {
     applyGlobalConfig(cfg);
     resolve();
@@ -169,19 +122,6 @@ function classifyUrl(url) {
   if (_trackerPatterns.some(h => u.includes(h))) return 'tracker';
   if (_adPatterns.some(h => u.includes(h)))      return 'ad';
   return null;
-}
-
-// Fetch real classifier lists from background (derived from actual DNR rules)
-function loadClassifierLists() {
-  if (!extValid()) return;
-  try {
-    chrome.runtime.sendMessage({ type: 'GET_CLASSIFIER_LISTS' }, (res) => {
-      if (chrome.runtime.lastError || !res) return;
-      if (res.adPatterns?.length)      _adPatterns      = res.adPatterns;
-      if (res.trackerPatterns?.length) _trackerPatterns = res.trackerPatterns;
-      if (res.malwarePatterns?.length) _malwarePatterns = res.malwarePatterns;
-    });
-  } catch { /* extension context invalidated */ }
 }
 
 // Batch counter — flushed every 2 s to avoid flooding the message channel
@@ -284,8 +224,7 @@ function init() {
         }
         _globalConfigReady.finally(() => {
           hideAds();
-          loadClassifierLists();   // fetch real rule patterns from background
-          removeAdScripts();       // seeds initial stats from existing elements
+          removeAdScripts();   // seed initial stats from existing elements
           observeMutations();
         });
       } catch { /* extension context invalidated */ }
@@ -453,24 +392,15 @@ function hideAds(root = document) {
   }
 }
 
-// ── Remove injected ad scripts ────────────────────────────────────
+// ── Record network elements for stats ────────────────────────────
+// DNR in background.js handles actual network blocking.
+// This function only reads element URLs to update stats counters.
 function removeAdScripts(root = document) {
   if (!enabled) return;
   root.querySelectorAll('script[src], iframe[src], img[src], link[href]').forEach(el => {
     try {
       const rawUrl = el.src || el.getAttribute('src') || el.href || el.getAttribute('href') || '';
-      if (!rawUrl) return;
-      const host = new URL(rawUrl).hostname;
-      // Record for stats regardless of whether we physically remove it
-      // (DNR already blocked the request; we just observe the attempt)
-      recordResource(rawUrl);
-      if (_adScriptHosts.some(h => host.endsWith(h))) {
-        // Don't remove iframes that are likely video players
-        if (el.tagName === 'IFRAME' && isVideoPlayerElement(el)) return;
-        // On YouTube, don't remove elements inside the video player
-        if (isYouTube && el.closest('.html5-video-player')) return;
-        el.remove();
-      }
+      if (rawUrl) recordResource(rawUrl);
     } catch { /* invalid URL */ }
   });
 }
@@ -497,13 +427,7 @@ function observeMutations() {
       removeAdScripts(node);
     }
     for (const el of srcEls) {
-      if (isYouTube && el.closest('.html5-video-player')) continue;
-      try {
-        const host = new URL(el.src).hostname;
-        if (_adScriptHosts.some(h => host.endsWith(h))) {
-          el.style.setProperty('display', 'none', 'important');
-        }
-      } catch { /* ignore */ }
+      try { recordResource(el.src); } catch { /* ignore */ }
     }
   }
 

@@ -89,23 +89,18 @@ async function fetchLocalRuleText() {
 function buildDefaultRulesFromConfig(config) {
   const adTypes = ['script', 'image', 'xmlhttprequest', 'sub_frame'];
   const trackerTypes = ['script', 'image', 'xmlhttprequest', 'ping'];
-  // YouTube ad requests must NOT be blocked at network level —
-  // yt-adblock.js strips ads from player responses in JS.
-  // Blocking at network level causes ERR_BLOCKED_BY_CLIENT which
-  // YouTube detects as an adblock signal.
-  const ytExclude = ['youtube.com', 'www.youtube.com'];
   const adRules = config.adNetworkPatterns.map((pattern, index) => ({
     id: 1 + index,
     priority: 1,
     action: { type: 'block' },
-    condition: { urlFilter: pattern, resourceTypes: adTypes, excludedInitiatorDomains: ytExclude },
+    condition: { urlFilter: pattern, resourceTypes: adTypes },
   }));
   const trackerStart = adRules.length + 1;
   const trackerRules = config.trackerNetworkPatterns.map((pattern, index) => ({
     id: trackerStart + index,
     priority: 1,
     action: { type: 'block' },
-    condition: { urlFilter: pattern, resourceTypes: trackerTypes, excludedInitiatorDomains: ytExclude },
+    condition: { urlFilter: pattern, resourceTypes: trackerTypes },
   }));
   return { adRules, trackerRules };
 }
