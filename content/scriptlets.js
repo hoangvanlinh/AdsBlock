@@ -881,36 +881,33 @@
   }
 
   // ── noWindowOpenIf ──────────────────────────────────────────────
-  // Proxies window.open and blocks calls matching `pattern`.
-  // Empty pattern → block ALL window.open (popup ads).
-  // Pattern starting with '!' inverts: block everything EXCEPT matches.
-  function noWindowOpenIf(pattern, delay, decoy) {
-    pattern = pattern || '';
-    delay = delay || '';
-    decoy = decoy || '';
-    const targetMatchResult = pattern.charAt(0) !== '!';
-    if (!targetMatchResult) pattern = pattern.slice(1);
-    const rePattern = _toRegex(pattern);
-    const autoRemoveAfter = (parseFloat(delay) || 0) * 1000;
+  // Proxy installed ONCE at document_start so it intercepts window.open
+  // before any page script can capture the original reference.
+  // Rules are registered later (on async rules load) via noWindowOpenIf().
+  var _noWinOpenRules = [];
+  proxyApplyFn('open', function (context) {
+    if (_noWinOpenRules.length === 0) return context.reflect();
+    const { callArgs } = context;
+    const haystack = callArgs.join(' ');
     const noopFunc = function () {};
-    proxyApplyFn('open', function (context) {
-      const { callArgs } = context;
-      const haystack = callArgs.join(' ');
-      if (rePattern.test(haystack) !== targetMatchResult) return context.reflect();
-      if (delay === '') return null;
-      if (decoy === 'blank') {
+    for (var _ri = 0; _ri < _noWinOpenRules.length; _ri++) {
+      const rule = _noWinOpenRules[_ri];
+      if (rule.re.test(haystack) !== rule.match) continue;
+      // Matched — apply the rule's blocking strategy
+      if (rule.delay === '') return null;
+      if (rule.decoy === 'blank') {
         callArgs[0] = 'about:blank';
         const r = context.reflect();
-        setTimeout(() => { try { r.close(); } catch (e) {} }, autoRemoveAfter);
+        setTimeout(() => { try { r.close(); } catch (e) {} }, rule.ms);
         return r;
       }
-      const tag = decoy === 'obj' ? 'object' : 'iframe';
-      const urlProp = decoy === 'obj' ? 'data' : 'src';
+      const tag = rule.decoy === 'obj' ? 'object' : 'iframe';
+      const urlProp = rule.decoy === 'obj' ? 'data' : 'src';
       const decoyEl = document.createElement(tag);
       decoyEl[urlProp] = callArgs[0] || '';
       decoyEl.style.cssText = 'height:1px;position:fixed;top:-1px;width:1px;pointer-events:none';
       document.body.appendChild(decoyEl);
-      setTimeout(() => { decoyEl.remove(); }, autoRemoveAfter);
+      setTimeout(() => { decoyEl.remove(); }, rule.ms);
       let popup = decoyEl.contentWindow;
       if (typeof popup === 'object' && popup !== null) {
         try { Object.defineProperty(popup, 'closed', { value: false }); } catch (e) {}
@@ -925,7 +922,17 @@
         });
       }
       return popup;
-    });
+    }
+    return context.reflect();
+  });
+
+  function noWindowOpenIf(pattern, delay, decoy) {
+    pattern = pattern || '';
+    delay = delay || '';
+    decoy = decoy || '';
+    const match = pattern.charAt(0) !== '!';
+    if (!match) pattern = pattern.slice(1);
+    _noWinOpenRules.push({ re: _toRegex(pattern), match, delay, decoy, ms: (parseFloat(delay) || 0) * 1000 });
   }
 
   // ── preventAddEventListener ──────────────────────────────────────
@@ -1174,73 +1181,6 @@
     });
   }
 
-  // ── proxyApplyFn ─────────────────────────────────────────────────
-  // Generic Proxy helper used by noWindowOpenIf. Wraps any callable at a
-  // dotted path on globalThis so handlers can inspect/redirect calls.
-  function proxyApplyFn(target, handler) {
-    var ctx = globalThis, prop = target;
-    for (;;) {
-      var pos = prop.indexOf('.');
-      if (pos === -1) break;
-      ctx = ctx[prop.slice(0, pos)];
-      if (ctx instanceof Object === false) return;
-      prop = prop.slice(pos + 1);
-    }
-    var fn = ctx[prop];
-    if (typeof fn !== 'function') return;
-    if (proxyApplyFn._init === undefined) {
-      proxyApplyFn._init = true;
-      proxyApplyFn.ctxPool = [];
-      proxyApplyFn.Ctx = function(callFn, thisArg, callArgs) {
-        this.callFn = callFn; this.thisArg = thisArg; this.callArgs = callArgs;
-      };
-      proxyApplyFn.Ctx.prototype.reflect = function() {
-        return Reflect.apply(this.callFn, this.thisArg, this.callArgs);
-      };
-      proxyApplyFn.isCtor = new Map();
-      proxyApplyFn.proxies = new WeakMap();
-    }
-    if (!proxyApplyFn.isCtor.has(target)) {
-      proxyApplyFn.isCtor.set(target, fn.prototype && fn.prototype.constructor === fn);
-    }
-    var proxied = new Proxy(fn, {
-      apply: function(t, thisArg, args) {
-        return handler(new proxyApplyFn.Ctx(t, thisArg, args));
-      }
-    });
-    proxyApplyFn.proxies.set(proxied, fn);
-    ctx[prop] = proxied;
-  }
-
-  // ── noWindowOpenIf ───────────────────────────────────────────────
-  // Intercepts window.open() and blocks calls whose URL matches `pattern`.
-  // pattern = '' → block ALL window.open (aggressive).
-  // pattern = '!' + re → block calls NOT matching (invert).
-  // Used for: popup ads, ad redirect tabs opened via window.open.
-  function noWindowOpenIf(pattern) {
-    pattern = pattern || '';
-    var invert = pattern.charAt(0) === '!';
-    if (invert) pattern = pattern.slice(1);
-    var re = _toRegex(pattern);
-    var _noopFn = function(){};
-    proxyApplyFn('open', function(ctx) {
-      var haystack = ctx.callArgs.join(' ');
-      if (re.test(haystack) !== !invert) {
-        // Not matched — allow
-        return ctx.reflect();
-      }
-      // Matched — block: return a minimal fake popup object
-      return new Proxy(window, {
-        get: function(t, p) {
-          if (p === 'closed') return false;
-          var v = t[p];
-          return typeof v === 'function' ? _noopFn : v;
-        },
-        set: function(t, p, v) { return Reflect.set(t, p, v); }
-      });
-    });
-  }
-
   // ── Scriptlet rule engine ────────────────────────────────────────
   // Applies rules declared in site-rules.txt via content.js bridge.
   // json_prune_* proxies: safe to call any time — intercept future requests.
@@ -1253,6 +1193,7 @@
     var pruneX  = rules.json_prune_xhr            || [];
     var setC    = rules.set_constant              || [];
     var noWin   = rules.no_window_open_if         || [];
+    var prevX   = rules.prevent_xhr               || [];
 
     for (var i = 0; i < pruneF.length; i++) {
       if (pruneF[i]) jsonPruneFetchResponse(pruneF[i]);
@@ -1267,7 +1208,15 @@
       }
     }
     for (var m = 0; m < noWin.length; m++) {
-      if (noWin[m] !== null) noWindowOpenIf(noWin[m]);
+      if (noWin[m] == null) continue;
+      // Format: "pattern [delay [decoy]]" — split on first 2 spaces only
+      // so regex patterns like /foo bar/ are preserved intact.
+      var nwParts = noWin[m].match(/^(\S+)(?:\s+(\S+)(?:\s+(\S+))?)?$/);
+      if (nwParts) noWindowOpenIf(nwParts[1] || '', nwParts[2] || '', nwParts[3] || '');
+      else noWindowOpenIf(noWin[m], 0, 'blank'); // fallback if format is wrong — block all matching window.open
+    }
+    for (var n = 0; n < prevX.length; n++) {
+      if (prevX[n]) preventXhr(prevX[n]);
     }
   }
 
