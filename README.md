@@ -76,28 +76,27 @@ Install directly from the Chrome Web Store:
 
 ```
 ablock/
-├── manifest.json           # Extension manifest (MV3, Chrome)
-├── manifest.firefox.json   # Extension manifest (Firefox)
-├── background.js           # Service worker — DNR rules, stats, malware lists, alarms
-├── build.sh                # Build script (packages dist for Chrome & Firefox)
+├── manifest.json             # Extension manifest (MV3, Chrome)
+├── manifest.firefox.json     # Extension manifest (Firefox)
+├── background.js             # Service worker — DNR rules, stats, malware lists, alarms
+├── build.sh                  # Build script (packages dist for Chrome & Firefox)
 ├── content/
-│   ├── content.js          # Content script — shared cosmetic engine plus YouTube bootstrap
-│   ├── content.css         # Cosmetic filter CSS rules
-│   ├── anti-detect.js      # Ad-block detector bypass — fakes XHR/fetch/bait elements in MAIN world
-│   ├── site-rules-loader.js # Shared parser for remote/local text-based site rules
-│   ├── site-block.js       # Generic site-specific blocker driven by site rules
-│   └── yt-adblock.js       # YouTube anti-adblock and skipper engine (runs in MAIN world)
+│   ├── content.js            # Content script — cosmetic engine, injects scriptlets into MAIN world
+│   ├── content.css           # Cosmetic filter CSS rules (scoped to html.adblock-on)
+│   ├── scriptlets.js         # MAIN-world scriptlets — API proxies, popup blockers, navigation guards
+│   ├── site-rules-loader.js  # Shared parser for remote/local text-based site rules
+│   └── site-block.js         # Generic native ad blocker driven by site rules
 ├── rule/
-│   └── site-rules.txt      # Local fallback for the remote rule map
+│   └── site-rules.txt        # Local fallback for the remote rule map
 ├── popup/
-│   ├── popup.html          # Browser action popup UI
-│   ├── popup.js            # Popup logic — toggle, stats, pause, focus mode
-│   └── popup.css           # Popup styles (glassmorphism dark theme)
+│   ├── popup.html            # Browser action popup UI
+│   ├── popup.js              # Popup logic — toggle, stats, pause, focus mode
+│   └── popup.css             # Popup styles (glassmorphism dark theme)
 ├── dashboard/
-│   ├── dashboard.html      # Full-page dashboard / options page
-│   ├── dashboard.js        # Dashboard logic — charts, rules, allowlist, settings
-│   └── dashboard.css       # Dashboard styles
-└── icons/                  # Extension icons (16/48/128, on/off states)
+│   ├── dashboard.html        # Full-page dashboard / options page
+│   ├── dashboard.js          # Dashboard logic — charts, rules, allowlist, settings
+│   └── dashboard.css         # Dashboard styles
+└── icons/                    # Extension icons (16/48/128, on/off states)
 ```
 
 ## How It Works
@@ -108,18 +107,17 @@ Uses Chrome's `declarativeNetRequest` API to block ad/tracker/malware requests a
 
 ### Cosmetic Filtering
 
-Injects CSS and JS at `document_start` to hide ad elements in the DOM. All selectors are scoped to `html.adblock-on` so toggling protection is instant without a page reload. A `MutationObserver` watches for dynamically injected ad elements (SPA pages, infinite scroll).
+Injects CSS (`content.css`) and JS (`content.js`) at `document_start` to hide ad elements in the DOM. All selectors are scoped to `html.adblock-on` so toggling protection is instant without a page reload. A `MutationObserver` watches for dynamically injected ad elements (SPA pages, infinite scroll).
 
-### YouTube Ad Skipper
+`content.js` also injects `scriptlets.js` into the **MAIN world** — the same JavaScript context as page scripts — so scriptlets can proxy native browser APIs (`window.open`, `EventTarget.prototype.addEventListener`, `Location.prototype.href`, etc.) before any ad script runs.
 
-YouTube video ads share the same domain as real videos, so network blocking can't catch them. Instead, the extension:
-1. Detects ads via player class changes (`ad-showing`, `ad-interrupting`)
-2. Mutes the ad audio instantly
-3. Clicks skip buttons or fast-forwards to the end (`playbackRate = 16`)
-4. Hides all ad UI (timer, progress bar, badges) via inline styles
-5. Restores normal playback when the ad ends
+### YouTube Ad Blocking
 
-YouTube uses a hybrid model: `rule/site-rules.txt` provides cosmetic selectors for feed, sidebar, and promo surfaces, while `content/yt-adblock.js` keeps the page-runtime hooks needed for anti-adblock bypass, ad-response stripping, and player recovery.
+YouTube video ads share the same domain as real videos, so network blocking can't catch them. Instead, the extension strips ad data at the API level:
+
+- `scriptlets.js` intercepts `fetch()` and `XMLHttpRequest` responses and prunes `adPlacements`, `adSlots`, and `playerAds` fields from player JSON before the player reads them.
+- `setConstant` freezes `ytInitialPlayerResponse.playerAds`, `adPlacements`, and `adSlots` to `undefined` in the inline page script.
+- `rule/site-rules.txt` provides cosmetic selectors to hide feed and sidebar ad surfaces.
 
 ### Multi-Site Native Ad Blocking
 
