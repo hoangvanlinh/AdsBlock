@@ -852,11 +852,11 @@ async function updateBadgeForTab(tabId, url) {
   try { domain = new URL(url).hostname; } catch { return; }
   const { pausedDomains = [] } = await chrome.storage.local.get('pausedDomains');
   if (pausedDomains.includes(domain)) {
-    chrome.action.setBadgeText({ text: '⏸', tabId });
-    chrome.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId });
+    chrome.action.setBadgeText({ text: '⏸', tabId }).catch(() => {});
+    chrome.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId }).catch(() => {});
   } else {
-    chrome.action.setBadgeText({ text: '', tabId });
-    chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0], tabId });
+    chrome.action.setBadgeText({ text: '', tabId }).catch(() => {});
+    chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0], tabId }).catch(() => {});
   }
 }
 

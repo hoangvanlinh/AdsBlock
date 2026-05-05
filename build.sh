@@ -65,10 +65,11 @@ mkdir -p "$BUILD_DIR/dashboard"
 mkdir -p "$BUILD_DIR/popup"
 cp "$PROJECT_DIR/content/content.css" "$BUILD_DIR/content/"
 # Copy MAIN world scripts WITHOUT obfuscation (they run in page context)
-cp "$PROJECT_DIR/content/yt-adblock.js" "$BUILD_DIR/content/"
-cp "$PROJECT_DIR/content/anti-detect.js" "$BUILD_DIR/content/"
+# cp "$PROJECT_DIR/content/yt-adblock.js" "$BUILD_DIR/content/"  # temporarily disabled
 cp "$PROJECT_DIR/content/site-rules-loader.js" "$BUILD_DIR/content/"
 cp "$PROJECT_DIR/rule/site-rules.txt" "$BUILD_DIR/rule/"
+# Copy streamlined scriptlets WITHOUT obfuscation (MAIN world page context)
+cp "$PROJECT_DIR/content/scriptlets.js" "$BUILD_DIR/content/"
 cp "$PROJECT_DIR/content/site-block.js" "$BUILD_DIR/content/"
 cp "$PROJECT_DIR/dashboard/dashboard.css" "$BUILD_DIR/dashboard/"
 cp "$PROJECT_DIR/popup/popup.css" "$BUILD_DIR/popup/"
@@ -84,8 +85,6 @@ if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   mkdir -p "$FIREFOX_BUILD_DIR/icons" "$FIREFOX_BUILD_DIR/content" "$FIREFOX_BUILD_DIR/rule" "$FIREFOX_BUILD_DIR/dashboard" "$FIREFOX_BUILD_DIR/popup"
   cp "$PROJECT_DIR/icons/"*.png "$FIREFOX_BUILD_DIR/icons/"
   cp "$PROJECT_DIR/content/content.css" "$FIREFOX_BUILD_DIR/content/"
-  cp "$PROJECT_DIR/content/yt-adblock.js" "$FIREFOX_BUILD_DIR/content/"
-  cp "$PROJECT_DIR/content/anti-detect.js" "$FIREFOX_BUILD_DIR/content/"
   cp "$PROJECT_DIR/content/site-rules-loader.js" "$FIREFOX_BUILD_DIR/content/"
   cp "$PROJECT_DIR/rule/site-rules.txt" "$FIREFOX_BUILD_DIR/rule/"
   cp "$PROJECT_DIR/content/site-block.js" "$FIREFOX_BUILD_DIR/content/"
@@ -93,6 +92,7 @@ if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   cp "$PROJECT_DIR/popup/popup.css" "$FIREFOX_BUILD_DIR/popup/"
   cp "$PROJECT_DIR/dashboard/dashboard.html" "$FIREFOX_BUILD_DIR/dashboard/"
   cp "$PROJECT_DIR/popup/popup.html" "$FIREFOX_BUILD_DIR/popup/"
+  cp "$PROJECT_DIR/content/scriptlets.js" "$FIREFOX_BUILD_DIR/content/"
 fi
 
 if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
@@ -101,8 +101,6 @@ if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
   mkdir -p "$OBFUSCATED_SRC_DIR/icons" "$OBFUSCATED_SRC_DIR/content" "$OBFUSCATED_SRC_DIR/rule" "$OBFUSCATED_SRC_DIR/dashboard" "$OBFUSCATED_SRC_DIR/popup"
   cp "$PROJECT_DIR/icons/"*.png "$OBFUSCATED_SRC_DIR/icons/"
   cp "$PROJECT_DIR/content/content.css" "$OBFUSCATED_SRC_DIR/content/"
-  cp "$PROJECT_DIR/content/yt-adblock.js" "$OBFUSCATED_SRC_DIR/content/"
-  cp "$PROJECT_DIR/content/anti-detect.js" "$OBFUSCATED_SRC_DIR/content/"
   cp "$PROJECT_DIR/content/site-rules-loader.js" "$OBFUSCATED_SRC_DIR/content/"
   cp "$PROJECT_DIR/rule/site-rules.txt" "$OBFUSCATED_SRC_DIR/rule/"
   cp "$PROJECT_DIR/content/site-block.js" "$OBFUSCATED_SRC_DIR/content/"
@@ -110,6 +108,7 @@ if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
   cp "$PROJECT_DIR/popup/popup.css" "$OBFUSCATED_SRC_DIR/popup/"
   cp "$PROJECT_DIR/dashboard/dashboard.html" "$OBFUSCATED_SRC_DIR/dashboard/"
   cp "$PROJECT_DIR/popup/popup.html" "$OBFUSCATED_SRC_DIR/popup/"
+  cp "$PROJECT_DIR/content/scriptlets.js" "$OBFUSCATED_SRC_DIR/content/"
 
   if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
     cp "$PROJECT_DIR/manifest.firefox.json" "$OBFUSCATED_SRC_FIREFOX_DIR/manifest.json"
@@ -117,8 +116,6 @@ if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
     mkdir -p "$OBFUSCATED_SRC_FIREFOX_DIR/icons" "$OBFUSCATED_SRC_FIREFOX_DIR/content" "$OBFUSCATED_SRC_FIREFOX_DIR/rule" "$OBFUSCATED_SRC_FIREFOX_DIR/dashboard" "$OBFUSCATED_SRC_FIREFOX_DIR/popup"
     cp "$PROJECT_DIR/icons/"*.png "$OBFUSCATED_SRC_FIREFOX_DIR/icons/"
     cp "$PROJECT_DIR/content/content.css" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
-    cp "$PROJECT_DIR/content/yt-adblock.js" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
-    cp "$PROJECT_DIR/content/anti-detect.js" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
     cp "$PROJECT_DIR/content/site-rules-loader.js" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
     cp "$PROJECT_DIR/rule/site-rules.txt" "$OBFUSCATED_SRC_FIREFOX_DIR/rule/"
     cp "$PROJECT_DIR/content/site-block.js" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
@@ -126,6 +123,7 @@ if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
     cp "$PROJECT_DIR/popup/popup.css" "$OBFUSCATED_SRC_FIREFOX_DIR/popup/"
     cp "$PROJECT_DIR/dashboard/dashboard.html" "$OBFUSCATED_SRC_FIREFOX_DIR/dashboard/"
     cp "$PROJECT_DIR/popup/popup.html" "$OBFUSCATED_SRC_FIREFOX_DIR/popup/"
+    cp "$PROJECT_DIR/content/scriptlets.js" "$OBFUSCATED_SRC_FIREFOX_DIR/content/"
   fi
 fi
 

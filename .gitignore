@@ -1,3 +1,5 @@
 *.zip
 dist*
 src-obfuscated*
+easyprivacy.js
+test/*
