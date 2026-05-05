@@ -1180,19 +1180,11 @@
   // set_constant: bundled defaults are applied immediately below since they
   // must be installed before YouTube inline scripts execute at document_start.
 
-  // Redirect code pattern — matches callbacks that contain navigation/redirect calls.
-  // Used by block_ad_redirects to intercept setTimeout, setInterval, and click handlers.
-  var _REDIRECT_PATTERN = /window\.open|location[\s\S]{0,4}[.=]|(?:location\.(?:href|assign|replace)\s*[=(])/;
-
   function _applyScriptletRules(rules) {
     if (!rules) return;
     var pruneF  = rules.json_prune_fetch          || [];
     var pruneX  = rules.json_prune_xhr            || [];
     var setC    = rules.set_constant              || [];
-    var noWin   = rules.no_window_open_if;            // undefined = skip; '' = block all
-    var pst     = rules.prevent_set_timeout       || [];
-    var psi     = rules.prevent_set_interval      || [];
-    var pael    = rules.prevent_add_event_listener || [];
 
     for (var i = 0; i < pruneF.length; i++) {
       if (pruneF[i]) jsonPruneFetchResponse(pruneF[i]);
@@ -1205,35 +1197,6 @@
       if (parts.length >= 2) {
         try { setConstant(parts[0], parts[1]); } catch (e) { /* already defined — skip */ }
       }
-    }
-    // no_window_open_if: empty string = block all window.open; a pattern = block matching
-    if (noWin !== undefined) {
-      try { noWindowOpenIf(noWin); } catch (e) {}
-    }
-    for (var p = 0; p < pst.length; p++) {
-      if (pst[p] !== undefined) preventSetTimeout(pst[p]);
-    }
-    for (var q = 0; q < psi.length; q++) {
-      if (psi[q] !== undefined) preventSetInterval(psi[q]);
-    }
-    // prevent_add_event_listener: 'type pattern' pairs, one per array entry
-    for (var r = 0; r < pael.length; r++) {
-      if (!pael[r]) continue;
-      var sp = pael[r].indexOf(' ');
-      var evType = sp === -1 ? pael[r] : pael[r].slice(0, sp);
-      var evPat  = sp === -1 ? '' : pael[r].slice(sp + 1);
-      try { preventAddEventListener(evType, evPat); } catch (e) {}
-    }
-    // block_ad_redirects = true: composite rule that enables all redirect interception:
-    //   1. window.open override (popup/new-tab ads)
-    //   2. setTimeout callbacks with redirect/navigation code
-    //   3. setInterval callbacks with redirect/navigation code
-    //   4. addEventListener('click', fn) where fn contains redirect code
-    if (rules.block_ad_redirects) {
-      try { noWindowOpenIf(''); } catch (e) {}
-      preventSetTimeout(_REDIRECT_PATTERN);
-      preventSetInterval(_REDIRECT_PATTERN);
-      try { preventAddEventListener('click', _REDIRECT_PATTERN.source); } catch (e) {}
     }
   }
 
