@@ -23,6 +23,7 @@ vnexpress.net = vnexpress
 tuoitre.vn = tuoitre
 #dantri.com.vn = dantri
 ww4.fmovies.co = fmovies
+fmovies.* = fmovies
 
 # site-rules.txt — editable site rule map
 # Format:
@@ -36,6 +37,9 @@ tracker_network_patterns = google-analytics.com | analytics.google.com | faceboo
 malware_network_domains = malware-check.disconnect.me | phishing.example.net | dl.free-counter.co.uk | naifrede.com | clafrfrede.com | coinhive.com | coin-hive.com | jsecoin.com | crypto-loot.com | authedmine.com | 0-internal.paypal.com.de | apple-icloud.org.uk | login-microsoft-office.com | secure-login-bank.com | netflix-account.com | installcore.net | softonic-analytics.net | bonzi.software | adf.ly | sh.st | ad-maven.com | propellerads.com | rig-exploit.com | exploit-kit-check.net | mspy.com | flexispy.com | virus-alert-windows.com | your-pc-is-infected.com | push-notification.tools | notification-service.club
 
 [youtube]
+json_prune_fetch = adPlacements adSlots playerResponse.adPlacements playerResponse.adSlots [].playerResponse.adPlacements [].playerResponse.adSlots | reelWatchSequenceResponse.entries.[-].command.reelWatchEndpoint.adClientParams.isAd entries.[-].command.reelWatchEndpoint.adClientParams.isAd
+json_prune_xhr = adPlacements adSlots playerResponse.adPlacements playerResponse.adSlots [].playerResponse.adPlacements [].playerResponse.adSlots
+set_constant = ytInitialPlayerResponse.playerAds undefined | ytInitialPlayerResponse.adPlacements undefined | ytInitialPlayerResponse.adSlots undefined
 direct_hide_selectors =  ytd-banner-promo-renderer | ytd-statement-banner-renderer | ytd-promoted-sparkles-web-renderer | ytd-promoted-video-renderer | ytd-display-ad-renderer | ytd-compact-promoted-video-renderer | ytd-action-companion-ad-renderer | ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | #player-ads | #masthead-ad | #panels > ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) | ytd-mealbar-promo-renderer | ytd-popup-container:has(ytd-mealbar-promo-renderer) | ytd-background-promo-renderer | ytd-official-card-renderer | tp-yt-paper-dialog:has(yt-premium-offer-renderer) | ytd-companion-slot-renderer:has([data-style-type="PREMIUM"]) | .ytd-mealbar-promo-renderer | ytd-survey-notification-renderer | #offer-module | .ytp-paid-content-overlay | .ytp-premium-yoodle | ytd-rich-section-renderer:has(ytd-statement-banner-renderer) | ytd-enforcement-message-view-model | tp-yt-paper-dialog:has(yt-upsell-dialog-renderer) | ytd-rich-item-renderer:has(ytd-ad-slot-renderer) | ytd-video-renderer[is-ad] | ytd-rich-item-renderer[is-ad] | ytd-reel-item-renderer[is-ad] | ytd-search-pyv-renderer | ytd-promoted-sparkles-text-search-renderer | ytd-movie-offer-module-renderer | ytd-compact-movie-renderer[is-ad] | #shopping-timely-shelf | yt-shopping-timely-shelf-content-view-model
 
 [facebook]
@@ -141,3 +145,13 @@ direct_hide_selectors = .box-tinquangcao | .tinquangcao | .block-ads | [class*="
 [tuoitre]
 # Admicro/VCCorp + Tuổi Trẻ first-party ad zones
 direct_hide_selectors = #LeaderBoardTop | [class*="quang-cao"] | [class*="quangcao"] | [id*="quang-cao"] | [id*="quangcao"] | div[id^="zone_"] | div[id^="admzone_"] | div[id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | .box-ads | .banner-ads | .ads-container | .ads-box | .sidebar-ads | .article-ads | .content-ads | .float-ads | .sticky-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | [id^="placement-"][revenue] | [data-admssprqid] | *:has(>[data-admssprqid])
+
+# ── FMovies ──────────────────────────────────────────────────────────────────
+[fmovies]
+# block_ad_redirects = true enables all redirect interception at once:
+#   - window.open override (popup/new-tab ads)
+#   - setTimeout/setInterval redirect callbacks
+#   - onclick redirect listeners (addEventListener click + inline onclick)
+block_ad_redirects = true
+# Hide overlay/modal ad elements
+direct_hide_selectors = #ngx-overlay | .ngx-overlay | [class*="overlay-ad"] | [id*="overlay-ad"] | .ad-overlay | #ad-overlay | .popup-wrapper | .popup-ad | #popup-ad | [class*="modal-ad"] | [id*="modal-ad"] | div[id^="adb"] | .jw-advertisement | .jw-ad-container | [class*="preroll"] | [id*="preroll"] | .video-ads | #video-ads | .vjs-ad-playing .vjs-poster | .ima-ad-container | [class*="ima-ad"] | div[style*="z-index: 999"] iframe | div[style*="z-index:999"] iframe | .overlay:not(.player-overlay) | #overlay:not(.player-overlay)
