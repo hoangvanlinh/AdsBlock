@@ -40,6 +40,16 @@
         "http://*/*",
         "https://*/*"
       ],
+      "js": ["content/scriptlets.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
       "js": ["content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
       "css": ["content/content.css"],
       "run_at": "document_start",
@@ -49,10 +59,6 @@
   "web_accessible_resources": [
     {
       "resources": ["rule/site-rules.txt"],
-      "matches": ["http://*/*", "https://*/*"]
-    },
-    {
-      "resources": ["content/scriptlets.js"],
       "matches": ["http://*/*", "https://*/*"]
     }
   ],

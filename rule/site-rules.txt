@@ -22,8 +22,7 @@ google.* = google
 vnexpress.net = vnexpress
 tuoitre.vn = tuoitre
 #dantri.com.vn = dantri
-ww4.fmovies.co = fmovies
-fmovies.* = fmovies
+.*fmovies.co = fmovies
 
 # site-rules.txt — editable site rule map
 # Format:
@@ -148,10 +147,5 @@ direct_hide_selectors = #LeaderBoardTop | [class*="quang-cao"] | [class*="quangc
 
 # ── FMovies ──────────────────────────────────────────────────────────────────
 [fmovies]
-# block_ad_redirects = true enables all redirect interception at once:
-#   - window.open override (popup/new-tab ads)
-#   - setTimeout/setInterval redirect callbacks
-#   - onclick redirect listeners (addEventListener click + inline onclick)
-block_ad_redirects = true
 # Hide overlay/modal ad elements
-direct_hide_selectors = #ngx-overlay | .ngx-overlay | [class*="overlay-ad"] | [id*="overlay-ad"] | .ad-overlay | #ad-overlay | .popup-wrapper | .popup-ad | #popup-ad | [class*="modal-ad"] | [id*="modal-ad"] | div[id^="adb"] | .jw-advertisement | .jw-ad-container | [class*="preroll"] | [id*="preroll"] | .video-ads | #video-ads | .vjs-ad-playing .vjs-poster | .ima-ad-container | [class*="ima-ad"] | div[style*="z-index: 999"] iframe | div[style*="z-index:999"] iframe | .overlay:not(.player-overlay) | #overlay:not(.player-overlay)
+direct_hide_selectors = #ngx-overlay | .ngx-overlay | [class*="overlay-ad"] | [id*="overlay-ad"] | .ad-overlay | #ad-overlay | .popup-wrapper | .popup-ad | #popup-ad | [class*="modal-ad"] | [id*="modal-ad"] | div[id^="adb"] | .jw-advertisement | .jw-ad-container | [class*="preroll"] | [id*="preroll"] | .video-ads | #video-ads | .vjs-ad-playing .vjs-poster | .ima-ad-container | [class*="ima-ad"] | div[style*="z-index: 999"] iframe | div[style*="z-index:999"] iframe | .overlay:not(.player-overlay) | #overlay:not(.player-overlay) | .modal-backdrop

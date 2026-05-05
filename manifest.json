@@ -30,7 +30,17 @@
         "http://*/*",
         "https://*/*"
       ],
-      "js": ["content/site-rules-loader.js", "content/content.js", "content/site-block.js", "content/scriptlets.js"],
+      "js": ["content/scriptlets.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": ["content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
       "css": ["content/content.css"],
       "run_at": "document_start",
       "all_frames": true
