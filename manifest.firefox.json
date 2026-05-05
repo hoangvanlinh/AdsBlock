@@ -42,7 +42,8 @@
       ],
       "js": ["content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
       "css": ["content/content.css"],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [
@@ -51,12 +52,8 @@
       "matches": ["http://*/*", "https://*/*"]
     },
     {
-      "resources": ["content/anti-detect.js"],
+      "resources": ["content/scriptlets.js"],
       "matches": ["http://*/*", "https://*/*"]
-    },
-    {
-      "resources": ["content/yt-adblock.js"],
-      "matches": ["*://*.youtube.com/*"]
     }
   ],
   "options_ui": {

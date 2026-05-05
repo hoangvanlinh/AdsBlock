@@ -4,6 +4,11 @@ var hostname=location.hostname;
 var siteKey='';
 
 var _enabled=true,_observer=null,_hidden=0,_raf=0,_config=null;
+// requestIdleCallback scheduling — from uBO removeAttr/onIdle pattern: run cosmetic
+// work when browser is idle; fall back to setTimeout(fn,50) if rIC not available.
+var _ric=window.requestIdleCallback?function(fn){return requestIdleCallback(fn,{timeout:100});}:function(fn){return setTimeout(fn,50);};
+// Track widened scan root across multiple schedule() calls in the same mutation batch.
+var _pendingScanRoot=null;
 var DEFAULT_ATTR_KEYS=['aria-label','data-promoted','post-type','recommendation-source','slot','click-location','data-component-type','cel_widget_id','data-cel-widget'];
 var CANDIDATE_KEYS=['selectors','feed_selectors','market_selectors','right_rail_selectors','post_selectors'];
 var HOST_KEYS=['ad_host_selectors'];
@@ -252,10 +257,20 @@ function scan(root){
 }
 
 function schedule(root){
+  root=root||document;
+  // Widen pending root when multiple different subtrees are queued in the same batch
+  // (the old RAF approach silently dropped all calls after the first via `if(_raf)return`).
+  if(_pendingScanRoot===null){
+    _pendingScanRoot=root;
+  } else if(_pendingScanRoot!==document&&!_pendingScanRoot.contains(root)){
+    _pendingScanRoot=document;
+  }
   if(_raf)return;
-  _raf=requestAnimationFrame(function(){
+  _raf=_ric(function(){
     _raf=0;
-    scan(root||document);
+    var r=_pendingScanRoot||document;
+    _pendingScanRoot=null;
+    scan(r);
   });
 }
 
@@ -471,6 +486,8 @@ function _onSpaNav(){
 }
 document.addEventListener('yt-navigate-finish',_onSpaNav);
 document.addEventListener('yt-page-data-updated',_onSpaNav);
+// Resume scan when tab becomes visible again — from uBO visibility patterns.
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&_enabled&&_config)schedule(document);});
 
 chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
   if(msg.type==='TOGGLE'||msg.type==='PAUSE_DOMAIN'||msg.type==='COSMETIC_TOGGLE'){

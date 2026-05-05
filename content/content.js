@@ -29,29 +29,20 @@
   document.documentElement.appendChild(s);
 })();
 
-// ── Inject anti-detect.js into MAIN world on all pages ─────────────
-// Fakes XHR / fetch / sendBeacon for known ad network hosts so their
-// SDKs receive synthetic 200 OK instead of status=0 (network error),
-// preventing "ad blocker detected" code paths from triggering.
+// ── Inject scriptlets.js into MAIN world on all pages ───────────────
+// scriptlets.js contains the core ad-blocking scriptlets
+// (setConstant, abortCurrentScript, abortOnPropertyRead) extracted and
+// streamlined from uBlock Origin Lite — must run at document_start so
+// they intercept page scripts before any detection code executes.
 // Only inject on real HTML pages — skip text/plain, JSON, XML, etc.
-if (!window[Symbol.for('_adblock_antidetect')] && document.contentType === 'text/html') {
-  const _ad = document.createElement('script');
-  _ad.src = chrome.runtime.getURL('content/anti-detect.js');
-  _ad.async = false;
-  (document.documentElement || document.head || document.body).appendChild(_ad);
-  _ad.remove();
-  // Send initial protection state to anti-detect.js after it loads.
-  // Default is _enabled=false in anti-detect.js; dispatches _ytpb_on/off
-  // (same event as yt-adblock.js) to toggle state in all MAIN world scripts.
-  chrome.storage.local.get(['enabled', 'pausedDomains'], (r) => {
-    const _host = location.hostname;
-    const _active = r.enabled !== false && !(r.pausedDomains || []).includes(_host);
-    document.dispatchEvent(new CustomEvent(_active ? '_ytpb_on' : '_ytpb_off'));
-  });
+if (!window[Symbol.for('_adblock_scriptlets')] && document.contentType === 'text/html') {
+  const _sc = document.createElement('script');
+  _sc.src = chrome.runtime.getURL('content/scriptlets.js');
+  _sc.async = false;
+  (document.documentElement || document.head || document.body).appendChild(_sc);
+  _sc.remove();
 }
-// Dispatch dynamic host list from site-rules.txt to MAIN world
-// anti-detect.js listens for __adblock_ad_hosts__ and rebuilds its regex
-// This runs after site-rules-loader.js has set window.__adblockRuleLoader
+
 function _dispatchAdHosts() {
   if (!(window.__adblockRuleLoader && window.__adblockRuleLoader.load)) return;
   window.__adblockRuleLoader.load('global', {}, function (cfg) {
@@ -67,35 +58,6 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', _dispatchAdHosts);
 } else {
   _dispatchAdHosts();
-}
-
-// ── YouTube: inject yt-adblock.js into MAIN world via DOM ─────────
-// chrome.scripting is not needed — a <script src> tag from content world
-// executes in MAIN world, same as the page's own scripts.
-// Always inject at document_start so ytcfg is intercepted early.
-// yt-adblock.js itself checks _ytEnabled before doing any blocking.
-if (/youtube\.com/.test(location.hostname) && !window[Symbol.for('_yt_pb')]) {
-  const s = document.createElement('script');
-  s.src = chrome.runtime.getURL('content/yt-adblock.js');
-  s.async = false;
-  (document.documentElement || document.head || document.body).appendChild(s);
-  s.remove(); // clean up after load
-  // Send initial protection state to yt-adblock.js after script loads.
-  // Use a microtask-safe approach: script is sync so it runs before this.
-  chrome.storage.local.get(['enabled', 'pausedDomains'], (r) => {
-    const host = location.hostname;
-    const e = r.enabled !== false;
-    const paused = (r.pausedDomains || []).includes(host);
-    const active = e && !paused;
-    // Write to localStorage so yt-adblock.js can read state synchronously
-    // on the NEXT (or current) page load — avoids async race at document_start.
-    try { localStorage.setItem('_ytpb_state', active ? '1' : '0'); } catch (_e) {}
-    if (!active) {
-      document.dispatchEvent(new CustomEvent('_ytpb_off'));
-    } else {
-      document.dispatchEvent(new CustomEvent('_ytpb_on'));
-    }
-  });
 }
 
 document.addEventListener('_ytpb1', (event) => {
@@ -583,7 +545,7 @@ function disconnectObserver() {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'TOGGLE') {
     enabled = msg.enabled;
-    try { localStorage.setItem('_ytpb_state', enabled ? '1' : '0'); } catch (_e) {}
+    try { localStorage.setItem('__yt_pb', enabled ? '1' : '0'); } catch (_e) {}
     if (enabled) {
       enableCosmeticCss();
       hideAds();
@@ -599,12 +561,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'PAUSE_DOMAIN') {
     if (msg.paused) {
       enabled = false;
-      try { localStorage.setItem('_ytpb_state', '0'); } catch (_e) {}
+      try { localStorage.setItem('__yt_pb', '0'); } catch (_e) {}
       disableCosmeticCss();
       document.dispatchEvent(new CustomEvent('_ytpb_off'));
     } else {
       enabled = true;
-      try { localStorage.setItem('_ytpb_state', '1'); } catch (_e) {}
+      try { localStorage.setItem('__yt_pb', '1'); } catch (_e) {}
       enableCosmeticCss();
       hideAds();
       observeMutations();
