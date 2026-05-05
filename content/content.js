@@ -29,20 +29,6 @@
   document.documentElement.appendChild(s);
 })();
 
-// ── Inject scriptlets.js into MAIN world on all pages ───────────────
-// scriptlets.js contains the core ad-blocking scriptlets
-// (setConstant, abortCurrentScript, abortOnPropertyRead) extracted and
-// streamlined from uBlock Origin Lite — must run at document_start so
-// they intercept page scripts before any detection code executes.
-// Only inject on real HTML pages — skip text/plain, JSON, XML, etc.
-if (!window[Symbol.for('_adblock_scriptlets')] && document.contentType === 'text/html') {
-  const _sc = document.createElement('script');
-  _sc.src = chrome.runtime.getURL('content/scriptlets.js');
-  _sc.async = false;
-  (document.documentElement || document.head || document.body).appendChild(_sc);
-  _sc.remove();
-}
-
 //   1. Hide ad elements via CSS selectors (cosmetic filtering)
 //   2. Remove ad iframes / scripts on DOM ready
 //   3. Observe dynamic DOM mutations (SPA / infinite scroll)

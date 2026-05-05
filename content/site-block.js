@@ -449,9 +449,31 @@ function boot(){
   // Always load [global] as the base config, then merge site-specific on top.
   window.__adblockRuleLoader.load('global',{},function(globalCfg){
     var base=globalCfg||{};
+    var SCRIPTLET_KEYS=['no_window_open_if','prevent_set_timeout','prevent_set_interval',
+                        'prevent_add_event_listener','json_prune_fetch','json_prune_xhr',
+                        'set_constant','block_ad_redirects'];
+    function _dispatchScriptletRules(cfg){
+      var rules={},hasAny=false,k,i;
+      for(i=0;i<SCRIPTLET_KEYS.length;i++){
+        k=SCRIPTLET_KEYS[i];
+        // Scalar boolean keys — include when truthy
+        if(k==='block_ad_redirects'){
+          if(cfg[k]&&cfg[k][0]==='true'){rules[k]=true;hasAny=true;}
+        // Include 'no_window_open_if' even if empty string (empty = block all)
+        } else if(k==='no_window_open_if'){
+          if(cfg[k]!==undefined){rules[k]=cfg[k];hasAny=true;}
+        } else if(cfg[k]&&cfg[k].length){
+          rules[k]=cfg[k];hasAny=true;
+        }
+      }
+      if(hasAny){
+        try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_rules__',{detail:rules}));}catch(e){}
+      }
+    }
     function _apply(siteCfg){
       _config=_mergeConfigs(base,siteCfg||{});
       _rebuildSelectorCache();
+      _dispatchScriptletRules(siteCfg||{});
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
       else sync();
     }
