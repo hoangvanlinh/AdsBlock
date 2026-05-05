@@ -449,7 +449,7 @@ function boot(){
   // Always load [global] as the base config, then merge site-specific on top.
   window.__adblockRuleLoader.load('global',{},function(globalCfg){
     var base=globalCfg||{};
-    var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if'];
+    var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if','prevent_xhr'];
     function _dispatchScriptletRules(cfg){
       var rules={},hasAny=false,k,i;
       for(i=0;i<SCRIPTLET_KEYS.length;i++){
@@ -465,7 +465,7 @@ function boot(){
     function _apply(siteCfg){
       _config=_mergeConfigs(base,siteCfg||{});
       _rebuildSelectorCache();
-      _dispatchScriptletRules(siteCfg||{});
+      _dispatchScriptletRules(_config);
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
       else sync();
     }
