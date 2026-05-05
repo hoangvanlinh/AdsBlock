@@ -449,7 +449,7 @@ function boot(){
   // Always load [global] as the base config, then merge site-specific on top.
   window.__adblockRuleLoader.load('global',{},function(globalCfg){
     var base=globalCfg||{};
-    var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant'];
+    var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if'];
     function _dispatchScriptletRules(cfg){
       var rules={},hasAny=false,k,i;
       for(i=0;i<SCRIPTLET_KEYS.length;i++){

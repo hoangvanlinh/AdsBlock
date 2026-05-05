@@ -1174,6 +1174,73 @@
     });
   }
 
+  // ── proxyApplyFn ─────────────────────────────────────────────────
+  // Generic Proxy helper used by noWindowOpenIf. Wraps any callable at a
+  // dotted path on globalThis so handlers can inspect/redirect calls.
+  function proxyApplyFn(target, handler) {
+    var ctx = globalThis, prop = target;
+    for (;;) {
+      var pos = prop.indexOf('.');
+      if (pos === -1) break;
+      ctx = ctx[prop.slice(0, pos)];
+      if (ctx instanceof Object === false) return;
+      prop = prop.slice(pos + 1);
+    }
+    var fn = ctx[prop];
+    if (typeof fn !== 'function') return;
+    if (proxyApplyFn._init === undefined) {
+      proxyApplyFn._init = true;
+      proxyApplyFn.ctxPool = [];
+      proxyApplyFn.Ctx = function(callFn, thisArg, callArgs) {
+        this.callFn = callFn; this.thisArg = thisArg; this.callArgs = callArgs;
+      };
+      proxyApplyFn.Ctx.prototype.reflect = function() {
+        return Reflect.apply(this.callFn, this.thisArg, this.callArgs);
+      };
+      proxyApplyFn.isCtor = new Map();
+      proxyApplyFn.proxies = new WeakMap();
+    }
+    if (!proxyApplyFn.isCtor.has(target)) {
+      proxyApplyFn.isCtor.set(target, fn.prototype && fn.prototype.constructor === fn);
+    }
+    var proxied = new Proxy(fn, {
+      apply: function(t, thisArg, args) {
+        return handler(new proxyApplyFn.Ctx(t, thisArg, args));
+      }
+    });
+    proxyApplyFn.proxies.set(proxied, fn);
+    ctx[prop] = proxied;
+  }
+
+  // ── noWindowOpenIf ───────────────────────────────────────────────
+  // Intercepts window.open() and blocks calls whose URL matches `pattern`.
+  // pattern = '' → block ALL window.open (aggressive).
+  // pattern = '!' + re → block calls NOT matching (invert).
+  // Used for: popup ads, ad redirect tabs opened via window.open.
+  function noWindowOpenIf(pattern) {
+    pattern = pattern || '';
+    var invert = pattern.charAt(0) === '!';
+    if (invert) pattern = pattern.slice(1);
+    var re = _toRegex(pattern);
+    var _noopFn = function(){};
+    proxyApplyFn('open', function(ctx) {
+      var haystack = ctx.callArgs.join(' ');
+      if (re.test(haystack) !== !invert) {
+        // Not matched — allow
+        return ctx.reflect();
+      }
+      // Matched — block: return a minimal fake popup object
+      return new Proxy(window, {
+        get: function(t, p) {
+          if (p === 'closed') return false;
+          var v = t[p];
+          return typeof v === 'function' ? _noopFn : v;
+        },
+        set: function(t, p, v) { return Reflect.set(t, p, v); }
+      });
+    });
+  }
+
   // ── Scriptlet rule engine ────────────────────────────────────────
   // Applies rules declared in site-rules.txt via content.js bridge.
   // json_prune_* proxies: safe to call any time — intercept future requests.
@@ -1185,6 +1252,7 @@
     var pruneF  = rules.json_prune_fetch          || [];
     var pruneX  = rules.json_prune_xhr            || [];
     var setC    = rules.set_constant              || [];
+    var noWin   = rules.no_window_open_if         || [];
 
     for (var i = 0; i < pruneF.length; i++) {
       if (pruneF[i]) jsonPruneFetchResponse(pruneF[i]);
@@ -1197,6 +1265,9 @@
       if (parts.length >= 2) {
         try { setConstant(parts[0], parts[1]); } catch (e) { /* already defined — skip */ }
       }
+    }
+    for (var m = 0; m < noWin.length; m++) {
+      if (noWin[m] !== null) noWindowOpenIf(noWin[m]);
     }
   }
 
