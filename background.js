@@ -73,12 +73,34 @@ function isFreshRuleCache(entry) {
 }
 
 async function fetchRemoteRuleText() {
-  const res = await fetch(RULES_REMOTE_URL, { cache: 'no-store' });
-  if (!res.ok) throw new Error('remote rules unavailable');
-  const text = await res.text();
-  if (!text) throw new Error('empty remote rules');
-  await setCachedRuleText(text);
-  return text;
+  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl']);
+  const sources = stored.ruleSources;
+  const urls = [];
+  const fileParts = [];
+
+  // Always load the default remote as base first
+  urls.push(RULES_REMOTE_URL);
+
+  if (sources && sources.length) {
+    for (const s of sources) {
+      if (s.type === 'url' && s.url && s.url !== RULES_REMOTE_URL) urls.push(s.url);
+      else if (s.type === 'file' && s.text) fileParts.push(s.text);
+    }
+  } else if (stored.customRulesUrl && stored.customRulesUrl !== RULES_REMOTE_URL) {
+    urls.push(stored.customRulesUrl);
+  }
+
+  const texts = await Promise.all(urls.map(async url => {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      return res.ok ? res.text() : '';
+    } catch { return ''; }
+  }));
+
+  const merged = [...texts, ...fileParts].filter(Boolean).join('\n');
+  if (!merged) throw new Error('no rules available');
+  await setCachedRuleText(merged);
+  return merged;
 }
 
 async function fetchLocalRuleText() {
@@ -677,9 +699,19 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       }
 
       case 'RULES_CHANGED': {
-        // Reapply network rules (picks up new custom block rules)
+        // Invalidate the rules text cache so the next fetch re-reads all sources
+        // (including any newly added/removed file or URL sources).
+        await chrome.storage.local.set({
+          [RULES_CACHE_TEXT_KEY]: '',
+          [RULES_CACHE_TIME_KEY]: 0,
+        });
+        // Reset in-memory rule definitions so ensureRuleDefinitionsLoaded re-fetches
+        DEFAULT_RULES = [];
+        MALWARE_RULES = [];
+        _ruleConfigPromise = null;
+        // Reapply network rules (re-fetches with current sources via fetchRemoteRuleText)
         await applyNetworkRules();
-        // Notify all tabs to refresh custom CSS hide rules
+        // Notify all tabs to refresh their in-memory parsed rules + cosmetic filters
         const tabs = await chrome.tabs.query({});
         for (const tab of tabs) {
           chrome.tabs.sendMessage(tab.id, { type: 'RULES_CHANGED' }).catch(() => {});
@@ -811,6 +843,27 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       case 'UPDATE_MALWARE_LISTS': {
         const count = await fetchMalwareBlocklists();
         sendResponse({ ok: true, count });
+        break;
+      }
+
+      case 'GET_RULES_TEXT': {
+        // Content scripts request merged rules text through background to avoid
+        // double-fetching REMOTE_RULES_URL and to ensure file sources are included.
+        try {
+          let cached = await getCachedRuleText();
+          if (!isFreshRuleCache(cached)) {
+            try {
+              const text = await fetchRemoteRuleText(); // reads ruleSources, merges, writes cache
+              sendResponse({ text });
+            } catch {
+              sendResponse({ text: (cached && cached.text) || '' });
+            }
+          } else {
+            sendResponse({ text: cached.text });
+          }
+        } catch {
+          sendResponse({ text: '' });
+        }
         break;
       }
 

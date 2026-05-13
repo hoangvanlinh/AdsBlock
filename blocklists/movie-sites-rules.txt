@@ -1,0 +1,298 @@
+# ── Movie & Streaming Sites Rule List ──────────────────────────────────────────
+# Merge file này vào Rule Source (local file) trong dashboard AdBlock.
+# Định dạng giống site-rules.txt chính — mỗi section là 1 trang phim.
+#
+# [host_patterns]  →  map hostname → sitekey
+# [sitekey]        →  các rule cho trang đó
+#
+# Lưu ý: subdomains khớp tự động (vd: "phimmoi.net" khớp "www.phimmoi.net", "m.phimmoi.net")
+
+[host_patterns]
+
+# ── Phim lậu Việt Nam ────────────────────────────────────────────────────────
+phimmoi.net         = phimmoi
+phimmoizz.net       = phimmoi
+phimmoiz.net        = phimmoi
+phimhay247.com      = phimhay247
+bilutv.com          = bilutv
+bilutv.net          = bilutv
+hdviet.com          = hdviet
+motchill.tv         = motchill
+motchill.net        = motchill
+ophim.com           = ophim
+ophim1.com          = ophim
+sphim.net           = sphim
+phimplus.top        = phimplus
+phimplus.net        = phimplus
+phimchill.tv        = phimchill
+phimchill.net       = phimchill
+xemphimso.com       = xemphimso
+phim1080.com        = phim1080
+phimvip.net         = phimvip
+subnhanh.com        = subnhanh
+vietp.com           = vietp
+phim3s.net          = phim3s
+phimhd.top          = phimhd
+123phim.vn          = phim123vn
+galaxyplay.vn       = galaxyplay
+
+# ── Anime ────────────────────────────────────────────────────────────────────
+9anime.to           = 9anime
+9anime.rs           = 9anime
+9anime.pl           = 9anime
+aniwatch.to         = aniwatch
+aniwatch.me         = aniwatch
+aniwatchtv.to       = aniwatch
+gogoanime.cl        = gogoanime
+gogoanime.tel       = gogoanime
+gogoanimes.net      = gogoanime
+anitaku.to          = anitaku
+animesuge.io        = animesuge
+animefrenzy.net     = animefrenzy
+animepahe.ru        = animepahe
+animepahe.com       = animepahe
+zoro.to             = zoro
+zoroanime.com       = zoro
+hianime.to          = zoro
+
+# ── Phim quốc tế (stream lậu) ────────────────────────────────────────────────
+fmovies.ps          = fmovies
+fmovies.to          = fmovies
+fmovies.wtf         = fmovies
+fmovies.one         = fmovies
+bmovies.vip         = bmovies
+sflix.to            = sflix
+sflix.pro           = sflix
+solarmovie.pe       = solarmovie
+solarmovies.one     = solarmovie
+123movies.ai        = movies123
+123movies.press     = movies123
+123moviesfree.sx    = movies123
+123moviesonline.ai  = movies123
+gomovies.sx         = gomovies
+gomovies.ac         = gomovies
+putlocker.vip       = putlocker
+putlocker2.fun      = putlocker
+lookmovie2.to       = lookmovie
+lookmovie.ag        = lookmovie
+yts.mx              = yts
+yts.am              = yts
+bflix.to            = bflix
+myflixer.to         = myflixer
+myflixer.cc         = myflixer
+flixhq.to           = flixhq
+cinemahdv2.net      = cinemahd
+hdtoday.cc          = hdtoday
+hdtoday.tv          = hdtoday
+pressplay.top       = pressplay
+streameast.io       = streameast
+streameast.live     = streameast
+crackstreams.com    = crackstreams
+moviesjoy.plus      = moviesjoy
+moviesmod.net       = moviesmod
+wcostream.net       = wcostream
+watchseries.tv      = watchseries
+theflixer.tv        = theflixer
+theflixer.org       = theflixer
+cineb.net           = cineb
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTIONS
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Shared popup block (áp dụng cho tất cả stream lậu) ──────────────────────
+# Không override [global] — khai báo per-section bên dưới
+
+# ── Common overlay/ad selectors (dùng lại trong nhiều section) ───────────────
+# Khai báo trong [global] sẽ áp dụng toàn site, đây là file merge nên để per-section.
+
+[global]
+prevent_xhr = /exoclick\.com|adsterra\.com|hilltopads\.net|monetag\.com|propellerads\.com|clickadilla\.com|trafficjunky\.net|mgid\.com|popcash\.net|popads\.net|adcash\.com|clickunder\.net/
+
+# =============================================================================
+# PHIM VIỆT NAM
+# =============================================================================
+
+[phimmoi]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-slot | .ad-box | [id^="div-gpt-ad"] | [id^="dfp-"] | .quang-cao | [class*="quangcao"] | [class*="quang-cao"] | .popup-ads | .modal-ads | .overlay-ad | .float-ads | [id*="float_ad"] | .sidebar-ads | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adtima.vn"] | iframe[src*="googlesyndication"] | iframe[src*="doubleclick.net"] | div[style*="z-index: 9"] iframe | .notice-ads | .ads-wrapper | .ads-section | #ads-section | .preroll-container | .ima-ad-container | .jw-ad-container | .video-ads | [id*="preroll"]
+
+[phimhay247]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .ad-box | .banner-ads | [id^="div-gpt-ad"] | [id^="dfp-"] | [class*="quangcao"] | .popup-ads | .overlay-ad | .float-ads | iframe[src*="admicro.vn"] | iframe[src*="googlesyndication"] | iframe[src*="doubleclick.net"] | .ima-ad-container | .jw-ad-container | [id*="preroll"] | .ads-leaderboard | .ads-billboard | .sticky-ads | .interstitial-wrapper
+
+[bilutv]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-slot | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | iframe[src*="admicro.vn"] | iframe[src*="googlesyndication"] | .video-ads | .ima-ad-container | [id*="preroll"] | .ads-wrap | .float-banner | .modal-overlay:not([id*="player"]) | div[style*="z-index: 999"] iframe | div[style*="z-index:999"] iframe
+
+[hdviet]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | [id^="dfp-"] | [class*="quangcao"] | .popup-ads | .overlay-ad | .float-ads | iframe[src*="admicro.vn"] | iframe[src*="adplay.vn"] | iframe[src*="googlesyndication"] | .video-ads | .ima-ad-container | [id*="preroll"] | .ads-leaderboard | .notice-ads | .ads-sidebar | .modal-backdrop:not(.player-modal)
+
+[motchill]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .ad-box | .banner-ads | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | .float-ads | iframe[src*="googlesyndication"] | iframe[src*="doubleclick.net"] | .video-ads | .ima-ad-container | [id*="preroll"] | [class*="preroll"] | .interstitial-wrapper | div[style*="z-index: 9999"] | div[style*="z-index:9999"] | .modal-ads | #modal-ads | .overlay:not(.video-overlay)
+
+[ophim]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | .float-ads | iframe[src*="googlesyndication"] | .video-ads | .ima-ad-container | [id*="preroll"] | .ads-section | .interstitial-wrapper | div[style*="z-index: 9999"]
+
+[sphim]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | .float-ads | iframe[src*="googlesyndication"] | .video-ads | [id*="preroll"] | .interstitial-wrapper | div[style*="z-index: 9999"]
+
+[phimplus]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .ad-slot | .banner-ads | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | .float-ads | iframe[src*="admicro.vn"] | iframe[src*="googlesyndication"] | .video-ads | .ima-ad-container | [id*="preroll"] | .ads-leaderboard | .ads-sidebar | .sticky-ads
+
+[phimchill]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | iframe[src*="googlesyndication"] | .video-ads | [id*="preroll"] | div[style*="z-index: 9999"] | .interstitial-wrapper | .modal-overlay:not(.player-modal)
+
+[xemphimso]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | iframe[src*="googlesyndication"] | .video-ads | [id*="preroll"] | div[style*="z-index: 9999"]
+
+[phim1080]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | iframe[src*="googlesyndication"] | .video-ads | [id*="preroll"] | div[style*="z-index: 9999"] | .interstitial-wrapper
+
+[subnhanh]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | [id^="dfp-"] | [class*="quangcao"] | .popup-ads | .overlay-ad | iframe[src*="admicro.vn"] | iframe[src*="googlesyndication"] | .video-ads | [id*="preroll"] | .ads-leaderboard | .float-ads
+
+[galaxyplay]
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | [class*="quangcao"] | .popup-ads | .overlay-ad | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"]
+
+# =============================================================================
+# ANIME
+# =============================================================================
+
+[9anime]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .banner | .ad-slot | .ads-container | [id^="div-gpt-ad"] | .popup-ads | #popup-container | .overlay-ad | .modal-backdrop | div[class*="overlay"]:not(.player-overlay) | iframe[src*="googlesyndication"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="adsterra.com"] | .btn-danger[onclick*="window.open"] | .skip-ad | .ad-container | #ad-container | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | div[style*="z-index:9999"]
+
+[aniwatch]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .banner | .ad-slot | .ads-container | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="googlesyndication"] | iframe[src*="exoclick.com"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | #fc-overlay | .fc-overlay | #modal-block | .ad-container | .ads-wrapper | .film-ads | [class*="-advertisement"] | .anim-ads
+
+[gogoanime]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .banner | .banner-ads | .ads-container | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="googlesyndication"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .side-ads | #side-ads | .content-ads | #content-ads | .ad-block | #ad-block
+
+[anitaku]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .banner | .banner-ads | .ads-container | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .side-ads | .ad-block
+
+[animesuge]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .banner | .ads-container | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="exoclick.com"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"]
+
+[animepahe]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .banner | .ads-container | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | .notice | #notice | .flash-notices
+
+[zoro]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .banner | .ad-slot | .ads-container | [id^="div-gpt-ad"] | .popup-ads | #popup-modal | .overlay-ad | .modal-backdrop | iframe[src*="googlesyndication"] | iframe[src*="exoclick.com"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | div[style*="z-index:9999"] | #fc-overlay | .film-ads | [class*="-advertisement"] | .tpAds | #tpAds
+
+# =============================================================================
+# PHIM QUỐC TẾ (STREAM LẬU)
+# =============================================================================
+
+[fmovies]
+# Override: chặn ALL window.open trên fmovies
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = #ngx-overlay | .ngx-overlay | [class*="overlay-ad"] | [id*="overlay-ad"] | .ad-overlay | #ad-overlay | .popup-wrapper | .popup-ad | #popup-ad | [class*="modal-ad"] | [id*="modal-ad"] | div[id^="adb"] | .jw-advertisement | .jw-ad-container | [class*="preroll"] | [id*="preroll"] | .video-ads | #video-ads | .vjs-ad-playing .vjs-poster | .ima-ad-container | [class*="ima-ad"] | div[style*="z-index: 999"] iframe | div[style*="z-index:999"] iframe | .overlay:not(.player-overlay) | #overlay:not(.player-overlay) | .modal-backdrop | .ads-container | [id^="div-gpt-ad"] | iframe[src*="googlesyndication"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="adsterra.com"] | iframe[src*="hilltopads.net"]
+
+[bmovies]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-box | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | div[style*="z-index:9999"]
+
+[sflix]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .notify | .sniper-overlay | .sniper-content | #sniper-overlay
+
+[solarmovie]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-box | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .blockUI | .blockOverlay | .blockMsg
+
+[movies123]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-slot | [id^="div-gpt-ad"] | .popup-ads | #popup | .overlay-ad | .modal-ads | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="trafficjunky"] | iframe[src*="adsterra.com"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .blockUI | .blockOverlay | div.show:has(iframe[src*="ad"])
+
+[gomovies]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-box | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | div[style*="z-index:9999"] | .notice-ads | .btn-close-ad
+
+[putlocker]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-slot | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[lookmovie]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | div[style*="z-index:9999"] | .lm-ads-container
+
+[yts]
+no_window_open_if = /doubleclick\.net|googlesyndication|exoclick|trafficjunky|adsterra|popads|popcash/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[bflix]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[myflixer]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-box | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | div[style*="z-index:9999"] | .notify-block
+
+[flixhq]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .fhq-ads
+
+[cinemahd]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[hdtoday]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-box | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | div[style*="z-index:9999"]
+
+[pressplay]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[streameast]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .se-ads | #se-ads
+
+[crackstreams]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[moviesjoy]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[wcostream]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | .ad-slot | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="trafficjunky"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | #ad_container | .ad_container | #adstickywrapper
+
+[watchseries]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[theflixer]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = [class^="banner"] | .banner-ngang | .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | iframe[src*="adsterra.com"] | iframe[src*="hilltopads.net"] | iframe[src*="trafficjunky"] | iframe[src*="monetag.com"] | iframe[src*="propellerads.com"] | iframe[src*="mgid.com"] | .ima-ad-container | [id*="preroll"] | [class*="preroll"] | .video-ads | #video-ads | .sniper-overlay | #sniper-overlay | .sniper | #sniper | div[style*="z-index: 9999"] | div[style*="z-index:9999"] | div[style*="z-index: 99999"] | div[style*="z-index:99999"] | div[style*="z-index: 2147483647"] | div[style*="z-index:2147483647"] | div[style*="z-index: 999999"] | div[style*="z-index:999999"] | div[style*="position: fixed"][style*="cursor: pointer"] | div[style*="position:fixed"][style*="cursor:pointer"] | div[style*="position: fixed"][style*="inset: 0"] | div[style*="position:fixed"][style*="inset:0"] | [class*="monetag"] | [id*="monetag"] | [class*="propeller"] | [id*="propeller"] | .jw-ad-container | .jw-advertisement | .jw-ad-label | .inplayer-ad | #ima-ad-container | [id*="ima-ad"] | [class*="ima-ad"] | .vjs-ad-playing .vjs-poster | div[id^="aswift_"] | div[id^="google_ads_iframe"] | .ad-wrap | .ad-layer | #ad-layer | .ad-overlay | #ad-overlay | .adWrapper | #adWrapper | .ad-notification | #ad-notification | .popupWrapper | #popupWrapper | .pop-overlay | #pop-overlay
+
+[cineb]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[moviesmod]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | .modal-backdrop | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[animefrenzy]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | .banner-ads | [id^="div-gpt-ad"] | .popup-ads | .overlay-ad | iframe[src*="exoclick.com"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
