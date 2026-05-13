@@ -27,7 +27,14 @@ function parseRules(text){
     var key=line.slice(0,eq).trim().toLowerCase();
     var value=line.slice(eq+1).trim();
     if(!key)continue;
-    out[section][key]=value?value.split('|').map(function(part){return part.trim();}).filter(Boolean):[];
+    var newVals=value?value.split('|').map(function(part){return part.trim();}).filter(Boolean):[];
+    if(out[section][key]&&out[section][key].length){
+      // Merge: append values not already present (supports multiple source files)
+      var seen=new Set(out[section][key]);
+      newVals.forEach(function(v){if(!seen.has(v)){seen.add(v);out[section][key].push(v);}});
+    }else{
+      out[section][key]=newVals;
+    }
   }
   return out;
 }
@@ -81,31 +88,50 @@ function isFreshCache(entry){
   return !!(entry&&entry.text&&entry.time&&(Date.now()-entry.time)<CACHE_TTL_MS);
 }
 
-function fetchRemoteRules(){
-  var urlPromise=new Promise(function(resolve){
-    if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(REMOTE_RULES_URL);return;}
-    try{
-      chrome.storage.local.get('customRulesUrl',function(res){
-        resolve((res&&res.customRulesUrl)||REMOTE_RULES_URL);
-      });
-    }catch(e){resolve(REMOTE_RULES_URL);}
-  });
-  return urlPromise.then(function(url){
-    return fetch(url,{cache:'no-store'})
-      .then(function(res){
-        if(res.ok)return res.text();
-        throw new Error('remote rules unavailable');
-      })
-      .then(function(text){
-        if(!text)throw new Error('empty remote rules');
-        return setCachedRules(text).then(function(){return text;});
-      });
+function fetchRemoteRules(urls) {
+  return Promise.all(urls.map(function(url) {
+    return fetch(url, {cache: 'no-store'})
+      .then(function(res) { return res.ok ? res.text() : ''; })
+      .catch(function() { return ''; });
+  })).then(function(texts) {
+    return texts.filter(Boolean).join('\n');
   });
 }
 
 function fetchLocalRules(){
   return fetch(chrome.runtime.getURL(LOCAL_RULES_PATH),{cache:'no-store'})
     .then(function(res){return res.ok?res.text():'';});
+}
+
+// _fetchAndMergeDirect — fallback when background messaging is unavailable.
+// Reads ruleSources from storage, fetches URL sources, merges with file sources.
+function _fetchAndMergeDirect(cached, resolve){
+  if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(null);return;}
+  chrome.storage.local.get(['ruleSources','customRulesUrl'],function(res){
+    var sources=res.ruleSources;
+    // Always load the default remote as base first
+    var urls=[REMOTE_RULES_URL];
+    var fileParts=[];
+    if(sources&&sources.length){
+      sources.forEach(function(s){
+        if(s.type==='url'&&s.url&&s.url!==REMOTE_RULES_URL)urls.push(s.url);
+        else if(s.type==='file'&&s.text)fileParts.push(s.text);
+      });
+    }else if(res.customRulesUrl&&res.customRulesUrl!==REMOTE_RULES_URL){
+      urls.push(res.customRulesUrl);
+    }
+    (urls.length?fetchRemoteRules(urls):Promise.resolve(''))
+      .then(function(urlText){
+        var merged=[urlText].concat(fileParts).filter(Boolean).join('\n');
+        if(!merged){
+          if(cached&&cached.text)return cached.text;
+          return fetchLocalRules();
+        }
+        return setCachedRules(merged).then(function(){return merged;});
+      })
+      .then(resolve)
+      .catch(function(){resolve((cached&&cached.text)||'');});
+  });
 }
 
 function loadParsed(callback){
@@ -115,9 +141,20 @@ function loadParsed(callback){
       ? fetchLocalRules()
       : getCachedRules().then(function(cached){
           if(isFreshCache(cached))return cached.text;
-          return fetchRemoteRules().catch(function(){
-            if(cached&&cached.text)return cached.text;
-            return fetchLocalRules();
+          // Delegate to background service worker — it is the single fetcher that
+          // reads ruleSources (URL + file), merges, and writes the shared cache.
+          // This prevents the double-fetch of REMOTE_RULES_URL.
+          return new Promise(function(resolve){
+            if(!extValid()){_fetchAndMergeDirect(cached,resolve);return;}
+            try{
+              chrome.runtime.sendMessage({type:'GET_RULES_TEXT'},function(res){
+                if(chrome.runtime.lastError||!res||!res.text){
+                  _fetchAndMergeDirect(cached,resolve);return;
+                }
+                // Cache the received text so isFreshCache works on next page load
+                setCachedRules(res.text).then(function(){resolve(res.text);});
+              });
+            }catch(e){_fetchAndMergeDirect(cached,resolve);}
           });
         })
     ).then(function(text){_parsed=parseRules(text);return _parsed;})
@@ -132,6 +169,23 @@ window.__adblockRuleLoader={
       var site=(siteKey||'').toLowerCase();
       callback(mergeDefaults(defaults||{},parsed[site]||{}));
     });
+  },
+  reset:function(){
+    _parsed=null;
+    _loading=null;
   }
 };
+
+// Listen for RULES_CHANGED from background (triggered when rule sources are updated).
+// Reset the in-memory parsed cache so the next load() call re-fetches with new sources.
+if(typeof chrome!=='undefined'&&chrome.runtime&&chrome.runtime.onMessage){
+  try{
+    chrome.runtime.onMessage.addListener(function(msg){
+      if(msg&&msg.type==='RULES_CHANGED'){
+        _parsed=null;
+        _loading=null;
+      }
+    });
+  }catch(e){}
+}
 })();

@@ -908,6 +908,35 @@ body::before {
   flex-wrap: wrap;
 }
 .rules-url-row .field-input { flex: 1; min-width: 0; }
+.rules-source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rules-source-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.source-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-2);
+  font-family: monospace;
+}
+.btn-sm {
+  padding: 2px 8px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
 .rules-file-status {
   font-size: 11px;
   color: var(--text-3);

@@ -841,6 +841,10 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+/* ── Rule Source constants ───────────────────── */
+const RULES_CACHE_KEY_TEXT = 'siteRulesCacheText';
+const RULES_CACHE_KEY_TIME = 'siteRulesCacheTime';
+
 /* ── Init ─────────────────────────────────────── */
 loadOverviewStats();
 loadRules();
@@ -905,77 +909,96 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-/* ── Rule Source settings ─────────────────────── */
-const RULES_CACHE_KEY_TEXT = 'siteRulesCacheText';
-const RULES_CACHE_KEY_TIME = 'siteRulesCacheTime';
-
-function setResetUrlVisible(hasUrl) {
-  const btn = document.getElementById('resetRulesUrl');
-  if (!btn) return;
-  if (hasUrl) btn.classList.remove('hidden');
-  else btn.classList.add('hidden');
+/* ── Rule Source settings (multi-source) ─────── */
+function makeSourceId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function setLocalFileActiveRow(filename) {
-  const row = document.getElementById('rulesFileActiveRow');
-  const status = document.getElementById('rulesFileStatus');
-  if (!row) return;
-  if (filename) {
-    if (status) { status.textContent = `Active: ${escHtml(filename)}`; status.style.color = 'var(--green)'; }
-    row.classList.remove('hidden');
-  } else {
-    row.classList.add('hidden');
+function renderRulesSources(sources) {
+  const urlList  = document.getElementById('rulesUrlList');
+  const fileList = document.getElementById('rulesFileList');
+  if (!urlList || !fileList) return;
+
+  const urlSources  = sources.filter(s => s.type === 'url');
+  const fileSources = sources.filter(s => s.type === 'file');
+
+  urlList.innerHTML = '';
+  for (const src of urlSources) {
+    const row = document.createElement('div');
+    row.className = 'rules-source-item';
+    row.innerHTML =
+      `<span class="source-label" title="${escHtml(src.url)}">${escHtml(src.url)}</span>` +
+      `<button class="btn-ghost btn-sm remove-source" data-id="${escHtml(src.id)}">Remove</button>`;
+    urlList.appendChild(row);
   }
+
+  fileList.innerHTML = '';
+  for (const src of fileSources) {
+    const row = document.createElement('div');
+    row.className = 'rules-source-item';
+    row.innerHTML =
+      `<span class="source-label">${escHtml(src.name)}</span>` +
+      `<button class="btn-ghost btn-sm remove-source" data-id="${escHtml(src.id)}">Remove</button>`;
+    fileList.appendChild(row);
+  }
+
+  document.querySelectorAll('.remove-source').forEach(btn => {
+    btn.addEventListener('click', () => removeRulesSource(btn.dataset.id));
+  });
 }
 
 function loadRulesSourceSettings() {
-  chrome.storage.local.get(['customRulesUrl', 'localRulesFileName'], ({ customRulesUrl, localRulesFileName }) => {
-    const input = document.getElementById('rulesUrlInput');
-    if (input) input.value = customRulesUrl || '';
-    setResetUrlVisible(!!customRulesUrl);
-    setLocalFileActiveRow(localRulesFileName || null);
-  });
-}
-
-function showRulesStatus(msg, ok = true) {
-  const el = document.getElementById('rulesFileStatus');
-  if (el) {
-    el.textContent = msg;
-    el.style.color = ok ? 'var(--green)' : 'var(--red)';
-  }
-}
-
-document.getElementById('saveRulesUrl')?.addEventListener('click', () => {
-  const url = document.getElementById('rulesUrlInput')?.value.trim();
-  // Clear cache + local file (mutually exclusive with remote URL)
-  chrome.storage.local.remove([RULES_CACHE_KEY_TEXT, RULES_CACHE_KEY_TIME, 'localRulesFileName'], () => {
-    setLocalFileActiveRow(null);
-    if (url) {
-      chrome.storage.local.set({ customRulesUrl: url }, () => {
-        setResetUrlVisible(true);
-        showRulesStatus('URL saved. Rules will reload on next page load.');
-      });
-    } else {
-      chrome.storage.local.remove('customRulesUrl', () => {
-        setResetUrlVisible(false);
-        showRulesStatus('Reset to default URL. Cache cleared.');
-      });
+  chrome.storage.local.get(
+    ['ruleSources', 'customRulesUrl', 'localRulesFileName', RULES_CACHE_KEY_TEXT],
+    (data) => {
+      let sources = data.ruleSources;
+      if (!sources) {
+        // Migrate from legacy single-source format
+        sources = [];
+        if (data.customRulesUrl) {
+          sources.push({ id: makeSourceId(), type: 'url', url: data.customRulesUrl });
+        }
+        if (data.localRulesFileName && data[RULES_CACHE_KEY_TEXT]) {
+          sources.push({ id: makeSourceId(), type: 'file', name: data.localRulesFileName, text: data[RULES_CACHE_KEY_TEXT] });
+        }
+        if (sources.length) {
+          chrome.storage.local.set({ ruleSources: sources });
+          chrome.storage.local.remove(['customRulesUrl', 'localRulesFileName']);
+        }
+      }
+      renderRulesSources(sources || []);
     }
-  });
-});
+  );
+}
 
-document.getElementById('resetRulesFile')?.addEventListener('click', () => {
-  chrome.storage.local.remove(['localRulesFileName', RULES_CACHE_KEY_TEXT, RULES_CACHE_KEY_TIME], () => {
-    setLocalFileActiveRow(null);
+function removeRulesSource(id) {
+  chrome.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
+    const updated = ruleSources.filter(s => s.id !== id);
+    chrome.storage.local.set(
+      { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
+      () => {
+        chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
+        renderRulesSources(updated);
+      }
+    );
   });
-});
+}
 
-document.getElementById('resetRulesUrl')?.addEventListener('click', () => {
+document.getElementById('addRulesUrl')?.addEventListener('click', () => {
   const input = document.getElementById('rulesUrlInput');
-  if (input) input.value = '';
-  chrome.storage.local.remove(['customRulesUrl', RULES_CACHE_KEY_TEXT, RULES_CACHE_KEY_TIME], () => {
-    setResetUrlVisible(false);
-    showRulesStatus('Reset to default. Cache cleared.');
+  const url = input?.value.trim();
+  if (!url) return;
+  chrome.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
+    if (ruleSources.some(s => s.type === 'url' && s.url === url)) return;
+    const updated = [...ruleSources, { id: makeSourceId(), type: 'url', url }];
+    chrome.storage.local.set(
+      { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
+      () => {
+        chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
+        if (input) input.value = '';
+        renderRulesSources(updated);
+      }
+    );
   });
 });
 
@@ -984,30 +1007,41 @@ document.getElementById('rulesFileBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('rulesFileInput')?.addEventListener('change', (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const text = ev.target?.result;
-    if (!text) { showRulesStatus('File is empty.', false); return; }
-    // Store as cache with far-future timestamp so it stays active until manually reset
-    const FAR_FUTURE = Date.now() + 10 * 365 * 24 * 60 * 60 * 1000;
-    chrome.storage.local.set({
-      [RULES_CACHE_KEY_TEXT]: text,
-      [RULES_CACHE_KEY_TIME]: FAR_FUTURE,
-      localRulesFileName: file.name,
-    }, () => {
-      setLocalFileActiveRow(file.name);
-      // Clear remote URL (mutually exclusive with local file)
-      chrome.storage.local.remove('customRulesUrl', () => {
-        setResetUrlVisible(false);
-        const urlInput = document.getElementById('rulesUrlInput');
-        if (urlInput) urlInput.value = '';
-      });
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  chrome.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
+    let pending = files.length;
+    const newSources = [];
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result;
+        if (text) newSources.push({ id: makeSourceId(), type: 'file', name: file.name, text });
+        if (--pending === 0) {
+          const updated = [...ruleSources, ...newSources];
+          chrome.storage.local.set(
+            { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
+            () => {
+              chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
+              renderRulesSources(updated);
+            }
+          );
+        }
+      };
+      reader.onerror = () => {
+        if (--pending === 0 && newSources.length) {
+          const updated = [...ruleSources, ...newSources];
+          chrome.storage.local.set(
+            { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
+            () => {
+              chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
+              renderRulesSources(updated);
+            }
+          );
+        }
+      };
+      reader.readAsText(file);
     });
-  };
-  reader.onerror = () => showRulesStatus('Failed to read file.', false);
-  reader.readAsText(file);
-  // Reset file input so the same file can be re-selected
+  });
   e.target.value = '';
 });

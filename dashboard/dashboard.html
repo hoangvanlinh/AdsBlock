@@ -430,27 +430,24 @@
         <h3 class="settings-section">Rule Source</h3>
         <div class="setting-row setting-col">
           <div>
-            <p class="setting-name">Remote rules URL</p>
-            <p class="setting-desc">Custom URL to fetch site-rules.txt from. Leave blank to use the default.</p>
+            <p class="setting-name">Remote rule URLs</p>
+            <p class="setting-desc">URLs to fetch site-rules.txt from. Multiple URLs are merged. Leave empty to use the default.</p>
           </div>
+          <div id="rulesUrlList" class="rules-source-list"></div>
           <div class="rules-url-row">
             <input class="field-input" id="rulesUrlInput" type="url" placeholder="https://raw.githubusercontent.com/…/site-rules.txt" />
-            <button class="btn-primary" id="saveRulesUrl">Save &amp; Reload</button>
+            <button class="btn-primary" id="addRulesUrl">Add URL</button>
           </div>
-          <button class="text-btn hidden" id="resetRulesUrl" style="margin-top:6px;font-size:11px">Reset to default URL</button>
         </div>
         <div class="setting-row setting-col">
           <div>
-            <p class="setting-name">Load from local file</p>
-            <p class="setting-desc">Upload a site-rules.txt — used as cached rules until replaced or reset.</p>
+            <p class="setting-name">Local rule files</p>
+            <p class="setting-desc">Upload .txt rule files — merged with URL sources. Multiple files supported.</p>
           </div>
+          <div id="rulesFileList" class="rules-source-list"></div>
           <div class="rules-url-row">
-            <input type="file" id="rulesFileInput" accept=".txt" style="display:none" />
-            <button class="btn-ghost" id="rulesFileBtn">Choose file…</button>
-          </div>
-          <div class="rules-url-row hidden" id="rulesFileActiveRow">
-            <span id="rulesFileStatus" class="rules-file-status"></span>
-            <button class="btn-ghost" id="resetRulesFile">Remove</button>
+            <input type="file" id="rulesFileInput" accept=".txt" multiple style="display:none" />
+            <button class="btn-ghost" id="rulesFileBtn">Add file…</button>
           </div>
         </div>
       </div>

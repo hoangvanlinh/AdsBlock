@@ -513,5 +513,13 @@ chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
     return true;
   }
   if(msg.type==='GET_HIDDEN_COUNT')sendResponse({count:_hidden});
+  if(msg.type==='RULES_CHANGED'){
+    // Rule sources were updated — reset the cached parsed rules and re-apply.
+    if(window.__adblockRuleLoader&&window.__adblockRuleLoader.reset)window.__adblockRuleLoader.reset();
+    _config=null;
+    siteKey='';
+    stopObserver();
+    boot();
+  }
 });
 })();
