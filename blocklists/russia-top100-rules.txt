@@ -1,0 +1,495 @@
+# ── Russia Top 100 Sites Rule List ─────────────────────────────────────────────
+# Ad blocking rules for the ~100 most-visited websites in Russia.
+# Merge this file into Rule Source (local file) in the AdBlock dashboard.
+# Format is identical to the main site-rules.txt.
+#
+# [host_patterns]  →  map hostname → sitekey
+# [sitekey]        →  rules for that site
+#
+# Note: subdomains match automatically (e.g. "yandex.ru" matches "www.yandex.ru")
+#
+# ⚠️  If movie-sites-rules.txt is also loaded, the [global] section below will
+#     override it. Merge the prevent_xhr values from both files manually.
+
+[host_patterns]
+
+# ── Search engines & portals ────────────────────────────────────────────────────
+yandex.ru           = yandex
+yandex.com          = yandex
+mail.ru             = mailru
+rambler.ru          = rambler
+
+# ── Social networks ─────────────────────────────────────────────────────────────
+vk.com              = vk
+ok.ru               = ok
+
+# ── News ─────────────────────────────────────────────────────────────────────────
+ria.ru              = ria
+rbc.ru              = rbc
+lenta.ru            = lenta
+kommersant.ru       = kommersant
+gazeta.ru           = gazeta
+iz.ru               = izvestia
+tass.ru             = tass
+interfax.ru         = interfax
+mk.ru               = mk
+aif.ru              = aif
+fontanka.ru         = fontanka
+meduza.io           = meduza
+forbes.ru           = forbesru
+regnum.ru           = regnum
+life.ru             = liferu
+ren.tv              = rentv
+ntv.ru              = ntv
+1tv.ru              = perviy
+championat.com      = championat
+sport-express.ru    = sportexpress
+sports.ru           = sportsru
+kp.ru               = kp
+vedomosti.ru        = vedomosti
+novayagazeta.ru     = novayagazeta
+pravda.ru           = pravda
+7days.ru            = sevendays
+e1.ru               = e1news
+
+# ── Video & streaming ───────────────────────────────────────────────────────────
+rutube.ru           = rutube
+ivi.ru              = ivi
+kinopoisk.ru        = kinopoisk
+okko.tv             = okko
+premier.one         = premier
+more.tv             = moretv
+start.ru            = startru
+kion.ru             = kion
+megogo.net          = megogo
+tvzavr.ru           = tvzavr
+
+# ── Torrents & piracy ───────────────────────────────────────────────────────────
+rutracker.org       = rutracker
+nnmclub.to          = nnmclub
+kinozal.tv          = kinozal
+rutor.info          = rutor
+lostfilm.tv         = lostfilm
+seasonvar.ru        = seasonvar
+filmix.ac           = filmix
+hdrezka.ag          = hdrezka
+rezka.ag            = hdrezka
+rezka.fm            = hdrezka
+kinogo.ac           = kinogo
+kinopub.app         = kinopub
+anilibria.tv        = anilibria
+animego.org         = animego
+
+# ── Classifieds & automotive ────────────────────────────────────────────────────
+avito.ru            = avito
+youla.ru            = youla
+drom.ru             = drom
+drive2.ru           = drive2
+auto.ru             = autoru
+farpost.ru          = farpost
+
+# ── Job boards ──────────────────────────────────────────────────────────────────
+hh.ru               = hh
+superjob.ru         = superjob
+zarplata.ru         = zarplata
+
+# ── Marketplaces & e-commerce ───────────────────────────────────────────────────
+wildberries.ru      = wildberries
+ozon.ru             = ozon
+dns-shop.ru         = dns
+mvideo.ru           = mvideo
+eldorado.ru         = eldorado
+citilink.ru         = citilink
+lamoda.ru           = lamoda
+sbermegamarket.ru   = sbermegamarket
+
+# ── Tech & communities ──────────────────────────────────────────────────────────
+habr.com            = habr
+pikabu.ru           = pikabu
+4pda.to             = fourpda
+2ch.hk              = dvach
+
+# ── Books ───────────────────────────────────────────────────────────────────────
+litres.ru           = litres
+flibusta.site       = flibusta
+flibusta.is         = flibusta
+
+# ── Services & misc ─────────────────────────────────────────────────────────────
+2gis.ru             = twogis
+gismeteo.ru         = gismeteo
+tiu.ru              = tiu
+zoon.ru             = zoon
+irecommend.ru       = irecommend
+otzovik.com         = otzovik
+banki.ru            = banki
+sravni.ru           = sravni
+cdek.ru             = cdek
+
+# ── Government services ─────────────────────────────────────────────────────────
+gosuslugi.ru        = gosuslugi
+mos.ru              = mosru
+nalog.ru            = nalog
+pochta.ru           = pochta
+
+# ── Banks & finance ─────────────────────────────────────────────────────────────
+sber.ru             = sber
+sberbank.ru         = sber
+tinkoff.ru          = tinkoff
+alfabank.ru         = alfabank
+vtb.ru              = vtb
+
+# =============================================================================
+# GLOBAL — Russian & international ad networks
+# =============================================================================
+
+[global]
+prevent_xhr = /adfox\.ru|adriver\.ru|begun\.ru|smi2\.ru|relap\.io|getintent\.com|segmento\.ru|mytarget\.ru|targetix\.net|soloway\.ru|imho\.ru|advertise\.ru|exoclick\.com|adsterra\.com|hilltopads\.net|monetag\.com|propellerads\.com|clickadilla\.com|trafficjunky\.net|mgid\.com|popcash\.net|popads\.net|adcash\.com|clickunder\.net/
+
+# =============================================================================
+# SEARCH ENGINES & PORTALS
+# =============================================================================
+
+[yandex]
+# Hide Yandex Direct ads in search results and RTB blocks
+direct_hide_selectors = [class*="serp-adv"] | [data-bem*="serp-adv"] | .t-construct-adapter__direct | [id^="yandex_rtb"] | [class*="adv_banner"] | .b-spec-adv | .Adv | [class*="SerpAdv"] | [class*="PremiumAdv"] | [class*="AdvRight"] | [class*="AdvLeft"] | [class*="adv_center"] | [class*="adv_left"] | [class*="adv_right"] | [class*="direct-serp"] | .DirectBanner | [class*="direct_banner"] | [class*="Banner_type_regular"] | .search2__banner | .serp-header__banner | [class*="premium-"] | .premium_adv
+
+[mailru]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advBanner"] | .ico_adv | [class*="--adv"] | [data-block="ad"] | [class*="mail-ad"] | iframe[src*="begun.ru"] | iframe[src*="adriver.ru"]
+
+[rambler]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertisement"] | [class*="Advert"] | .rnet-ad | .rnet-advert | [class*="rmbl-ad"] | iframe[src*="begun.ru"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"]
+
+# =============================================================================
+# SOCIAL NETWORKS
+# =============================================================================
+
+[vk]
+direct_hide_selectors = ._post[data-is-ad] | ._post_has_ad_mark | .ads_block | #ads_block | [class*="PostSponsoredBadge"] | [class*="feed_row--ad"] | [class*="ads-feed"] | #ads | .ads_item | [class*="sponsored"] | [class*="adsItem"] | [class*="feedAdItem"] | div[data-ad-view] | [class*="adLabel"] | .vkuiSimpleCell--ad | [class*="--ad-container"] | [data-marker="ad"]
+
+[ok]
+direct_hide_selectors = .ugrid_i_ad | [class*="ads_tg"] | [data-l*="adv"] | #ads | [class*="ad-unit"] | [class*="advert"] | [class*="AdvertBanner"] | [class*="ad_banner"] | [id^="yandex_rtb"] | [class*="ad-item"] | [data-ad-type] | .js-adv | .js-ad
+
+# =============================================================================
+# NEWS
+# =============================================================================
+
+[ria]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="teaser-"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | .leaderboard | .billboard | [class*="reklama"] | .js-adv | [class*="media-sponsored"] | .aside__block--ad
+
+[rbc]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="l-sidebar__ad"] | [class*="advertising"] | [class*="media-sponsored"] | [class*="topic__banner"] | [class*="article__sponsor"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [data-widget="AdvertisementWidget"] | [class*="sidebar__advert"]
+
+[lenta]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | [class*="mgid"] | iframe[src*="adriver.ru"] | .js-advert | [class*="sidebar__adv"] | [data-widget="adv"] | .spec-projects__item--ad
+
+[kommersant]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="uho__"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="teaser"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | .special-projects-ad | [class*="sidebar__ad"]
+
+[gazeta]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="mgid"] | [class*="teaser"] | .aside-block--ad | [class*="article-advert"]
+
+[izvestia]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="iz-advert"] | [class*="sidebar__adv"]
+
+[tass]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="tass-adv"] | .sidebar__adv
+
+[interfax]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"] | .aside__advert | .leaderboard
+
+[mk]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="mgid"] | .b-banner | [class*="sidebar-ad"]
+
+[aif]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="aif-adv"] | [class*="sidebar__advert"]
+
+[fontanka]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="sidebar__ad"] | .leaderboard | [class*="fullscreen-banner"]
+
+[meduza]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="PartnerMaterial"] | .partner-card | .ads-wrapper
+
+[forbesru]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | [class*="teaser"] | iframe[src*="adriver.ru"] | [class*="ad-wrapper"] | [class*="partner-block"]
+
+[regnum]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"]
+
+[liferu]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="teaser"] | [class*="mgid"] | .popup-ads | .overlay-ad | div[style*="z-index: 9999"]
+
+[rentv]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"]
+
+[ntv]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | .leaderboard
+
+[perviy]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"]
+
+[championat]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="teaser"] | [class*="mgid"] | .aside__adv | [class*="article__adv"]
+
+[sportexpress]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="teaser"] | [class*="aside__ad"]
+
+[sportsru]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="teaser"] | [class*="ads-block"]
+
+[kp]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="teaser"] | [class*="mgid"] | .aside-adv | .article__adv | .special__adv
+
+[vedomosti]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="partner-"]
+
+[novayagazeta]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"]
+
+[pravda]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="teaser"] | div[style*="z-index: 9999"]
+
+[sevendays]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"]
+
+[e1news]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | [class*="teaser"] | div[style*="z-index: 9999"]
+
+# =============================================================================
+# VIDEO & STREAMING
+# =============================================================================
+
+[rutube]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ad-overlay | .preroll-overlay | [class*="ad-container"] | [class*="ads-container"] | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | .ima-ad-container | [id*="preroll"] | [class*="preroll"] | .video-ads | .vast-skip-button | [class*="adv-overlay"] | [class*="banner"] | [class*="advert"] | div[style*="z-index: 9999"] | .ntv-adv-block | [class*="rutube-adv"]
+
+[ivi]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | .ima-ad-container | [id*="preroll"] | [class*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[kinopoisk]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertisement"] | .ima-ad-container | [id*="preroll"] | [class*="preroll"] | .video-ads | div[style*="z-index: 9999"] | [class*="kinopoisk-adv"]
+
+[okko]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[premier]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[moretv]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[startru]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[kion]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"]
+
+[megogo]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[tvzavr]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+# =============================================================================
+# TORRENTS & PIRACY
+# =============================================================================
+
+[rutracker]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | .leaderboard | [id*="leaderboard"] | table[id*="adv"] | td[id*="adv"]
+
+[nnmclub]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | div[style*="z-index: 9999"] | [id*="ads"] | [class*="ads"]
+
+[kinozal]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[rutor]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[lostfilm]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad | .modal-overlay:not(.player-modal) | .lf-adv
+
+[seasonvar]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[filmix]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad | .modal-backdrop | [class*="filmix-ad"]
+
+[hdrezka]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | iframe[src*="adsterra.com"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | div[style*="z-index:9999"] | .popup-ads | .overlay-ad | .modal-backdrop | #stickyBanner | .b-content__main > .b-adv
+
+[kinogo]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad | .modal-backdrop
+
+[kinopub]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | .ima-ad-container | [id*="preroll"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[anilibria]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[animego]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = .ads-container | [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad | .modal-backdrop
+
+# =============================================================================
+# CLASSIFIEDS, AUTOMOTIVE & JOBS
+# =============================================================================
+
+[avito]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="iva-ad"] | [data-marker="ad"] | [class*="context-ad"] | [class*="avito-ad"] | .items__banner
+
+[youla]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | [class*="ad-block"] | [data-stat-id*="ad"]
+
+[drom]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"] | [class*="teaser"] | .drom-adv | [id*="drom_ad"] | [class*="banner-drom"]
+
+[drive2]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"] | div[style*="z-index: 9999"]
+
+[autoru]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="ad-frame"] | [class*="Banner_"] | [data-widget-name*="Banner"] | [class*="VertBannerCell"] | [class*="banner-auto"]
+
+[farpost]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+[hh]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="HhruAdv"] | [data-qa="vacancy-serp__banner"]
+
+[superjob]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"]
+
+[zarplata]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"]
+
+# =============================================================================
+# MARKETPLACES
+# =============================================================================
+
+[wildberries]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | iframe[src*="adriver.ru"] | [class*="banner"] | [class*="advertising"] | [class*="adv-banner"] | .popup-ads | .overlay-ad | div[style*="z-index: 9999"]
+
+[ozon]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | iframe[src*="adriver.ru"] | [class*="banner"] | [class*="advertising"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[dns]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+[mvideo]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[eldorado]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+[citilink]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+[lamoda]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[sbermegamarket]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+# =============================================================================
+# TECH & COMMUNITIES
+# =============================================================================
+
+[habr]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | .tm-adv | [class*="tm-advert"] | [class*="habr-adv"] | [data-id^="ad-"]
+
+[pikabu]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"] | [class*="teaser"] | .story-block_type_adfox | [data-type="adfox"] | [class*="sidebar-block--adfox"]
+
+[fourpda]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad | #ads | .ads | [id^="4pda_ad"]
+
+[dvach]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad | #banner | .board-banner
+
+# =============================================================================
+# BOOKS
+# =============================================================================
+
+[litres]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+[flibusta]
+no_window_open_if = /.*/ 0 blank
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+# =============================================================================
+# SERVICES & MISC
+# =============================================================================
+
+[twogis]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"]
+
+[gismeteo]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"] | div[style*="z-index: 9999"]
+
+[tiu]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[zoon]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"]
+
+[irecommend]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"]
+
+[otzovik]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="smi2"] | [class*="relap"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"] | .popup-ads
+
+[banki]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"] | [class*="teaser"] | div[style*="z-index: 9999"]
+
+[sravni]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | [class*="smi2"] | [class*="relap"] | div[style*="z-index: 9999"]
+
+[cdek]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+# =============================================================================
+# GOVERNMENT SERVICES (minimal ads — hide stray banners only)
+# =============================================================================
+
+[gosuslugi]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | .adsbygoogle | [class*="banner"] | div[style*="z-index: 9999"]
+
+[mosru]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | .adsbygoogle | [class*="banner"] | div[style*="z-index: 9999"]
+
+[nalog]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | .adsbygoogle | [class*="banner"] | div[style*="z-index: 9999"]
+
+[pochta]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | .adsbygoogle | [class*="banner"] | [class*="advert"] | div[style*="z-index: 9999"]
+
+# =============================================================================
+# BANKS & FINANCE (mainly block unwanted popups/overlays)
+# =============================================================================
+
+[sber]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | [class*="advertising"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad
+
+[tinkoff]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+[alfabank]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
+
+[vtb]
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="adriver.ru"] | div[style*="z-index: 9999"]
