@@ -926,9 +926,16 @@ function renderRulesSources(sources) {
   for (const src of urlSources) {
     const row = document.createElement('div');
     row.className = 'rules-source-item';
-    row.innerHTML =
-      `<span class="source-label" title="${escHtml(src.url)}">${escHtml(src.url)}</span>` +
-      `<button class="btn-ghost btn-sm remove-source" data-id="${escHtml(src.id)}">Remove</button>`;
+    const urlSpan = document.createElement('span');
+    urlSpan.className = 'source-label';
+    urlSpan.title = src.url;
+    urlSpan.textContent = src.url;
+    const urlBtn = document.createElement('button');
+    urlBtn.className = 'btn-ghost btn-sm remove-source';
+    urlBtn.dataset.id = src.id;
+    urlBtn.textContent = 'Remove';
+    row.appendChild(urlSpan);
+    row.appendChild(urlBtn);
     urlList.appendChild(row);
   }
 
@@ -936,9 +943,15 @@ function renderRulesSources(sources) {
   for (const src of fileSources) {
     const row = document.createElement('div');
     row.className = 'rules-source-item';
-    row.innerHTML =
-      `<span class="source-label">${escHtml(src.name)}</span>` +
-      `<button class="btn-ghost btn-sm remove-source" data-id="${escHtml(src.id)}">Remove</button>`;
+    const fileSpan = document.createElement('span');
+    fileSpan.className = 'source-label';
+    fileSpan.textContent = src.name;
+    const fileBtn = document.createElement('button');
+    fileBtn.className = 'btn-ghost btn-sm remove-source';
+    fileBtn.dataset.id = src.id;
+    fileBtn.textContent = 'Remove';
+    row.appendChild(fileSpan);
+    row.appendChild(fileBtn);
     fileList.appendChild(row);
   }
 
