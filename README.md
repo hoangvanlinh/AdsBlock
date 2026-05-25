@@ -5,14 +5,15 @@
 <h1 align="center">AdBlock — Ads, Trackers</h1>
 
 <p align="center">
-  A fast, privacy-first Chrome extension that blocks ads, trackers, and malware.<br>
-  Built with Manifest V3 — lightweight, open source, no data collection.
+  A fast, privacy-first browser extension that blocks ads, trackers, and malware.<br>
+  Available for Chrome, Firefox, and Edge — lightweight, open source, no data collection.
 </p>
 
 <p align="center">
   <a href="#features">Features</a> •
   <a href="https://prostores.top/">Website</a> •
   <a href="#install">Install</a> •
+  <a href="#build">Build</a> •
   <a href="#project-structure">Structure</a> •
   <a href="#how-it-works">How It Works</a> •
   <a href="#contributing">Contributing</a> •
@@ -62,17 +63,21 @@
 
 5. The extension icon will appear in your toolbar — you're ready to go!
 
-### From Chrome Web Store
+### From a browser store
 
-Install directly from the Chrome Web Store:
+Available on Chrome, Firefox, and Edge:
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/adblock-%E2%80%94-ads-trackers/emdofgiggmkkncojffpebiaegdmdkgio">
-    <img src="https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Install from Chrome Web Store">
+    <img src="https://img.shields.io/badge/Chrome-Get%20Extension-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Install from Chrome Web Store">
   </a>
   &nbsp;
   <a href="https://addons.mozilla.org/addon/adblock-ads-trackers/">
-    <img src="https://img.shields.io/badge/Firefox%20Add--ons-Install-FF7139?style=for-the-badge&logo=firefox&logoColor=white" alt="Install from Firefox Add-ons">
+    <img src="https://img.shields.io/badge/Firefox-Get%20Extension-FF7139?style=for-the-badge&logo=firefox&logoColor=white" alt="Install from Firefox Add-ons">
+  </a>
+  &nbsp;
+  <a href="#install">
+    <img src="https://img.shields.io/badge/Edge-Get%20Extension-0078D7?style=for-the-badge&logo=microsoftedge&logoColor=white" alt="Install from Microsoft Edge Add-ons">
   </a>
 </p>
 
