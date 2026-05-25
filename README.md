@@ -70,7 +70,42 @@ Install directly from the Chrome Web Store:
   <a href="https://chromewebstore.google.com/detail/adblock-%E2%80%94-ads-trackers/emdofgiggmkkncojffpebiaegdmdkgio">
     <img src="https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Install from Chrome Web Store">
   </a>
+  &nbsp;
+  <a href="https://addons.mozilla.org/addon/adblock-ads-trackers/">
+    <img src="https://img.shields.io/badge/Firefox%20Add--ons-Install-FF7139?style=for-the-badge&logo=firefox&logoColor=white" alt="Install from Firefox Add-ons">
+  </a>
 </p>
+
+## Build
+
+```bash
+# Build a single target (with obfuscation by default)
+./build-chrome.sh          # → dist/  +  adblock-extension.zip
+./build-firefox.sh         # → dist-firefox/  +  adblock-extension-firefox.zip
+./build-edge.sh            # → dist-edge/  +  adblock-extension-edge.zip
+
+# Or use the orchestrator
+./build.sh chrome          # Chrome only
+./build.sh firefox         # Firefox only
+./build.sh edge            # Edge only
+./build.sh all             # All three targets
+```
+
+**Arguments** (same for all scripts):
+
+| # | Name | Default | Description |
+|---|------|---------|-------------|
+| 1 | `target` | `chrome` | `chrome` \| `firefox` \| `edge` \| `all` *(orchestrator only)* |
+| 2 | `obfuscate` | `true` | Obfuscate JS with `javascript-obfuscator` |
+| 3 | `export_obfuscated_src` | `false` | Export obfuscated source tree to `src-obfuscated[-target]/` |
+| 4 | `debug` | `false` | Patch `DEBUG_LOCAL=true` in the rules loader (loads local file instead of remote) |
+
+```bash
+# Examples
+./build.sh all false               # All targets, no obfuscation
+./build.sh all false false true    # All targets, no obfuscation, DEBUG_LOCAL=true
+./build-chrome.sh true true        # Chrome, obfuscated + export source tree
+```
 
 ## Project Structure
 
