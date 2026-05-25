@@ -7,10 +7,12 @@ BUILD_DIR="$PROJECT_DIR/dist"
 ZIP_NAME="adblock-extension.zip"
 FIREFOX_BUILD_DIR="$PROJECT_DIR/dist-firefox"
 FIREFOX_ZIP_NAME="adblock-extension-firefox.zip"
+EDGE_BUILD_DIR="$PROJECT_DIR/dist-edge"
+EDGE_ZIP_NAME="adblock-extension-edge.zip"
 OBFUSCATED_SRC_DIR="$PROJECT_DIR/src-obfuscated"
 OBFUSCATED_SRC_FIREFOX_DIR="$PROJECT_DIR/src-obfuscated-firefox"
 
-# Target: "chrome" (default), "firefox", or "all"
+# Target: "chrome" (default), "firefox", "edge", or "all"
 TARGET="${1:-chrome}"
 
 # Obfuscate: "true" (default) or "false" to skip obfuscation
@@ -33,6 +35,10 @@ mkdir -p "$BUILD_DIR"
 if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   rm -rf "$FIREFOX_BUILD_DIR"
   mkdir -p "$FIREFOX_BUILD_DIR"
+fi
+if [[ "$TARGET" == "edge" || "$TARGET" == "all" ]]; then
+  rm -rf "$EDGE_BUILD_DIR"
+  mkdir -p "$EDGE_BUILD_DIR"
 fi
 if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
   rm -rf "$OBFUSCATED_SRC_DIR"
@@ -93,6 +99,23 @@ if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   cp "$PROJECT_DIR/dashboard/dashboard.html" "$FIREFOX_BUILD_DIR/dashboard/"
   cp "$PROJECT_DIR/popup/popup.html" "$FIREFOX_BUILD_DIR/popup/"
   cp "$PROJECT_DIR/content/scriptlets.js" "$FIREFOX_BUILD_DIR/content/"
+fi
+
+# Edge build: same manifest as Chrome (Edge is Chromium MV3 compatible)
+if [[ "$TARGET" == "edge" || "$TARGET" == "all" ]]; then
+  cp "$PROJECT_DIR/manifest.json" "$EDGE_BUILD_DIR/manifest.json"
+  cp "$PROJECT_DIR/LICENSE" "$EDGE_BUILD_DIR/" 2>/dev/null || true
+  mkdir -p "$EDGE_BUILD_DIR/icons" "$EDGE_BUILD_DIR/content" "$EDGE_BUILD_DIR/rule" "$EDGE_BUILD_DIR/dashboard" "$EDGE_BUILD_DIR/popup"
+  cp "$PROJECT_DIR/icons/"*.png "$EDGE_BUILD_DIR/icons/"
+  cp "$PROJECT_DIR/content/content.css" "$EDGE_BUILD_DIR/content/"
+  cp "$PROJECT_DIR/content/site-rules-loader.js" "$EDGE_BUILD_DIR/content/"
+  cp "$PROJECT_DIR/rule/site-rules.txt" "$EDGE_BUILD_DIR/rule/"
+  cp "$PROJECT_DIR/content/site-block.js" "$EDGE_BUILD_DIR/content/"
+  cp "$PROJECT_DIR/dashboard/dashboard.css" "$EDGE_BUILD_DIR/dashboard/"
+  cp "$PROJECT_DIR/popup/popup.css" "$EDGE_BUILD_DIR/popup/"
+  cp "$PROJECT_DIR/dashboard/dashboard.html" "$EDGE_BUILD_DIR/dashboard/"
+  cp "$PROJECT_DIR/popup/popup.html" "$EDGE_BUILD_DIR/popup/"
+  cp "$PROJECT_DIR/content/scriptlets.js" "$EDGE_BUILD_DIR/content/"
 fi
 
 if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
@@ -164,6 +187,11 @@ for js in "${JS_FILES[@]}"; do
                 --output "$FIREFOX_BUILD_DIR/$js" \
                 "${OBFUSCATOR_OPTS[@]}"
         fi
+        if [[ "$TARGET" == "edge" || "$TARGET" == "all" ]]; then
+            javascript-obfuscator "$PROJECT_DIR/$js" \
+                --output "$EDGE_BUILD_DIR/$js" \
+                "${OBFUSCATOR_OPTS[@]}"
+        fi
       if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
         javascript-obfuscator "$PROJECT_DIR/$js" \
           --output "$OBFUSCATED_SRC_DIR/$js" \
@@ -179,6 +207,9 @@ for js in "${JS_FILES[@]}"; do
         cp "$PROJECT_DIR/$js" "$BUILD_DIR/$js"
         if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
             cp "$PROJECT_DIR/$js" "$FIREFOX_BUILD_DIR/$js"
+        fi
+        if [[ "$TARGET" == "edge" || "$TARGET" == "all" ]]; then
+            cp "$PROJECT_DIR/$js" "$EDGE_BUILD_DIR/$js"
         fi
       if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
         cp "$PROJECT_DIR/$js" "$OBFUSCATED_SRC_DIR/$js"
@@ -196,6 +227,9 @@ if [[ "$DEBUG" == "true" ]]; then
   if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
     sed -i '' 's/var DEBUG_LOCAL=false/var DEBUG_LOCAL=true/' "$FIREFOX_BUILD_DIR/content/site-rules-loader.js" 2>/dev/null || true
   fi
+  if [[ "$TARGET" == "edge" || "$TARGET" == "all" ]]; then
+    sed -i '' 's/var DEBUG_LOCAL=false/var DEBUG_LOCAL=true/' "$EDGE_BUILD_DIR/content/site-rules-loader.js" 2>/dev/null || true
+  fi
 fi
 
 echo -e "${YELLOW}[4/4] Creating ZIP archive...${NC}"
@@ -208,6 +242,11 @@ if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   zip -r "$PROJECT_DIR/$FIREFOX_ZIP_NAME" . -x "*.DS_Store"
   cd "$PROJECT_DIR"
 fi
+if [[ "$TARGET" == "edge" || "$TARGET" == "all" ]]; then
+  cd "$EDGE_BUILD_DIR"
+  zip -r "$PROJECT_DIR/$EDGE_ZIP_NAME" . -x "*.DS_Store"
+  cd "$PROJECT_DIR"
+fi
 
 echo ""
 echo -e "${GREEN}✅ Build complete!${NC}"
@@ -216,6 +255,9 @@ if [[ "$TARGET" == "chrome" || "$TARGET" == "all" ]]; then
 fi
 if [[ "$TARGET" == "firefox" || "$TARGET" == "all" ]]; then
   echo "   Firefox ZIP: $PROJECT_DIR/$FIREFOX_ZIP_NAME  ($(du -h "$PROJECT_DIR/$FIREFOX_ZIP_NAME" | cut -f1))"
+fi
+if [[ "$TARGET" == "edge" || "$TARGET" == "all" ]]; then
+  echo "   Edge ZIP:    $PROJECT_DIR/$EDGE_ZIP_NAME  ($(du -h "$PROJECT_DIR/$EDGE_ZIP_NAME" | cut -f1))"
 fi
 if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
   echo "   Obfuscated source: $OBFUSCATED_SRC_DIR"
