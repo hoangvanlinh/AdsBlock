@@ -19,6 +19,7 @@ pinterest.com = pinterest
 quora.com = quora
 amazon.* = amazon
 google.* = google
+yandex.* = yandex
 vnexpress.net = vnexpress
 tuoitre.vn = tuoitre
 #dantri.com.vn = dantri
@@ -162,6 +163,16 @@ direct_hide_selectors = .box-tinquangcao | .tinquangcao | .block-ads | [class*="
 [tuoitre]
 # Admicro/VCCorp + Tuổi Trẻ first-party ad zones
 direct_hide_selectors = #LeaderBoardTop | [class*="quang-cao"] | [class*="quangcao"] | [id*="quang-cao"] | [id*="quangcao"] | div[id^="zone_"] | div[id^="admzone_"] | div[id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | .box-ads | .banner-ads | .ads-container | .ads-box | .sidebar-ads | .article-ads | .content-ads | .float-ads | .sticky-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | [id^="placement-"][revenue] | [data-admssprqid] | *:has(>[data-admssprqid])
+
+# ── Yandex ──────────────────────────────────────────────────────────────────
+[yandex]
+# Yandex Direct search ads are labelled "Реклама" (= Advertisement) with a yellow badge.
+# Adfox is Yandex's own ad serving platform, injected as [id^="adfox"].
+labels = реклама
+# Direct ads in SERP: li.serp-item with data-cid, yellow label, or direct fast-name marker
+direct_hide_selectors = [id^="adfox"] | .serp-item_type_adv | li.serp-item[data-cid] | li.serp-item:has(.label_theme_yellow) | li.serp-item:has(.badge_theme_yellow) | .organic:has(.label_theme_yellow) | .organic:has(.badge_theme_yellow) | div[data-fast-name="direct"] | div[data-fast-name="banner"] | [class*="serp-adv"] | [class*="adv-block"] | [data-log-event-group*="direct"] | .ads-section | #yandex_banner | [data-widget-type="AdvHost"] | [class*="Organic-Adv"] | .AdvWidget | [class*="yandex-sticky-adv-banner"] | [id^="yandex-adv-"] | [id^="yandex-mIX"] | .adv-focusable | [data-name="adWrapper"] | [data-name="adaptiveConstructorAd"] | [data-new-adtune="true"] | [data-testid="disable-adv-button-sticky"]
+paths = /search | /yandsearch
+query_keys = text | p
 
 # ── FMovies ──────────────────────────────────────────────────────────────────
 [fmovies]
