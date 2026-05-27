@@ -56,24 +56,9 @@ set_constant = ytInitialPlayerResponse.playerAds undefined | ytInitialPlayerResp
 direct_hide_selectors =  ytd-banner-promo-renderer | ytd-statement-banner-renderer | ytd-promoted-sparkles-web-renderer | ytd-promoted-video-renderer | ytd-display-ad-renderer | ytd-compact-promoted-video-renderer | ytd-action-companion-ad-renderer | ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | #player-ads | #masthead-ad | #panels > ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) | ytd-mealbar-promo-renderer | ytd-popup-container:has(ytd-mealbar-promo-renderer) | ytd-background-promo-renderer | ytd-official-card-renderer | tp-yt-paper-dialog:has(yt-premium-offer-renderer) | ytd-companion-slot-renderer:has([data-style-type="PREMIUM"]) | .ytd-mealbar-promo-renderer | ytd-survey-notification-renderer | #offer-module | .ytp-paid-content-overlay | .ytp-premium-yoodle | ytd-rich-section-renderer:has(ytd-statement-banner-renderer) | ytd-enforcement-message-view-model | tp-yt-paper-dialog:has(yt-upsell-dialog-renderer) | ytd-rich-item-renderer:has(ytd-ad-slot-renderer) | ytd-video-renderer[is-ad] | ytd-rich-item-renderer[is-ad] | ytd-reel-item-renderer[is-ad] | ytd-search-pyv-renderer | ytd-promoted-sparkles-text-search-renderer | ytd-movie-offer-module-renderer | ytd-compact-movie-renderer[is-ad] | #shopping-timely-shelf | yt-shopping-timely-shelf-content-view-model | yt-overlay-sticker | ytd-ad-slot-renderer | .yt-notification-action-renderer
 
 [facebook]
-# json_prune_fetch targets /api/graphql/ responses.
-# Facebook embeds ads as GraphQL story nodes — pruning these fields strips ad metadata,
-# causing the ad node to render empty (then hidden by DOM selectors below).
-json_prune_fetch = sponsored_data ad_id is_ad_place comet_ad_unit ad_query_id sponsored_row
-labels = sponsored | đượctàitrợ | patrocinado | sponsorisé | gesponsert | sponsorizzato | gesponsord | sponsorowane | sponsorlu | sponsorizat | χορηγούμενη | спонсировано | مُموَّل | ممول | ได้รับการสนับสนุน | ได้รับการสนับสนุนโดย | bersponsor | ditaja | 広告 | 赞助内容 | 贊助 | 赞助 | 후원광고
-feed_selectors = [role="feed"] [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-pagelet*="VideoFeed"] [role="article"] | div[data-pagelet*="Reels"] [role="article"]
-market_selectors = div[aria-label="Marketplace"] [role="article"] | div[data-pagelet*="Marketplace"] [role="article"]
-right_rail_selectors = div[data-pagelet="RightRail"] > div | div[data-pagelet*="RightRail"] > div | div[data-visualcompletion="ignore-late-mutation"]
-# FB ads use data-ad-rendering-role / data-ad-comet-preview as internal markers.
-# :has() catches carousel/video/photo ad posts regardless of CSS-obfuscated "Sponsored" text.
-direct_hide_selectors = [role="feed"] [role="article"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has([data-ad-comet-preview]) | div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has(a[href^="/ads/about/"]) | div[data-pagelet*="FeedUnit"]:has(a[href^="/ads/about/"])
-# "/ads/about/" is Facebook's Sponsored label link (text is char-obfuscated via CSS ordering — innertext match won't work)
+direct_hide_selectors = [role="feed"] [role="article"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has([data-ad-comet-preview]) | div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has(a[href^="/ads/about/"]) | div[data-pagelet*="FeedUnit"]:has(a[href^="/ads/about/"]) | div[data-visualcompletion="ignore-late-mutation"]
 ad_host_selectors = a[href^="/ads/about/"] | a[aria-label^="Sponsored"] | a[aria-label^="Sponsorisé"] | a[aria-label^="Gesponsert"] | a[aria-label^="Patrocinado"] | a[aria-label^="Sponsorizzato"] | a[aria-label^="Gesponsord"] | a[aria-label^="Sponsorowane"] | a[aria-label^="Sponsorlu"] | a[aria-label^="Bersponsor"] | a[aria-label^="Ditaja"] | span[aria-label^="Sponsored"] | a[attributionsrc*="privacy_sandbox/comet/register/source"]
-innertext_selectors = [role="feed"] [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-visualcompletion="ignore-late-mutation"] h3
-innertext_labels = Sponsored
-context_selectors = a[aria-label] | h3 | header | [role="heading"] | span[dir="auto"] | [data-ad-rendering-role]
-attr_keys = aria-label | data-ad-rendering-role | data-ad-comet-preview | data-ad-preview
-hide_closest = [role="article"] | div[data-pagelet*="FeedUnit"] | div[data-visualcompletion="ignore-late-mutation"]
+
 
 [reddit]
 labels = promoted | sponsored | advertisement
