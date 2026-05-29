@@ -39,4 +39,6 @@ create_zip "$BUILD_DIR" "$ZIP_PATH"
 
 echo -e "${GREEN}✅ Chrome build complete!${NC}"
 echo "   ZIP: $ZIP_PATH  ($(du -h "$ZIP_PATH" | cut -f1))"
-[[ "$EXPORT_OBFUSCATED_SRC" == "true" ]] && echo "   Obfuscated src: $OBFUSCATED_SRC_DIR"
+if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
+  echo "   Obfuscated src: $OBFUSCATED_SRC_DIR"
+fi
