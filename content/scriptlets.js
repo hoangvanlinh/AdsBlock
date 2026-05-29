@@ -1733,6 +1733,39 @@
     };
   }
 
+  // ── trusted-prevent-dom-bypass ──────────────────────────────────────
+  function trustedPreventDomBypass(methodPath, targetProp) {
+    if (!methodPath) return;
+    proxyApplyFn(methodPath, function(context) {
+      var elems = new Set(context.callArgs.filter(function(e) {
+        return e instanceof HTMLElement;
+      }));
+      var r = context.reflect();
+      if (elems.size === 0) return r;
+      elems.forEach(function(elem) {
+        try {
+          if (String(elem.contentWindow) !== '[object Window]') return;
+          var href = elem.contentWindow.location.href;
+          if (href !== 'about:blank' && href !== self.location.href) return;
+          if (targetProp) {
+            var me = self, it = elem.contentWindow, chain = targetProp;
+            for (;;) {
+              var pos = chain.indexOf('.');
+              if (pos === -1) break;
+              var prop = chain.slice(0, pos);
+              me = me[prop]; it = it[prop];
+              chain = chain.slice(pos + 1);
+            }
+            it[chain] = me[chain];
+          } else {
+            Object.defineProperty(elem, 'contentWindow', { value: self });
+          }
+        } catch (e) {}
+      });
+      return r;
+    });
+  }
+
   // ── Scriptlet rule engine ────────────────────────────────────────
   // Applies rules declared in site-rules.txt via content.js bridge.
   // json_prune_* proxies: safe to call any time — intercept future requests.
@@ -1781,6 +1814,13 @@
       var jq = spaceIdx >= 0 ? jsonlXhr[q].slice(0, spaceIdx) : jsonlXhr[q];
       var urlPat = spaceIdx >= 0 ? jsonlXhr[q].slice(spaceIdx + 1) : '';
       jsonlEditXhrResponse(jq, urlPat);
+    }
+
+    var prevDomBypass = rules.prevent_dom_bypass || [];
+    for (var s = 0; s < prevDomBypass.length; s++) {
+      if (!prevDomBypass[s]) continue;
+      var dbParts = prevDomBypass[s].trim().split(/\s+/);
+      trustedPreventDomBypass(dbParts[0] || '', dbParts[1] || '');
     }
   }
 
