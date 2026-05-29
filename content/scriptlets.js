@@ -1664,6 +1664,75 @@
     editOutboundObjectFn(false, 'JSON.parse', jsonq || '');
   }
 
+  // ── jsonl-edit-xhr-response ───────────────────────────────────────
+  // Intercepts XHR responses in JSONL format (one JSON object per line)
+  // and applies a JSONPath query to each parsed line.
+  function jsonlEditFn(jsonp, text) {
+    text = text || '';
+    const safe = safeSelf();
+    var lineSeparatorMatch = /\r?\n/.exec(text);
+    var sep = (lineSeparatorMatch && lineSeparatorMatch[0]) || '\n';
+    var linesBefore = text.split('\n');
+    var linesAfter = [];
+    for (var i = 0; i < linesBefore.length; i++) {
+      var lineBefore = linesBefore[i];
+      var obj;
+      try { obj = safe.JSON_parse(lineBefore); } catch(e) {}
+      if (typeof obj !== 'object' || obj === null) {
+        linesAfter.push(lineBefore);
+        continue;
+      }
+      var objAfter = jsonp.apply(obj);
+      if (objAfter === undefined) {
+        linesAfter.push(lineBefore);
+        continue;
+      }
+      linesAfter.push(safe.JSON_stringify(objAfter));
+    }
+    return linesAfter.join(sep);
+  }
+
+  function jsonlEditXhrResponse(jsonq, urlPattern) {
+    jsonq = jsonq || '';
+    urlPattern = urlPattern || '';
+    const jsonp = JSONPath.create(jsonq);
+    if (!jsonp.valid || jsonp.value !== undefined) return;
+    const propNeedles = parsePropertiesToMatchFn(urlPattern, 'url');
+    const xhrInstances = new WeakMap();
+    self.XMLHttpRequest = class extends self.XMLHttpRequest {
+      open(method, url, ...args) {
+        if (!_scriptletsEnabled) return super.open(method, url, ...args);
+        const xhrDetails = { method, url };
+        const matched = propNeedles.size === 0 ||
+          matchObjectPropertiesFn(propNeedles, xhrDetails);
+        if (matched) xhrInstances.set(this, xhrDetails);
+        return super.open(method, url, ...args);
+      }
+      get response() {
+        const innerResponse = super.response;
+        const xhrDetails = xhrInstances.get(this);
+        if (xhrDetails === undefined) return innerResponse;
+        const responseLength = typeof innerResponse === 'string'
+          ? innerResponse.length
+          : undefined;
+        if (xhrDetails.lastResponseLength !== responseLength) {
+          xhrDetails.response = undefined;
+          xhrDetails.lastResponseLength = responseLength;
+        }
+        if (xhrDetails.response !== undefined) return xhrDetails.response;
+        if (typeof innerResponse !== 'string') {
+          return (xhrDetails.response = innerResponse);
+        }
+        const outerResponse = jsonlEditFn(jsonp, innerResponse);
+        return (xhrDetails.response = outerResponse);
+      }
+      get responseText() {
+        const response = this.response;
+        return typeof response !== 'string' ? super.responseText : response;
+      }
+    };
+  }
+
   // ── Scriptlet rule engine ────────────────────────────────────────
   // Applies rules declared in site-rules.txt via content.js bridge.
   // json_prune_* proxies: safe to call any time — intercept future requests.
@@ -1704,6 +1773,14 @@
     var jsonEd = rules.json_edit || [];
     for (var p = 0; p < jsonEd.length; p++) {
       if (jsonEd[p]) jsonEdit(jsonEd[p]);
+    }
+    var jsonlXhr = rules.jsonl_edit_xhr || [];
+    for (var q = 0; q < jsonlXhr.length; q++) {
+      if (!jsonlXhr[q]) continue;
+      var spaceIdx = jsonlXhr[q].indexOf(' ');
+      var jq = spaceIdx >= 0 ? jsonlXhr[q].slice(0, spaceIdx) : jsonlXhr[q];
+      var urlPat = spaceIdx >= 0 ? jsonlXhr[q].slice(spaceIdx + 1) : '';
+      jsonlEditXhrResponse(jq, urlPat);
     }
   }
 
