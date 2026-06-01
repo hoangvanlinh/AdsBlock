@@ -76,7 +76,7 @@ Available on Chrome, Firefox, and Edge:
     <img src="https://img.shields.io/badge/Firefox-Get%20Extension-FF7139?style=for-the-badge&logo=firefox&logoColor=white" alt="Install from Firefox Add-ons">
   </a>
   &nbsp;
-  <a href="#install">
+  <a href="https://microsoftedge.microsoft.com/addons/detail/pbhhhdiineoaofllgkipegloafcpiaml">
     <img src="https://img.shields.io/badge/Edge-Get%20Extension-0078D7?style=for-the-badge&logo=microsoftedge&logoColor=white" alt="Install from Microsoft Edge Add-ons">
   </a>
 </p>
