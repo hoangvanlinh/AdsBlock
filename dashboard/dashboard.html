@@ -103,7 +103,7 @@
 
     <!-- KPI cards -->
     <div class="kpi-grid">
-      <div class="kpi-card">
+      <div class="kpi-card active" data-metric="blocked">
         <div class="kpi-top">
           <span class="kpi-label">Total Blocked</span>
           <span class="kpi-icon red">
@@ -115,7 +115,7 @@
         <p class="kpi-value" id="kpiBlocked">0</p>
         <p class="kpi-delta up" id="kpiBlockedDelta">+0% today</p>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" data-metric="trackers">
         <div class="kpi-top">
           <span class="kpi-label">Trackers Stopped</span>
           <span class="kpi-icon purple">
@@ -127,7 +127,7 @@
         <p class="kpi-value" id="kpiTrackers">0</p>
         <p class="kpi-delta up" id="kpiTrackersDelta">+0% today</p>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" data-metric="malware">
         <div class="kpi-top">
           <span class="kpi-label">Malware Blocked</span>
           <span class="kpi-icon orange">
@@ -165,15 +165,13 @@
         <p class="kpi-value" id="kpiTime">0m</p>
         <p class="kpi-delta up">this session</p>
       </div>
-    </div>
-
-    <!-- Chart + top domains -->
+    </div>  
+          <!-- Chart + top domains -->
     <div class="two-col">
-
       <!-- Activity chart -->
-      <div class="card chart-card">
+    <div class="card chart-card">
         <div class="card-header">
-          <h2 class="card-title">Blocked requests</h2>
+          <h2 class="card-title" id="chartTitle">Blocked requests</h2>
           <div class="chip-group" id="chartRange">
             <button class="chip active" data-range="7">7d</button>
             <button class="chip" data-range="14">14d</button>
@@ -190,14 +188,14 @@
       <!-- Top domains -->
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">Top blocked domains</h2>
+          <h2 class="card-title" id="domainListTitle">Top blocked domains</h2>
           <button class="text-btn" id="seeAllDomains">See all</button>
         </div>
         <ul class="domain-list" id="domainList">
           <!-- rendered by JS -->
         </ul>
+        </div>
       </div>
-    </div>
 
     <!-- Privacy score -->
     <div class="card privacy-card">
@@ -217,7 +215,7 @@
           <span class="score-pct" id="scorePct-trackers">—</span>
         </div>
         <div class="score-row" id="scoreRow-malware">
-          <span class="score-name">Malware blocked</span>
+          <span class="score-name">Malware protection</span>
           <div class="score-track"><div class="score-fill orange" id="scoreFill-malware" style="width:0%"></div></div>
           <span class="score-pct" id="scorePct-malware">—</span>
         </div>
