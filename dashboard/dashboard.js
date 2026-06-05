@@ -26,8 +26,9 @@ function calculatePrivacyScore(domainStats = {}, settings = {}) {
   }
 
   const referrerScore = settings.referrerAnonymization !== false ? 85 : 20;
-  let malwareScore = malwareActive ? 70 : 0;
-  if (malwareActive && (domainStats.malwareBlocked || 0) > 0) malwareScore = 100;
+  // Malware: reflects protection status — active = fully protected (100%), off = 0%.
+  // No threats found means protection is working perfectly, not partially.
+  const malwareScore = malwareActive ? 100 : 0;
 
   const score = Math.round(
     adsScore * 0.30 + trackersScore * 0.25 + malwareScore * 0.20 + referrerScore * 0.25
@@ -226,8 +227,12 @@ function formatTime(s) {
 }
 
 /* ── Bar chart ────────────────────────────────── */
-let activeRange = 7;
-
+let activeRange = 7;let activeMetric = 'blocked';
+const METRIC_CONFIG = {
+  blocked:  { chartTitle: 'Blocked requests',   domainTitle: 'Top blocked domains',  dailyKey: 'blocked',  domainKey: 'blocked',        tooltip: 'blocked'  },
+  trackers: { chartTitle: 'Tracker requests',    domainTitle: 'Top tracker domains',  dailyKey: 'trackers', domainKey: 'trackersBlocked', tooltip: 'trackers' },
+  malware:  { chartTitle: 'Malware detections',  domainTitle: 'Top malware domains',  dailyKey: 'malware',  domainKey: 'malwareBlocked',  tooltip: 'malware'  },
+};
 function renderChart() {
   const svg = document.getElementById('chartSvg');
   const labelsEl = document.getElementById('chartLabels');
@@ -253,7 +258,8 @@ function renderChart() {
       d.setDate(d.getDate() - i);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const label = d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
-      days.push({ label, value: (dailyStats[key] && dailyStats[key].blocked) || 0 });
+      const _mcfg = METRIC_CONFIG[activeMetric];
+      days.push({ label, value: (dailyStats[key] && dailyStats[key][_mcfg.dailyKey]) || 0 });
     }
 
     const max = Math.max(...days.map(d => d.value), 1);
@@ -285,6 +291,10 @@ function renderChart() {
 
     const linePath = smoothPath(points);
     const areaPath = linePath + ` L${points[n - 1].x},${h} L${points[0].x},${h} Z`;
+
+    // Update chart title
+    const _chartTitleEl = document.getElementById('chartTitle');
+    if (_chartTitleEl) _chartTitleEl.textContent = METRIC_CONFIG[activeMetric].chartTitle;
 
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     while (svg.firstChild) svg.removeChild(svg.firstChild);
@@ -327,7 +337,7 @@ function renderChart() {
       const rect = svg.getBoundingClientRect();
       const xPct = (p.x / w) * 100;
       const yPx = (p.y / h) * rect.height;
-      tooltip.textContent = `${p.label}: ${p.value} blocked`;
+      tooltip.textContent = `${p.label}: ${p.value} ${METRIC_CONFIG[activeMetric].tooltip}`;
       tooltip.style.display = 'block';
       tooltip.style.left = `${xPct}%`;
       tooltip.style.top = `${yPx}px`;
@@ -335,6 +345,17 @@ function renderChart() {
     svg.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
   });
 }
+
+// KPI card click — switch active metric
+document.querySelectorAll('.kpi-card[data-metric]').forEach(card => {
+  card.addEventListener('click', () => {
+    activeMetric = card.dataset.metric;
+    document.querySelectorAll('.kpi-card[data-metric]').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    renderChart();
+    chrome.storage.local.get('stats', ({ stats = {} }) => renderDomainList(stats));
+  });
+});
 
 document.getElementById('chartRange')?.addEventListener('click', e => {
   const btn = e.target.closest('.chip');
@@ -352,8 +373,11 @@ function renderDomainList(stats) {
   const list = document.getElementById('domainList');
   if (!list) return;
 
+  const _dcfg = METRIC_CONFIG[activeMetric];
+  const _domTitleEl = document.getElementById('domainListTitle');
+  if (_domTitleEl) _domTitleEl.textContent = _dcfg.domainTitle;
   const allEntries = Object.entries(stats)
-    .map(([domain, s]) => ({ domain, blocked: s.blocked ?? 0 }))
+    .map(([domain, s]) => ({ domain, blocked: (s[_dcfg.domainKey] ?? 0) }))
     .sort((a, b) => b.blocked - a.blocked);
 
   const entries = domainListExpanded ? allEntries : allEntries.slice(0, 7);

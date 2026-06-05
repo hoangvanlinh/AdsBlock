@@ -292,7 +292,7 @@ body::before {
 /* ── KPI grid ── */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
   margin-bottom: 20px;
 }
@@ -307,6 +307,12 @@ body::before {
 .kpi-card:hover {
   background: var(--surface-2);
   border-color: var(--border-h);
+}
+.kpi-card[data-metric] { cursor: pointer; }
+.kpi-card[data-metric].active {
+  border-color: var(--border-h);
+  background: var(--surface-2);
+  box-shadow: inset 3px 0 0 var(--border-h);
 }
 
 .kpi-top {
