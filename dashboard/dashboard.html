@@ -235,57 +235,15 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Custom Rules</h1>
-        <p class="page-sub">User-defined blocking and cosmetic filter rules</p>
+        <p class="page-sub">Edit in site-rules.txt format — same syntax as the main rule file. Values are merged with built-in rules.</p>
       </div>
-      <button class="btn-primary" id="addRuleBtn">+ Add rule</button>
-    </div>
-
-    <!-- Add rule form (hidden by default) -->
-    <div class="card form-card hidden" id="ruleForm">
-      <h3 class="form-title">New Rule</h3>
-      <div class="form-grid">
-        <div class="field">
-          <label class="field-label">Type</label>
-          <select class="field-input" id="ruleType">
-            <option value="keyword">Keyword</option>
-            <option value="domain">Domain</option>
-            <option value="css">CSS selector</option>
-            <option value="regex">Regex</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="field-label">Pattern</label>
-          <input class="field-input" id="rulePattern" type="text" placeholder="e.g. ads.example.com" />
-        </div>
-        <div class="field">
-          <label class="field-label">Action</label>
-          <select class="field-input" id="ruleAction">
-            <option value="block">Block</option>
-            <option value="hide">Hide (CSS)</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="btn-ghost" id="cancelRule">Cancel</button>
-        <button class="btn-primary" id="saveRule">Save rule</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost" id="resetCustomRules">Clear</button>
+        <button class="btn-primary" id="saveCustomRules">Save</button>
       </div>
     </div>
-
     <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Saved custom rules</h2>
-        <input class="search-input" id="ruleSearch" type="text" placeholder="Search custom rules…" />
-      </div>
-      <table class="data-table" id="rulesTable">
-        <thead>
-          <tr>
-            <th>Type</th><th>Pattern</th><th>Action</th><th>Stored hits</th><th>Status</th><th></th>
-          </tr>
-        </thead>
-        <tbody id="rulesBody">
-          <!-- rendered by JS -->
-        </tbody>
-      </table>
+      <textarea id="customRulesEditor" class="rules-editor" spellcheck="false"></textarea>
     </div>
   </section>
 

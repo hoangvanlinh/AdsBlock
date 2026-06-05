@@ -391,137 +391,50 @@ document.getElementById('seeAllDomains')?.addEventListener('click', () => {
   chrome.storage.local.get('stats', ({ stats = {} }) => renderDomainList(stats));
 });
 
-/* ── Rules page ───────────────────────────────── */
-function renderRules(rules) {
-  const tbody = document.getElementById('rulesBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  if (!rules.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-4);padding:14px 10px">No custom rules yet.</td></tr>';
-    return;
-  }
-  rules.forEach(rule => {
-    const storedHits = Number(rule.hits || 0);
-    const tr = document.createElement('tr');
-    tr.dataset.id = rule.id;
-    const _td1 = document.createElement('td');
-    const _badge = document.createElement('span'); _badge.className = `rule-type-badge ${escHtml(rule.type)}`; _badge.textContent = rule.type;
-    _td1.appendChild(_badge);
-    const _td2 = document.createElement('td'); _td2.className = 'pattern-cell';
-    const _pt = document.createElement('span'); _pt.className = 'pattern-text'; _pt.style.cssText = 'font-family:monospace;font-size:12px;color:var(--text-1)'; _pt.textContent = rule.pattern;
-    const _pi = document.createElement('input'); _pi.className = 'pattern-input field-input hidden'; _pi.value = rule.pattern; _pi.style.cssText = 'font-family:monospace;font-size:12px;height:28px;padding:2px 8px';
-    _td2.append(_pt, _pi);
-    const _td3 = document.createElement('td'); _td3.textContent = rule.action;
-    const _td4 = document.createElement('td'); _td4.style.color = 'var(--text-3)'; _td4.title = 'Stored value only; not live runtime rule telemetry'; _td4.textContent = storedHits.toLocaleString();
-    const _td5 = document.createElement('td');
-    const _toggleBtn = document.createElement('button'); _toggleBtn.className = `toggle-rule status-dot${rule.active ? '' : ' off'}`; _toggleBtn.dataset.id = rule.id; _toggleBtn.title = rule.active ? 'Disable rule' : 'Enable rule'; _toggleBtn.textContent = rule.active ? 'Active' : 'Disabled';
-    _td5.appendChild(_toggleBtn);
-    const _td6 = document.createElement('td'); _td6.style.cssText = 'display:flex;gap:4px;align-items:center';
-    const _editBtn = document.createElement('button'); _editBtn.className = 'icon-btn-sm edit-rule'; _editBtn.dataset.id = rule.id; _editBtn.title = 'Edit pattern';
-    const _svgNS = 'http://www.w3.org/2000/svg';
-    const _svgIcon = document.createElementNS(_svgNS, 'svg'); _svgIcon.setAttribute('width','12'); _svgIcon.setAttribute('height','12'); _svgIcon.setAttribute('viewBox','0 0 24 24'); _svgIcon.setAttribute('fill','none'); _svgIcon.setAttribute('stroke','currentColor'); _svgIcon.setAttribute('stroke-width','2'); _svgIcon.setAttribute('stroke-linecap','round');
-    const _sp1 = document.createElementNS(_svgNS, 'path'); _sp1.setAttribute('d','M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7');
-    const _sp2 = document.createElementNS(_svgNS, 'path'); _sp2.setAttribute('d','M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z');
-    _svgIcon.append(_sp1, _sp2); _editBtn.appendChild(_svgIcon);
-    const _saveBtn = document.createElement('button'); _saveBtn.className = 'icon-btn-sm save-rule hidden'; _saveBtn.dataset.id = rule.id; _saveBtn.title = 'Save'; _saveBtn.style.color = 'var(--green)'; _saveBtn.textContent = '✓';
-    const _delBtn = document.createElement('button'); _delBtn.className = 'icon-btn-sm delete-rule'; _delBtn.dataset.id = rule.id; _delBtn.title = 'Delete'; _delBtn.textContent = '✕';
-    _td6.append(_editBtn, _saveBtn, _delBtn);
-    tr.append(_td1, _td2, _td3, _td4, _td5, _td6);
-    tbody.appendChild(tr);
+/* ── Custom Rules page (plain-text editor) ───── */
+const CUSTOM_RULES_DEFAULT = `# Custom rules — same format as site-rules.txt
+# Values are MERGED with the built-in rules (not replaced).
+#
+# ── Map a new domain to a rule section ──────────────────────────────────
+# [host_patterns]
+# example.com = example          ← subdomains matched automatically
+#
+# ── Add extra domains to block globally ─────────────────────────────────
+# [global]
+# ad_network_patterns = new-ad-network.com
+# tracker_network_patterns = new-tracker.com
+# direct_hide_selectors = .new-ad-class
+# no_window_open_if = /new-ad\.com/ 0 blank
+#
+# ── Per-site cosmetic rules ──────────────────────────────────────────────
+# [example]
+# direct_hide_selectors = .ad-unit | #sidebar-ad
+# no_window_open_if = /.*/ 0 blank
+# labels = sponsored | promoted
+# json_prune_fetch = adData adSlots
+`;
+
+function loadCustomRules() {
+  chrome.storage.local.get('customRulesText', ({ customRulesText }) => {
+    const el = document.getElementById('customRulesEditor');
+    if (el) el.value = customRulesText != null ? customRulesText : CUSTOM_RULES_DEFAULT;
   });
 }
 
-let currentRules = [];
-
-function loadRules() {
-  chrome.storage.local.get('rules', ({ rules }) => {
-    currentRules = Array.isArray(rules) ? rules : [];
-    renderRules(currentRules);
+document.getElementById('saveCustomRules')?.addEventListener('click', () => {
+  const text = document.getElementById('customRulesEditor')?.value || '';
+  chrome.storage.local.set({ customRulesText: text }, () => {
+    chrome.runtime.sendMessage({ type: 'RULES_CHANGED' });
   });
-}
-
-document.getElementById('addRuleBtn')?.addEventListener('click', () => {
-  document.getElementById('ruleForm')?.classList.toggle('hidden');
 });
 
-document.getElementById('cancelRule')?.addEventListener('click', () => {
-  document.getElementById('ruleForm')?.classList.add('hidden');
-});
-
-document.getElementById('saveRule')?.addEventListener('click', () => {
-  const type    = document.getElementById('ruleType')?.value;
-  const pattern = document.getElementById('rulePattern')?.value.trim();
-  const action  = document.getElementById('ruleAction')?.value;
-
-  if (!pattern) return;
-  const newRule = { id: Date.now(), type, pattern, action, hits: 0, active: true };
-  currentRules.unshift(newRule);
-  renderRules(currentRules);
-  document.getElementById('ruleForm')?.classList.add('hidden');
-  if (document.getElementById('rulePattern')) document.getElementById('rulePattern').value = '';
-  chrome.storage.local.set({ rules: currentRules });
-  chrome.runtime.sendMessage({ type: 'RULES_CHANGED' });
-});
-
-document.getElementById('rulesBody')?.addEventListener('click', e => {
-  const id = parseInt(e.target.closest('[data-id]')?.dataset.id, 10);
-  if (!id) return;
-  const tr = e.target.closest('tr');
-
-  // ── Delete ──────────────────────────────────
-  if (e.target.closest('.delete-rule')) {
-    currentRules = currentRules.filter(r => r.id !== id);
-    renderRules(currentRules);
-    chrome.storage.local.set({ rules: currentRules });
+document.getElementById('resetCustomRules')?.addEventListener('click', () => {
+  if (!confirm('Clear all custom rules?')) return;
+  const el = document.getElementById('customRulesEditor');
+  if (el) el.value = CUSTOM_RULES_DEFAULT;
+  chrome.storage.local.set({ customRulesText: '' }, () => {
     chrome.runtime.sendMessage({ type: 'RULES_CHANGED' });
-    return;
-  }
-
-  // ── Toggle active/disabled ───────────────────
-  if (e.target.closest('.toggle-rule')) {
-    const rule = currentRules.find(r => r.id === id);
-    if (!rule) return;
-    rule.active = !rule.active;
-    renderRules(currentRules);
-    chrome.storage.local.set({ rules: currentRules });
-    chrome.runtime.sendMessage({ type: 'RULES_CHANGED' });
-    return;
-  }
-
-  // ── Edit (enter edit mode) ───────────────────
-  if (e.target.closest('.edit-rule')) {
-    const patternText  = tr.querySelector('.pattern-text');
-    const patternInput = tr.querySelector('.pattern-input');
-    const editBtn      = tr.querySelector('.edit-rule');
-    const saveBtn      = tr.querySelector('.save-rule');
-    patternText.classList.add('hidden');
-    patternInput.classList.remove('hidden');
-    editBtn.classList.add('hidden');
-    saveBtn.classList.remove('hidden');
-    patternInput.focus();
-    patternInput.select();
-    return;
-  }
-
-  // ── Save (exit edit mode) ────────────────────
-  if (e.target.closest('.save-rule')) {
-    const patternInput = tr.querySelector('.pattern-input');
-    const newPattern   = patternInput.value.trim();
-    if (!newPattern) return;
-    const rule = currentRules.find(r => r.id === id);
-    if (!rule) return;
-    rule.pattern = newPattern;
-    renderRules(currentRules);
-    chrome.storage.local.set({ rules: currentRules });
-    chrome.runtime.sendMessage({ type: 'RULES_CHANGED' });
-  }
-});
-
-document.getElementById('ruleSearch')?.addEventListener('input', e => {
-  const q = e.target.value.toLowerCase();
-  const filtered = currentRules.filter(r =>
-    r.pattern.toLowerCase().includes(q) || r.type.includes(q));
-  renderRules(filtered);
+  });
 });
 
 /* ── Allowlist page ───────────────────────────── */
@@ -847,7 +760,7 @@ const RULES_CACHE_KEY_TIME = 'siteRulesCacheTime';
 
 /* ── Init ─────────────────────────────────────── */
 loadOverviewStats();
-loadRules();
+loadCustomRules();
 loadAllowList();
 loadBlockingSettings();
 loadPrivacySettings();
