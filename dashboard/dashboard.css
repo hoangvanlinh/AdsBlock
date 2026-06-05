@@ -728,6 +728,26 @@ body::before {
 
 .hidden { display: none !important; }
 
+.rules-editor {
+  width: 100%;
+  min-height: 420px;
+  resize: vertical;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-1);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  outline: none;
+  transition: border-color .15s;
+  box-sizing: border-box;
+  tab-size: 2;
+}
+.rules-editor:focus { border-color: var(--border-h); }
+.rules-editor::placeholder { color: var(--text-4); font-style: italic; }
+
 .pattern-input { width: 100%; min-width: 140px; }
 
 .icon-btn-sm {

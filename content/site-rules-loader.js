@@ -107,7 +107,7 @@ function fetchLocalRules(){
 // Reads ruleSources from storage, fetches URL sources, merges with file sources.
 function _fetchAndMergeDirect(cached, resolve){
   if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(null);return;}
-  chrome.storage.local.get(['ruleSources','customRulesUrl'],function(res){
+  chrome.storage.local.get(['ruleSources','customRulesUrl','customRulesText'],function(res){
     var sources=res.ruleSources;
     // Always load the default remote as base first
     var urls=[REMOTE_RULES_URL];
@@ -120,6 +120,8 @@ function _fetchAndMergeDirect(cached, resolve){
     }else if(res.customRulesUrl&&res.customRulesUrl!==REMOTE_RULES_URL){
       urls.push(res.customRulesUrl);
     }
+    // Append user's custom rules text
+    if(res.customRulesText)fileParts.push(res.customRulesText);
     (urls.length?fetchRemoteRules(urls):Promise.resolve(''))
       .then(function(urlText){
         var merged=[urlText].concat(fileParts).filter(Boolean).join('\n');

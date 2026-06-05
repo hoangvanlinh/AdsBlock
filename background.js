@@ -73,7 +73,7 @@ function isFreshRuleCache(entry) {
 }
 
 async function fetchRemoteRuleText() {
-  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl']);
+  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText']);
   const sources = stored.ruleSources;
   const urls = [];
   const fileParts = [];
@@ -89,6 +89,9 @@ async function fetchRemoteRuleText() {
   } else if (stored.customRulesUrl && stored.customRulesUrl !== RULES_REMOTE_URL) {
     urls.push(stored.customRulesUrl);
   }
+
+  // Append user's custom rules text (merged with built-in rules via parseRuleText merge logic)
+  if (stored.customRulesText) fileParts.push(stored.customRulesText);
 
   const texts = await Promise.all(urls.map(async url => {
     try {
@@ -149,7 +152,11 @@ async function ensureRuleDefinitionsLoaded() {
         try {
           text = await fetchRemoteRuleText();
         } catch {
-          text = (cached && cached.text) || await fetchLocalRuleText();
+          // Fallback: use cached/local rules, but still append customRulesText
+          const baseText = (cached && cached.text) || await fetchLocalRuleText();
+          const { customRulesText: customText = '' } = await chrome.storage.local.get('customRulesText');
+          text = customText ? baseText + '\n' + customText : baseText;
+          if (text) await setCachedRuleText(text);
         }
       }
       const parsed = parseRuleText(text);
