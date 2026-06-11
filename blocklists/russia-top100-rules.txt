@@ -418,7 +418,8 @@ direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | 
 
 [dvach]
 no_window_open_if = /.*/ 0 blank
-direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad | #banner | .board-banner
+direct_hide_selectors = [id^="yandex_rtb"] | [id^="adfox"] | [class*="adfox"] | .
+adsbygoogle | [id^="div-gpt-ad"] | [class*="banner"] | [class*="advert"] | iframe[src*="exoclick.com"] | iframe[src*="adriver.ru"] | iframe[src*="trafficjunky"] | iframe[src*="googlesyndication"] | div[style*="z-index: 9999"] | .popup-ads | .overlay-ad | #banner | .board-banner
 
 # =============================================================================
 # BOOKS
