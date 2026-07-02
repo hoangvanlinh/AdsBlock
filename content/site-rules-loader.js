@@ -1,8 +1,12 @@
-// site-rules-loader.js — shared text rules loader for site-specific blockers
+// site-rules-loader.js — shared site-config loader for site-specific blockers.
+// Primary path: one GET_SITE_CONFIG message per frame — background parses the
+// rules text ONCE and returns only [global] + this host's resolved section
+// (a few KB). Full-text fetching/parsing here is kept only as a fallback for
+// when background messaging is unavailable.
 (function(){
 if(window.__adblockRuleLoader)return;
 
-var _parsed=null,_loading=null;
+var _site=null,_loading=null;
 var DEBUG_LOCAL=false; // patched to true by build.sh when 4th arg is "true"
 var REMOTE_RULES_URL='https://raw.githubusercontent.com/hoangvanlinh/AdsBlock/refs/heads/main/rule/site-rules.txt';
 var LOCAL_RULES_PATH='rule/site-rules.txt';
@@ -136,44 +140,80 @@ function _fetchAndMergeDirect(cached, resolve){
   });
 }
 
-function loadParsed(callback){
-  if(_parsed){callback(_parsed);return;}
+// _resolveFromPatterns — resolve hostname against [host_patterns] (fallback path;
+// the primary path lets background resolve). Same logic as background resolveSiteKey.
+function _resolveFromPatterns(patterns,host){
+  for(var pat in patterns){
+    if(!Object.prototype.hasOwnProperty.call(patterns,pat))continue;
+    var targetKey=(patterns[pat]&&patterns[pat][0])||'';
+    if(!targetKey)continue;
+    try{
+      var re;
+      if(pat.slice(-2)==='.*'){
+        var base=pat.slice(0,-2).replace(/[.+?^${}()|[\]\\]/g,'\\$&');
+        re=new RegExp('(^|\\.)'+base+'\\.');
+      } else {
+        var escaped=pat.replace(/[.+?^${}()|[\]\\]/g,'\\$&');
+        re=new RegExp('(^|\\.)'+escaped+'$');
+      }
+      if(re.test(host))return targetKey;
+    }catch(e){}
+  }
+  return '';
+}
+
+// Build the {siteKey, global, site} shape from a full rules text (fallback only).
+function _fromParsedText(text){
+  var parsed=parseRules(text||'');
+  var host=(location.hostname||'').toLowerCase();
+  var siteKey=_resolveFromPatterns(parsed.host_patterns||{},host);
+  return {siteKey:siteKey,global:parsed.global||{},site:(siteKey&&parsed[siteKey])||{}};
+}
+
+function _loadFallback(resolve){
+  getCachedRules().then(function(cached){
+    if(isFreshCache(cached)){resolve(_fromParsedText(cached.text));return;}
+    _fetchAndMergeDirect(cached,function(text){resolve(_fromParsedText(text||''));});
+  });
+}
+
+function loadSiteConfig(callback){
+  if(_site){callback(_site);return;}
   if(!_loading){
-    _loading=(DEBUG_LOCAL
-      ? fetchLocalRules()
-      : getCachedRules().then(function(cached){
-          if(isFreshCache(cached))return cached.text;
-          // Delegate to background service worker — it is the single fetcher that
-          // reads ruleSources (URL + file), merges, and writes the shared cache.
-          // This prevents the double-fetch of REMOTE_RULES_URL.
-          return new Promise(function(resolve){
-            if(!extValid()){_fetchAndMergeDirect(cached,resolve);return;}
-            try{
-              chrome.runtime.sendMessage({type:'GET_RULES_TEXT'},function(res){
-                if(chrome.runtime.lastError||!res||!res.text){
-                  _fetchAndMergeDirect(cached,resolve);return;
-                }
-                // Cache the received text so isFreshCache works on next page load
-                setCachedRules(res.text).then(function(){resolve(res.text);});
-              });
-            }catch(e){_fetchAndMergeDirect(cached,resolve);}
-          });
-        })
-    ).then(function(text){_parsed=parseRules(text);return _parsed;})
-     .catch(function(){_parsed={};return _parsed;});
+    _loading=new Promise(function(resolve){
+      if(DEBUG_LOCAL){
+        fetchLocalRules()
+          .then(function(t){resolve(_fromParsedText(t));})
+          .catch(function(){resolve({siteKey:'',global:{},site:{}});});
+        return;
+      }
+      if(!extValid()){_loadFallback(resolve);return;}
+      try{
+        chrome.runtime.sendMessage({type:'GET_SITE_CONFIG',host:location.hostname},function(res){
+          if(chrome.runtime.lastError||!res){_loadFallback(resolve);return;}
+          resolve({siteKey:res.siteKey||'',global:res.global||{},site:res.site||{}});
+        });
+      }catch(e){_loadFallback(resolve);}
+    }).then(function(site){_site=site;return site;});
   }
   _loading.then(callback);
 }
 
 window.__adblockRuleLoader={
-  load:function(siteKey,defaults,callback){
-    loadParsed(function(parsed){
-      var site=(siteKey||'').toLowerCase();
-      callback(mergeDefaults(defaults||{},parsed[site]||{}));
+  // loadSite — preferred API: full resolved config for this frame's hostname.
+  loadSite:function(callback){loadSiteConfig(callback);},
+  // load — backward-compatible section accessor ('global' or this host's siteKey).
+  load:function(sectionKey,defaults,callback){
+    loadSiteConfig(function(site){
+      var key=(sectionKey||'').toLowerCase();
+      var section={};
+      if(key==='global')section=site.global;
+      else if(key&&key===site.siteKey)section=site.site;
+      callback(mergeDefaults(defaults||{},section||{}));
     });
   },
   reset:function(){
-    _parsed=null;
+    _site=null;
     _loading=null;
   }
 };

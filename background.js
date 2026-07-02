@@ -40,7 +40,17 @@ function parseRuleText(text) {
     const key = line.slice(0, eq).trim().toLowerCase();
     const value = line.slice(eq + 1).trim();
     if (!key) continue;
-    out[section][key] = value ? value.split('|').map(part => part.trim()).filter(Boolean) : [];
+    const newVals = value ? value.split('|').map(part => part.trim()).filter(Boolean) : [];
+    // Merge duplicate keys across multiple source files (same semantics as the
+    // content-side parser): append values not already present.
+    if (out[section][key] && out[section][key].length) {
+      const seen = new Set(out[section][key]);
+      for (const v of newVals) {
+        if (!seen.has(v)) { seen.add(v); out[section][key].push(v); }
+      }
+    } else {
+      out[section][key] = newVals;
+    }
   }
   return out;
 }
@@ -167,26 +177,68 @@ function buildMalwareRulesFromConfig(config, startId) {
   }];
 }
 
+// Single source for the merged rules text (fresh cache → remote → cached/local
+// fallback). Used by rule-definition loading, GET_RULES_TEXT, and GET_SITE_CONFIG.
+async function getRulesText() {
+  const cached = await getCachedRuleText();
+  if (isFreshRuleCache(cached)) return cached.text;
+  try {
+    return await fetchRemoteRuleText();
+  } catch {
+    // Fallback: use cached/local rules, but still append customRulesText
+    const baseText = (cached && cached.text) || await fetchLocalRuleText();
+    const { customRulesText: customText = '' } = await chrome.storage.local.get('customRulesText');
+    const text = customText ? baseText + '\n' + customText : baseText;
+    if (text) await setCachedRuleText(text);
+    return text;
+  }
+}
+
+// Parsed rules cached in the service worker so the text is parsed ONCE here
+// instead of by every content-script frame. Reset on RULES_CHANGED.
+let _parsedRules = null;
+let _parsedRulesPromise = null;
+
+async function getParsedRules() {
+  if (_parsedRules) return _parsedRules;
+  if (!_parsedRulesPromise) {
+    _parsedRulesPromise = getRulesText()
+      .then(text => {
+        _parsedRules = parseRuleText(text);
+        return _parsedRules;
+      })
+      .finally(() => { _parsedRulesPromise = null; });
+  }
+  return _parsedRulesPromise;
+}
+
+// Resolve hostname against the dynamic [host_patterns] section.
+// "vnexpress.net" also matches *.vnexpress.net; "amazon.*" matches any TLD.
+function resolveSiteKey(patterns, host) {
+  for (const pat in patterns) {
+    if (!Object.prototype.hasOwnProperty.call(patterns, pat)) continue;
+    const targetKey = (patterns[pat] && patterns[pat][0]) || '';
+    if (!targetKey) continue;
+    try {
+      let re;
+      if (pat.slice(-2) === '.*') {
+        const base = pat.slice(0, -2).replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+        re = new RegExp('(^|\\.)' + base + '\\.');
+      } else {
+        const escaped = pat.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+        re = new RegExp('(^|\\.)' + escaped + '$');
+      }
+      if (re.test(host)) return targetKey;
+    } catch { /* bad pattern — skip */ }
+  }
+  return '';
+}
+
 async function ensureRuleDefinitionsLoaded() {
   if (DEFAULT_RULES.length && MALWARE_RULES.length) return;
   if (!_ruleConfigPromise) {
     _ruleConfigPromise = (async () => {
-      const cached = await getCachedRuleText();
-      let text = '';
-      if (isFreshRuleCache(cached)) {
-        text = cached.text;
-      } else {
-        try {
-          text = await fetchRemoteRuleText();
-        } catch {
-          // Fallback: use cached/local rules, but still append customRulesText
-          const baseText = (cached && cached.text) || await fetchLocalRuleText();
-          const { customRulesText: customText = '' } = await chrome.storage.local.get('customRulesText');
-          text = customText ? baseText + '\n' + customText : baseText;
-          if (text) await setCachedRuleText(text);
-        }
-      }
-      const parsed = parseRuleText(text);
+      const parsed = await getParsedRules();
       const global = parsed.global || {};
       const config = {
         adNetworkPatterns: global.ad_network_patterns?.length ? global.ad_network_patterns : FALLBACK_RULE_CONFIG.adNetworkPatterns,
@@ -734,6 +786,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         DEFAULT_RULES = [];
         MALWARE_RULES = [];
         _ruleConfigPromise = null;
+        _parsedRules = null;
         // Reapply network rules (re-fetches with current sources via fetchRemoteRuleText)
         await applyNetworkRules();
         // Notify all tabs to refresh their in-memory parsed rules + cosmetic filters
@@ -873,22 +926,31 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       }
 
       case 'GET_RULES_TEXT': {
-        // Content scripts request merged rules text through background to avoid
-        // double-fetching REMOTE_RULES_URL and to ensure file sources are included.
+        // Legacy/fallback: full merged rules text. Content scripts normally use
+        // GET_SITE_CONFIG which sends only the relevant parsed sections.
         try {
-          let cached = await getCachedRuleText();
-          if (!isFreshRuleCache(cached)) {
-            try {
-              const text = await fetchRemoteRuleText(); // reads ruleSources, merges, writes cache
-              sendResponse({ text });
-            } catch {
-              sendResponse({ text: (cached && cached.text) || '' });
-            }
-          } else {
-            sendResponse({ text: cached.text });
-          }
+          sendResponse({ text: await getRulesText() });
         } catch {
           sendResponse({ text: '' });
+        }
+        break;
+      }
+
+      case 'GET_SITE_CONFIG': {
+        // Sends a frame only what it needs: [global] + its resolved site section
+        // (a few KB), instead of the full rules text that every frame previously
+        // fetched and re-parsed independently.
+        try {
+          const parsed = await getParsedRules();
+          const host = String(msg.host || '').toLowerCase();
+          const siteKey = resolveSiteKey(parsed.host_patterns || {}, host);
+          sendResponse({
+            siteKey,
+            global: parsed.global || {},
+            site: (siteKey && parsed[siteKey]) || {},
+          });
+        } catch {
+          sendResponse(null);
         }
         break;
       }
