@@ -142,22 +142,42 @@ function _fetchAndMergeDirect(cached, resolve){
 
 // _resolveFromPatterns — resolve hostname against [host_patterns] (fallback path;
 // the primary path lets background resolve). Same logic as background resolveSiteKey.
+// LHS forms: hostname | wildcard TLD "base.*" | '|'-separated list | /regex/ (whole LHS).
+function _hostPatternMatches(pat,host){
+  pat=pat.trim();
+  // Raw regex form: /body/flags — the whole LHS, never split on '|'
+  if(pat.charAt(0)==='/'){
+    var last=pat.lastIndexOf('/');
+    if(last>0){
+      try{return new RegExp(pat.slice(1,last),pat.slice(last+1)).test(host);}catch(e){}
+    }
+    return false;
+  }
+  var subs=pat.split('|');
+  for(var i=0;i<subs.length;i++){
+    var sub=subs[i].trim();
+    if(!sub)continue;
+    try{
+      var re;
+      if(sub.slice(-2)==='.*'){
+        var base=sub.slice(0,-2).replace(/[.+?^${}()|[\]\\]/g,'\\$&');
+        re=new RegExp('(^|\\.)'+base+'\\.');
+      } else {
+        var escaped=sub.replace(/[.+?^${}()|[\]\\]/g,'\\$&');
+        re=new RegExp('(^|\\.)'+escaped+'$');
+      }
+      if(re.test(host))return true;
+    }catch(e){}
+  }
+  return false;
+}
+
 function _resolveFromPatterns(patterns,host){
   for(var pat in patterns){
     if(!Object.prototype.hasOwnProperty.call(patterns,pat))continue;
     var targetKey=(patterns[pat]&&patterns[pat][0])||'';
     if(!targetKey)continue;
-    try{
-      var re;
-      if(pat.slice(-2)==='.*'){
-        var base=pat.slice(0,-2).replace(/[.+?^${}()|[\]\\]/g,'\\$&');
-        re=new RegExp('(^|\\.)'+base+'\\.');
-      } else {
-        var escaped=pat.replace(/[.+?^${}()|[\]\\]/g,'\\$&');
-        re=new RegExp('(^|\\.)'+escaped+'$');
-      }
-      if(re.test(host))return targetKey;
-    }catch(e){}
+    if(_hostPatternMatches(pat,host))return targetKey;
   }
   return '';
 }

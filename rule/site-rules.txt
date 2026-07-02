@@ -2,10 +2,15 @@
 
 # ── Dynamic host → siteKey mapping ────────────────────────────────────────────
 # Add any site here without touching JavaScript code.
-# Format:  hostname = sitekey
+# Format:  pattern = sitekey
 # The sitekey must match a [section] name below.
-# Subdomains are matched automatically (e.g. "vnexpress.net" also matches
-# "m.vnexpress.net", "video.vnexpress.net", etc.)
+# Pattern forms (left-hand side):
+#   vnexpress.net                   → matches vnexpress.net + all subdomains
+#   amazon.*                        → wildcard TLD (amazon.com, amazon.co.uk, ...)
+#   a.com | b.net | c.*             → several patterns sharing one sitekey
+#   /(^|\.)fmovies[a-z0-9-]*\./     → raw regex tested against the hostname;
+#                                     '|' inside is regex alternation.
+#                                     Do NOT use '=' inside a regex.
 [host_patterns]
 youtube.com = youtube
 facebook.com = facebook
@@ -62,8 +67,8 @@ r7.com = r7
 ig.com.br = ig
 estadao.com.br = estadao
 olx.com.br = olx
-fmovies.co = fmovies
-ww4.fmovies.co = fmovies
+# fmovies mirrors: fmovies.co, ww4.fmovies.co, fmoviess.to, fmovies4.tv, ...
+/(^|\.)fmovies[a-z0-9-]*\./ = fmovies
 
 # site-rules.txt — editable site rule map
 # Format:
