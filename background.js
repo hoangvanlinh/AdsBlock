@@ -111,33 +111,60 @@ async function fetchLocalRuleText() {
   return res.ok ? res.text() : '';
 }
 
+// A pattern that is a bare hostname can be matched via requestDomains, which is
+// domain-indexed by the browser (much faster than urlFilter substring scan) and
+// lets many domains share a single rule. Anything else (paths like
+// "facebook.com/tr") stays as an individual urlFilter rule.
+const DOMAIN_PATTERN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
+
+// One invalid domain in requestDomains rejects the whole updateDynamicRules
+// call, so every grouped domain must be validated first.
+function buildPatternRules(patterns, startId, resourceTypes, priority) {
+  const domains = [];
+  const urlFilters = [];
+  for (const p of patterns) {
+    if (DOMAIN_PATTERN_RE.test(p)) domains.push(p.toLowerCase());
+    else urlFilters.push(p);
+  }
+  const rules = [];
+  let id = startId;
+  if (domains.length) {
+    rules.push({
+      id: id++,
+      priority,
+      action: { type: 'block' },
+      condition: { requestDomains: domains, resourceTypes },
+    });
+  }
+  for (const f of urlFilters) {
+    rules.push({
+      id: id++,
+      priority,
+      action: { type: 'block' },
+      condition: { urlFilter: f, resourceTypes },
+    });
+  }
+  return rules;
+}
+
 function buildDefaultRulesFromConfig(config) {
   const adTypes = ['script', 'image', 'xmlhttprequest', 'sub_frame'];
   const trackerTypes = ['script', 'image', 'xmlhttprequest', 'ping'];
-  const adRules = config.adNetworkPatterns.map((pattern, index) => ({
-    id: 1 + index,
-    priority: 1,
-    action: { type: 'block' },
-    condition: { urlFilter: pattern, resourceTypes: adTypes },
-  }));
-  const trackerStart = adRules.length + 1;
-  const trackerRules = config.trackerNetworkPatterns.map((pattern, index) => ({
-    id: trackerStart + index,
-    priority: 1,
-    action: { type: 'block' },
-    condition: { urlFilter: pattern, resourceTypes: trackerTypes },
-  }));
+  const adRules = buildPatternRules(config.adNetworkPatterns, 1, adTypes, 1);
+  const trackerRules = buildPatternRules(config.trackerNetworkPatterns, adRules.length + 1, trackerTypes, 1);
   return { adRules, trackerRules };
 }
 
-function buildMalwareRulesFromConfig(config, trackerStart) {
+function buildMalwareRulesFromConfig(config, startId) {
   const malwareTypes = ['main_frame', 'sub_frame', 'script', 'xmlhttprequest', 'image'];
-  return config.malwareNetworkDomains.map((domain, index) => ({
-    id: trackerStart + index,
+  const domains = config.malwareNetworkDomains.filter(d => DOMAIN_PATTERN_RE.test(d));
+  if (!domains.length) return [];
+  return [{
+    id: startId,
     priority: 2,
     action: { type: 'block' },
-    condition: { requestDomains: [domain], resourceTypes: malwareTypes },
-  }));
+    condition: { requestDomains: domains.map(d => d.toLowerCase()), resourceTypes: malwareTypes },
+  }];
 }
 
 async function ensureRuleDefinitionsLoaded() {
@@ -191,8 +218,26 @@ const REMOTE_MALWARE_RULE_ID_START = 100000; // for fetched blocklists
 const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
 const PAUSE_ALLOW_RULE_ID_START = 300000;    // for pause/allowlist allow-all rules
 
-function isRemoteMalwareRuleId(ruleId) {
-  return ruleId >= REMOTE_MALWARE_RULE_ID_START && ruleId < CUSTOM_RULE_ID_START;
+// Remote blocklist domains are grouped into a few requestDomains rules instead
+// of one rule per domain, so the dynamic-rule quota is no longer the constraint.
+const REMOTE_MAX_DOMAINS = 25000;
+const REMOTE_DOMAINS_PER_RULE = 1000;
+
+function buildRemoteMalwareRules(domains) {
+  const rules = [];
+  for (let i = 0; i < domains.length; i += REMOTE_DOMAINS_PER_RULE) {
+    rules.push({
+      id: REMOTE_MALWARE_RULE_ID_START + rules.length,
+      priority: 2,
+      action: { type: 'block' },
+      condition: {
+        requestDomains: domains.slice(i, i + REMOTE_DOMAINS_PER_RULE),
+        // Exclude sub_frame to avoid blocking embedded video players (iframes)
+        resourceTypes: ['main_frame', 'script', 'xmlhttprequest', 'image'],
+      },
+    });
+  }
+  return rules;
 }
 
 // ── Privacy score calculation ─────────────────────────────────────
@@ -308,8 +353,15 @@ async function buildActiveRulesFromStorage() {
 
   const activeRules = [...filteredDefaultRules];
   const malwareActive = blockMalware ? [...MALWARE_RULES] : [];
-  const { remoteMalwareRules = [] } = await chrome.storage.local.get('remoteMalwareRules');
-  const remoteActive = blockMalware ? [...remoteMalwareRules] : [];
+  const { remoteMalwareDomains, remoteMalwareRules = [] } = await chrome.storage.local.get(
+    ['remoteMalwareDomains', 'remoteMalwareRules']
+  );
+  // Migration: older versions stored full rule objects (one per domain).
+  // Flatten them back to a domain list until the next blocklist refresh
+  // rewrites storage in the new format.
+  const remoteDomains = remoteMalwareDomains
+    || remoteMalwareRules.flatMap(r => r.condition?.requestDomains || []);
+  const remoteActive = blockMalware ? buildRemoteMalwareRules(remoteDomains) : [];
   const customBlockRules = await buildCustomBlockRules();
   const focusRules = await buildFocusRules(focusMode);
 
@@ -501,27 +553,6 @@ const BLOCKLIST_SOURCES = [
   { url: 'https://phishing.army/download/phishing_army_blocklist.txt', name: 'Phishing Army' },
 ];
 
-const REMOTE_FALLBACK_MAX_DOMAINS = 500;
-
-async function getRemoteMalwareRuleBudget() {
-  try {
-    const dnr = chrome.declarativeNetRequest;
-    if (!(dnr && dnr.getDynamicRules)) return REMOTE_FALLBACK_MAX_DOMAINS;
-
-    const [existingRules, activeState] = await Promise.all([
-      dnr.getDynamicRules(),
-      buildActiveRulesFromStorage(),
-    ]);
-    const availableCount = typeof dnr.getAvailableDynamicRuleCount === 'function'
-      ? await dnr.getAvailableDynamicRuleCount()
-      : REMOTE_FALLBACK_MAX_DOMAINS;
-    const totalCapacity = existingRules.length + Math.max(0, Number(availableCount || 0));
-    const baseRuleCount = (activeState.allRules || []).filter(rule => !isRemoteMalwareRuleId(rule.id)).length;
-    return Math.max(0, totalCapacity - baseRuleCount);
-  } catch {
-    return REMOTE_FALLBACK_MAX_DOMAINS;
-  }
-}
 async function fetchMalwareBlocklists() {
   const allDomains = new Set();
   for (const source of BLOCKLIST_SOURCES) {
@@ -531,6 +562,7 @@ async function fetchMalwareBlocklists() {
       const text = await resp.text();
       const lines = text.split('\n');
       for (const line of lines) {
+        if (allDomains.size >= REMOTE_MAX_DOMAINS) break;
         const trimmed = line.trim();
         if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!')) continue;
         // Hosts file format: "127.0.0.1 domain" or "0.0.0.0 domain" or just "domain"
@@ -538,47 +570,33 @@ async function fetchMalwareBlocklists() {
         if (domain.startsWith('127.0.0.1') || domain.startsWith('0.0.0.0')) {
           domain = domain.split(/\s+/)[1];
         }
-        if (!domain || domain === 'localhost' || domain.includes('/') || !domain.includes('.')) continue;
-        allDomains.add(domain.toLowerCase());
+        if (!domain || domain === 'localhost') continue;
+        domain = domain.toLowerCase();
+        if (!DOMAIN_PATTERN_RE.test(domain)) continue;
+        allDomains.add(domain);
       }
     } catch (e) {
       console.warn(`[AdBlock] Failed to fetch ${source.name}:`, e.message);
     }
   }
 
-  const remoteBudget = await getRemoteMalwareRuleBudget();
-  const selectedDomains = remoteBudget > 0
-    ? Array.from(allDomains).slice(0, remoteBudget)
-    : [];
+  const domains = Array.from(allDomains);
 
-  // Convert to declarativeNetRequest rules
-  const rules = [];
-  let id = REMOTE_MALWARE_RULE_ID_START;
-  for (const domain of selectedDomains) {
-    rules.push({
-      id: id++,
-      priority: 2,
-      action: { type: 'block' },
-      condition: {
-        requestDomains: [domain],
-        // Exclude sub_frame to avoid blocking embedded video players (iframes)
-        resourceTypes: ['main_frame', 'script', 'xmlhttprequest', 'image'],
-      },
-    });
-  }
-
-  // Store rules and update timestamp
+  // Store only the domain list — rules are rebuilt on apply. Storing rule
+  // objects (~150 bytes each as JSON) wasted storage; the old per-rule key
+  // is removed on first update after migration.
   await chrome.storage.local.set({
-    remoteMalwareRules: rules,
+    remoteMalwareDomains: domains,
     malwareListLastUpdate: Date.now(),
-    malwareListCount: rules.length,
+    malwareListCount: domains.length,
   });
+  await chrome.storage.local.remove('remoteMalwareRules');
 
   // Re-apply all network rules
   await applyNetworkRules();
 
-  console.log(`[AdBlock] Malware blocklist updated: ${rules.length} domains from remote sources`);
-  return rules.length;
+  console.log(`[AdBlock] Malware blocklist updated: ${domains.length} domains from remote sources`);
+  return domains.length;
 }
 
 // Check if blocklist needs update (every 24 hours)
@@ -811,14 +829,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         await ensureRuleDefinitionsLoaded();
         // Derive classifier patterns directly from actual DNR rule definitions.
         // content.js uses these to classify observed DOM resources for stats.
-        const AD_IDS = new Set(DEFAULT_RULES.filter(r => !TRACKER_RULE_IDS.has(r.id)).map(r => r.id));
-        const adPatterns = DEFAULT_RULES
-          .filter(r => AD_IDS.has(r.id) && r.condition.urlFilter)
-          .map(r => r.condition.urlFilter);
-
-        const trackerPatterns = DEFAULT_RULES
-          .filter(r => TRACKER_RULE_IDS.has(r.id) && r.condition.urlFilter)
-          .map(r => r.condition.urlFilter);
+        // Patterns live either in a grouped requestDomains rule or in
+        // individual urlFilter rules.
+        const adPatterns = [];
+        const trackerPatterns = [];
+        for (const r of DEFAULT_RULES) {
+          const bucket = TRACKER_RULE_IDS.has(r.id) ? trackerPatterns : adPatterns;
+          if (r.condition.urlFilter) bucket.push(r.condition.urlFilter);
+          if (r.condition.requestDomains) bucket.push(...r.condition.requestDomains);
+        }
 
         const malwarePatterns = MALWARE_RULES
           .flatMap(r => r.condition.requestDomains || []);
@@ -877,7 +896,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       case 'GET_MALWARE_STATUS': {
         await ensureRuleDefinitionsLoaded();
         const { malwareListLastUpdate = 0, malwareListCount = 0 } = await chrome.storage.local.get(['malwareListLastUpdate', 'malwareListCount']);
-        sendResponse({ lastUpdate: malwareListLastUpdate, count: malwareListCount + MALWARE_RULES.length });
+        // MALWARE_RULES is now a single grouped rule — count its domains, not rules.
+        const builtinMalwareCount = MALWARE_RULES.reduce(
+          (n, r) => n + (r.condition.requestDomains?.length || 0), 0
+        );
+        sendResponse({ lastUpdate: malwareListLastUpdate, count: malwareListCount + builtinMalwareCount });
         break;
       }
 

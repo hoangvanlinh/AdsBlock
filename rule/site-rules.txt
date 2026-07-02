@@ -22,7 +22,46 @@ google.* = google
 yandex.* = yandex
 vnexpress.net = vnexpress
 tuoitre.vn = tuoitre
-#dantri.com.vn = dantri
+dantri.com.vn = dantri
+zingnews.vn = zingnews
+zing.vn = zingnews
+znews.vn = zingnews
+kenh14.vn = kenh14
+thanhnien.vn = thanhnien
+24h.com.vn = site24h
+soha.vn = soha
+tienphong.vn = tienphong
+laodong.vn = laodong
+vtc.vn = vtc
+genk.vn = genk
+baomoi.com = baomoi
+twitch.tv = twitch
+medium.com = medium
+cnn.com = cnn
+espn.com = espn
+imgur.com = imgur
+yahoo.co.jp = yahoo_jp
+nicovideo.jp = nicovideo
+pixiv.net = pixiv
+naver.com = naver
+daum.net = daum
+kakao.com = kakao
+vk.com = vk
+ok.ru = okru
+mail.ru = mailru
+rambler.ru = rambler
+rbc.ru = rbc
+lenta.ru = lenta
+ria.ru = ria
+kinopoisk.ru = kinopoisk
+dzen.ru = dzen
+globo.com = globo
+uol.com.br = uol
+terra.com.br = terra
+r7.com = r7
+ig.com.br = ig
+estadao.com.br = estadao
+olx.com.br = olx
 fmovies.co = fmovies
 ww4.fmovies.co = fmovies
 
@@ -43,7 +82,7 @@ ww4.fmovies.co = fmovies
 #   no_window_open_if = /adsite\.com/ 3 blank       ← decoy blank tab, close after 3s
 #   no_window_open_if = /adsite\.com/ 5 iframe      ← hidden iframe decoy
 # Per-site override: add no_window_open_if = <value> in the site's section.
-direct_hide_selectors = ins.adsbygoogle | .adsbygoogle | [id^="div-gpt-ad"] | [id^="google_ads_iframe"] | [id^="dfp-ad-"] | iframe[src*="googleadservices"] | iframe[src*="doubleclick.net"] | iframe[src*="googlesyndication"] | .OUTBRAIN | div.ob-widget | div.ob-smartfeed-wrapper | [data-widget-id^="outbrain"] | .trc_related_container | [id^="taboola-"] | .taboola-container | iframe[src*="amazon-adsystem"] | .criteo-ad | [id^="crt-"][id$="-wrapper"] | iframe[src*="adnxs.com"] | iframe[src*="media.net"] | iframe[src*="pubmatic.com"] | iframe[src*="openx.net"] | iframe[src*="rubiconproject.com"] | .ad-banner | .ad-wrapper | .ad-container | .ad-slot | .ad-unit | .ad-frame | .ad-leaderboard | .ad-sidebar | .ad-rectangle | #ad-banner | #ad-wrapper | #ad-container | [aria-label="Advertisement"] | [aria-label="Sponsored"] | [data-ad="true"] | li[data-promoted="true"] | .sponsored-post | .promoted-content | .ad-modal | .ad-popup | .interstitial-ad | [data-google-query-id] | [data-google-container-id] | .snigel_ad | .snigel_desktop | .snigel_mobile | [class*="advertising_slot_"] | [data-id^="nn_"] | iframe[src*="xandr.com"] | iframe[src*="adsrvr.org"] | iframe[src*="smartadserver.com"] | iframe[src*="adform.net"] | iframe[src*="33across.com"] | iframe[src*="sharethrough.com"] | iframe[src*="mgid.com"] | iframe[src*="teads.tv"] | iframe[src*="undertone.com"] | iframe[src*="yieldmo.com"] | iframe[src*="improvedigital.com"] | iframe[src*="smartclip.net"] | [id^="yandex_rtb_"] | [id^="sas_"] | [id^="mgid-"] | [id^="rc-widget-"] | .rc-widget | [id^="seedtag-"] | [data-str-native-key] | [id^="teads-"] | [id^="prebid-"] | [data-prebid] | [id^="adnzone_"] | [id^="ssppagebid_"] | [data-admssprqid] | [data-ssp^="sspbid_"] | *:has(> [data-admssprqid]) | *:has(> [id^="adnzone_"]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | [id^="ads_top_"] | [id^="ads_bottom_"] | [id^="dfp_"] | [id^="vm-placement-"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | iframe[src*="mfast.vn"] | [id^="adskeeper-"] | iframe[src*="adskeeper.com"] | .skimlinks-widget | [data-skimlinks-widget] | .viglink-widget | [id^="admitad-widget-"] | .howl-widget | [data-howl] | .awin-banner | [data-awin] | iframe[src*="shareasale.com"] | iframe[src*="awin1.com"] | iframe[src*="jdoqocy.com"] | iframe[src*="tradedoubler.com"] | iframe[src*="admitad.com"] | iframe[src*="impact.com"] | iframe[src*="skimlinks.com"] | iframe[src*="viglink.com"] | iframe[src*="partnerize.com"] | iframe[src*="howl.me"] | .ads-banner
+direct_hide_selectors = ins.adsbygoogle | .adsbygoogle | [id^="div-gpt-ad"] | [id^="google_ads_iframe"] | [id^="dfp-ad-"] | iframe[src*="googleadservices"] | iframe[src*="doubleclick.net"] | iframe[src*="googlesyndication"] | .OUTBRAIN | div.ob-widget | div.ob-smartfeed-wrapper | [data-widget-id^="outbrain"] | .trc_related_container | [id^="taboola-"] | .taboola-container | iframe[src*="amazon-adsystem"] | .criteo-ad | [id^="crt-"][id$="-wrapper"] | iframe[src*="adnxs.com"] | iframe[src*="media.net"] | iframe[src*="pubmatic.com"] | iframe[src*="openx.net"] | iframe[src*="rubiconproject.com"] | .ad-banner | .ad-wrapper | .ad-container | .ad-slot | .ad-unit | .ad-frame | .ad-leaderboard | .ad-sidebar | .ad-rectangle | #ad-banner | #ad-wrapper | #ad-container | [aria-label="Advertisement"] | [aria-label="Sponsored"] | [data-ad="true"] | li[data-promoted="true"] | .sponsored-post | .promoted-content | .ad-modal | .ad-popup | .interstitial-ad | [data-google-query-id] | [data-google-container-id] | .snigel_ad | .snigel_desktop | .snigel_mobile | [class*="advertising_slot_"] | [data-id^="nn_"] | iframe[src*="xandr.com"] | iframe[src*="adsrvr.org"] | iframe[src*="smartadserver.com"] | iframe[src*="adform.net"] | iframe[src*="33across.com"] | iframe[src*="sharethrough.com"] | iframe[src*="mgid.com"] | iframe[src*="teads.tv"] | iframe[src*="undertone.com"] | iframe[src*="yieldmo.com"] | iframe[src*="improvedigital.com"] | iframe[src*="smartclip.net"] | [id^="yandex_rtb_"] | [id^="sas_"] | [id^="mgid-"] | [id^="rc-widget-"] | .rc-widget | [id^="seedtag-"] | [data-str-native-key] | [id^="teads-"] | [id^="prebid-"] | [data-prebid] | [id^="adnzone_"] | [id^="ssppagebid_"] | [data-admssprqid] | [data-ssp^="sspbid_"] | *:has(> [data-admssprqid]) | *:has(> [id^="adnzone_"]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | [id^="VLiIfrWrapper_"] | [class*="VLi-iframe"] | [class*="VLiIf"] | [id^="ads_top_"] | [id^="ads_bottom_"] | [id^="dfp_"] | [id^="vm-placement-"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | iframe[src*="mfast.vn"] | [id^="adskeeper-"] | iframe[src*="adskeeper.com"] | .skimlinks-widget | [data-skimlinks-widget] | .viglink-widget | [id^="admitad-widget-"] | .howl-widget | [data-howl] | .awin-banner | [data-awin] | iframe[src*="shareasale.com"] | iframe[src*="awin1.com"] | iframe[src*="jdoqocy.com"] | iframe[src*="tradedoubler.com"] | iframe[src*="admitad.com"] | iframe[src*="impact.com"] | iframe[src*="skimlinks.com"] | iframe[src*="viglink.com"] | iframe[src*="partnerize.com"] | iframe[src*="howl.me"] | .ads-banner | [id^="google-auto-placed"] | .google-auto-placed | [id^="aswift_"] | [id^="outbrain_"] | [data-ob-contentid] | [class*="ob-dynamic-rec-container"] | [class*="taboola-"] | div[id^="taboola_"] | [id^="criteo-"] | iframe[src*="cas.criteo.com"] | [id^="ezoic-pub-ad-placeholder-"] | ez-ad-placeholder | [id^="mediavine-"] | [class*="mediavine-"] | [data-pw-mobi] | [data-pw-desk] | [id^="adthrive"] | [class*="adthrive"] | [id^="raptive-"] | [class*="raptive-"] | #carbonads | .carbon-ads | [id^="bsa_it_"] | [data-freestar-ad] | [id^="freestar-"] | [class*="freestar-"] | iframe[src*="connatix.com"] | iframe[src*="gumgum.com"] | iframe[src*="sovrn.com"] | iframe[src*="advertising.com"] | .ima-ad-container | [class*="ima-ad"] | .jw-advertisement | .jw-ad-container | [class*="advertisement"] | [id*="advertisement"] | .native-ad | [class*="native-ad"] | [class*="sticky-ad"] | [class*="floating-ad"]
 ad_network_patterns = doubleclick.net | googlesyndication.com | googleadservices.com | adnxs.com | outbrain.com | taboola.com | ads.yahoo.com | amazon-adsystem.com | media.net | criteo.com | adtago.s3.amazonaws.com | advice-ads.s3.amazonaws.com | advertising-api-eu.amazon.com | adservice.google.com | ads30.adcolony.com | adc3-launch.adcolony.com | events3alt.adcolony.com | wd.adcolony.com | static.ads-twitter.com | ads-api.twitter.com | ads.linkedin.com | ads.pinterest.com | ads.youtube.com | ads-api.tiktok.com | ads-sg.tiktok.com | business-api.tiktok.com | ads.tiktok.com | advertising.yahoo.com | partnerads.ysm.yahoo.com | gemini.yahoo.com | adtech.yahooinc.com | adfstat.yandex.ru | advertising.yandex.ru | offerwall.yandex.net | adfox.yandex.ru | auction.unityads.unity3d.com | webview.unityads.unity3d.com | config.unityads.unity3d.com | adserver.unityads.unity3d.com | bdapi-ads.realmemobile.com | bdapi-in-ads.realmemobile.com | api.ad.xiaomi.com | sdkconfig.ad.xiaomi.com | sdkconfig.ad.intl.xiaomi.com | adsfs.oppomobile.com | adx.ads.oppomobile.com | ck.ads.oppomobile.com | data.ads.oppomobile.com | samsungads.com | advertising.apple.com | tr.iadsdk.apple.com | iadsdk.apple.com | api-adservices.apple.com | propellerads.com | adsterra.com | highperformanceformat.com | exoclick.com | exdynsrv.com | hilltopads.net | clickadu.com | popcash.net | popads.net | trafficjunky.com | trafficstars.com | juicyads.com | monetag.com | pushground.com | bidvertiser.com | revcontent.com | adcash.com | rhythmone.com | 1rx.io | ero-advertising.com | plugrush.com | adxpansion.com | a-ads.com | coinzilla.com | zedo.com | valueclick.com | conversantmedia.com | gumgum.com | primis.tech | connatix.com | springserve.com | triplelift.com | districtm.io | liveintent.com | sonobi.com | indexexchange.com
 tracker_network_patterns = google-analytics.com | analytics.google.com | facebook.com/tr | hotjar.com | mixpanel.com | segment.com | amplitude.com | fullstory.com | clarity.ms | quantserve.com | analyticsengine.s3.amazonaws.com | analytics.s3.amazonaws.com | app-measurement.com | region1.google-analytics.com | click.googleanalytics.com | adm.hotjar.com | identify.hotjar.com | insights.hotjar.com | script.hotjar.com | surveys.hotjar.com | mouseflow.com | cdn.mouseflow.com | o2.mouseflow.com | api.mouseflow.com | tools.mouseflow.com | cdn-test.mouseflow.com | freshmarketer.com | claritybt.freshmarketer.com | fwtracks.freshmarketer.com | luckyorange.com | api.luckyorange.com | realtime.luckyorange.com | cdn.luckyorange.com | w1.luckyorange.com | upload.luckyorange.net | cs.luckyorange.net | settings.luckyorange.net | notify.bugsnag.com | sessions.bugsnag.com | api.bugsnag.com | app.bugsnag.com | browser.sentry-cdn.com | app.getsentry.com | o0.ingest.sentry.io | pixel.facebook.com | an.facebook.com | analytics.twitter.com | analytics.pointdrive.linkedin.com | log.pinterest.com | analytics.pinterest.com | trk.pinterest.com | widgets.pinterest.com | events.reddit.com | events.redditmedia.com | analytics.tiktok.com | analytics-sg.tiktok.com | log.byteoversea.com | analytics.yahoo.com | geo.yahoo.com | udc.yahoo.com | udcm.yahoo.com | analytics.query.yahoo.com | log.fc.yahoo.com | extmaps-api.yandex.net | appmetrica.yandex.ru | metrika.yandex.ru | iot-eu-logser.realme.com | iot-logser.realme.com | data.mistat.xiaomi.com | data.mistat.india.xiaomi.com | data.mistat.rus.xiaomi.com | tracking.rus.miui.com | metrics.data.hicloud.com | metrics2.data.hicloud.com | grs.hicloud.com | logservice.hicloud.com | logservice1.hicloud.com | logbak.hicloud.com | smetrics.samsung.com | samsung-com.112.2o7.net | analytics-api.samsunghealthcn.com | metrics.icloud.com | metrics.mzstatic.com | books-analytics-events.apple.com | weather-analytics-events.apple.com | notes-analytics-events.apple.com | cdn-cgi/rum
 malware_network_domains = malware-check.disconnect.me | phishing.example.net | dl.free-counter.co.uk | naifrede.com | clafrfrede.com | coinhive.com | coin-hive.com | jsecoin.com | crypto-loot.com | authedmine.com | 0-internal.paypal.com.de | apple-icloud.org.uk | login-microsoft-office.com | secure-login-bank.com | netflix-account.com | installcore.net | softonic-analytics.net | bonzi.software | adf.ly | sh.st | ad-maven.com | propellerads.com | rig-exploit.com | exploit-kit-check.net | mspy.com | flexispy.com | virus-alert-windows.com | your-pc-is-infected.com | push-notification.tools | notification-service.club
@@ -168,3 +207,259 @@ query_keys = text | p
 no_window_open_if = /.*/ 0 blank
 # Hide overlay/modal ad elements
 direct_hide_selectors = #ngx-overlay | .ngx-overlay | [class*="overlay-ad"] | [id*="overlay-ad"] | .ad-overlay | #ad-overlay | .popup-wrapper | .popup-ad | #popup-ad | [class*="modal-ad"] | [id*="modal-ad"] | div[id^="adb"] | .jw-advertisement | .jw-ad-container | [class*="preroll"] | [id*="preroll"] | .video-ads | #video-ads | .vjs-ad-playing .vjs-poster | .ima-ad-container | [class*="ima-ad"] | div[style*="z-index: 999"] iframe | div[style*="z-index:999"] iframe | .overlay:not(.player-overlay) | #overlay:not(.player-overlay) | .modal-backdrop
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ── Việt Nam ─────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[dantri]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [id*="quang-cao"] | [id*="quangcao"] | .dtads | .dt-ads | .ads-top | .ads-right | .ads-bottom | .ads-left | .ads-center | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | .sticky-ads | .sidebar-ads | [class*="float-ad"] | [id*="float_ad"] | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | .sponsor-article | .chuyen-de-quangcao | .dantri-ads-center
+
+[zingnews]
+direct_hide_selectors = .zac__wrapper | [id^="zing-ads-"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="zing-ad"] | .z-ads | .z-box-ad | .ads-container | .ads-box | .banner-ads | .float-ads | .popup-ads | .sticky-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | div.ad-tag | iframe[src*="adtima.vn"] | iframe[src*="bannerngang"] | iframe[src*="/interactive/"] | [class*="zingstoryad"] | [class*="zingstory-ad"]
+
+
+[kenh14]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .kn_adv_box | .kn_adv | .ads-kenh14 | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+
+[thanhnien]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [id^="tn_ads"] | [class*="tn-ads"] | .tn__quangcao | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | .sticky-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+
+[site24h]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .ads24h | [id^="ads24h_"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+no_window_open_if = /.*/ 0 blank
+
+[soha]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .soha-quangcao | .soha-ads | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+
+[tienphong]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="tp-ads"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+
+[laodong]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+
+[vtc]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="vtc-ads"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+no_window_open_if = /.*/ 0 blank
+
+[genk]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="genk-ads"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+
+[baomoi]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .bm-ads | .baomoi-ads | .block-ads | .banner-ads | .float-ads | .popup-ads | [data-admssprqid] | *:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | .fc-link
+labels = quảng cáo | tài trợ
+innertext_selectors = article | .story | .news-item | .bm-item
+innertext_labels = Quảng cáo | Tài trợ
+context_selectors = span | a | .label | .category
+hide_closest = article | .story | .news-item | .bm-item
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ── Mỹ / Global ──────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[twitch]
+direct_hide_selectors = [data-test-selector="ad-banner-default-wrapper"] | .ad-banner-default-wrapper | [data-a-target="ad-overlay-background"] | [data-a-target="ad-overlay"] | [data-a-target="ad-choice-wrapper"] | [class*="ad-choice"] | .player-ad-notice | [aria-label*="Advertisement"] | .tw-ad | [data-test-selector="content-overlay-gate"] | [class*="game-ad"] | #top-nav-promo | [class*="channel-leaderboard"] | [class*="ad-banner"]
+no_window_open_if = /ads\.twitch\.tv|twitchadvertising\.com|doubleclick\.net/ 0 blank
+
+[medium]
+direct_hide_selectors = [data-testid="membership-banner"] | [class*="MembershipBanner"] | [class*="SubscribeBanner"] | [class*="UpsellBanner"] | [class*="MeteredPaywall"] | [class*="subscribe-modal"] | [class*="SubscribeModal"] | .pw-subscribe-cta | [class*="promoted-post"] | [data-testid="promoted-content"] | [class*="PriceCard"] | [class*="FriendLink"]
+labels = promoted | sponsored | partner content
+innertext_selectors = article | div[class*="postItem"] | div[class*="PostPreview"]
+innertext_labels = Member-only | Promoted
+context_selectors = span | [class*="PostLabel"] | [class*="ReadingTime"]
+hide_closest = article | div[class*="postItem"] | div[class*="PostPreview"]
+
+[cnn]
+direct_hide_selectors = [class*="pg-ad-wrapper"] | [class*="AdSlot"] | .cr__advertisement | .cnn-ad-wrapper | #commercial_node | [data-section-name="ad"] | [class*="ad-feedback"] | [class*="ad-choices"] | [class*="ad__container"] | [class*="ad-unit"] | [id^="div-gpt-ad"] | [class*="outbrain"] | [id^="outbrain"] | [class*="taboola"] | [id^="taboola"] | [class*="commercial-unit"]
+
+[espn]
+direct_hide_selectors = [class*="ad__container"] | [id^="ad-slot"] | [class*="ad-module"] | [data-ad-unit] | .sponsor-logos | [class*="ad-wrapper"] | [class*="espn-advertisement"] | [class*="AdSection"] | [id^="espn-ad-"] | [class*="inline-ad"] | [id^="inline-ad"] | [class*="sidebar-ad"] | [id^="sidebar-ad"] | [class*="ad-label"] | .promo-banner | [class*="PromoUnit"] | [class*="advertisement"]
+
+[imgur]
+direct_hide_selectors = .promoted-entry | [data-promoted="true"] | [class*="ad-block"] | .ad-box | [class*="EasyAdBlock"] | [class*="native-ad"] | [class*="sponsored"] | [class*="outstream"] | [id^="imgur-ad-"] | [class*="sidebar-ad"] | div[class*="advertisement"]
+labels = promoted | sponsored | advertisement
+innertext_selectors = .post-item | .image-list-item | .hoverable
+innertext_labels = Promoted | Sponsored
+context_selectors = span | a | .post-tag
+hide_closest = .post-item | .image-list-item | .hoverable
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ── Nhật Bản ─────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[yahoo_jp]
+labels = PR | 広告 | スポンサー
+direct_hide_selectors = #yj-ad | [id^="yjad-"] | [id^="yads_"] | .yjad | #Ads_topcover | #ads_sp_links | [class*="YahooAd"] | [class*="yjad"] | [class*="SponsLink"] | [id^="ad_region"] | [id^="Ads_searchbox"] | ul.adpR | #sponsoredresults_top | #sponsoredresults_bottom | li.spider | .yjad_splink | .sc_ads | [id^="pr_area"] | #ymktHeader | [class*="ads_unit"] | [data-ual-id*="ad"] | [class*="yads"]
+selectors = .search-item | .sw-CardBase | .sw-List__item
+innertext_selectors = .search-item | .sw-CardBase
+innertext_labels = 広告 | PR | スポンサー
+context_selectors = span | .sw-Label | a | .label
+hide_closest = .search-item | .sw-CardBase | li.spider | .sw-List__item
+
+[nicovideo]
+direct_hide_selectors = .skipContainer | #videoAdBanner | [class*="OverlayAd"] | [class*="NC-Overlay-Ad"] | [id^="nicoad-"] | [class*="nicoad-"] | .nicoad-banner | .nicoad-video-content | #NicoAdPlayerModal | .ad_area | .sponsor_link | #nc-overlay-ad-frame | .nico-ads-wrapper | [id^="nc-ad-"] | .danime-ad-area
+no_window_open_if = /nicovideo\.jp\/ads|nicoad\.nicovideo/ 0 blank
+
+[pixiv]
+direct_hide_selectors = [data-gtm-zone^="ad_"] | [id^="ad-"] | [id^="pixiv-ad-"] | [class*="ad-area"] | [class*="ad-wrapper"] | [class*="Advertisement"] | [class*="AdvertisingArea"] | [class*="sponsored"] | .premium-lead | [class*="premium-upsell"] | [data-ga-label^="ad"] | ._premium-lead
+
+[fc2]
+direct_hide_selectors = [id^="fc2-bnr-"] | .fc2-ad | #fc2_ad | [class*="fc2_ad"] | #side_ad | [id^="fc2ad"] | .fc2-ad-unit | [class*="fc2-banner"] | #ad_area | [class*="ad-placement"] | .ad_unit | .ad-section
+no_window_open_if = /.*/ 0 blank
+
+[ameblo]
+direct_hide_selectors = [id^="ameba-ad-"] | .ad_ameba | #ameba_ad | [class*="ameba_ad"] | .skinAdModule | #sideAd | [class*="AmebaAd"] | [class*="ameba-ad"] | .ameba-ads | .amr-container | #AMR_SLOT | [class*="sp_ad"] | .theme-ad-area | [class*="amr-"]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ── Hàn Quốc ─────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[naver]
+labels = 광고 | AD
+direct_hide_selectors = #da_inbody | [id^="da_top"] | [id^="ad_"] | [class*="ad_area"] | #ad_layer | .lego_ad | .lego_ad_post | [class*="power_link"] | ul.lst_sp_more | ul.lst_type_pa | [class*="brand_board"] | [data-clk="adlink"] | #csp_pack_top | [id^="powerlink_"] | [class*="powerlink"] | #right_adcontainer | [class*="display-ad"] | [id^="display-ad"] | .ad_panel | #adcontent | #adContent | .adSponsor | #power_ads | [class*="naver-ad"] | [class*="blind_txt"]
+selectors = li.bx | .sp_each_item | li[class*="spw"]
+innertext_selectors = li.bx | .sp_each_item
+innertext_labels = 광고 | 파워링크
+context_selectors = .lego_headerlnk | span | .sp_text | a
+hide_closest = li.bx | li[class*="spw"] | .sp_each_item | div[id^="ad_"]
+paths = /search
+query_keys = query | q
+
+[daum]
+labels = 광고 | AD | 스폰서
+direct_hide_selectors = [id^="kakao_ad_"] | [class*="kakao_ad"] | [class*="daumAd"] | #kakao_ad_banner | [data-ad-type] | [class*="ad_unit"] | #realbox_splink | [id^="daum-ad"] | .ad_module | [id^="top_ad"] | [id^="right_ad"] | [id^="bottom_ad"] | [class*="ad_wrap"] | [class*="powerlink"] | [class*="special-link"] | .itemad | [class*="itemAd"] | [id^="adarea"] | .ad-area | [class*="dsp_ad"]
+selectors = .search-result-wrap .coll_cont li | ul.c-list-main li
+innertext_selectors = .search-result-wrap .coll_cont li | ul.c-list-main li
+innertext_labels = 광고 | 스폰서
+context_selectors = span | a | .display_s
+hide_closest = .search-result-wrap .coll_cont li | ul.c-list-main li | [class*="ad_unit"]
+paths = /search
+query_keys = q | w
+
+[kakao]
+labels = 광고 | AD
+direct_hide_selectors = [id^="kakao_ad_"] | [class*="kakao_ad"] | [class*="kakao-ad"] | #kakao_ad_banner | [data-ad-type] | [class*="ad_unit"] | [id^="kakao-ad-"] | [class*="adfit"] | [class*="kakaoAd"] | .ad_area | [id^="adfit_"] | [data-adfit-unit] | [class*="ad-fit"] | iframe[src*="t1.kakaocdn.net/ad_fig"]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ── Nga (Russia) ─────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[vk]
+# VK ads: feed posts labelled "Реклама"/"Рекламная запись", side column banners, myTarget
+labels = реклама | продвигается
+direct_hide_selectors = #ads_column | .ads_table | [class*="ads_post"] | [class*="_ads_post"] | .ads_label | [class*="ReactAdvertising"] | [class*="vkuiAd"] | [data-ad-view] | [class*="VkAds"] | [class*="adLabel"] | [class*="PromoPost"] | ._post:has(.ads_label) | [class*="CasualAds"] | [class*="mediatarg"] | [id^="mt_"] | iframe[src*="vk.com/adstransit"] | [data-story-type="ads"]
+selectors = [class*="feed_row"] | [class*="wall_item"] | ._post
+innertext_selectors = [class*="feed_row"] | ._post
+innertext_labels = Реклама | Рекламная запись | Продвигается
+context_selectors = [class*="post_ads_label"] | span | a
+hide_closest = [class*="feed_row"] | ._post | [class*="wall_item"]
+
+[okru]
+# Одноклассники / OK.ru — uses myTarget + own ad system
+labels = реклама | рекламная запись
+direct_hide_selectors = [class*="ads-block"] | [class*="adv-block"] | [id^="widget-ad-"] | [class*="mediatarg"] | [id^="mt_"] | .ok-ads | [class*="PromoOffer"] | [class*="promo-post"] | [class*="AdvertBlock"] | [class*="ad_label"] | [data-l*="advert"] | .wt-feed__item:has([class*="PromoPost"])
+innertext_selectors = .wt-feed__item | [class*="card-social"]
+innertext_labels = Реклама | Промо
+context_selectors = span | [class*="entity-label"]
+hide_closest = .wt-feed__item | [class*="card-social"]
+
+[mailru]
+# Mail.ru — uses myTarget ad network
+labels = реклама
+direct_hide_selectors = [class*="ad_unit"] | [class*="mail-ad"] | [class*="portal-ad"] | [id^="mt_"] | [data-target-id] | [class*="special-projects"] | [class*="mediatarg"] | [id^="rnd"] | .ad_col | [class*="ad_col"] | iframe[src*="r.mradx.net"] | iframe[src*="ad.mail.ru"] | [class*="MyTarget"] | [class*="AdvBlock"] | [id^="tgb_"] | [class*="tgb-"] | [class*="advert_"] | .ph-adv | [class*="ph-adv"]
+
+[rambler]
+labels = реклама | партнёрский материал
+direct_hide_selectors = [class*="rambler-ad"] | [id^="rbrads"] | .r_adv | [class*="adv_block"] | [class*="native-adv"] | [class*="partner-material"] | [class*="advert"] | [id^="adfox"] | [class*="banner-widget"] | [id^="r-banner"] | [class*="rb-ad"] | iframe[src*="ad.rambler.ru"]
+
+[rbc]
+# РБК — business news, heavy on native/sponsored content
+labels = реклама | партнёрский материал | спонсор
+direct_hide_selectors = [class*="banner__wrapper"] | [class*="article__banner"] | [id^="rbc-ad"] | [class*="rbc-ad"] | [class*="l-col__right"] .c-banner | [class*="spec-projects"] | [class*="NativeAds"] | [class*="partner__article"] | [id^="adfox"] | .l-col-center__aside | [class*="ad-block"] | [data-ad-zone]
+selectors = [class*="item js-search-results-item"] | [class*="news-feed__item"]
+innertext_selectors = [class*="news-feed__item"] | [class*="search-results-item"]
+innertext_labels = Реклама | Партнёрский материал | Спонсор
+context_selectors = span | [class*="news-label"] | a
+hide_closest = [class*="news-feed__item"] | [class*="search-results-item"]
+
+[lenta]
+labels = реклама | партнёрский материал | промо
+direct_hide_selectors = [class*="lenta-ad"] | [class*="banner-lenta"] | [class*="native-articles"] | [class*="advertising"] | [class*="topic-page__aside"] .banner | [class*="sidebar-banner"] | [id^="adfox"] | [class*="card__promo"] | [class*="promo-section"] | [class*="NativeItem"] | [data-ad]
+selectors = [class*="card _"] | [class*="list-item"]
+innertext_selectors = [class*="card _"] | [class*="list-item"]
+innertext_labels = Реклама | Партнёрский материал | Промо
+context_selectors = span | [class*="card__tag"] | a
+hide_closest = [class*="card _"] | [class*="list-item"]
+
+[ria]
+labels = реклама | партнёрский материал | рекламодатель
+direct_hide_selectors = [class*="listing__ad"] | [class*="widget__ad"] | [id^="adfox"] | [class*="ria-ad"] | [class*="banner-holder"] | [class*="banner__inner"] | [class*="advert-promo"] | [class*="article-partner"] | [class*="sponsor-label"] | [data-ad-slot] | [class*="advBlock"]
+
+[kinopoisk]
+# Кинопоиск (Yandex) — movie reviews/streaming
+labels = реклама
+direct_hide_selectors = [class*="kinopoisk-ad"] | [class*="KPAd"] | .banner_widget | [id^="kp_ad_"] | [id^="adfox"] | [class*="advert"] | [class*="promo-banner"] | [class*="PremiumBanner"] | [class*="ad-block"] | [data-testid*="ad"] | [class*="Advertisement"] | [class*="FloatPlayer"] .ad | [class*="PartnerBanner"]
+
+[dzen]
+# Яндекс Дзен / dzen.ru — news feed, uses Yandex ad network
+labels = реклама | промо
+direct_hide_selectors = [data-zen-type="ad"] | [class*="zen-ad"] | [class*="DzenAd"] | [class*="article_adv"] | [id^="adfox"] | [class*="adv_"] | [class*="PromoChannel"] | [class*="NativeAd"] | [class*="AdvLabel"] | [data-stat-click*="advert"] | [class*="PartnerChannel"]
+selectors = [class*="card__wrap"] | [class*="feed-item"]
+innertext_selectors = [class*="card__wrap"] | [class*="feed-item"]
+innertext_labels = Реклама | Промо | Партнёр
+context_selectors = span | [class*="channel-name"] | a
+hide_closest = [class*="card__wrap"] | [class*="feed-item"]
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ── Brazil ───────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+
+[globo]
+# Globo media group — g1.globo.com, gshow.globo.com, ge.globo.com, etc.
+labels = publicidade | patrocinado | anúncio | parceiro
+direct_hide_selectors = [class*="glb-ad"] | [id^="glb-ad-"] | [class*="widget--ad"] | [data-type="ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="gpt-ad"] | [class*="globo-ad"] | [class*="advertisement"] | [class*="oferta-highlight"] | [class*="anuncio"] | [id^="anuncio"] | [class*="pub_"] | [id^="div-gpt-ad"] | [class*="DFP"] | iframe[src*="advertising.globo.com"] | [class*="ad-content"] | [class*="adunit"]
+selectors = [class*="feed-post"] | [class*="bastian-feed-item"] | article
+innertext_selectors = [class*="feed-post"] | [class*="bastian-feed-item"]
+innertext_labels = Publicidade | Patrocinado | Anúncio | Parceiro
+context_selectors = span | [class*="feed-post-header"] | [class*="label"] | a
+hide_closest = [class*="feed-post"] | [class*="bastian-feed-item"] | article
+
+[uol]
+# UOL — Brazil's largest portal
+labels = publicidade | patrocinado | anúncio
+direct_hide_selectors = [id^="uol-ad-"] | [class*="uol-ad"] | [class*="uol_ad"] | [id^="divad"] | .divad | [class*="bnnr"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [id^="anuncio"] | [class*="Banner"] | [class*="advertisement"] | iframe[src*="ads.uol.com.br"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [id^="taboola"] | [class*="outbrain"]
+
+[terra]
+# Terra — portal
+labels = publicidade | patrocinado | anúncio
+direct_hide_selectors = [id^="terra-ad"] | [class*="terra-ad"] | .tc-ad | [class*="tc_ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | iframe[src*="ads.terra.com.br"] | [class*="Banner"] | [class*="taboola"] | [class*="outbrain"]
+
+[r7]
+# R7 — Record news portal
+labels = publicidade | patrocinado | anúncio
+direct_hide_selectors = [class*="r7-ads"] | [id^="r7-ad"] | [class*="advertising-widget"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="Banner"] | [class*="taboola"] | iframe[src*="ads.r7.com"]
+
+[ig]
+# iG — portal
+labels = publicidade | patrocinado | anúncio
+direct_hide_selectors = [id^="ig-ad"] | [class*="ig-ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [class*="outbrain"] | iframe[src*="ads.ig.com.br"]
+
+[estadao]
+# Estado de São Paulo — newspaper
+labels = publicidade | patrocinado | conteúdo patrocinado
+direct_hide_selectors = [class*="estadao-ad"] | [id^="estadao-ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="piano-ad"] | [class*="paywall"] | [class*="subscription-wall"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [class*="outbrain"] | [class*="Banner"] | [class*="ConteudoPatrocinado"]
+selectors = article | [class*="story-card"]
+innertext_selectors = article | [class*="story-card"]
+innertext_labels = Publicidade | Patrocinado | Conteúdo Patrocinado
+context_selectors = span | [class*="story-label"] | a
+hide_closest = article | [class*="story-card"]
+
+[olx]
+# OLX Brazil — classifieds, promoted listings
+labels = destaque | super destaque | patrocinado
+direct_hide_selectors = [class*="olx-ad"] | .promoted-badge | [data-adsstate="true"] | [class*="SuperDestaque"] | [class*="ad-listing-item--highlighted"] | [class*="listing-promoted"] | [class*="AdCard--featured"] | [data-testid*="promoted"] | [class*="highlight-badge"] | [class*="PatrocinadorBadge"]
+selectors = [class*="AdCard"] | li[class*="ad-list-item"]
+innertext_selectors = [class*="AdCard"] | li[class*="ad-list-item"]
+innertext_labels = Destaque | Super Destaque | Patrocinado
+context_selectors = span | [class*="badge"] | [class*="tag"]
+hide_closest = [class*="AdCard"] | li[class*="ad-list-item"]
