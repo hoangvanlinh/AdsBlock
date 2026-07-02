@@ -34,34 +34,10 @@
 //   3. Observe dynamic DOM mutations (SPA / infinite scroll)
 //   4. Listen for messages from background to toggle per-domain
 
-// Shared selectors and classifier patterns primarily live in rule/site-rules.txt.
-// Keep a minimal fallback in code so the engine still works if config loading
-// is unavailable or delayed.
-const FALLBACK_COSMETIC_SELECTORS = [
-  'ins.adsbygoogle', '.adsbygoogle',
-  '[id^="div-gpt-ad"]',
-  '[id^="google_ads_iframe"]',
-  '[id^="dfp-ad-"]',
-  'iframe[src*="googleadservices"]',
-  'iframe[src*="doubleclick.net"]',
-  'iframe[src*="googlesyndication"]',
-];
-
-let _cosmeticSelectors = FALLBACK_COSMETIC_SELECTORS.slice();
-
-// ── Cached joined selector string ────────────────────────────────
-// querySelectorAll with a joined selector is ~10x faster than N separate calls.
-// Rebuilt only when _cosmeticSelectors changes (applyGlobalConfig / init).
-let _joinedSelector = _buildJoinedSelector(FALLBACK_COSMETIC_SELECTORS);
-
-function _buildJoinedSelector(selectors) {
-  // Validate each selector; skip any that throw so one bad rule can't break all.
-  const valid = [];
-  for (const s of selectors) {
-    try { document.querySelector(s); valid.push(s); } catch { /* invalid — skip */ }
-  }
-  return valid.join(',');
-}
+// Cosmetic hiding (direct_hide_selectors) is owned entirely by site-block.js,
+// which injects them as a stylesheet scoped under html.adblock-on.
+// This file only manages the adblock-on class, user custom CSS rules,
+// and resource stats classification.
 
 // ── Resource classification for stats ────────────────────────────
 // Seeded from site-rules.txt [global] ad_network_patterns / tracker_network_patterns.
@@ -72,10 +48,6 @@ let _malwarePatterns = ['coinhive', 'coin-hive', 'jsecoin'];
 
 function applyGlobalConfig(cfg) {
   if (!cfg) return;
-  if (Array.isArray(cfg.direct_hide_selectors) && cfg.direct_hide_selectors.length) {
-    _cosmeticSelectors = cfg.direct_hide_selectors.slice();
-    _joinedSelector = _buildJoinedSelector(_cosmeticSelectors);
-  }
   // Use ad_network_patterns / tracker_network_patterns for URL stats classification
   if (Array.isArray(cfg.ad_network_patterns) && cfg.ad_network_patterns.length) {
     _adPatterns = cfg.ad_network_patterns.slice();
@@ -93,9 +65,7 @@ const _globalConfigReady = new Promise((resolve) => {
     resolve();
     return;
   }
-  window.__adblockRuleLoader.load('global', {
-    direct_hide_selectors: FALLBACK_COSMETIC_SELECTORS,
-  }, (cfg) => {
+  window.__adblockRuleLoader.load('global', {}, (cfg) => {
     applyGlobalConfig(cfg);
     resolve();
   });
@@ -156,10 +126,7 @@ function extValid() {
 }
 
 // ── State ─────────────────────────────────────────────────────────
-const isYouTube = location.hostname.includes('youtube.com');
 let enabled = true;
-let cosmeticEnabled = true;
-let hiddenCount = 0;
 
 // Check storage — only to REMOVE adblock-on if disabled/paused.
 // The class was already injected synchronously by earlyInject above.
@@ -209,7 +176,6 @@ function init() {
           injectBaseCss();
         }
         _globalConfigReady.finally(() => {
-          hideAds();
           removeAdScripts();   // seed initial stats from existing elements
           observeMutations();
         });
@@ -286,98 +252,6 @@ function injectCustomCssRules() {
   } catch { /* extension context invalidated */ }
 }
 
-// ── Video player protection ──────────────────────────────────────
-// Never hide or remove elements that are (or contain) the main video player.
-function isVideoPlayerElement(el) {
-  if (!el || !el.tagName) return false;
-  const tag = el.tagName;
-  // Direct video/embed/object elements
-  if (tag === 'VIDEO' || tag === 'EMBED' || tag === 'OBJECT') return true;
-  // Iframes that are likely video players (large size or video-related src)
-  if (tag === 'IFRAME') {
-    const src = (el.src || '').toLowerCase();
-    // Known video player / streaming embed patterns
-    if (/player|embed|video|stream|hls|dash|jwplayer|plyr|vimeo|dailymotion|mp4|m3u8/.test(src)) return true;
-    // Large iframes are usually the main content player, not ads
-    const rect = el.getBoundingClientRect();
-    if (rect.width > 200 && rect.height > 150) return true;
-  }
-  // Element contains a video/iframe player inside
-  if (el.querySelector && (el.querySelector('video, embed, object') ||
-      el.querySelector('iframe[src*="player"], iframe[src*="embed"], iframe[src*="video"]'))) {
-    return true;
-  }
-  return false;
-}
-
-// ── Batch parent collapse via RAF ────────────────────────────────
-const _COLLAPSE_SKIP_TAGS = new Set(['SCRIPT','STYLE','LINK','META','NOSCRIPT','TEMPLATE','BR','WBR']);
-let _collapsePending = new Set();
-let _collapseRafId = null;
-
-function _flushCollapse() {
-  _collapseRafId = null;
-  const nodes = _collapsePending;
-  _collapsePending = new Set();
-  for (const el of nodes) _collapseWalk(el);
-}
-
-function _collapseWalk(el) {
-  let node = el;
-  while (true) {
-    const parent = node.parentElement;
-    if (!parent || parent === document.body || parent === document.documentElement) break;
-    if (parent.dataset.adblockHidden) break;
-    if (isVideoPlayerElement(parent)) break;
-    let visible = 0;
-    for (const child of parent.children) {
-      if (_COLLAPSE_SKIP_TAGS.has(child.tagName)) continue;
-      if (child.dataset.adblockHidden) continue;
-      if (child.style.display === 'none' || child.style.visibility === 'hidden') continue;
-      visible++;
-    }
-    if (visible > 0) break;
-    parent.style.setProperty('display',    'none',   'important');
-    parent.style.setProperty('visibility', 'hidden', 'important');
-    parent.style.setProperty('height',     '0',      'important');
-    parent.style.setProperty('min-height', '0',      'important');
-    parent.style.setProperty('margin',     '0',      'important');
-    parent.style.setProperty('padding',    '0',      'important');
-    parent.style.setProperty('overflow',   'hidden', 'important');
-    parent.dataset.adblockHidden = '1';
-    node = parent;
-  }
-}
-
-function _scheduleCollapse(el) {
-  _collapsePending.add(el);
-  if (!_collapseRafId) _collapseRafId = requestAnimationFrame(_flushCollapse);
-}
-
-// ── Hide ad elements in DOM — single querySelectorAll call ───────
-function hideAds(root = document) {
-  if (!enabled || !cosmeticEnabled || !_joinedSelector) return;
-
-  let count = 0;
-  try {
-    (root === document ? document : root).querySelectorAll(_joinedSelector).forEach(el => {
-      if (el.dataset.adblockHidden) return;
-      if (isVideoPlayerElement(el)) return;
-      if (isYouTube && el.closest('.html5-video-player')) return;
-      el.style.setProperty('display',    'none',   'important');
-      el.style.setProperty('visibility', 'hidden', 'important');
-      el.dataset.adblockHidden = '1';
-      _scheduleCollapse(el);
-      count++;
-    });
-  } catch { /* joined selector parse error — extremely rare */ }
-
-  hiddenCount += count;
-  if (count > 0 && extValid()) {
-    chrome.runtime.sendMessage({ type: 'COSMETIC_HIDDEN', count, url: location.href }).catch(() => {});
-  }
-}
-
 // ── Record network elements for stats ────────────────────────────
 // DNR in background.js handles actual network blocking.
 // This function only reads element URLs to update stats counters.
@@ -391,15 +265,16 @@ function removeAdScripts(root = document) {
   });
 }
 
-// ── MutationObserver for dynamic / SPA pages ─────────────────────
+// ── MutationObserver for stats on dynamic / SPA pages ────────────
+// Cosmetic hiding is CSS-driven (site-block.js stylesheet); this observer
+// only records resource URLs for stats classification.
 let activeObserver = null;
 
 function observeMutations() {
   // Don't create duplicate observers
   if (activeObserver) return;
 
-  // Batch nodes and process once per animation frame to avoid
-  // calling querySelectorAll (70+ selectors) on every single DOM mutation.
+  // Batch nodes and process once per animation frame.
   let _pendingNodes = [];
   let _pendingSrcEls = [];
   let _rafPending = false;
@@ -409,7 +284,6 @@ function observeMutations() {
     const nodes = _pendingNodes.splice(0);
     const srcEls = _pendingSrcEls.splice(0);
     for (const node of nodes) {
-      hideAds(node);
       removeAdScripts(node);
     }
     for (const el of srcEls) {
@@ -458,7 +332,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     try { localStorage.setItem('__yt_pb', enabled ? '1' : '0'); } catch (_e) {}
     if (enabled) {
       enableCosmeticCss();
-      hideAds();
       observeMutations();
       document.dispatchEvent(new CustomEvent('_ytpb_on'));
     } else {
@@ -478,21 +351,17 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       enabled = true;
       try { localStorage.setItem('__yt_pb', '1'); } catch (_e) {}
       enableCosmeticCss();
-      hideAds();
       observeMutations();
       document.dispatchEvent(new CustomEvent('_ytpb_on'));
     }
     sendResponse({ ok: true });
   }
 
-  if (msg.type === 'GET_HIDDEN_COUNT') {
-    sendResponse({ count: hiddenCount });
-  }
+  // GET_HIDDEN_COUNT is answered by site-block.js, the sole cosmetic engine.
 
   if (msg.type === 'COSMETIC_TOGGLE') {
     if (msg.enabled) {
       enableCosmeticCss();
-      hideAds();
       observeMutations();
     } else {
       disableCosmeticCss();
@@ -504,7 +373,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     // Re-inject custom CSS rules when user modifies rules
     _globalConfigReady.finally(() => {
       injectCustomCssRules();
-      hideAds();
       sendResponse({ ok: true });
     });
     return true;
