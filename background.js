@@ -214,22 +214,50 @@ async function getParsedRules() {
 
 // Resolve hostname against the dynamic [host_patterns] section.
 // "vnexpress.net" also matches *.vnexpress.net; "amazon.*" matches any TLD.
+// _hostPatternMatches — one [host_patterns] left-hand side vs a hostname.
+// Supported forms:
+//   vnexpress.net                  — host + subdomains
+//   amazon.*                       — wildcard TLD (amazon.com, amazon.co.uk, ...)
+//   a.com | b.net | c.*            — several patterns sharing one key
+//   /(^|\.)fmovies[a-z0-9-]*\./    — raw regex tested against the hostname;
+//                                    '|' inside is regex alternation. Do not
+//                                    use '=' inside (the line parser splits on
+//                                    the first '='). Keys are lowercased.
+function _hostPatternMatches(pat, host) {
+  pat = pat.trim();
+  // Raw regex form: /body/flags — the whole LHS, never split on '|'
+  if (pat.charAt(0) === '/') {
+    const last = pat.lastIndexOf('/');
+    if (last > 0) {
+      try { return new RegExp(pat.slice(1, last), pat.slice(last + 1)).test(host); }
+      catch { /* bad regex — no match */ }
+    }
+    return false;
+  }
+  for (let sub of pat.split('|')) {
+    sub = sub.trim();
+    if (!sub) continue;
+    try {
+      let re;
+      if (sub.slice(-2) === '.*') {
+        const base = sub.slice(0, -2).replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+        re = new RegExp('(^|\\.)' + base + '\\.');
+      } else {
+        const escaped = sub.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+        re = new RegExp('(^|\\.)' + escaped + '$');
+      }
+      if (re.test(host)) return true;
+    } catch { /* bad pattern — skip */ }
+  }
+  return false;
+}
+
 function resolveSiteKey(patterns, host) {
   for (const pat in patterns) {
     if (!Object.prototype.hasOwnProperty.call(patterns, pat)) continue;
     const targetKey = (patterns[pat] && patterns[pat][0]) || '';
     if (!targetKey) continue;
-    try {
-      let re;
-      if (pat.slice(-2) === '.*') {
-        const base = pat.slice(0, -2).replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-        re = new RegExp('(^|\\.)' + base + '\\.');
-      } else {
-        const escaped = pat.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-        re = new RegExp('(^|\\.)' + escaped + '$');
-      }
-      if (re.test(host)) return targetKey;
-    } catch { /* bad pattern — skip */ }
+    if (_hostPatternMatches(pat, host)) return targetKey;
   }
   return '';
 }
