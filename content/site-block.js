@@ -1,6 +1,5 @@
 // site-block.js — generic native ad blocker driven by rule/site-rules.txt
 (function(){
-var hostname=location.hostname;
 var siteKey='';
 
 var _enabled=true,_observer=null,_hidden=0,_raf=0,_config=null;
@@ -390,31 +389,6 @@ function sync(cb){
   });}catch(e){}
 }
 
-// Resolve hostname against dynamic [host_patterns] section.
-// Patterns can be:
-//   plain hostname  — "vnexpress.net"  matches vnexpress.net and *.vnexpress.net
-//   wildcard TLD    — "amazon.*"       matches amazon.com, amazon.co.uk, amazon.de, etc.
-function _resolveFromPatterns(patterns,host){
-  for(var pat in patterns){
-    if(!Object.prototype.hasOwnProperty.call(patterns,pat))continue;
-    var targetKey=(patterns[pat]&&patterns[pat][0])||'';
-    if(!targetKey)continue;
-    try{
-      var re;
-      if(pat.slice(-2)==='.*'){
-        // Wildcard TLD: "amazon.*" → matches (^|\.)amazon\. followed by anything
-        var base=pat.slice(0,-2).replace(/[.+?^${}()|[\]\\]/g,'\\$&');
-        re=new RegExp('(^|\\.)'+base+'\\.');
-      } else {
-        var escaped=pat.replace(/[.+?^${}()|[\]\\]/g,'\\$&');
-        re=new RegExp('(^|\\.)'+escaped+'$');
-      }
-      if(re.test(host))return targetKey;
-    }catch(e){}
-  }
-  return '';
-}
-
 // Merge two config objects: array fields are concatenated (deduped),
 // scalar fields from overlay override base.
 function _mergeConfigs(base,overlay){
@@ -443,10 +417,12 @@ function _mergeConfigs(base,overlay){
 }
 
 function boot(){
-  if(!(window.__adblockRuleLoader&&window.__adblockRuleLoader.load))return;
-  // Always load [global] as the base config, then merge site-specific on top.
-  window.__adblockRuleLoader.load('global',{},function(globalCfg){
-    var base=globalCfg||{};
+  if(!(window.__adblockRuleLoader&&window.__adblockRuleLoader.loadSite))return;
+  // One loader call returns {siteKey, global, site} — the loader (or background)
+  // resolves [host_patterns] for this frame's hostname.
+  window.__adblockRuleLoader.loadSite(function(res){
+    siteKey=(res&&res.siteKey)||'';
+    var base=(res&&res.global)||{};
     var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if','prevent_xhr','json_edit','jsonl_edit_xhr','prevent_dom_bypass'];
     function _dispatchScriptletRules(cfg){
       var rules={},hasAny=false,k,i;
@@ -460,32 +436,15 @@ function boot(){
         try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_rules__',{detail:rules}));}catch(e){}
       }
     }
-    function _apply(siteCfg){
-      _config=_mergeConfigs(base,siteCfg||{});
-      _rebuildSelectorCache();
-      // Inject the direct-hide stylesheet immediately (before DOMContentLoaded)
-      // so late-rendered ads never paint. Scoped under html.adblock-on, so the
-      // pause/disable path (class removal in content.js) turns it off for free.
-      _injectDirectStyle();
-      _dispatchScriptletRules(_config);
-      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
-      else sync();
-    }
-    if(siteKey){
-      // Previously resolved site — merge its config on top of global
-      window.__adblockRuleLoader.load(siteKey,{},function(siteCfg){_apply(siteCfg);});
-    } else {
-      // Try [host_patterns] for dynamic sites
-      window.__adblockRuleLoader.load('host_patterns',{},function(patterns){
-        var resolved=_resolveFromPatterns(patterns,hostname);
-        if(resolved){
-          siteKey=resolved;
-          window.__adblockRuleLoader.load(siteKey,{},function(siteCfg){_apply(siteCfg);});
-        } else {
-          _apply({}); // no site-specific config — global selectors only
-        }
-      });
-    }
+    _config=_mergeConfigs(base,(res&&res.site)||{});
+    _rebuildSelectorCache();
+    // Inject the direct-hide stylesheet immediately (before DOMContentLoaded)
+    // so late-rendered ads never paint. Scoped under html.adblock-on, so the
+    // pause/disable path (class removal in content.js) turns it off for free.
+    _injectDirectStyle();
+    _dispatchScriptletRules(_config);
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
+    else sync();
   });
 }
 
