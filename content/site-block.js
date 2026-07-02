@@ -84,6 +84,27 @@ function _rebuildSelectorCache(){
   _cachedHostStr=_cachedHosts.join(',');
 }
 
+// _injectDirectStyle — direct_hide_selectors go into ONE stylesheet scoped under
+// html.adblock-on (same pattern as content.css). The style engine then hides
+// current AND future matching nodes for free — no per-mutation JS matching,
+// and removing the adblock-on class instantly disables everything.
+var DIRECT_STYLE_ID='__adblock_direct__';
+function _injectDirectStyle(){
+  var old=document.getElementById(DIRECT_STYLE_ID);
+  if(old)old.remove();
+  if(!_cachedDirect.length)return;
+  // Validate each selector — one invalid selector drops the whole CSS rule.
+  var valid=[];
+  for(var i=0;i<_cachedDirect.length;i++){
+    try{document.querySelector(_cachedDirect[i]);valid.push('html.adblock-on '+_cachedDirect[i]);}catch(e){}
+  }
+  if(!valid.length)return;
+  var s=document.createElement('style');
+  s.id=DIRECT_STYLE_ID;
+  s.textContent=valid.join(',\n')+'{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;pointer-events:none!important}';
+  (document.head||document.documentElement).appendChild(s);
+}
+
 function matchesAny(value,patterns){
   if(!value||!patterns||!patterns.length)return false;
   for(var i=0;i<patterns.length;i++)if(value.indexOf(compactText(patterns[i]))!==-1)return true;
@@ -276,45 +297,23 @@ function schedule(root){
 
 function startObserver(){
   if(_observer)return;
+  // direct_hide_selectors are handled entirely by the injected stylesheet
+  // (_injectDirectStyle) — the observer only queues candidate/host scanning,
+  // which runs deferred at idle. No selector matching on the mutation hot path.
   _observer=new MutationObserver(function(muts){
     if(!_enabled||!_config)return;
     for(var i=0;i<muts.length;i++){
       var mut=muts[i];
-      // Fast path: direct_hide_selectors — single matches/querySelectorAll with pre-joined string
       if(mut.type==='childList'){
         for(var j=0;j<mut.addedNodes.length;j++){
           var node=mut.addedNodes[j];
           if(node.nodeType!==1)continue;
-          // Check node itself — one matches() call covers all direct selectors
-          if(_cachedDirectStr){
-            try{if(node.matches(_cachedDirectStr))hide(node);}catch(e){}
-          }
-          // Check descendants — one querySelectorAll covers all direct selectors
-          if(_cachedDirectStr&&node.querySelectorAll){
-            var found=collectFast(node,_cachedDirectStr);
-            for(var f=0;f<found.length;f++)hide(found[f]);
-          }
-          // Full scan for candidate/host selectors (deferred via RAF)
           schedule(node);
         }
       } else if(mut.type==='attributes'){
         // Attribute change may make an existing element become an ad
         var target=mut.target;
-        if(target&&target.nodeType===1){
-          if(_cachedDirectStr){
-            try{if(target.matches(_cachedDirectStr))hide(target);}catch(e){}
-          }
-          // Ad-signal attrs (data-ad-rendering-role etc.) are set on a CHILD element
-          // after the article is in the DOM — check nearest article ancestor immediately
-          // var _mn=mut.attributeName||'';
-          // if((_mn==='data-ad-rendering-role'||_mn==='data-ad-comet-preview'||_mn==='data-ad-preview')&&target.closest){
-          //   var _art=target.closest('[role="article"],[data-pagelet*="FeedUnit"]');
-          //   if(_art&&_cachedDirectStr){
-          //     try{if(_art.matches(_cachedDirectStr))hide(_art);}catch(e){}
-          //   }
-          // }
-          schedule(target);
-        }
+        if(target&&target.nodeType===1)schedule(target);
       }
     }
   });
@@ -330,19 +329,18 @@ var _shadowObservers=new WeakMap();
 
 function observeShadowRoot(shadow){
   if(!shadow||_shadowObservers.has(shadow))return;
+  // The injected stylesheet does not pierce shadow roots, so direct_hide_selectors
+  // still need JS matching here — using the pre-joined cached string (previously
+  // this recomputed flattenSelectors on every mutation batch).
   var obs=new MutationObserver(function(muts){
     if(!_enabled||!_config)return;
-    var directSelectors=flattenSelectors(_config,DIRECT_HIDE_KEYS);
     for(var i=0;i<muts.length;i++){
       for(var j=0;j<muts[i].addedNodes.length;j++){
         var node=muts[i].addedNodes[j];
         if(node.nodeType!==1)continue;
         // Fast hide for direct_hide_selectors inside shadow root
-        for(var s=0;s<directSelectors.length;s++){
-          try{if(node.matches(directSelectors[s])){hide(node);break;}}catch(e){}
-        }
-        if(node.querySelectorAll){
-          var found=collect(node,directSelectors);
+        if(_cachedDirectStr){
+          var found=collectFast(node,_cachedDirectStr);
           for(var f=0;f<found.length;f++)hide(found[f]);
         }
         // Scan also runs full candidate check
@@ -465,6 +463,10 @@ function boot(){
     function _apply(siteCfg){
       _config=_mergeConfigs(base,siteCfg||{});
       _rebuildSelectorCache();
+      // Inject the direct-hide stylesheet immediately (before DOMContentLoaded)
+      // so late-rendered ads never paint. Scoped under html.adblock-on, so the
+      // pause/disable path (class removal in content.js) turns it off for free.
+      _injectDirectStyle();
       _dispatchScriptletRules(_config);
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
       else sync();
