@@ -48,6 +48,7 @@ copy_static_files() {
     local MANIFEST="$2"
 
     cp "$MANIFEST" "$DEST/manifest.json"
+    cp "$PROJECT_DIR/config.js" "$DEST/"
     cp "$PROJECT_DIR/LICENSE" "$DEST/" 2>/dev/null || true
 
     mkdir -p "$DEST/icons" "$DEST/content" "$DEST/rule" "$DEST/dashboard" "$DEST/popup"
