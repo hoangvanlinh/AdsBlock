@@ -68,7 +68,7 @@ ig.com.br = ig
 estadao.com.br = estadao
 olx.com.br = olx
 # fmovies mirrors: fmovies.co, ww4.fmovies.co, fmoviess.to, fmovies4.tv, ...
-/(^|\.)fmovies[a-z0-9-]*\./ = fmovies
+#/(^|\.)fmovies[a-z0-9-]*\./ = fmovies
 
 # site-rules.txt — editable site rule map
 # Format:
@@ -104,7 +104,7 @@ json_prune_fetch = require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer
 json_prune_xhr = data.viewer.sideFeedUnit.nodes.[].new_adverts.nodes.[-].sponsored_data
 json_edit = ..data.viewer..nodes.*[?.__typename=="AdsSideFeedUnit"] | ..node[?.*.__typename=="SponsoredData"]
 jsonl_edit_xhr = .data[?.category=="SPONSORED"].node | ..node[?.*.__typename=="SponsoredData"] | .data.viewer.news_feed.edges.*[?.category=="SPONSORED"].node
-prevent_dom_bypass = Node.prototype.appendChild
+prevent_dom_bypass = Node.prototype.appendChild | Element.prototype.insertAdjacentElement
 selectors = [role="feed"] [role="article"] | [role="feed"] [role="group"] | div[data-pagelet*="FeedUnit"] | div[data-pagelet*="VideoFeed"] [role="article"] | div[data-pagelet*="Reels"] [role="article"] | [role="complementary"] [data-visualcompletion="ignore-dynamic"]
 labels = Sponsored | Sponsorisé | Gesponsert | Patrocinado | Sponsorizzato | Gesponsord | Sponsorowane | Sponsorlu | Bersponsor | Ditaja
 link_patterns = /ads/about/ | sponsorships | sponsored
