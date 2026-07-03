@@ -31,7 +31,7 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "scripts": ["background.js"],
+    "scripts": ["config.js", "background.js"],
     "type": "module"
   },
   "content_scripts": [
@@ -50,7 +50,7 @@
         "http://*/*",
         "https://*/*"
       ],
-      "js": ["content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
+      "js": ["config.js", "content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
       "css": ["content/content.css"],
       "run_at": "document_start",
       "all_frames": true

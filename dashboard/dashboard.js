@@ -778,9 +778,9 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-/* ── Rule Source constants ───────────────────── */
-const RULES_CACHE_KEY_TEXT = 'siteRulesCacheText';
-const RULES_CACHE_KEY_TIME = 'siteRulesCacheTime';
+/* ── Rule Source constants — from shared config.js (loaded by dashboard.html) ── */
+const RULES_CACHE_KEY_TEXT = self.ADBLOCK_CONFIG.RULES_CACHE_TEXT_KEY;
+const RULES_CACHE_KEY_TIME = self.ADBLOCK_CONFIG.RULES_CACHE_TIME_KEY;
 
 /* ── Init ─────────────────────────────────────── */
 loadOverviewStats();

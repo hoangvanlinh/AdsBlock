@@ -1,11 +1,20 @@
 // background.js — AdBlock Service Worker (Manifest V3)
 // Handles: network blocking (declarativeNetRequest) + message routing
 
-const RULES_REMOTE_URL = 'https://raw.githubusercontent.com/hoangvanlinh/AdsBlock/refs/heads/main/rule/site-rules.txt';
-const RULES_LOCAL_PATH = 'rule/site-rules.txt';
-const RULES_CACHE_TEXT_KEY = 'siteRulesCacheText';
-const RULES_CACHE_TIME_KEY = 'siteRulesCacheTime';
-const RULES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+// Shared constants live in config.js (single source of truth).
+// Chrome MV3 service worker: importScripts. Firefox background page:
+// importScripts does not exist there — config.js is listed before this
+// file in background.scripts instead, so ADBLOCK_CONFIG is already set.
+if (typeof importScripts === 'function' && !self.ADBLOCK_CONFIG) {
+  importScripts('config.js');
+}
+const {
+  RULES_REMOTE_URL,
+  RULES_LOCAL_PATH,
+  RULES_CACHE_TEXT_KEY,
+  RULES_CACHE_TIME_KEY,
+  RULES_CACHE_TTL_MS,
+} = self.ADBLOCK_CONFIG;
 
 const FALLBACK_RULE_CONFIG = {
   adNetworkPatterns: ['doubleclick.net', 'googlesyndication.com', 'googleadservices.com', 'adnxs.com', 'outbrain.com', 'taboola.com', 'ads.yahoo.com', 'amazon-adsystem.com', 'media.net', 'criteo.com'],
@@ -119,6 +128,76 @@ async function fetchRemoteRuleText() {
 async function fetchLocalRuleText() {
   const res = await fetch(chrome.runtime.getURL(RULES_LOCAL_PATH), { cache: 'no-store' });
   return res.ok ? res.text() : '';
+}
+
+// ── Remote rules revalidation (ETag) ──────────────────────────────
+// The 6h TTL alone means an urgent rules fix can take up to 6h to reach
+// users. Instead, a 30-minute alarm revalidates the default remote with
+// If-None-Match: a 304 response costs a few hundred bytes and just extends
+// the cache; only a real content change triggers the full reload pipeline.
+const RULES_REVALIDATE_ALARM = 'rules-revalidate';
+const RULES_REVALIDATE_PERIOD_MIN = 30;
+const RULES_REMOTE_ETAG_KEY = 'siteRulesRemoteEtag';
+const RULES_REMOTE_HASH_KEY = 'siteRulesRemoteHash';
+
+// djb2 — cheap content fingerprint, fallback when the server rotates ETags
+// (CDN) or omits them, so a 200 with identical content doesn't force a reload.
+function _hashText(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
+// Full reload pipeline — shared by the dashboard's RULES_CHANGED message and
+// the revalidation alarm: drop caches, rebuild DNR rules, notify all tabs.
+async function reloadRules() {
+  await chrome.storage.local.set({
+    [RULES_CACHE_TEXT_KEY]: '',
+    [RULES_CACHE_TIME_KEY]: 0,
+  });
+  DEFAULT_RULES = [];
+  MALWARE_RULES = [];
+  _ruleConfigPromise = null;
+  _parsedRules = null;
+  await applyNetworkRules();
+  const tabs = await chrome.tabs.query({});
+  for (const tab of tabs) {
+    chrome.tabs.sendMessage(tab.id, { type: 'RULES_CHANGED' }).catch(() => {});
+  }
+}
+
+async function revalidateRemoteRules() {
+  try {
+    const stored = await chrome.storage.local.get([RULES_REMOTE_ETAG_KEY, RULES_REMOTE_HASH_KEY]);
+    const etag = stored[RULES_REMOTE_ETAG_KEY] || '';
+    const res = await fetch(RULES_REMOTE_URL, {
+      cache: 'no-store',
+      headers: etag ? { 'If-None-Match': etag } : {},
+    });
+    if (res.status === 304) {
+      // Unchanged — keep serving the cache and push its expiry out.
+      await chrome.storage.local.set({ [RULES_CACHE_TIME_KEY]: Date.now() });
+      return false;
+    }
+    if (!res.ok) return false;
+    const text = await res.text();
+    const newHash = _hashText(text);
+    await chrome.storage.local.set({
+      [RULES_REMOTE_ETAG_KEY]: res.headers.get('etag') || '',
+      [RULES_REMOTE_HASH_KEY]: newHash,
+    });
+    if (newHash === (stored[RULES_REMOTE_HASH_KEY] || '')) {
+      await chrome.storage.local.set({ [RULES_CACHE_TIME_KEY]: Date.now() });
+      return false;
+    }
+    // Content actually changed — run the full pipeline (re-fetches ALL
+    // sources incl. user ruleSources, rebuilds DNR, notifies tabs).
+    await reloadRules();
+    console.log('[AdBlock] Remote rules changed — reloaded');
+    return true;
+  } catch {
+    return false; // offline etc. — cache TTL remains the safety net
+  }
 }
 
 // A pattern that is a bare hostname can be matched via requestDomains, which is
@@ -408,6 +487,9 @@ chrome.runtime.onStartup.addListener(() => {
   applyNetworkRules();
   applyPrivacySettings();
   maybeUpdateMalwareLists();
+  // Cheap ETag check (304 when unchanged) — picks up urgent rules fixes
+  // published while the browser was closed, instead of waiting out the TTL.
+  revalidateRemoteRules();
 });
 
 let activeStatsRules = [];
@@ -690,9 +772,13 @@ async function maybeUpdateMalwareLists() {
 
 // Schedule periodic updates via alarm
 chrome.alarms?.create('malware-list-update', { periodInMinutes: 60 * 24 });
+chrome.alarms?.create(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
 chrome.alarms?.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'malware-list-update') {
     await fetchMalwareBlocklists();
+  }
+  if (alarm.name === RULES_REVALIDATE_ALARM) {
+    await revalidateRemoteRules();
   }
   if (alarm.name === 'focus-end') {
     // Auto-disable focus mode when timer expires
@@ -804,24 +890,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       }
 
       case 'RULES_CHANGED': {
-        // Invalidate the rules text cache so the next fetch re-reads all sources
-        // (including any newly added/removed file or URL sources).
-        await chrome.storage.local.set({
-          [RULES_CACHE_TEXT_KEY]: '',
-          [RULES_CACHE_TIME_KEY]: 0,
-        });
-        // Reset in-memory rule definitions so ensureRuleDefinitionsLoaded re-fetches
-        DEFAULT_RULES = [];
-        MALWARE_RULES = [];
-        _ruleConfigPromise = null;
-        _parsedRules = null;
-        // Reapply network rules (re-fetches with current sources via fetchRemoteRuleText)
-        await applyNetworkRules();
-        // Notify all tabs to refresh their in-memory parsed rules + cosmetic filters
-        const tabs = await chrome.tabs.query({});
-        for (const tab of tabs) {
-          chrome.tabs.sendMessage(tab.id, { type: 'RULES_CHANGED' }).catch(() => {});
-        }
+        // Invalidate caches, re-fetch all sources, rebuild DNR rules and
+        // notify every tab — shared with the revalidation alarm.
+        await reloadRules();
         sendResponse({ ok: true });
         break;
       }
