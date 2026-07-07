@@ -801,7 +801,10 @@
   // resolves — not when fetch() is called — so requests fired during the
   // config round-trip are still pruned.
   var _fetchPruneRules = [];
+  var _fetchProxyInstalled = false;
   function _installFetchResponseProxy() {
+    if (_fetchProxyInstalled) return;
+    _fetchProxyInstalled = true;
     const safe = safeSelf();
     const applyHandler = function (target, thisArg, args) {
       const fetchPromise = Reflect.apply(target, thisArg, args);
@@ -855,6 +858,9 @@
       needlePaths: rawNeedlePaths || '',
       propNeedles: parsePropertiesToMatchFn(extraArgs.propsToMatch, 'url'),
     });
+    // Lazy install — covers sites whose response-filter rules only became
+    // known after boot (first visit / rules update). No-op when installed.
+    _installFetchResponseProxy();
   }
 
   // ── XHR response filtering (json_prune_xhr / jsonl_edit_xhr) ─────
@@ -865,7 +871,10 @@
   // filtered.
   var _xhrPruneRules = []; // { prunePaths, needlePaths, propNeedles }
   var _xhrJsonlRules = []; // { jsonp, propNeedles }
+  var _xhrProxyInstalled = false;
   function _installXhrResponseProxy() {
+    if (_xhrProxyInstalled) return;
+    _xhrProxyInstalled = true;
     const safe = safeSelf();
     const xhrInstances = new WeakMap();
     const applicableRules = function (rules, xhrDetails) {
@@ -948,6 +957,7 @@
       needlePaths: rawNeedlePaths || '',
       propNeedles: parsePropertiesToMatchFn(extraArgs.propsToMatch, 'url'),
     });
+    _installXhrResponseProxy();
   }
 
   // ── noWindowOpenIf ──────────────────────────────────────────────
@@ -1719,7 +1729,10 @@
   // JSON.parse proxy installed ONCE at document_start; compiled JSONPath
   // rules land in _jsonEditRules when the async config arrives.
   var _jsonEditRules = [];
+  var _jsonEditProxyInstalled = false;
   function _installJsonEditProxy() {
+    if (_jsonEditProxyInstalled) return;
+    _jsonEditProxyInstalled = true;
     proxyApplyFn('JSON.parse', function(context) {
       const obj = context.reflect();
       if (!_scriptletsEnabled || _jsonEditRules.length === 0) return obj;
@@ -1737,6 +1750,7 @@
     // Untrusted variant — value-assigning queries are rejected.
     if (!jsonp.valid || jsonp.value !== undefined) return;
     _jsonEditRules.push(jsonp);
+    _installJsonEditProxy();
   }
 
   // ── jsonl-edit-xhr-response ───────────────────────────────────────
@@ -1776,6 +1790,7 @@
       jsonp,
       propNeedles: parsePropertiesToMatchFn(urlPattern || '', 'url'),
     });
+    _installXhrResponseProxy();
   }
 
   // ── trusted-prevent-dom-bypass ──────────────────────────────────────
@@ -1825,6 +1840,9 @@
 
   function _applyScriptletRules(rules) {
     if (!rules) return;
+    // Cache the full rule set for the NEXT page load so the install gate
+    // below can apply it synchronously at document_start.
+    _saveScriptletRulesCache(rules);
     _fetchPruneRules.length = 0;
     _xhrPruneRules.length = 0;
     _xhrJsonlRules.length = 0;
@@ -1884,13 +1902,52 @@
   }
 
   // ── Install response-filtering wrappers at document_start ────────
-  // Must run before any page script executes so the page can never capture
-  // an unwrapped fetch/XMLHttpRequest/JSON.parse reference. Until rules
-  // arrive via the bridge below, the wrappers are pure pass-through
-  // (empty registries).
-  try { _installFetchResponseProxy(); } catch (e) {}
-  try { _installXhrResponseProxy(); } catch (e) {}
-  try { _installJsonEditProxy(); } catch (e) {}
+  // The wrappers AND their rules must exist BEFORE any page script runs to
+  // close the boot race, but the site's config only arrives async. Bridge:
+  // every rules dispatch caches the full scriptlet rule set in localStorage
+  // (only on sites whose rules contain response-filter keys — json_prune_* /
+  // json_edit / jsonl_edit_xhr). On the next load the cache is read
+  // synchronously here, the wrappers install and the rules apply
+  // immediately — set_constant/json_edit run before the page's inline
+  // scripts, and the registries are live for its very first requests. The
+  // async dispatch then re-applies fresh rules (replace semantics), so a
+  // stale cache self-corrects on every load.
+  // Sites without the cache keep fetch/XHR/JSON.parse completely untouched:
+  // no extension frame in stack traces, no per-request overhead. If
+  // response-filter rules arrive anyway (very first visit, rules update),
+  // the registration functions install the wrappers lazily mid-session.
+  var _RULES_CACHE_KEY = '__abrules';
+  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit'];
+
+  function _saveScriptletRulesCache(rules) {
+    var has = false;
+    for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
+      var v = rules[_RESPONSE_FILTER_RULE_KEYS[i]];
+      if (v && v.length) { has = true; break; }
+    }
+    // Only sites with response-filter rules ever get the key written;
+    // removeItem on all others is a no-op that leaves no trace.
+    try {
+      if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(rules));
+      else localStorage.removeItem(_RULES_CACHE_KEY);
+    } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
+  }
+
+  (function () {
+    var cached = null;
+    try { cached = localStorage.getItem(_RULES_CACHE_KEY); } catch (e) {}
+    if (!cached) return;
+    try { _installFetchResponseProxy(); } catch (e) {}
+    try { _installXhrResponseProxy(); } catch (e) {}
+    try { _installJsonEditProxy(); } catch (e) {}
+    try {
+      var rules = JSON.parse(cached);
+      // The cache lives in page-writable storage, so treat it as untrusted
+      // input: anything non-object is ignored. A page corrupting it can only
+      // affect its own MAIN world — same privilege it already has.
+      if (rules && typeof rules === 'object') _applyScriptletRules(rules);
+    } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
+  })();
 
   // Bridge: content.js dispatches '__adblock_scriptlet_rules__' after async rule load.
   // Content script and MAIN world share DOM events — standard cross-world pattern.
