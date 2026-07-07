@@ -52,14 +52,28 @@ const sandbox = {
   CustomEvent: CustomEventStub,
   XMLHttpRequest: FakeXHR,
   Location: class Location {},
-  Response: class Response {},
   Request: class Request { clone() { return this; } },
-  fetch: async () => ({}),
   document: documentStub,
   location: { href: 'https://test.example.com/', hostname: 'test.example.com' },
   navigator: { userAgent: 'test' },
   open: () => ({ close() {}, closed: false }), // window.open
 };
+// Fake fetch/Response pair — enough surface for jsonPruneFetchResponse
+// (clone / json / Response.json static / status metadata).
+class FakeResponse {
+  constructor(obj) {
+    this._obj = obj;
+    this.status = 200; this.statusText = 'OK'; this.headers = {};
+    this.ok = true; this.redirected = false; this.type = 'basic'; this.url = '';
+  }
+  clone() { return new FakeResponse(this._obj); }
+  async json() { return this._obj; }
+  static json(obj) { return new FakeResponse(obj); }
+}
+let fetchPayload = {};
+sandbox.Response = FakeResponse;
+sandbox.fetch = async () => new FakeResponse(fetchPayload);
+
 sandbox.window = sandbox;
 sandbox.self = sandbox;
 sandbox.globalThis = sandbox;
@@ -149,6 +163,43 @@ function sendRules(rules) {
   const r4 = sandbox.open('https://adsite.com/popup2');
   check('window.open passes through when disabled', r4 && typeof r4.close === 'function');
   check('no block event when disabled', blockedEvents.length === 0);
+
+  console.log('\n== 4. boot race: requests fired BEFORE rules arrive are still filtered ==');
+  // XHR opened + response ready before the rules land — the wrapper installed
+  // at document_start must still prune when the page reads .response later.
+  blockedEvents = [];
+  const XHR2 = sandbox.XMLHttpRequest;
+  const xhrEarly = new XHR2();
+  xhrEarly.open('GET', 'https://www.youtube.com/youtubei/v1/player');
+  xhrEarly._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }], videoDetails: { title: 'race' } });
+  // fetch fired before rules too — payload carries an ad field
+  fetchPayload = { adPlacements: [{ ad: 1 }], videoDetails: { title: 'race' } };
+  const earlyFetchPromise = sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
+  // rules arrive only NOW (re-enables scriptlets after section 3's disable)
+  sendRules({ json_prune_xhr: ['adPlacements adSlots'], json_prune_fetch: ['adPlacements adSlots'] });
+  const earlyXhrObj = JSON.parse(xhrEarly.response);
+  check('XHR opened before rules: ad field pruned', !earlyXhrObj.adPlacements,
+    String(xhrEarly.response));
+  check('XHR opened before rules: non-ad fields kept', earlyXhrObj.videoDetails.title === 'race');
+  const earlyFetchResp = await earlyFetchPromise;
+  const earlyFetchObj = await earlyFetchResp.json();
+  check('fetch fired before rules: ad field pruned', !earlyFetchObj.adPlacements,
+    JSON.stringify(earlyFetchObj));
+  check('fetch fired before rules: non-ad fields kept', earlyFetchObj.videoDetails.title === 'race');
+
+  console.log('\n== 5. re-dispatching rules does not stack proxy layers ==');
+  // Same full rule set dispatched again (unpause / RULES_CHANGED path):
+  // registries are replaced, so one prune still counts exactly once.
+  sendRules({ json_prune_xhr: ['adPlacements adSlots'] });
+  sendRules({ json_prune_xhr: ['adPlacements adSlots'] });
+  blockedEvents = [];
+  const xhrTwice = new XHR2();
+  xhrTwice.open('GET', 'https://www.youtube.com/youtubei/v1/player');
+  xhrTwice._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }] });
+  void xhrTwice.response;
+  check('double dispatch: pruned response counted exactly once', blockedEvents.length === 1,
+    String(blockedEvents.length));
+  check('XMLHttpRequest not re-subclassed on re-dispatch', sandbox.XMLHttpRequest === XHR2);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

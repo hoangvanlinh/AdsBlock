@@ -795,26 +795,40 @@
   // ── jsonPruneFetchResponse ────────────────────────────────────────
   // Intercepts fetch() responses and surgically removes ad-related
   // JSON fields before the page script reads them.
-  function jsonPruneFetchResponse(rawPrunePaths, rawNeedlePaths) {
-    rawPrunePaths = rawPrunePaths || '';
-    rawNeedlePaths = rawNeedlePaths || '';
+  // The fetch proxy is installed ONCE at document_start (install block at
+  // the bottom of this file); rules land in _fetchPruneRules later, when
+  // the async config load completes. Rules are looked up when the RESPONSE
+  // resolves — not when fetch() is called — so requests fired during the
+  // config round-trip are still pruned.
+  var _fetchPruneRules = [];
+  function _installFetchResponseProxy() {
     const safe = safeSelf();
-    const extraArgs = safe.getExtraArgs(Array.from(arguments), 2);
-    const propNeedles = parsePropertiesToMatchFn(extraArgs.propsToMatch, 'url');
     const applyHandler = function (target, thisArg, args) {
-      if (!_scriptletsEnabled) return Reflect.apply(target, thisArg, args);
       const fetchPromise = Reflect.apply(target, thisArg, args);
-      if (propNeedles.size !== 0) {
-        const props = collateFetchArgumentsFn(...args);
-        const matched = matchObjectPropertiesFn(propNeedles, props);
-        if (matched === undefined) return fetchPromise;
-      }
       return fetchPromise.then(responseBefore => {
+        if (!_scriptletsEnabled || _fetchPruneRules.length === 0) return responseBefore;
+        let props;
+        const applicable = [];
+        for (const rule of _fetchPruneRules) {
+          if (rule.propNeedles.size !== 0) {
+            if (props === undefined) props = collateFetchArgumentsFn(...args);
+            if (matchObjectPropertiesFn(rule.propNeedles, props) === undefined) continue;
+          }
+          applicable.push(rule);
+        }
+        if (applicable.length === 0) return responseBefore;
         const response = responseBefore.clone();
         return response.json().then(objBefore => {
-          if (typeof objBefore !== 'object') return responseBefore;
-          const objAfter = objectPruneFn(objBefore, rawPrunePaths, rawNeedlePaths);
-          if (typeof objAfter !== 'object') return responseBefore;
+          if (typeof objBefore !== 'object' || objBefore === null) return responseBefore;
+          let objAfter = objBefore, pruned = false;
+          for (const rule of applicable) {
+            const r = objectPruneFn(objAfter, rule.prunePaths, rule.needlePaths);
+            if (typeof r !== 'object' || r === null) continue;
+            objAfter = r;
+            pruned = true;
+            try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+          }
+          if (!pruned) return responseBefore;
           const responseAfter = Response.json(objAfter, {
             status: responseBefore.status,
             statusText: responseBefore.statusText,
@@ -826,7 +840,6 @@
             type: { value: responseBefore.type },
             url: { value: responseBefore.url },
           });
-          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
           return responseAfter;
         }).catch(() => responseBefore);
       }).catch(() => fetchPromise);
@@ -834,31 +847,47 @@
     self.fetch = new Proxy(self.fetch, { apply: applyHandler });
   }
 
-  // ── jsonPruneXhrResponse ──────────────────────────────────────────
-  // Subclasses XMLHttpRequest to intercept JSON responses and remove
-  // ad-related fields before the page script reads .response.
-  function jsonPruneXhrResponse(rawPrunePaths, rawNeedlePaths) {
-    rawPrunePaths = rawPrunePaths || '';
-    rawNeedlePaths = rawNeedlePaths || '';
+  function jsonPruneFetchResponse(rawPrunePaths, rawNeedlePaths) {
     const safe = safeSelf();
     const extraArgs = safe.getExtraArgs(Array.from(arguments), 2);
-    const propNeedles = parsePropertiesToMatchFn(extraArgs.propsToMatch, 'url');
+    _fetchPruneRules.push({
+      prunePaths: rawPrunePaths || '',
+      needlePaths: rawNeedlePaths || '',
+      propNeedles: parsePropertiesToMatchFn(extraArgs.propsToMatch, 'url'),
+    });
+  }
+
+  // ── XHR response filtering (json_prune_xhr / jsonl_edit_xhr) ─────
+  // One XMLHttpRequest subclass installed at document_start; rules are
+  // consulted lazily in the response getter, which the page only reads
+  // after the request completes — by then the async-loaded rules have
+  // normally arrived, so requests opened before rule delivery are still
+  // filtered.
+  var _xhrPruneRules = []; // { prunePaths, needlePaths, propNeedles }
+  var _xhrJsonlRules = []; // { jsonp, propNeedles }
+  function _installXhrResponseProxy() {
+    const safe = safeSelf();
     const xhrInstances = new WeakMap();
+    const applicableRules = function (rules, xhrDetails) {
+      const out = [];
+      for (const rule of rules) {
+        if (rule.propNeedles.size !== 0 &&
+            matchObjectPropertiesFn(rule.propNeedles, xhrDetails) === undefined) continue;
+        out.push(rule);
+      }
+      return out;
+    };
     self.XMLHttpRequest = class extends self.XMLHttpRequest {
       open(method, url, ...args) {
-        if (!_scriptletsEnabled) return super.open(method, url, ...args);
-        const xhrDetails = { method, url };
-        let outcome = 'match';
-        if (propNeedles.size !== 0) {
-          if (matchObjectPropertiesFn(propNeedles, xhrDetails) === undefined) {
-            outcome = 'nomatch';
-          }
-        }
-        if (outcome === 'match') xhrInstances.set(this, xhrDetails);
+        // Details are always recorded — rules may arrive between open()
+        // and the page reading .response.
+        xhrInstances.set(this, { method, url });
         return super.open(method, url, ...args);
       }
       get response() {
         const innerResponse = super.response;
+        if (!_scriptletsEnabled) return innerResponse;
+        if (_xhrPruneRules.length === 0 && _xhrJsonlRules.length === 0) return innerResponse;
         const xhrDetails = xhrInstances.get(this);
         if (xhrDetails === undefined) return innerResponse;
         const responseLength = typeof innerResponse === 'string'
@@ -869,29 +898,56 @@
           xhrDetails.lastResponseLength = responseLength;
         }
         if (xhrDetails.response !== undefined) return xhrDetails.response;
-        let objBefore;
-        if (typeof innerResponse === 'object') {
-          objBefore = innerResponse;
-        } else if (typeof innerResponse === 'string') {
-          try { objBefore = safe.JSON_parse(innerResponse); } catch (e) {}
+        let result = innerResponse;
+        // Whole-body JSON pruning
+        const pruneRules = applicableRules(_xhrPruneRules, xhrDetails);
+        if (pruneRules.length !== 0) {
+          let objBefore;
+          if (typeof result === 'object' && result !== null) {
+            objBefore = result;
+          } else if (typeof result === 'string') {
+            try { objBefore = safe.JSON_parse(result); } catch (e) {}
+          }
+          if (typeof objBefore === 'object' && objBefore !== null) {
+            let pruned = false;
+            for (const rule of pruneRules) {
+              // objectPruneFn returns the object only when it actually pruned
+              // something — only that counts as a block for stats.
+              const objAfter = objectPruneFn(objBefore, rule.prunePaths, rule.needlePaths);
+              if (typeof objAfter !== 'object' || objAfter === null) continue;
+              objBefore = objAfter;
+              pruned = true;
+              try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+            }
+            if (pruned) {
+              result = typeof result === 'string' ? safe.JSON_stringify(objBefore) : objBefore;
+            }
+          }
         }
-        if (typeof objBefore !== 'object') return (xhrDetails.response = innerResponse);
-        const objAfter = objectPruneFn(objBefore, rawPrunePaths, rawNeedlePaths);
-        // objectPruneFn returns the object only when it actually pruned
-        // something — only that counts as a block for stats.
-        if (typeof objAfter === 'object') {
-          xhrDetails.response = typeof innerResponse === 'string' ? safe.JSON_stringify(objAfter) : objAfter;
-          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
-        } else {
-          xhrDetails.response = innerResponse;
+        // Line-wise JSONL editing (string responses only)
+        if (typeof result === 'string') {
+          const jsonlRules = applicableRules(_xhrJsonlRules, xhrDetails);
+          for (const rule of jsonlRules) {
+            result = jsonlEditFn(rule.jsonp, result);
+          }
         }
-        return xhrDetails.response;
+        return (xhrDetails.response = result);
       }
       get responseText() {
         const response = this.response;
         return typeof response !== 'string' ? super.responseText : response;
       }
     };
+  }
+
+  function jsonPruneXhrResponse(rawPrunePaths, rawNeedlePaths) {
+    const safe = safeSelf();
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 2);
+    _xhrPruneRules.push({
+      prunePaths: rawPrunePaths || '',
+      needlePaths: rawNeedlePaths || '',
+      propNeedles: parsePropertiesToMatchFn(extraArgs.propsToMatch, 'url'),
+    });
   }
 
   // ── noWindowOpenIf ──────────────────────────────────────────────
@@ -1660,19 +1716,27 @@
   }
 
   // ── json-edit ─────────────────────────────────────────────────────
-  function editOutboundObjectFn(trusted, propChain, jsonq) {
-    if (!propChain) return;
-    const jsonp = JSONPath.create(jsonq || '');
-    if (!jsonp.valid || (jsonp.value !== undefined && !trusted)) return;
-    proxyApplyFn(propChain, function(context) {
+  // JSON.parse proxy installed ONCE at document_start; compiled JSONPath
+  // rules land in _jsonEditRules when the async config arrives.
+  var _jsonEditRules = [];
+  function _installJsonEditProxy() {
+    proxyApplyFn('JSON.parse', function(context) {
       const obj = context.reflect();
-      const objAfter = jsonp.apply(obj);
-      return objAfter !== undefined ? objAfter : obj;
+      if (!_scriptletsEnabled || _jsonEditRules.length === 0) return obj;
+      let objAfter = obj;
+      for (const jsonp of _jsonEditRules) {
+        const r = jsonp.apply(objAfter);
+        if (r !== undefined) objAfter = r;
+      }
+      return objAfter;
     });
   }
 
   function jsonEdit(jsonq) {
-    editOutboundObjectFn(false, 'JSON.parse', jsonq || '');
+    const jsonp = JSONPath.create(jsonq || '');
+    // Untrusted variant — value-assigning queries are rejected.
+    if (!jsonp.valid || jsonp.value !== undefined) return;
+    _jsonEditRules.push(jsonp);
   }
 
   // ── jsonl-edit-xhr-response ───────────────────────────────────────
@@ -1703,45 +1767,15 @@
     return linesAfter.join(sep);
   }
 
+  // Registers a JSONL rule for the shared XHR response proxy
+  // (_installXhrResponseProxy) — no extra XMLHttpRequest layer per rule.
   function jsonlEditXhrResponse(jsonq, urlPattern) {
-    jsonq = jsonq || '';
-    urlPattern = urlPattern || '';
-    const jsonp = JSONPath.create(jsonq);
+    const jsonp = JSONPath.create(jsonq || '');
     if (!jsonp.valid || jsonp.value !== undefined) return;
-    const propNeedles = parsePropertiesToMatchFn(urlPattern, 'url');
-    const xhrInstances = new WeakMap();
-    self.XMLHttpRequest = class extends self.XMLHttpRequest {
-      open(method, url, ...args) {
-        if (!_scriptletsEnabled) return super.open(method, url, ...args);
-        const xhrDetails = { method, url };
-        const matched = propNeedles.size === 0 ||
-          matchObjectPropertiesFn(propNeedles, xhrDetails);
-        if (matched) xhrInstances.set(this, xhrDetails);
-        return super.open(method, url, ...args);
-      }
-      get response() {
-        const innerResponse = super.response;
-        const xhrDetails = xhrInstances.get(this);
-        if (xhrDetails === undefined) return innerResponse;
-        const responseLength = typeof innerResponse === 'string'
-          ? innerResponse.length
-          : undefined;
-        if (xhrDetails.lastResponseLength !== responseLength) {
-          xhrDetails.response = undefined;
-          xhrDetails.lastResponseLength = responseLength;
-        }
-        if (xhrDetails.response !== undefined) return xhrDetails.response;
-        if (typeof innerResponse !== 'string') {
-          return (xhrDetails.response = innerResponse);
-        }
-        const outerResponse = jsonlEditFn(jsonp, innerResponse);
-        return (xhrDetails.response = outerResponse);
-      }
-      get responseText() {
-        const response = this.response;
-        return typeof response !== 'string' ? super.responseText : response;
-      }
-    };
+    _xhrJsonlRules.push({
+      jsonp,
+      propNeedles: parsePropertiesToMatchFn(urlPattern || '', 'url'),
+    });
   }
 
   // ── trusted-prevent-dom-bypass ──────────────────────────────────────
@@ -1779,12 +1813,23 @@
 
   // ── Scriptlet rule engine ────────────────────────────────────────
   // Applies rules declared in site-rules.txt via content.js bridge.
-  // json_prune_* proxies: safe to call any time — intercept future requests.
-  // set_constant: bundled defaults are applied immediately below since they
-  // must be installed before YouTube inline scripts execute at document_start.
+  // fetch/XHR/JSON.parse wrappers are installed once at document_start
+  // (install block below); this function only fills their rule registries.
+  // Each dispatch carries the FULL current rule set (global + site), so
+  // registries use replace semantics — re-dispatching after an unpause or
+  // RULES_CHANGED must not stack duplicate rules or proxy layers.
+
+  // Dedup for scriptlets that still wrap an API per call (prevent_xhr,
+  // prevent_dom_bypass) — re-dispatching the same rule must not add layers.
+  var _appliedWrapOnce = new Set();
 
   function _applyScriptletRules(rules) {
     if (!rules) return;
+    _fetchPruneRules.length = 0;
+    _xhrPruneRules.length = 0;
+    _xhrJsonlRules.length = 0;
+    _jsonEditRules.length = 0;
+    _noWinOpenRules.length = 0;
     var pruneF  = rules.json_prune_fetch          || [];
     var pruneX  = rules.json_prune_xhr            || [];
     var setC    = rules.set_constant              || [];
@@ -1812,7 +1857,9 @@
       else noWindowOpenIf(noWin[m], 0, 'blank'); // fallback if format is wrong — block all matching window.open
     }
     for (var n = 0; n < prevX.length; n++) {
-      if (prevX[n]) preventXhr(prevX[n]);
+      if (!prevX[n] || _appliedWrapOnce.has('prevent_xhr ' + prevX[n])) continue;
+      _appliedWrapOnce.add('prevent_xhr ' + prevX[n]);
+      preventXhr(prevX[n]);
     }
     var jsonEd = rules.json_edit || [];
     for (var p = 0; p < jsonEd.length; p++) {
@@ -1829,11 +1876,21 @@
 
     var prevDomBypass = rules.prevent_dom_bypass || [];
     for (var s = 0; s < prevDomBypass.length; s++) {
-      if (!prevDomBypass[s]) continue;
+      if (!prevDomBypass[s] || _appliedWrapOnce.has('prevent_dom_bypass ' + prevDomBypass[s])) continue;
+      _appliedWrapOnce.add('prevent_dom_bypass ' + prevDomBypass[s]);
       var dbParts = prevDomBypass[s].trim().split(/\s+/);
       trustedPreventDomBypass(dbParts[0] || '', dbParts[1] || '');
     }
   }
+
+  // ── Install response-filtering wrappers at document_start ────────
+  // Must run before any page script executes so the page can never capture
+  // an unwrapped fetch/XMLHttpRequest/JSON.parse reference. Until rules
+  // arrive via the bridge below, the wrappers are pure pass-through
+  // (empty registries).
+  try { _installFetchResponseProxy(); } catch (e) {}
+  try { _installXhrResponseProxy(); } catch (e) {}
+  try { _installJsonEditProxy(); } catch (e) {}
 
   // Bridge: content.js dispatches '__adblock_scriptlet_rules__' after async rule load.
   // Content script and MAIN world share DOM events — standard cross-world pattern.
