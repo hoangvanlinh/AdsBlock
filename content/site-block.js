@@ -378,13 +378,39 @@ function attachShadowListeners(){
   }catch(e){}
 }
 
+// Scriptlet rules bridge — receiving '__adblock_scriptlet_rules__' re-enables
+// scriptlets in the MAIN world, so rules must only be dispatched while
+// _enabled. _scriptletRulesActive tracks the MAIN-world state so sync() can
+// re-dispatch after an unpause without re-wrapping APIs on every sync.
+var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if','prevent_xhr','json_edit','jsonl_edit_xhr','prevent_dom_bypass'];
+var _scriptletRulesActive=false;
+function _dispatchScriptletRules(cfg){
+  var rules={},hasAny=false,k,i;
+  for(i=0;i<SCRIPTLET_KEYS.length;i++){
+    k=SCRIPTLET_KEYS[i];
+    if(cfg[k]&&cfg[k].length){
+      rules[k]=cfg[k];hasAny=true;
+    }
+  }
+  if(hasAny){
+    try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
+  }
+}
+
 function sync(cb){
   if(!extValid())return;
   try{chrome.storage.local.get(['enabled','pausedDomains','cosmeticFiltering'],function(res){
     var paused=(res.pausedDomains||[]).indexOf(location.hostname)!==-1;
     _enabled=(res.enabled!==false)&&res.cosmeticFiltering!==false&&!paused;
-    if(_enabled){schedule(document);startObserver();attachShadowListeners();}
-    else{stopObserver();try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_disable__'));}catch(_e){}}
+    if(_enabled){
+      schedule(document);startObserver();attachShadowListeners();
+      if(_config&&!_scriptletRulesActive)_dispatchScriptletRules(_config);
+    }
+    else{
+      stopObserver();
+      try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_disable__'));}catch(_e){}
+      _scriptletRulesActive=false;
+    }
     if(cb)cb({ok:true});
   });}catch(e){}
 }
@@ -423,28 +449,17 @@ function boot(){
   window.__adblockRuleLoader.loadSite(function(res){
     siteKey=(res&&res.siteKey)||'';
     var base=(res&&res.global)||{};
-    var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if','prevent_xhr','json_edit','jsonl_edit_xhr','prevent_dom_bypass'];
-    function _dispatchScriptletRules(cfg){
-      var rules={},hasAny=false,k,i;
-      for(i=0;i<SCRIPTLET_KEYS.length;i++){
-        k=SCRIPTLET_KEYS[i];
-        if(cfg[k]&&cfg[k].length){
-          rules[k]=cfg[k];hasAny=true;
-        }
-      }
-      if(hasAny){
-        try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_rules__',{detail:rules}));}catch(e){}
-      }
-    }
     _config=_mergeConfigs(base,(res&&res.site)||{});
     _rebuildSelectorCache();
     // Inject the direct-hide stylesheet immediately (before DOMContentLoaded)
     // so late-rendered ads never paint. Scoped under html.adblock-on, so the
     // pause/disable path (class removal in content.js) turns it off for free.
     _injectDirectStyle();
-    _dispatchScriptletRules(_config);
+    // New/changed config must always be re-dispatched — reset the flag so the
+    // sync below sends it (but only if the site turns out to be enabled).
+    _scriptletRulesActive=false;
+    sync();
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
-    else sync();
   });
 }
 

@@ -244,16 +244,43 @@ function buildDefaultRulesFromConfig(config) {
   return { adRules, trackerRules };
 }
 
+// main_frame malware hits are redirected to the extension's warning page
+// instead of plain-blocked: a blocked navigation runs no content script, so
+// it would otherwise be invisible in stats. The warning page reports the
+// blocked host back via MALWARE_PAGE_BLOCKED. \1 captures the hostname.
+const MALWARE_REDIRECT_REGEX = '^[a-zA-Z]+://([^/:]+)';
+
+function malwareMainFrameRedirect() {
+  return {
+    type: 'redirect',
+    redirect: { regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?h=\\1' },
+  };
+}
+
 function buildMalwareRulesFromConfig(config, startId) {
-  const malwareTypes = ['main_frame', 'sub_frame', 'script', 'xmlhttprequest', 'image'];
-  const domains = config.malwareNetworkDomains.filter(d => DOMAIN_PATTERN_RE.test(d));
+  const subresourceTypes = ['sub_frame', 'script', 'xmlhttprequest', 'image'];
+  const domains = config.malwareNetworkDomains
+    .filter(d => DOMAIN_PATTERN_RE.test(d))
+    .map(d => d.toLowerCase());
   if (!domains.length) return [];
-  return [{
-    id: startId,
-    priority: 2,
-    action: { type: 'block' },
-    condition: { requestDomains: domains.map(d => d.toLowerCase()), resourceTypes: malwareTypes },
-  }];
+  return [
+    {
+      id: startId,
+      priority: 2,
+      action: { type: 'block' },
+      condition: { requestDomains: domains, resourceTypes: subresourceTypes },
+    },
+    {
+      id: startId + 1,
+      priority: 2,
+      action: malwareMainFrameRedirect(),
+      condition: {
+        requestDomains: domains,
+        regexFilter: MALWARE_REDIRECT_REGEX,
+        resourceTypes: ['main_frame'],
+      },
+    },
+  ];
 }
 
 // Single source for the merged rules text (fresh cache → remote → cached/local
@@ -370,8 +397,6 @@ async function ensureRuleDefinitionsLoaded() {
   await _ruleConfigPromise;
 }
 
-const MALWARE_RULE_ID_START = 100;
-const MALWARE_RULE_ID_END   = 199;
 const FOCUS_RULE_ID_START   = 2000;
 const REMOTE_MALWARE_RULE_ID_START = 100000; // for fetched blocklists
 const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
@@ -385,14 +410,25 @@ const REMOTE_DOMAINS_PER_RULE = 1000;
 function buildRemoteMalwareRules(domains) {
   const rules = [];
   for (let i = 0; i < domains.length; i += REMOTE_DOMAINS_PER_RULE) {
+    const chunk = domains.slice(i, i + REMOTE_DOMAINS_PER_RULE);
     rules.push({
       id: REMOTE_MALWARE_RULE_ID_START + rules.length,
       priority: 2,
       action: { type: 'block' },
       condition: {
-        requestDomains: domains.slice(i, i + REMOTE_DOMAINS_PER_RULE),
+        requestDomains: chunk,
         // Exclude sub_frame to avoid blocking embedded video players (iframes)
-        resourceTypes: ['main_frame', 'script', 'xmlhttprequest', 'image'],
+        resourceTypes: ['script', 'xmlhttprequest', 'image'],
+      },
+    });
+    rules.push({
+      id: REMOTE_MALWARE_RULE_ID_START + rules.length,
+      priority: 2,
+      action: malwareMainFrameRedirect(),
+      condition: {
+        requestDomains: chunk,
+        regexFilter: MALWARE_REDIRECT_REGEX,
+        resourceTypes: ['main_frame'],
       },
     });
   }
@@ -632,7 +668,7 @@ function updateIcon(enabled) {
 
 // ── Stats tracking ────────────────────────────────────────────────
 function initDomainStats() {
-  return { blocked: 0, adsBlocked: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0, https: false };
+  return { blocked: 0, adsBlocked: 0, cosmeticHidden: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0, https: false };
 }
 
 // Average bytes saved per blocked request (heuristic)
@@ -659,11 +695,12 @@ function _enqueueStatWrite(fn) {
 async function _writeDomainStatDelta(domain, delta) {
   const { stats = {} } = await chrome.storage.local.get('stats');
   if (!stats[domain]) {
-    stats[domain] = { blocked: 0, adsBlocked: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
+    stats[domain] = { blocked: 0, adsBlocked: 0, cosmeticHidden: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
   }
   const s = stats[domain];
   s.totalSeen       += delta.totalSeen       || 0;
   s.adsBlocked      += delta.adsBlocked      || 0;
+  s.cosmeticHidden   = (s.cosmeticHidden || 0) + (delta.cosmeticHidden || 0);
   s.trackersBlocked += delta.trackersBlocked || 0;
   s.malwareBlocked  += delta.malwareBlocked  || 0;
   s.blocked = s.adsBlocked + s.trackersBlocked + s.malwareBlocked;
@@ -696,7 +733,10 @@ function updateDailyStats(delta) {
 
 function recalcDerived(s) {
   s.timeSaved  = Math.round(s.blocked * 0.3);
-  s.bandwidth  = (s.adsBlocked * AVG_AD_BYTES) + (s.trackersBlocked * AVG_TRACKER_BYTES);
+  // Bandwidth is only saved by blocked NETWORK requests — cosmetically hidden
+  // elements were still downloaded, so exclude them from the estimate.
+  const networkAds = Math.max(0, s.adsBlocked - (s.cosmeticHidden || 0));
+  s.bandwidth  = (networkAds * AVG_AD_BYTES) + (s.trackersBlocked * AVG_TRACKER_BYTES);
   s.speedGain  = s.totalSeen > 0 ? Math.round((s.blocked / s.totalSeen) * 100) : 0;
 }
 
@@ -928,22 +968,37 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       case 'RESOURCE_SEEN': {
         // Sent by content.js MutationObserver with classification counts.
         // delta: { seen, ads, trackers, malware }
-        const { collectStats = true } = await chrome.storage.local.get('collectStats');
+        const {
+          collectStats = true, enabled: statsEnabled = true,
+          blockAds: rsAds = true, blockTrackers: rsTrackers = true, blockMalware: rsMalware = true,
+          pausedDomains: rsPaused = [], allowedDomains: rsAllowed = [],
+        } = await chrome.storage.local.get(
+          ['collectStats', 'enabled', 'blockAds', 'blockTrackers', 'blockMalware', 'pausedDomains', 'allowedDomains']
+        );
         if (!collectStats) { sendResponse({ ok: true }); break; }
 
         const domain = msg.domain || '_global';
+        // Only count categories whose blocking is actually active — a matched
+        // URL is only "blocked" if the corresponding DNR rules are installed.
+        if (!statsEnabled || rsPaused.includes(domain) || rsAllowed.includes(domain)) {
+          sendResponse({ ok: true });
+          break;
+        }
         const d = msg.delta || {};
+        const ads      = rsAds      ? (d.ads      || 0) : 0;
+        const trackers = rsTrackers ? (d.trackers || 0) : 0;
+        const malware  = rsMalware  ? (d.malware  || 0) : 0;
         _enqueueStatWrite(() => _writeDomainStatDelta(domain, {
-          totalSeen:       d.seen     || 0,
-          adsBlocked:      d.ads      || 0,
-          trackersBlocked: d.trackers || 0,
-          malwareBlocked:  d.malware  || 0,
+          totalSeen:       d.seen || 0,
+          adsBlocked:      ads,
+          trackersBlocked: trackers,
+          malwareBlocked:  malware,
         }));
         updateDailyStats({
-          blocked:  (d.ads || 0) + (d.trackers || 0) + (d.malware || 0),
-          ads:      d.ads      || 0,
-          trackers: d.trackers || 0,
-          malware:  d.malware  || 0,
+          blocked:  ads + trackers + malware,
+          ads,
+          trackers,
+          malware,
         });
         sendResponse({ ok: true });
         break;
@@ -956,23 +1011,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
         const chDomain = (msg.url ? new URL(msg.url).hostname : null) || '_global';
         const hiddenCount = msg.count || 0;
-        _enqueueStatWrite(() => _writeDomainStatDelta(chDomain, { adsBlocked: hiddenCount, totalSeen: hiddenCount }));
+        _enqueueStatWrite(() => _writeDomainStatDelta(chDomain, {
+          adsBlocked: hiddenCount, cosmeticHidden: hiddenCount, totalSeen: hiddenCount,
+        }));
         updateDailyStats({ blocked: hiddenCount, ads: hiddenCount, trackers: 0, malware: 0 });
-        sendResponse({ ok: true });
-        break;
-      }
-
-      case 'AD_BLOCKED':
-      case 'AD_SKIPPED': {
-        // Sent by content.js as a bridge for MAIN-world yt-adblock.js when an ad
-        // is stripped before render or when a visible video ad is skipped.
-        const { collectStats: collectAS = true } = await chrome.storage.local.get('collectStats');
-        if (!collectAS) { sendResponse({ ok: true }); break; }
-
-        const asDomain = msg.domain || '_global';
-        const asDelta = Math.max(1, Number(msg.count || 1));
-        _enqueueStatWrite(() => _writeDomainStatDelta(asDomain, { adsBlocked: asDelta, totalSeen: asDelta }));
-        updateDailyStats({ blocked: asDelta, ads: asDelta, trackers: 0, malware: 0 });
         sendResponse({ ok: true });
         break;
       }
@@ -991,8 +1033,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           if (r.condition.requestDomains) bucket.push(...r.condition.requestDomains);
         }
 
-        const malwarePatterns = MALWARE_RULES
-          .flatMap(r => r.condition.requestDomains || []);
+        const malwarePatterns = [...new Set(
+          MALWARE_RULES.flatMap(r => r.condition.requestDomains || [])
+        )];
 
         // Also include user custom block rules (domain + keyword types)
         const { rules = [] } = await chrome.storage.local.get('rules');
@@ -1057,11 +1100,25 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       case 'GET_MALWARE_STATUS': {
         await ensureRuleDefinitionsLoaded();
         const { malwareListLastUpdate = 0, malwareListCount = 0 } = await chrome.storage.local.get(['malwareListLastUpdate', 'malwareListCount']);
-        // MALWARE_RULES is now a single grouped rule — count its domains, not rules.
-        const builtinMalwareCount = MALWARE_RULES.reduce(
-          (n, r) => n + (r.condition.requestDomains?.length || 0), 0
-        );
+        // Grouped rules (block + main_frame redirect) share the same domain
+        // list — count unique domains, not per-rule entries.
+        const builtinMalwareCount = new Set(
+          MALWARE_RULES.flatMap(r => r.condition.requestDomains || [])
+        ).size;
         sendResponse({ lastUpdate: malwareListLastUpdate, count: malwareListCount + builtinMalwareCount });
+        break;
+      }
+
+      case 'MALWARE_PAGE_BLOCKED': {
+        // Sent by blocked/blocked.js after a main_frame malware navigation was
+        // redirected to the warning page — the only way such blocks get counted.
+        const host = String(msg.host || '').toLowerCase();
+        if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
+        const { collectStats: collectMB = true } = await chrome.storage.local.get('collectStats');
+        if (!collectMB) { sendResponse({ ok: true }); break; }
+        _enqueueStatWrite(() => _writeDomainStatDelta(host, { malwareBlocked: 1, totalSeen: 1 }));
+        updateDailyStats({ blocked: 1, ads: 0, trackers: 0, malware: 1 });
+        sendResponse({ ok: true });
         break;
       }
 
