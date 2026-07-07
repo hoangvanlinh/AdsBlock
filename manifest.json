@@ -48,7 +48,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["rule/site-rules.txt"],
+      "resources": ["rule/site-rules.txt", "blocked/blocked.html"],
       "matches": ["http://*/*", "https://*/*"]
     }
   ],

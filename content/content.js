@@ -42,21 +42,22 @@
 // ── Resource classification for stats ────────────────────────────
 // Seeded from site-rules.txt [global] ad_network_patterns / tracker_network_patterns.
 // Fallback defaults active until config loads.
-let _adPatterns      = ['doubleclick', 'googlesyndication', 'googleadservices'];
-let _trackerPatterns = ['google-analytics', 'analytics.google', 'facebook.com/tr'];
-let _malwarePatterns = ['coinhive', 'coin-hive', 'jsecoin'];
+let _adPatterns      = ['doubleclick.net', 'googlesyndication.com', 'googleadservices.com'];
+let _trackerPatterns = ['google-analytics.com', 'analytics.google.com', 'facebook.com/tr'];
+let _malwarePatterns = ['coinhive.com', 'coin-hive.com', 'jsecoin.com'];
 
 function applyGlobalConfig(cfg) {
   if (!cfg) return;
   // Use ad_network_patterns / tracker_network_patterns for URL stats classification
+  const norm = list => list.map(p => String(p).toLowerCase().trim()).filter(Boolean);
   if (Array.isArray(cfg.ad_network_patterns) && cfg.ad_network_patterns.length) {
-    _adPatterns = cfg.ad_network_patterns.slice();
+    _adPatterns = norm(cfg.ad_network_patterns);
   }
   if (Array.isArray(cfg.tracker_network_patterns) && cfg.tracker_network_patterns.length) {
-    _trackerPatterns = cfg.tracker_network_patterns.slice();
+    _trackerPatterns = norm(cfg.tracker_network_patterns);
   }
   if (Array.isArray(cfg.malware_network_domains) && cfg.malware_network_domains.length) {
-    _malwarePatterns = cfg.malware_network_domains.slice();
+    _malwarePatterns = norm(cfg.malware_network_domains);
   }
 }
 
@@ -71,12 +72,26 @@ const _globalConfigReady = new Promise((resolve) => {
   });
 });
 
+// Mirror DNR matching semantics so stats only count what would be blocked:
+// bare domains anchor on the request hostname (domain or subdomain), while
+// patterns with a path ("facebook.com/tr") or bare keywords stay substrings.
+function _patternMatches(pattern, fullUrl, host) {
+  if (pattern.includes('/')) return fullUrl.includes(pattern);
+  if (pattern.includes('.')) return host === pattern || host.endsWith('.' + pattern);
+  return fullUrl.includes(pattern);
+}
+
 function classifyUrl(url) {
   if (!url) return null;
-  const u = url.toLowerCase();
-  if (_malwarePatterns.some(h => u.includes(h))) return 'malware';
-  if (_trackerPatterns.some(h => u.includes(h))) return 'tracker';
-  if (_adPatterns.some(h => u.includes(h)))      return 'ad';
+  let host, full;
+  try {
+    const u = new URL(url, location.href);
+    host = u.hostname.toLowerCase();
+    full = u.href.toLowerCase();
+  } catch { return null; }
+  if (_malwarePatterns.some(p => _patternMatches(p, full, host))) return 'malware';
+  if (_trackerPatterns.some(p => _patternMatches(p, full, host))) return 'tracker';
+  if (_adPatterns.some(p => _patternMatches(p, full, host)))      return 'ad';
   return null;
 }
 
@@ -84,17 +99,19 @@ function classifyUrl(url) {
 let _statBatch = { seen: 0, ads: 0, trackers: 0, malware: 0 };
 let _flushTimer = null;
 let _recordedUrls = new Set(); // dedup: prevent counting the same URL multiple times
-const _RECORDED_URLS_MAX = 500; // cap to prevent unbounded memory growth
+const _RECORDED_URLS_MAX = 2000; // cap to prevent unbounded memory growth
 
 function recordResource(url) {
-  const kind = classifyUrl(url);
-  if (!kind) return; // not something we track
+  if (!url) return;
   // Deduplicate — same URL should only be counted once per page load
   if (_recordedUrls.has(url)) return;
   // Cap the set to prevent unbounded growth on long sessions
   if (_recordedUrls.size >= _RECORDED_URLS_MAX) _recordedUrls.clear();
   _recordedUrls.add(url);
+  // Every observed resource counts toward `seen` — speedGain and the privacy
+  // score treat totalSeen as ALL requests, not just the ad-tech ones.
   _statBatch.seen++;
+  const kind = classifyUrl(url);
   if (kind === 'ad')      _statBatch.ads++;
   else if (kind === 'tracker') _statBatch.trackers++;
   else if (kind === 'malware') _statBatch.malware++;
@@ -380,10 +397,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 });
 
 
-// ── YouTube video ad skipper ─────────────────────────────────────
-// Moved entirely to content/yt-adblock.js (MAIN world).
-// content.js injects that file at the top of this script via a <script> tag.
-// yt-adblock.js handles: setInterval polling, MutationObserver, forceSkipAd,
-// clickSkipButton, restoreAfterAd, blackscreen watchdog, CSS injection.
-// YouTube cosmetic selectors now live in rule/site-rules.txt and are
-// applied by content/site-block.js so the shared content engine stays generic.
+// ── YouTube video ads ────────────────────────────────────────────
+// Handled by content/scriptlets.js (MAIN world): json_prune_fetch/xhr rules in
+// rule/site-rules.txt strip adPlacements/adSlots from player responses before
+// the page reads them, and report blocks via the __adblock_blocked__ event
+// (forwarded to stats by site-block.js). YouTube cosmetic selectors live in
+// rule/site-rules.txt and are applied by content/site-block.js.

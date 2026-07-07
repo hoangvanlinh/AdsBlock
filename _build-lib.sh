@@ -31,6 +31,7 @@ JS_FILES=(
     "content/site-block.js"
     "dashboard/dashboard.js"
     "popup/popup.js"
+    "blocked/blocked.js"
 )
 
 # Ensure javascript-obfuscator is available
@@ -51,7 +52,7 @@ copy_static_files() {
     cp "$PROJECT_DIR/config.js" "$DEST/"
     cp "$PROJECT_DIR/LICENSE" "$DEST/" 2>/dev/null || true
 
-    mkdir -p "$DEST/icons" "$DEST/content" "$DEST/rule" "$DEST/dashboard" "$DEST/popup"
+    mkdir -p "$DEST/icons" "$DEST/content" "$DEST/rule" "$DEST/dashboard" "$DEST/popup" "$DEST/blocked"
 
     cp "$PROJECT_DIR/icons/"*.png "$DEST/icons/"
     cp "$PROJECT_DIR/content/content.css"         "$DEST/content/"
@@ -64,6 +65,7 @@ copy_static_files() {
     cp "$PROJECT_DIR/dashboard/dashboard.html"     "$DEST/dashboard/"
     cp "$PROJECT_DIR/popup/popup.css"              "$DEST/popup/"
     cp "$PROJECT_DIR/popup/popup.html"             "$DEST/popup/"
+    cp "$PROJECT_DIR/blocked/blocked.html"         "$DEST/blocked/"
 }
 
 # Obfuscate (or copy) all JS_FILES into DEST.

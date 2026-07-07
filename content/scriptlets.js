@@ -877,10 +877,14 @@
         }
         if (typeof objBefore !== 'object') return (xhrDetails.response = innerResponse);
         const objAfter = objectPruneFn(objBefore, rawPrunePaths, rawNeedlePaths);
-        xhrDetails.response = typeof objAfter === 'object'
-          ? (typeof innerResponse === 'string' ? safe.JSON_stringify(objAfter) : objAfter)
-          : innerResponse;
-        try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+        // objectPruneFn returns the object only when it actually pruned
+        // something — only that counts as a block for stats.
+        if (typeof objAfter === 'object') {
+          xhrDetails.response = typeof innerResponse === 'string' ? safe.JSON_stringify(objAfter) : objAfter;
+          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+        } else {
+          xhrDetails.response = innerResponse;
+        }
         return xhrDetails.response;
       }
       get responseText() {
@@ -905,10 +909,11 @@
     for (var _ri = 0; _ri < _noWinOpenRules.length; _ri++) {
       const rule = _noWinOpenRules[_ri];
       if (rule.re.test(haystack) !== rule.match) continue;
-      // Matched — apply the rule's blocking strategy
+      // Matched — every strategy below blocks the popup, so report it
+      // for stats here, once, regardless of which branch handles it.
+      try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: _blockedUrl } })); } catch (_e) {}
       if (rule.delay === '') return null;
       if (rule.decoy === 'blank') {
-        try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: _blockedUrl } })); } catch (_e) {}
         callArgs[0] = 'about:blank';
         const r = context.reflect();
         setTimeout(() => { try { r.close(); } catch (e) {} }, rule.ms);
@@ -1165,6 +1170,9 @@
   function preventSetTimeout(pattern) {
     var rePattern = (pattern instanceof RegExp) ? pattern : _toRegex(pattern || '');
     var _matchAll = !pattern;
+    // Report the block to stats only once per rule — pages retry blocked
+    // timers in a loop, and each retry is the same block, not a new one.
+    var _reported = false;
     proxyApplyFn('setTimeout', function(context) {
       var fn = context.callArgs[0];
       var fnStr = '';
@@ -1173,7 +1181,10 @@
         else if (typeof fn === 'string') fnStr = fn;
       } catch(e) {}
       if (_matchAll || rePattern.test(fnStr)) {
+        if (!_reported) {
+          _reported = true;
           try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+        }
         return;
       } // block
       return context.reflect();
