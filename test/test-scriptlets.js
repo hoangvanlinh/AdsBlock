@@ -74,6 +74,18 @@ let fetchPayload = {};
 sandbox.Response = FakeResponse;
 sandbox.fetch = async () => new FakeResponse(fetchPayload);
 
+// localStorage stub — the boot gate reads the '__abrules' cache saved on a
+// previous visit. Preset = "returning visit to a site whose rules use
+// response filters": wrappers install AND these rules apply at boot.
+const localStorageStore = new Map([
+  ['__abrules', JSON.stringify({ json_prune_xhr: ['adPlacements adSlots'] })],
+]);
+sandbox.localStorage = {
+  getItem: k => (localStorageStore.has(k) ? localStorageStore.get(k) : null),
+  setItem: (k, v) => { localStorageStore.set(k, String(v)); },
+  removeItem: k => { localStorageStore.delete(k); },
+};
+
 sandbox.window = sandbox;
 sandbox.self = sandbox;
 sandbox.globalThis = sandbox;
@@ -99,7 +111,19 @@ function sendRules(rules) {
 }
 
 (async () => {
-  console.log('== 1. window.open blocking dispatches on ALL block paths ==');
+  console.log('== 0. cached rules apply synchronously at boot (before any dispatch) ==');
+  blockedEvents = [];
+  const BootXHR = sandbox.XMLHttpRequest;
+  check('wrappers installed at boot from cache', BootXHR !== FakeXHR);
+  const xhrBoot = new BootXHR();
+  xhrBoot.open('GET', 'https://www.youtube.com/youtubei/v1/player');
+  xhrBoot._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }], videoDetails: { title: 'boot' } });
+  const bootObj = JSON.parse(xhrBoot.response);
+  check('cached rules prune with NO rules dispatch at all', !bootObj.adPlacements,
+    String(xhrBoot.response));
+  check('non-ad fields kept', bootObj.videoDetails.title === 'boot');
+
+  console.log('\n== 1. window.open blocking dispatches on ALL block paths ==');
   sendRules({ no_window_open_if: ['/adsite\\.com/ 0 blank'] });
   blockedEvents = [];
   const r1 = sandbox.open('https://adsite.com/popup');
@@ -200,6 +224,23 @@ function sendRules(rules) {
   check('double dispatch: pruned response counted exactly once', blockedEvents.length === 1,
     String(blockedEvents.length));
   check('XMLHttpRequest not re-subclassed on re-dispatch', sandbox.XMLHttpRequest === XHR2);
+
+  console.log('\n== 6. rules cache follows dispatched rules ==');
+  // Rules WITH response-filter keys → full rule set cached for the next load
+  sendRules({ json_prune_xhr: ['adPlacements adSlots'], no_window_open_if: ['/y\\.com/'] });
+  const cached = JSON.parse(localStorageStore.get('__abrules') || 'null');
+  check('full rule set cached when rules contain response-filter keys',
+    !!cached && Array.isArray(cached.json_prune_xhr) && Array.isArray(cached.no_window_open_if),
+    JSON.stringify(cached));
+  // Rules WITHOUT response-filter keys → cache cleared (site no longer needs
+  // boot wrappers, e.g. after a rules update removed them)
+  sendRules({ no_window_open_if: ['/x\\.com/'] });
+  check('cache cleared when rules have no response-filter keys',
+    !localStorageStore.has('__abrules'));
+  sendRules({ json_prune_fetch: ['adPlacements'] });
+  const recached = JSON.parse(localStorageStore.get('__abrules') || 'null');
+  check('cache re-saved on next dispatch with response-filter keys',
+    !!recached && Array.isArray(recached.json_prune_fetch));
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
