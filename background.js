@@ -14,6 +14,7 @@ const {
   RULES_CACHE_TEXT_KEY,
   RULES_CACHE_TIME_KEY,
   RULES_CACHE_TTL_MS,
+  DEBUG_LOCAL,
 } = self.ADBLOCK_CONFIG;
 
 const FALLBACK_RULE_CONFIG = {
@@ -286,6 +287,13 @@ function buildMalwareRulesFromConfig(config, startId) {
 // Single source for the merged rules text (fresh cache → remote → cached/local
 // fallback). Used by rule-definition loading, GET_RULES_TEXT, and GET_SITE_CONFIG.
 async function getRulesText() {
+  // Debug build: serve the bundled local rules (skip cache + remote) so the
+  // DNR network rules match what's in the working tree.
+  if (DEBUG_LOCAL) {
+    const baseText = await fetchLocalRuleText();
+    const { customRulesText: customText = '' } = await chrome.storage.local.get('customRulesText');
+    return customText ? baseText + '\n' + customText : baseText;
+  }
   const cached = await getCachedRuleText();
   if (isFreshRuleCache(cached)) return cached.text;
   try {

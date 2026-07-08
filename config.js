@@ -11,4 +11,9 @@ self.ADBLOCK_CONFIG = {
   RULES_CACHE_TEXT_KEY: 'siteRulesCacheText',
   RULES_CACHE_TIME_KEY: 'siteRulesCacheTime',
   RULES_CACHE_TTL_MS: 6 * 60 * 60 * 1000,
+  // Debug builds (./build.sh <target> <obf> <export> true) flip this to true:
+  // every context (background DNR rules + content rule loader) then reads the
+  // bundled rule/site-rules.txt instead of cache/remote, so local rule edits
+  // take effect on extension reload without pushing to GitHub.
+  DEBUG_LOCAL: false,
 };

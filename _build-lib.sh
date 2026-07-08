@@ -85,12 +85,13 @@ process_js_files() {
     done
 }
 
-# Patch DEBUG_LOCAL flag in the loader inside DEST.
+# Patch DEBUG_LOCAL flag in config.js inside DEST — config.js is the single
+# source read by both the content rule loader and the background DNR builder.
 # Usage: patch_debug <DEST_DIR>
 patch_debug() {
     local DEST="$1"
-    sed -i '' 's/var DEBUG_LOCAL=false/var DEBUG_LOCAL=true/' \
-        "$DEST/content/site-rules-loader.js" 2>/dev/null || true
+    sed -i '' 's/DEBUG_LOCAL: false/DEBUG_LOCAL: true/' \
+        "$DEST/config.js" 2>/dev/null || true
 }
 
 # Create a ZIP archive from a directory.
