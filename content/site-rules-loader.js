@@ -7,10 +7,12 @@
 if(window.__adblockRuleLoader)return;
 
 var _site=null,_loading=null;
-var DEBUG_LOCAL=false; // patched to true by build.sh when 4th arg is "true"
 // Shared constants from config.js — listed before this file in the
 // manifest's content_scripts js array, so ADBLOCK_CONFIG is already set.
 var _CFG=self.ADBLOCK_CONFIG||{};
+// build.sh patches DEBUG_LOCAL in config.js when the 4th arg is "true",
+// switching every context (this loader + background DNR) to local rules.
+var DEBUG_LOCAL=!!_CFG.DEBUG_LOCAL;
 var REMOTE_RULES_URL=_CFG.RULES_REMOTE_URL;
 var LOCAL_RULES_PATH=_CFG.RULES_LOCAL_PATH;
 var CACHE_KEY_TEXT=_CFG.RULES_CACHE_TEXT_KEY;

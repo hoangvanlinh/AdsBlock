@@ -95,7 +95,9 @@ function _injectDirectStyle(){
   // Validate each selector — one invalid selector drops the whole CSS rule.
   var valid=[];
   for(var i=0;i<_cachedDirect.length;i++){
-    try{document.querySelector(_cachedDirect[i]);valid.push('html.adblock-on '+_cachedDirect[i]);}catch(e){}
+    // Scope under `body ` (descendant) so a broad selector can never match
+    // body/html itself and blank the whole page.
+    try{document.querySelector(_cachedDirect[i]);valid.push('html.adblock-on body '+_cachedDirect[i]);}catch(e){}
   }
   if(!valid.length)return;
   var s=document.createElement('style');
@@ -246,6 +248,9 @@ function removeEl(el){
 
 function hide(el){
   if(!el||el.dataset.adblockHidden)return false;
+  // Never hide the page itself — a broad rule (e.g. *:has(>[ad-attr]))
+  // can match body/html when an ad script appends straight into <body>.
+  if(el===document.body||el===document.documentElement)return false;
   el.style.setProperty('display','none','important');
   el.style.setProperty('visibility','hidden','important');
   el.dataset.adblockHidden='1';
