@@ -97,7 +97,7 @@ no_window_open_if = /doubleclick\.net|googlesyndication|googleadservices|adnxs\.
 json_prune_fetch = adPlacements adSlots playerResponse.adPlacements playerResponse.adSlots [].playerResponse.adPlacements [].playerResponse.adSlots | reelWatchSequenceResponse.entries.[-].command.reelWatchEndpoint.adClientParams.isAd entries.[-].command.reelWatchEndpoint.adClientParams.isAd
 json_prune_xhr = adPlacements adSlots playerResponse.adPlacements playerResponse.adSlots [].playerResponse.adPlacements [].playerResponse.adSlots
 set_constant = ytInitialPlayerResponse.playerAds undefined | ytInitialPlayerResponse.adPlacements undefined | ytInitialPlayerResponse.adSlots undefined
-direct_hide_selectors =  ytd-banner-promo-renderer | ytd-statement-banner-renderer | ytd-promoted-sparkles-web-renderer | ytd-promoted-video-renderer | ytd-display-ad-renderer | ytd-compact-promoted-video-renderer | ytd-action-companion-ad-renderer | ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | #player-ads | #masthead-ad | #panels > ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) | ytd-mealbar-promo-renderer | ytd-popup-container:has(ytd-mealbar-promo-renderer) | ytd-background-promo-renderer | ytd-official-card-renderer | tp-yt-paper-dialog:has(yt-premium-offer-renderer) | ytd-companion-slot-renderer:has([data-style-type="PREMIUM"]) | .ytd-mealbar-promo-renderer | ytd-survey-notification-renderer | #offer-module | .ytp-paid-content-overlay | .ytp-premium-yoodle | ytd-rich-section-renderer:has(ytd-statement-banner-renderer) | ytd-enforcement-message-view-model | tp-yt-paper-dialog:has(yt-upsell-dialog-renderer) | ytd-rich-item-renderer:has(ytd-ad-slot-renderer) | ytd-video-renderer[is-ad] | ytd-rich-item-renderer[is-ad] | ytd-reel-item-renderer[is-ad] | ytd-search-pyv-renderer | ytd-promoted-sparkles-text-search-renderer | ytd-movie-offer-module-renderer | ytd-compact-movie-renderer[is-ad] | #shopping-timely-shelf | yt-shopping-timely-shelf-content-view-model | yt-overlay-sticker | ytd-ad-slot-renderer | .yt-notification-action-renderer
+direct_hide_selectors =  ytd-banner-promo-renderer | ytd-statement-banner-renderer | ytd-promoted-sparkles-web-renderer | ytd-promoted-video-renderer | ytd-display-ad-renderer | ytd-compact-promoted-video-renderer | ytd-action-companion-ad-renderer | ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | #player-ads | #masthead-ad | #panels > ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) | ytd-mealbar-promo-renderer | ytd-popup-container:has(ytd-mealbar-promo-renderer) | ytd-background-promo-renderer | ytd-official-card-renderer | tp-yt-paper-dialog:has(yt-premium-offer-renderer) | ytd-companion-slot-renderer:has([data-style-type="PREMIUM"]) | .ytd-mealbar-promo-renderer | ytd-survey-notification-renderer | #offer-module | .ytp-paid-content-overlay | .ytp-premium-yoodle | ytd-rich-section-renderer:has(ytd-statement-banner-renderer) | ytd-enforcement-message-view-model | tp-yt-paper-dialog:has(yt-upsell-dialog-renderer) | ytd-rich-item-renderer:has(ytd-ad-slot-renderer) | ytd-video-renderer[is-ad] | ytd-rich-item-renderer[is-ad] | ytd-reel-item-renderer[is-ad] | ytd-search-pyv-renderer | ytd-promoted-sparkles-text-search-renderer | ytd-movie-offer-module-renderer | ytd-compact-movie-renderer[is-ad] | #shopping-timely-shelf | yt-shopping-timely-shelf-content-view-model | yt-overlay-sticker | ytd-ad-slot-renderer | .yt-notification-action-renderer | #description-inner > ytd-merch-shelf-renderer > #main.ytd-merch-shelf-renderer | .ytd-watch-flexy > ytd-merch-shelf-renderer > #main.ytd-merch-shelf-renderer | #shorts-inner-container > .ytd-shorts:has(> .ytd-reel-video-renderer > ytd-ad-slot-renderer) | .ytp-suggested-action > .ytp-suggested-action-badge | .ytReelMetapanelViewModelHost > .ytReelMetapanelViewModelMetapanelItem > .ytShortsSuggestedActionViewModelStaticHost | lazy-list > ad-slot-renderer | ytm-rich-item-renderer > ad-slot-renderer | ytm-companion-slot[data-content-type] > ytm-companion-ad-renderer
 
 [facebook]
 json_prune_fetch = require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer.sideFeedUnit.nodes.[].new_adverts.nodes.[-].sponsored_data | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.serpResponse.results.edges.[-].rendering_strategy.view_model.story.sponsored_data.ad_id
@@ -110,7 +110,7 @@ labels = Sponsored | Sponsorisé | Gesponsert | Patrocinado | Sponsorizzato | Ge
 link_patterns = /ads/about/ | sponsorships | sponsored
 context_selectors = [aria-label] | a[aria-label] | span[aria-label] | a[href] | span | div[dir="auto"]
 attr_keys = aria-label | data-ad-rendering-role | data-ad-comet-preview | data-ad-preview | data-pagelet | role
-direct_hide_selectors = [role="article"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="group"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | div[data-pagelet]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="feed"] [role="article"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has([data-ad-comet-preview]) | div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="FeedUnit"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="Reels"] [role="article"]:has([data-ad-rendering-role]) | div[data-pagelet*="Reels"] [role="group"]:has([data-ad-rendering-role]) | div[data-pagelet*="VideoFeed"] [role="article"]:has([data-ad-rendering-role]) | div[data-visualcompletion="ignore-late-mutation"]:has([data-ad-rendering-role]) | div[role="complementary"] > div > div > div > div > div > div > div[data-visualcompletion="ignore-late-mutation"]
+direct_hide_selectors = [role="article"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="group"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | div[data-pagelet]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="feed"] [role="article"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has([data-ad-comet-preview]) | div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="FeedUnit"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="Reels"] [role="article"]:has([data-ad-rendering-role]) | div[data-pagelet*="Reels"] [role="group"]:has([data-ad-rendering-role]) | div[data-pagelet*="VideoFeed"] [role="article"]:has([data-ad-rendering-role]) | div[data-visualcompletion="ignore-late-mutation"]:has([data-ad-rendering-role]) | div[role="complementary"] > div > div > div > div > div > div > div[data-visualcompletion="ignore-late-mutation"] | a[aria-label="Advertiser link"] | a[aria-label="Advertiser"]
 ad_host_selectors = a[href^="/ads/about/"] | a[href*="/ads/about/"] | a[aria-label^="Sponsored"] | a[aria-label^="Sponsorisé"] | a[aria-label^="Gesponsert"] | a[aria-label^="Patrocinado"] | a[aria-label^="Sponsorizzato"] | a[aria-label^="Gesponsord"] | a[aria-label^="Sponsorowane"] | a[aria-label^="Sponsorlu"] | a[aria-label^="Bersponsor"] | a[aria-label^="Ditaja"] | span[aria-label^="Sponsored"] | div[aria-label*="sponsored content"] | a[attributionsrc*="privacy_sandbox/comet/register/source"]
 hide_closest = [role="article"] | [role="group"] | div[data-pagelet] | div[data-visualcompletion="ignore-late-mutation"]
 
@@ -118,7 +118,7 @@ hide_closest = [role="article"] | [role="group"] | div[data-pagelet] | div[data-
 [reddit]
 labels = promoted | sponsored | advertisement
 link_patterns = utm_name=promoted | /promoted | promoted=true
-direct_hide_selectors = shreddit-ad-post | shreddit-comments-page-ad | shreddit-dynamic-ad-link[aria-label^="Advertisement:"] | shreddit-dynamic-ad-link[aria-label^="Promoted:"] | shreddit-dynamic-ad-link[slot*="ad"]
+direct_hide_selectors = shreddit-ad-post | shreddit-comments-page-ad | shreddit-dynamic-ad-link[aria-label^="Advertisement:"] | shreddit-dynamic-ad-link[aria-label^="Promoted:"] | shreddit-dynamic-ad-link[slot*="ad"] | .native-ad-container | div[data-before-content="advertisement"] | div.dfp-ad-container | div.promotedlink | div.promotedvideolink | div#comment-atf
 post_selectors = shreddit-post[post-type="promoted"] | div[data-promoted="true"]
 innertext_selectors = article[data-testid="post-container"] | div[data-testid="post-container"] | shreddit-post
 innertext_labels = Promoted
@@ -145,9 +145,10 @@ hide_closest = div[data-e2e="recommend-list-item-container"] | div[data-e2e="vid
 
 
 [x]
-direct_hide_selectors = div[data-testid="cellInnerDiv"] > div > div > div[data-testid="placementTracking"]
+direct_hide_selectors = div[data-testid="cellInnerDiv"] > div > div > div[data-testid="placementTracking"] | .promoted-account | .stream-item-group-start[label="promoted"] | a[href*="src=promoted_trend_click"] | a[href*="src=promoted_trend_click"] + div | div[data-testid="placementTracking"]:has(div[data-testid$="-impression-pixel"]) | div[data-testid="UserCell"]:has(path[d$="10H8.996V8h7v7z"]) | div[data-testid="trend"]:has(path[d$="10H8.996V8h7v7z"]) | div.promoted-tweet | li.has-profile-promoted-tweet | div[data-testid="cellInnerDiv"] > div > div[class] > div[class][data-testid="placementTracking"]
 
 [linkedin]
+direct_hide_selectors = [componentkey*="urn:li:sponsoredContentV2"] | [data-sponsored-tracking-url] | article[data-is-sponsored] | li[data-is-sponsored="true"] | iframe[componentkey$="_ad"] | iframe[title="Advertisement"] | iframe[title="advertisement"]
 labels = promoted | sponsored
 selectors = div[data-id^="urn:li:activity"]
 innertext_selectors = div[data-id^="urn:li:activity"] | li.scaffold-finite-scroll__content
@@ -157,6 +158,7 @@ attr_keys = aria-label
 hide_closest = li.scaffold-finite-scroll__content | div[data-id^="urn:li:activity"]
 
 [pinterest]
+direct_hide_selectors = div[class*="ScreenBanner"]
 labels = promoted | sponsored
 innertext_selectors = [data-test-id="pin"] | div[data-grid-item="true"]
 innertext_labels = Promoted
@@ -164,6 +166,7 @@ context_selectors = [aria-label] | span
 hide_closest = [data-test-id="pin"] | div[data-grid-item="true"]
 
 [quora]
+direct_hide_selectors = .dom_annotate_ad_image_ad | .dom_annotate_ad_promoted_answer | .dom_annotate_ad_text_ad | .spacing_log_question_page_ad | div.question_page_ad
 labels = promoted | sponsored | advertisement
 selectors = div.puppeteer_test_feed_item | div[class*="FeedStory"]
 innertext_selectors = div.puppeteer_test_feed_item | div[class*="FeedStory"]
@@ -173,7 +176,7 @@ hide_closest = div.puppeteer_test_feed_item | div[class*="FeedStory"]
 
 [amazon]
 labels = sponsored | sponsoredad
-direct_hide_selectors = [data-component-type="sp-sponsored-result"]
+direct_hide_selectors = [data-component-type="sp-sponsored-result"] | #sponsoredProducts_feature_div | #sponsoredProducts2_feature_div | .s-result-item:has(.puis-sponsored-label-text) | .s-result-item:has([data-ad-feedback]) | .s-result-item:has([data-ad-feedback-label-id]) | div[cel_widget_id*="_ad-placements-"] | div[cel_widget_id*="Deals3Ads"] | div[cel_widget_id="typ-ads"] | div[class*="SponsoredProducts"] | .amzn-safe-frame-container | .sbv-video-single-product | #faceoutContainer:has(> [class$="sponsored-label"]) | .dp-widget-card-deck:has([data-ad-placement-metadata]) | div[data-ad-details] | #widget-rightUpsellSlot | .kw-ads-ftue-container
 selectors = [data-component-type="s-search-result"]
 context_selectors = .puis-sponsored-label-text | .s-sponsored-label-text
 attr_keys = data-component-type | cel_widget_id | data-cel-widget | aria-label
@@ -182,19 +185,19 @@ paths = /s
 query_keys = k | field-keywords
 
 [google]
-direct_hide_selectors = #tads | #tadsb | #bottomads | #rhsads | div[data-text-ad] | div[data-ta-slot] | .commercial-unit-desktop-top | .commercial-unit-desktop-rhs | #tvcap | div[data-sokoban-feature] | .ads-ad | li.g:has([data-text-ad])
+direct_hide_selectors = #tads | #tadsb | #bottomads | #rhsads | div[data-text-ad] | div[data-ta-slot] | .commercial-unit-desktop-top | .commercial-unit-desktop-rhs | #tvcap | div[data-sokoban-feature] | .ads-ad | li.g:has([data-text-ad]) | #google-s-ad | .uEierd | .cu-container | .commercial-unit-mobile-top > div[data-pla="1"] | div[data-ads-title="1"] | div[data-is-ad="1"] | div[data-section-type="ads"] | #atvcap | div[data-is-promoted-hotel-ad="true"] | body#yDmH0d [data-is-promoted="true"] | .OcdnDb | .ltJjte
 paths = /search
 query_keys = q
 
 # ── VNExpress ────────────────────────────────────────────────────────────────
 [vnexpress]
 # Admicro/VCCorp ad zones specific to vnexpress.net
-direct_hide_selectors = .box-tinquangcao | .tinquangcao | .block-ads | [class*="quang-cao"] | [class*="quangcao"] | .banner-ads | .ads-300 | .ads-728 | .ads-970 | .sidebar-ads | div[id^="zone_"] | div[id^="admzone_"] | .article-footer-ads | .article-top-ads | .article-middle-ads | .float-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | .box-video-ads | div#sis_outstream_container > div#video_outstream > div.txt_ads
+direct_hide_selectors = .box-tinquangcao | .tinquangcao | .block-ads | [class*="quang-cao"] | [class*="quangcao"] | .banner-ads | .ads-300 | .ads-728 | .ads-970 | .sidebar-ads | div[id^="zone_"] | div[id^="admzone_"] | .article-footer-ads | .article-top-ads | .article-middle-ads | .float-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | .box-video-ads | div#sis_outstream_container > div#video_outstream > div.txt_ads | #admbackground | #banner_top | #rich-media-banner-ads | #supper_masthead | .box-kd-300 | .section_ads_300x250 | .banner
 
 # ── Tuổi Trẻ ────────────────────────────────────────────────────────────────
 [tuoitre]
 # Admicro/VCCorp + Tuổi Trẻ first-party ad zones
-direct_hide_selectors = #LeaderBoardTop | [class*="quang-cao"] | [class*="quangcao"] | [id*="quang-cao"] | [id*="quangcao"] | div[id^="zone_"] | div[id^="admzone_"] | div[id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | .box-ads | .banner-ads | .ads-container | .ads-box | .sidebar-ads | .article-ads | .content-ads | .float-ads | .sticky-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | [id^="placement-"][revenue] | [data-admssprqid] | div:has(>[data-admssprqid])
+direct_hide_selectors = #LeaderBoardTop | [class*="quang-cao"] | [class*="quangcao"] | [id*="quang-cao"] | [id*="quangcao"] | div[id^="zone_"] | div[id^="admzone_"] | div[id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | .box-ads | .banner-ads | .ads-container | .ads-box | .sidebar-ads | .article-ads | .content-ads | .float-ads | .sticky-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | iframe[src*="adtima.vn"] | [id^="placement-"][revenue] | [data-admssprqid] | div:has(>[data-admssprqid]) | #admbackground | #adsMainFooter | .banner-top | .box-qad | .content-amuasam | .section__r-vietlot
 
 # ── Yandex ──────────────────────────────────────────────────────────────────
 [yandex]
@@ -202,7 +205,7 @@ direct_hide_selectors = #LeaderBoardTop | [class*="quang-cao"] | [class*="quangc
 # Adfox is Yandex's own ad serving platform, injected as [id^="adfox"].
 labels = реклама
 # Direct ads in SERP: li.serp-item with data-cid, yellow label, or direct fast-name marker
-direct_hide_selectors = [id^="adfox"] | .serp-item_type_adv | li.serp-item[data-cid] | li.serp-item:has(.label_theme_yellow) | li.serp-item:has(.badge_theme_yellow) | .organic:has(.label_theme_yellow) | .organic:has(.badge_theme_yellow) | div[data-fast-name="direct"] | div[data-fast-name="banner"] | [class*="serp-adv"] | [class*="adv-block"] | [data-log-event-group*="direct"] | .ads-section | #yandex_banner | [data-widget-type="AdvHost"] | [class*="Organic-Adv"] | .AdvWidget | [class*="yandex-sticky-adv-banner"] | [id^="yandex-adv-"] | [id^="yandex-mIX"] | .adv-focusable | [data-name="adWrapper"] | [data-name="adaptiveConstructorAd"] | [data-new-adtune="true"] | [data-testid="disable-adv-button-sticky"]
+direct_hide_selectors = [id^="adfox"] | .serp-item_type_adv | li.serp-item[data-cid] | li.serp-item:has(.label_theme_yellow) | li.serp-item:has(.badge_theme_yellow) | .organic:has(.label_theme_yellow) | .organic:has(.badge_theme_yellow) | div[data-fast-name="direct"] | div[data-fast-name="banner"] | [class*="serp-adv"] | [class*="adv-block"] | [data-log-event-group*="direct"] | .ads-section | #yandex_banner | [data-widget-type="AdvHost"] | [class*="Organic-Adv"] | .AdvWidget | [class*="yandex-sticky-adv-banner"] | [id^="yandex-adv-"] | [id^="yandex-mIX"] | .adv-focusable | [data-name="adWrapper"] | [data-name="adaptiveConstructorAd"] | [data-new-adtune="true"] | [data-testid="disable-adv-button-sticky"] | .AdvOffers | .DirectFeature | .ImagesViewer-SidebarAdv | .search-snippet-view:has(span.search-advert-badge__advert) | .search-business-snippet-view__direct | .search-list-view__advert-offer-banner | .business-card-title-view__advert | ._view_advertisement | div[aria-label="Ad"] | [aria-label="Баннер"] | .AdvProductGallery | .AdvRsya-Slot | .b-spec-adv | .spec-adv | .direct-view | .serp-adv__add | .serp-adv__all | .b-direct | .b-direct-stripe | .top-direct-line | .sidebar-direct | div[class*="DirectLine"] | .adfox | .awaps__banner | .turbo-advert | .turbo-advert__loader | img[src*="yandex.net/get-direct"] | a[href*="//ads.adfox.ru/"] | [data-madv] | [data-auto="direct-tgo-banner"] | div[data-banner-id] | div[data-block="banner-view"] | .t-construct-adapter__adv | .layout__banner | .main-home-banner | .main__block-banner | .weather-maps__ad | .catalog-grid-view__item._advert | .grid-list__game-item_adv
 paths = /search | /yandsearch
 query_keys = text | p
 
@@ -218,27 +221,27 @@ direct_hide_selectors = #ngx-overlay | .ngx-overlay | [class*="overlay-ad"] | [i
 # ═══════════════════════════════════════════════════════════════════════════════
 
 [dantri]
-direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [id*="quang-cao"] | [id*="quangcao"] | .dtads | .dt-ads | .ads-top | .ads-right | .ads-bottom | .ads-left | .ads-center | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | .sticky-ads | .sidebar-ads | [class*="float-ad"] | [id*="float_ad"] | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | .sponsor-article | .chuyen-de-quangcao | .dantri-ads-center
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [id*="quang-cao"] | [id*="quangcao"] | .dtads | .dt-ads | .ads-top | .ads-right | .ads-bottom | .ads-left | .ads-center | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | .sticky-ads | .sidebar-ads | [class*="float-ad"] | [id*="float_ad"] | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | iframe[src*="adplay.vn"] | .sponsor-article | .chuyen-de-quangcao | .dantri-ads-center | #bannerMasthead | #desktop-home-top-page | #mobile-home-middle-1 | #mobile-home-middle-2 | #mobile-home-top-page | #tpmInpageContainer | .ads-masthead
 
 [zingnews]
-direct_hide_selectors = .zac__wrapper | [id^="zing-ads-"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="zing-ad"] | .z-ads | .z-box-ad | .ads-container | .ads-box | .banner-ads | .float-ads | .popup-ads | .sticky-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | div.ad-tag | iframe[src*="adtima.vn"] | iframe[src*="bannerngang"] | iframe[src*="/interactive/"] | [class*="zingstoryad"] | [class*="zingstory-ad"]
+direct_hide_selectors = .zac__wrapper | [id^="zing-ads-"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="zing-ad"] | .z-ads | .z-box-ad | .ads-container | .ads-box | .banner-ads | .float-ads | .popup-ads | .sticky-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | div.ad-tag | iframe[src*="adtima.vn"] | iframe[src*="bannerngang"] | iframe[src*="/interactive/"] | [class*="zingstoryad"] | [class*="zingstory-ad"] | .banner-slider-wrapper | .znews-banner
 
 
 [kenh14]
-direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .kn_adv_box | .kn_adv | .ads-kenh14 | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .kn_adv_box | .kn_adv | .ads-kenh14 | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | .ads-sponsor | .khw-adk14-wrapper
 
 [thanhnien]
-direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [id^="tn_ads"] | [class*="tn-ads"] | .tn__quangcao | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | .sticky-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [id^="tn_ads"] | [class*="tn-ads"] | .tn__quangcao | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | .sticky-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | .super-masthead | .top-banner | .mb-40.section__qadd | [data-marked-zoneid="tn_detail_danhchoban"] | [data-marked-zoneid="tn_detail_quantam"] | zone | .asd-headt
 
 [site24h]
-direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .ads24h | [id^="ads24h_"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .ads24h | [id^="ads24h_"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | #background_bg_link | #subRightAboveHome | .adv-24h-mid | .fixad300x600 | .col:has(a[rel="sponsored"])
 no_window_open_if = /.*/ 0 blank
 
 [soha]
 direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .soha-quangcao | .soha-ads | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
 
 [tienphong]
-direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="tp-ads"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="tp-ads"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | .banner-top | .banner | .fyi
 
 [laodong]
 direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
@@ -248,10 +251,10 @@ direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [i
 no_window_open_if = /.*/ 0 blank
 
 [genk]
-direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="genk-ads"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"]
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | [class*="genk-ads"] | .block-ads | .banner-ads | .ads-box | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | .khw-ads-wrapper.clearfix
 
 [baomoi]
-direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .bm-ads | .baomoi-ads | .block-ads | .banner-ads | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | .fc-link
+direct_hide_selectors = [id^="admicro_"] | [id^="zone_"] | [id^="admzone_"] | [id^="adnzone_"] | [id^="dfp_"] | [id^="ads_"] | [class*="quang-cao"] | [class*="quangcao"] | .bm-ads | .baomoi-ads | .block-ads | .banner-ads | .float-ads | .popup-ads | [data-admssprqid] | div:has(>[data-admssprqid]) | [id^="placement-"][revenue] | iframe[src*="admicro.vn"] | iframe[src*="adx.admicro"] | iframe[src*="vccorp.vn"] | .fc-link | .block:has([data-adaptive])
 labels = quảng cáo | tài trợ
 innertext_selectors = article | .story | .news-item | .bm-item
 innertext_labels = Quảng cáo | Tài trợ
@@ -263,7 +266,7 @@ hide_closest = article | .story | .news-item | .bm-item
 # ═══════════════════════════════════════════════════════════════════════════════
 
 [twitch]
-direct_hide_selectors = [data-test-selector="ad-banner-default-wrapper"] | .ad-banner-default-wrapper | [data-a-target="ad-overlay-background"] | [data-a-target="ad-overlay"] | [data-a-target="ad-choice-wrapper"] | [class*="ad-choice"] | .player-ad-notice | [aria-label*="Advertisement"] | .tw-ad | [data-test-selector="content-overlay-gate"] | [class*="game-ad"] | #top-nav-promo | [class*="channel-leaderboard"] | [class*="ad-banner"]
+direct_hide_selectors = [data-test-selector="ad-banner-default-wrapper"] | .ad-banner-default-wrapper | [data-a-target="ad-overlay-background"] | [data-a-target="ad-overlay"] | [data-a-target="ad-choice-wrapper"] | [class*="ad-choice"] | .player-ad-notice | [aria-label*="Advertisement"] | .tw-ad | [data-test-selector="content-overlay-gate"] | [class*="game-ad"] | #top-nav-promo | [class*="channel-leaderboard"] | [class*="ad-banner"] | .stream-display-ad__wrapper | [data-test-selector="sda-wrapper"] | div#directory-banner | div#directory-rectangle
 no_window_open_if = /ads\.twitch\.tv|twitchadvertising\.com|doubleclick\.net/ 0 blank
 
 [medium]
@@ -275,13 +278,13 @@ context_selectors = span | [class*="PostLabel"] | [class*="ReadingTime"]
 hide_closest = article | div[class*="postItem"] | div[class*="PostPreview"]
 
 [cnn]
-direct_hide_selectors = [class*="pg-ad-wrapper"] | [class*="AdSlot"] | .cr__advertisement | .cnn-ad-wrapper | #commercial_node | [data-section-name="ad"] | [class*="ad-feedback"] | [class*="ad-choices"] | [class*="ad__container"] | [class*="ad-unit"] | [id^="div-gpt-ad"] | [class*="outbrain"] | [id^="outbrain"] | [class*="taboola"] | [id^="taboola"] | [class*="commercial-unit"]
+direct_hide_selectors = [class*="pg-ad-wrapper"] | [class*="AdSlot"] | .cr__advertisement | .cnn-ad-wrapper | #commercial_node | [data-section-name="ad"] | [class*="ad-feedback"] | [class*="ad-choices"] | [class*="ad__container"] | [class*="ad-unit"] | [id^="div-gpt-ad"] | [class*="outbrain"] | [id^="outbrain"] | [class*="taboola"] | [id^="taboola"] | [class*="commercial-unit"] | .ad | .ad-slot-dynamic | .ad-slot-header__wrapper | .ad-slot__ad-wrapper | #js-outbrain-rightrail-ads-module | #partner-zone | #sponsored-outbrain-1 | .stack__ads | .zone__ads | [data-zone-label="Paid Partner Content"] | div.container__ads | div.ad-slot-rail | .ad-feedback__modal
 
 [espn]
 direct_hide_selectors = [class*="ad__container"] | [id^="ad-slot"] | [class*="ad-module"] | [data-ad-unit] | .sponsor-logos | [class*="ad-wrapper"] | [class*="espn-advertisement"] | [class*="AdSection"] | [id^="espn-ad-"] | [class*="inline-ad"] | [id^="inline-ad"] | [class*="sidebar-ad"] | [id^="sidebar-ad"] | [class*="ad-label"] | .promo-banner | [class*="PromoUnit"] | [class*="advertisement"]
 
 [imgur]
-direct_hide_selectors = .promoted-entry | [data-promoted="true"] | [class*="ad-block"] | .ad-box | [class*="EasyAdBlock"] | [class*="native-ad"] | [class*="sponsored"] | [class*="outstream"] | [id^="imgur-ad-"] | [class*="sidebar-ad"] | div[class*="advertisement"]
+direct_hide_selectors = .promoted-entry | [data-promoted="true"] | [class*="ad-block"] | .ad-box | [class*="EasyAdBlock"] | [class*="native-ad"] | [class*="sponsored"] | [class*="outstream"] | [id^="imgur-ad-"] | [class*="sidebar-ad"] | div[class*="advertisement"] | .BannerAd-cont | .Top300x600 | .fast-grid-ad | div.ad-slot
 labels = promoted | sponsored | advertisement
 innertext_selectors = .post-item | .image-list-item | .hoverable
 innertext_labels = Promoted | Sponsored
@@ -294,7 +297,7 @@ hide_closest = .post-item | .image-list-item | .hoverable
 
 [yahoo_jp]
 labels = PR | 広告 | スポンサー
-direct_hide_selectors = #yj-ad | [id^="yjad-"] | [id^="yads_"] | .yjad | #Ads_topcover | #ads_sp_links | [class*="YahooAd"] | [class*="yjad"] | [class*="SponsLink"] | [id^="ad_region"] | [id^="Ads_searchbox"] | ul.adpR | #sponsoredresults_top | #sponsoredresults_bottom | li.spider | .yjad_splink | .sc_ads | [id^="pr_area"] | #ymktHeader | [class*="ads_unit"] | [data-ual-id*="ad"] | [class*="yads"]
+direct_hide_selectors = #yj-ad | [id^="yjad-"] | [id^="yads_"] | .yjad | #Ads_topcover | #ads_sp_links | [class*="YahooAd"] | [class*="yjad"] | [class*="SponsLink"] | [id^="ad_region"] | [id^="Ads_searchbox"] | ul.adpR | #sponsoredresults_top | #sponsoredresults_bottom | li.spider | .yjad_splink | .sc_ads | [id^="pr_area"] | #ymktHeader | [class*="ads_unit"] | [data-ual-id*="ad"] | [class*="yads"] | div.adWrap
 selectors = .search-item | .sw-CardBase | .sw-List__item
 innertext_selectors = .search-item | .sw-CardBase
 innertext_labels = 広告 | PR | スポンサー
@@ -302,11 +305,11 @@ context_selectors = span | .sw-Label | a | .label
 hide_closest = .search-item | .sw-CardBase | li.spider | .sw-List__item
 
 [nicovideo]
-direct_hide_selectors = .skipContainer | #videoAdBanner | [class*="OverlayAd"] | [class*="NC-Overlay-Ad"] | [id^="nicoad-"] | [class*="nicoad-"] | .nicoad-banner | .nicoad-video-content | #NicoAdPlayerModal | .ad_area | .sponsor_link | #nc-overlay-ad-frame | .nico-ads-wrapper | [id^="nc-ad-"] | .danime-ad-area
+direct_hide_selectors = .skipContainer | #videoAdBanner | [class*="OverlayAd"] | [class*="NC-Overlay-Ad"] | [id^="nicoad-"] | [class*="nicoad-"] | .nicoad-banner | .nicoad-video-content | #NicoAdPlayerModal | .ad_area | .sponsor_link | #nc-overlay-ad-frame | .nico-ads-wrapper | [id^="nc-ad-"] | .danime-ad-area | div#overlayBanner | div.Ads | div.BottomContainer-adContainer | div.CommentPanelBannerAd | div.HeaderContainer_Re-ad | div[class$="AdContainer"] | section[class$="AdSection"]
 no_window_open_if = /nicovideo\.jp\/ads|nicoad\.nicovideo/ 0 blank
 
 [pixiv]
-direct_hide_selectors = [data-gtm-zone^="ad_"] | [id^="ad-"] | [id^="pixiv-ad-"] | [class*="ad-area"] | [class*="ad-wrapper"] | [class*="Advertisement"] | [class*="AdvertisingArea"] | [class*="sponsored"] | .premium-lead | [class*="premium-upsell"] | [data-ga-label^="ad"] | ._premium-lead
+direct_hide_selectors = [data-gtm-zone^="ad_"] | [id^="ad-"] | [id^="pixiv-ad-"] | [class*="ad-area"] | [class*="ad-wrapper"] | [class*="Advertisement"] | [class*="AdvertisingArea"] | [class*="sponsored"] | .premium-lead | [class*="premium-upsell"] | [data-ga-label^="ad"] | ._premium-lead | .ad-footer | .ad-frame-container | .ad-mobile-anchor | iframe.ad-frame | span.multi-ads-area | div.ad-container | div.ad-topmost-header | div#header-banner | iframe[name="expandedFooter"] | iframe[name="footer"] | iframe[name="header"] | iframe[name="300x250"] | iframe[width="300"][height="250"]
 
 [fc2]
 direct_hide_selectors = [id^="fc2-bnr-"] | .fc2-ad | #fc2_ad | [class*="fc2_ad"] | #side_ad | [id^="fc2ad"] | .fc2-ad-unit | [class*="fc2-banner"] | #ad_area | [class*="ad-placement"] | .ad_unit | .ad-section
@@ -321,7 +324,7 @@ direct_hide_selectors = [id^="ameba-ad-"] | .ad_ameba | #ameba_ad | [class*="ame
 
 [naver]
 labels = 광고 | AD
-direct_hide_selectors = #da_inbody | [id^="da_top"] | [id^="ad_"] | [class*="ad_area"] | #ad_layer | .lego_ad | .lego_ad_post | [class*="power_link"] | ul.lst_sp_more | ul.lst_type_pa | [class*="brand_board"] | [data-clk="adlink"] | #csp_pack_top | [id^="powerlink_"] | [class*="powerlink"] | #right_adcontainer | [class*="display-ad"] | [id^="display-ad"] | .ad_panel | #adcontent | #adContent | .adSponsor | #power_ads | [class*="naver-ad"] | [class*="blind_txt"]
+direct_hide_selectors = #da_inbody | [id^="da_top"] | [id^="ad_"] | [class*="ad_area"] | #ad_layer | .lego_ad | .lego_ad_post | [class*="power_link"] | ul.lst_sp_more | ul.lst_type_pa | [class*="brand_board"] | [data-clk="adlink"] | #csp_pack_top | [id^="powerlink_"] | [class*="powerlink"] | #right_adcontainer | [class*="display-ad"] | [id^="display-ad"] | .ad_panel | #adcontent | #adContent | .adSponsor | #power_ads | [class*="naver-ad"] | [class*="blind_txt"] | div#ssp-adcontent | div#ssp-adpost | div.ssp-adcontent | div.post_adpost | td.adpost_con | div.power_ad | table.searchad | div.section_powerlink | div.area_sa | li.ad_wrap | div._ad_area | div._adPost | div#adPostArea | div.ad_box | div[data-da] | div._da_banner | div#veta_branding | div#veta_top | div#veta_time2 | div#NM_TOP_BANNER | div#NM_MID_BANNER | div#aside_ad | div.grid_ad | div.comp_news_ad | div.main_brick_item._card_ad | div.main_brick_item._card_ad_secondary | div[class*=" AdBanner_ad_banner__"] | div[class*=" AdBanner_comp_ad__"] | div[class*=" AdDeDupBanner_comp_ad__"] | div.article_bottom_ad | div#da_kin | div.ads_sc | li.ads_sc | div.comp_performance_ad | div._cnDisplayAd | div.ad_section | div#ad-banner | div#ad-head-slot | div#AD_WEBTOON_MOBILEWEB_UP | div#_SmartChannelTopBanner
 selectors = li.bx | .sp_each_item | li[class*="spw"]
 innertext_selectors = li.bx | .sp_each_item
 innertext_labels = 광고 | 파워링크
@@ -332,7 +335,7 @@ query_keys = query | q
 
 [daum]
 labels = 광고 | AD | 스폰서
-direct_hide_selectors = [id^="kakao_ad_"] | [class*="kakao_ad"] | [class*="daumAd"] | #kakao_ad_banner | [data-ad-type] | [class*="ad_unit"] | #realbox_splink | [id^="daum-ad"] | .ad_module | [id^="top_ad"] | [id^="right_ad"] | [id^="bottom_ad"] | [class*="ad_wrap"] | [class*="powerlink"] | [class*="special-link"] | .itemad | [class*="itemAd"] | [id^="adarea"] | .ad-area | [class*="dsp_ad"]
+direct_hide_selectors = [id^="kakao_ad_"] | [class*="kakao_ad"] | [class*="daumAd"] | #kakao_ad_banner | [data-ad-type] | [class*="ad_unit"] | #realbox_splink | [id^="daum-ad"] | .ad_module | [id^="top_ad"] | [id^="right_ad"] | [id^="bottom_ad"] | [class*="ad_wrap"] | [class*="powerlink"] | [class*="special-link"] | .itemad | [class*="itemAd"] | [id^="adarea"] | .ad-area | [class*="dsp_ad"] | div.bnr_ad | li.item_ad | div#daum-ad-root | div.box_ad | div.top_ad | div.wing_ad | div.ad_sch | div#bizBoardAd | li.nativead-placeholder | div.mtop_adfit | div#daBannerWrapper | ins[data-ad-unit] | div.content_sponsor | a.link_ad | div.link_ad | div.ad_body2 | div.bar_ad
 selectors = .search-result-wrap .coll_cont li | ul.c-list-main li
 innertext_selectors = .search-result-wrap .coll_cont li | ul.c-list-main li
 innertext_labels = 광고 | 스폰서
@@ -343,7 +346,7 @@ query_keys = q | w
 
 [kakao]
 labels = 광고 | AD
-direct_hide_selectors = [id^="kakao_ad_"] | [class*="kakao_ad"] | [class*="kakao-ad"] | #kakao_ad_banner | [data-ad-type] | [class*="ad_unit"] | [id^="kakao-ad-"] | [class*="adfit"] | [class*="kakaoAd"] | .ad_area | [id^="adfit_"] | [data-adfit-unit] | [class*="ad-fit"] | iframe[src*="t1.kakaocdn.net/ad_fig"]
+direct_hide_selectors = [id^="kakao_ad_"] | [class*="kakao_ad"] | [class*="kakao-ad"] | #kakao_ad_banner | [data-ad-type] | [class*="ad_unit"] | [id^="kakao-ad-"] | [class*="adfit"] | [class*="kakaoAd"] | .ad_area | [id^="adfit_"] | [data-adfit-unit] | [class*="ad-fit"] | iframe[src*="t1.kakaocdn.net/ad_fig"] | div.ad_body | div[data-cloud="toros_recommend_two_column"]>ul.list_column2>li[adfit-unit-id]
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ── Nga (Russia) ─────────────────────────────────────────────────────────────
@@ -352,7 +355,7 @@ direct_hide_selectors = [id^="kakao_ad_"] | [class*="kakao_ad"] | [class*="kakao
 [vk]
 # VK ads: feed posts labelled "Реклама"/"Рекламная запись", side column banners, myTarget
 labels = реклама | продвигается
-direct_hide_selectors = #ads_column | .ads_table | [class*="ads_post"] | [class*="_ads_post"] | .ads_label | [class*="ReactAdvertising"] | [class*="vkuiAd"] | [data-ad-view] | [class*="VkAds"] | [class*="adLabel"] | [class*="PromoPost"] | ._post:has(.ads_label) | [class*="CasualAds"] | [class*="mediatarg"] | [id^="mt_"] | iframe[src*="vk.com/adstransit"] | [data-story-type="ads"]
+direct_hide_selectors = #ads_column | .ads_table | [class*="ads_post"] | [class*="_ads_post"] | .ads_label | [class*="ReactAdvertising"] | [class*="vkuiAd"] | [data-ad-view] | [class*="VkAds"] | [class*="adLabel"] | [class*="PromoPost"] | ._post:has(.ads_label) | [class*="CasualAds"] | [class*="mediatarg"] | [id^="mt_"] | iframe[src*="vk.com/adstransit"] | [data-story-type="ads"] | ._ads_block_data_w | ._ads_promoted_post_data_w | .post_marked_as_ads | [data-ad-block-uid] | div[data-ad] | .wi_head[href*="/away.php?to="] | .wi_head[href*="/away.php?to="] + .wi_body | #system_msg
 selectors = [class*="feed_row"] | [class*="wall_item"] | ._post
 innertext_selectors = [class*="feed_row"] | ._post
 innertext_labels = Реклама | Рекламная запись | Продвигается
@@ -362,7 +365,7 @@ hide_closest = [class*="feed_row"] | ._post | [class*="wall_item"]
 [okru]
 # Одноклассники / OK.ru — uses myTarget + own ad system
 labels = реклама | рекламная запись
-direct_hide_selectors = [class*="ads-block"] | [class*="adv-block"] | [id^="widget-ad-"] | [class*="mediatarg"] | [id^="mt_"] | .ok-ads | [class*="PromoOffer"] | [class*="promo-post"] | [class*="AdvertBlock"] | [class*="ad_label"] | [data-l*="advert"] | .wt-feed__item:has([class*="PromoPost"])
+direct_hide_selectors = [class*="ads-block"] | [class*="adv-block"] | [id^="widget-ad-"] | [class*="mediatarg"] | [id^="mt_"] | .ok-ads | [class*="PromoOffer"] | [class*="promo-post"] | [class*="AdvertBlock"] | [class*="ad_label"] | [data-l*="advert"] | .wt-feed__item:has([class*="PromoPost"]) | #hook_Block_AvatarPromoMenu | #hook_Block_FixedPromoBanner | #hook_Block_ForthColumnTopBanner | #hook_Block_LeftColumnAdCustom | #hook_Block_TargetBanner | .dialogWrapperBanner | .forthTopAdv | [adchoicesize] | div[class*="__banner-feed-"] | div[data-place*="BANNER"] | .exit-popup | .html5-vpl_oklive-banner
 innertext_selectors = .wt-feed__item | [class*="card-social"]
 innertext_labels = Реклама | Промо
 context_selectors = span | [class*="entity-label"]
@@ -371,16 +374,16 @@ hide_closest = .wt-feed__item | [class*="card-social"]
 [mailru]
 # Mail.ru — uses myTarget ad network
 labels = реклама
-direct_hide_selectors = [class*="ad_unit"] | [class*="mail-ad"] | [class*="portal-ad"] | [id^="mt_"] | [data-target-id] | [class*="special-projects"] | [class*="mediatarg"] | [id^="rnd"] | .ad_col | [class*="ad_col"] | iframe[src*="r.mradx.net"] | iframe[src*="ad.mail.ru"] | [class*="MyTarget"] | [class*="AdvBlock"] | [id^="tgb_"] | [class*="tgb-"] | [class*="advert_"] | .ph-adv | [class*="ph-adv"]
+direct_hide_selectors = [class*="ad_unit"] | [class*="mail-ad"] | [class*="portal-ad"] | [id^="mt_"] | [data-target-id] | [class*="special-projects"] | [class*="mediatarg"] | [id^="rnd"] | .ad_col | [class*="ad_col"] | iframe[src*="r.mradx.net"] | iframe[src*="ad.mail.ru"] | [class*="MyTarget"] | [class*="AdvBlock"] | [id^="tgb_"] | [class*="tgb-"] | [class*="advert_"] | .ph-adv | [class*="ph-adv"] | .letter-list-item-adv | .direct_septima | .layer-sent-page__banner | .ph-project-promo-container | .adv-marker-box | .left-advert-block | div[class*="adv-slot-"] | .b-video__native-rb-banner | .b-video__top-rb-banner | .sp-video__billboard | .b-history__adv-post-carousel | .b-music__main__banner | .TopBannerSlot | .adv-contacts | .banner_left | .link-ad | .spring_adb | .sticky-springs | div[class*="sticky-springs__item"] | .pypo-slot | .pypo-springs-sticky | div[class*="advHeaderStatic"] | div[class*=" rb_"] | div.rb_banner | div.p-top-banner | .block_ad-text | .p-commercial | .p-movie-intro__commercial
 
 [rambler]
 labels = реклама | партнёрский материал
-direct_hide_selectors = [class*="rambler-ad"] | [id^="rbrads"] | .r_adv | [class*="adv_block"] | [class*="native-adv"] | [class*="partner-material"] | [class*="advert"] | [id^="adfox"] | [class*="banner-widget"] | [id^="r-banner"] | [class*="rb-ad"] | iframe[src*="ad.rambler.ru"]
+direct_hide_selectors = [class*="rambler-ad"] | [id^="rbrads"] | .r_adv | [class*="adv_block"] | [class*="native-adv"] | [class*="partner-material"] | [class*="advert"] | [id^="adfox"] | [class*="banner-widget"] | [id^="r-banner"] | [class*="rb-ad"] | iframe[src*="ad.rambler.ru"] | [aria-label="Реклама"] | [class*="MaillistItemAdvertPlace"] | div[class*="Ad-direct"] | div[class*="Ad-root"] | div[class*="AddBillboard"] | div[class*="AppContainer-adWrapper"] | div[class*="adv__context"] | div[class*="billboard"] | .adfox-background-container | rambler-info-banner | a[href*="//ads.adfox.ru/"] | .finance__partners
 
 [rbc]
 # РБК — business news, heavy on native/sponsored content
 labels = реклама | партнёрский материал | спонсор
-direct_hide_selectors = [class*="banner__wrapper"] | [class*="article__banner"] | [id^="rbc-ad"] | [class*="rbc-ad"] | [class*="l-col__right"] .c-banner | [class*="spec-projects"] | [class*="NativeAds"] | [class*="partner__article"] | [id^="adfox"] | .l-col-center__aside | [class*="ad-block"] | [data-ad-zone]
+direct_hide_selectors = [class*="banner__wrapper"] | [class*="article__banner"] | [id^="rbc-ad"] | [class*="rbc-ad"] | [class*="l-col__right"] .c-banner | [class*="spec-projects"] | [class*="NativeAds"] | [class*="partner__article"] | [id^="adfox"] | .l-col-center__aside | [class*="ad-block"] | [data-ad-zone] | .branding-block | .right-promo-block | .simple-promo-card | [data-name="SimplePromoCard"] | [data-name="WithButtonPromoCard"] | .mts-promo | .radio-partner-block | .header__partner | .topline__branding__wrapper | .wrapper-top-line-branding | .topline-desktop-link-branding | .ui-branding-logo | .story-wrapper_branded .story-header__logo | .fox-fallback | .read-more-pro
 selectors = [class*="item js-search-results-item"] | [class*="news-feed__item"]
 innertext_selectors = [class*="news-feed__item"] | [class*="search-results-item"]
 innertext_labels = Реклама | Партнёрский материал | Спонсор
@@ -389,7 +392,7 @@ hide_closest = [class*="news-feed__item"] | [class*="search-results-item"]
 
 [lenta]
 labels = реклама | партнёрский материал | промо
-direct_hide_selectors = [class*="lenta-ad"] | [class*="banner-lenta"] | [class*="native-articles"] | [class*="advertising"] | [class*="topic-page__aside"] .banner | [class*="sidebar-banner"] | [id^="adfox"] | [class*="card__promo"] | [class*="promo-section"] | [class*="NativeItem"] | [data-ad]
+direct_hide_selectors = [class*="lenta-ad"] | [class*="banner-lenta"] | [class*="native-articles"] | [class*="advertising"] | [class*="topic-page__aside"] .banner | [class*="sidebar-banner"] | [id^="adfox"] | [class*="card__promo"] | [class*="promo-section"] | [class*="NativeItem"] | [data-ad] | .advertisable-plate__erid | .banner | .custom-banner | .promo-block | .traffic-exchange | a[href*="?erid="] | div.b-banner | section.b-banner
 selectors = [class*="card _"] | [class*="list-item"]
 innertext_selectors = [class*="card _"] | [class*="list-item"]
 innertext_labels = Реклама | Партнёрский материал | Промо
@@ -398,17 +401,17 @@ hide_closest = [class*="card _"] | [class*="list-item"]
 
 [ria]
 labels = реклама | партнёрский материал | рекламодатель
-direct_hide_selectors = [class*="listing__ad"] | [class*="widget__ad"] | [id^="adfox"] | [class*="ria-ad"] | [class*="banner-holder"] | [class*="banner__inner"] | [class*="advert-promo"] | [class*="article-partner"] | [class*="sponsor-label"] | [data-ad-slot] | [class*="advBlock"]
+direct_hide_selectors = [class*="listing__ad"] | [class*="widget__ad"] | [id^="adfox"] | [class*="ria-ad"] | [class*="banner-holder"] | [class*="banner__inner"] | [class*="advert-promo"] | [class*="article-partner"] | [class*="sponsor-label"] | [data-ad-slot] | [class*="advBlock"] | .article__aggr | .banner
 
 [kinopoisk]
 # Кинопоиск (Yandex) — movie reviews/streaming
 labels = реклама
-direct_hide_selectors = [class*="kinopoisk-ad"] | [class*="KPAd"] | .banner_widget | [id^="kp_ad_"] | [id^="adfox"] | [class*="advert"] | [class*="promo-banner"] | [class*="PremiumBanner"] | [class*="ad-block"] | [data-testid*="ad"] | [class*="Advertisement"] | [class*="FloatPlayer"] .ad | [class*="PartnerBanner"]
+direct_hide_selectors = [class*="kinopoisk-ad"] | [class*="KPAd"] | .banner_widget | [id^="kp_ad_"] | [id^="adfox"] | [class*="advert"] | [class*="promo-banner"] | [class*="PremiumBanner"] | [class*="ad-block"] | [data-testid*="ad"] | [class*="Advertisement"] | [class*="FloatPlayer"] .ad | [class*="PartnerBanner"] | button[class*=" styles_adButton_"] | div[class$="__adfox"] | div[id$="_super_banner"] | div[id$="_top_banner"] | div[id$="banner_300_600"]
 
 [dzen]
 # Яндекс Дзен / dzen.ru — news feed, uses Yandex ad network
 labels = реклама | промо
-direct_hide_selectors = [data-zen-type="ad"] | [class*="zen-ad"] | [class*="DzenAd"] | [class*="article_adv"] | [id^="adfox"] | [class*="adv_"] | [class*="PromoChannel"] | [class*="NativeAd"] | [class*="AdvLabel"] | [data-stat-click*="advert"] | [class*="PartnerChannel"]
+direct_hide_selectors = [data-zen-type="ad"] | [class*="zen-ad"] | [class*="DzenAd"] | [class*="article_adv"] | [id^="adfox"] | [class*="adv_"] | [class*="PromoChannel"] | [class*="NativeAd"] | [class*="AdvLabel"] | [data-stat-click*="advert"] | [class*="PartnerChannel"] | div[class*="DirectAdvert"] | div[class*="MyTargetAdvert"] | div[class*="_advertItem"] | div[class*="news-advert"] | div[data-ad-index] | div[id*="discrete-feed-banner"] | [data-testid="bottom-ad"] | [data-testid="right-ad-block"] | [data-type="rtb_card"] | .adv-skeleton___main | div[class*="_rightAdWrapper"] | div[class*="-top-ad-"] | [id*="_R-I-"] | [id*="_R-N-"] | div[class*="news_branding"]
 selectors = [class*="card__wrap"] | [class*="feed-item"]
 innertext_selectors = [class*="card__wrap"] | [class*="feed-item"]
 innertext_labels = Реклама | Промо | Партнёр
@@ -422,7 +425,7 @@ hide_closest = [class*="card__wrap"] | [class*="feed-item"]
 [globo]
 # Globo media group — g1.globo.com, gshow.globo.com, ge.globo.com, etc.
 labels = publicidade | patrocinado | anúncio | parceiro
-direct_hide_selectors = [class*="glb-ad"] | [id^="glb-ad-"] | [class*="widget--ad"] | [data-type="ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="gpt-ad"] | [class*="globo-ad"] | [class*="advertisement"] | [class*="oferta-highlight"] | [class*="anuncio"] | [id^="anuncio"] | [class*="pub_"] | [id^="div-gpt-ad"] | [class*="DFP"] | iframe[src*="advertising.globo.com"] | [class*="ad-content"] | [class*="adunit"]
+direct_hide_selectors = [class*="glb-ad"] | [id^="glb-ad-"] | [class*="widget--ad"] | [data-type="ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="gpt-ad"] | [class*="globo-ad"] | [class*="advertisement"] | [class*="oferta-highlight"] | [class*="anuncio"] | [id^="anuncio"] | [class*="pub_"] | [id^="div-gpt-ad"] | [class*="DFP"] | iframe[src*="advertising.globo.com"] | [class*="ad-content"] | [class*="adunit"] | .especial-publicitario | glb-ad | #banner_vitrine | .adv-item | .container-adv | li[data-item-type="advertising"] | .banner-fix-cls
 selectors = [class*="feed-post"] | [class*="bastian-feed-item"] | article
 innertext_selectors = [class*="feed-post"] | [class*="bastian-feed-item"]
 innertext_labels = Publicidade | Patrocinado | Anúncio | Parceiro
@@ -432,27 +435,27 @@ hide_closest = [class*="feed-post"] | [class*="bastian-feed-item"] | article
 [uol]
 # UOL — Brazil's largest portal
 labels = publicidade | patrocinado | anúncio
-direct_hide_selectors = [id^="uol-ad-"] | [class*="uol-ad"] | [class*="uol_ad"] | [id^="divad"] | .divad | [class*="bnnr"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [id^="anuncio"] | [class*="Banner"] | [class*="advertisement"] | iframe[src*="ads.uol.com.br"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [id^="taboola"] | [class*="outbrain"]
+direct_hide_selectors = [id^="uol-ad-"] | [class*="uol-ad"] | [class*="uol_ad"] | [id^="divad"] | .divad | [class*="bnnr"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [id^="anuncio"] | [class*="Banner"] | [class*="advertisement"] | iframe[src*="ads.uol.com.br"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [id^="taboola"] | [class*="outbrain"] | #area_flutuante_2 | #banner-300x250-3-area | #uolpd-video-inarticle | .uolpd-video-inarticle | .ads | .advertisementArea--showLabel | .apb | .ms-apb | .ms-hapb | .ms-ap-native | .area-publi | .area-publi-topo | .banner_conteudo | .box-banner | .cardads | .content-banner | .corpoPubli | .itemAds | .jupiter-ads | .m1-ads-placeholder | .pub-box | .pub-topo | .pub_left_text | .publi-dir | .up-floating | .wrapper-banner | .wrapper-bnr | .block--pub-super | .banner-anuncio | .ads-billboard | .banner-stick | .bannersticky-base | .bannersticky-top-container | .mod-publieditorial | .moduloBanner | #publicity | #bloco-native-rodape
 
 [terra]
 # Terra — portal
 labels = publicidade | patrocinado | anúncio
-direct_hide_selectors = [id^="terra-ad"] | [class*="terra-ad"] | .tc-ad | [class*="tc_ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | iframe[src*="ads.terra.com.br"] | [class*="Banner"] | [class*="taboola"] | [class*="outbrain"]
+direct_hide_selectors = [id^="terra-ad"] | [class*="terra-ad"] | .tc-ad | [class*="tc_ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | iframe[src*="ads.terra.com.br"] | [class*="Banner"] | [class*="taboola"] | [class*="outbrain"] | [data-app-name="app.svaAd"]
 
 [r7]
 # R7 — Record news portal
 labels = publicidade | patrocinado | anúncio
-direct_hide_selectors = [class*="r7-ads"] | [id^="r7-ad"] | [class*="advertising-widget"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="Banner"] | [class*="taboola"] | iframe[src*="ads.r7.com"]
+direct_hide_selectors = [class*="r7-ads"] | [id^="r7-ad"] | [class*="advertising-widget"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="Banner"] | [class*="taboola"] | iframe[src*="ads.r7.com"] | div[data-testid="ad-shell"] | .r7-flex-adv__placeholder | .widget-24x1-ultimas__taboola
 
 [ig]
 # iG — portal
 labels = publicidade | patrocinado | anúncio
-direct_hide_selectors = [id^="ig-ad"] | [class*="ig-ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [class*="outbrain"] | iframe[src*="ads.ig.com.br"]
+direct_hide_selectors = [id^="ig-ad"] | [class*="ig-ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [class*="outbrain"] | iframe[src*="ads.ig.com.br"] | #superbanner | .superbanner | #mrec2 | #rodapefixo | .banner_interna | .ig-ad | .iGh__small-ad | .ppAnchorWidthAd | .duasPubli | .Ads | .ads | .betOrBillboard
 
 [estadao]
 # Estado de São Paulo — newspaper
 labels = publicidade | patrocinado | conteúdo patrocinado
-direct_hide_selectors = [class*="estadao-ad"] | [id^="estadao-ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="piano-ad"] | [class*="paywall"] | [class*="subscription-wall"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [class*="outbrain"] | [class*="Banner"] | [class*="ConteudoPatrocinado"]
+direct_hide_selectors = [class*="estadao-ad"] | [id^="estadao-ad"] | [class*="publicidade"] | [id*="publicidade"] | [class*="piano-ad"] | [class*="paywall"] | [class*="subscription-wall"] | [class*="anuncio"] | [class*="advertisement"] | [id^="div-gpt-ad"] | [class*="gpt-ad"] | [class*="taboola"] | [class*="outbrain"] | [class*="Banner"] | [class*="ConteudoPatrocinado"] | .area-publicidade-rectangular | .container-pub-selo | .ads-container | .ajuste-banner | .banner
 selectors = article | [class*="story-card"]
 innertext_selectors = article | [class*="story-card"]
 innertext_labels = Publicidade | Patrocinado | Conteúdo Patrocinado
@@ -462,7 +465,7 @@ hide_closest = article | [class*="story-card"]
 [olx]
 # OLX Brazil — classifieds, promoted listings
 labels = destaque | super destaque | patrocinado
-direct_hide_selectors = [class*="olx-ad"] | .promoted-badge | [data-adsstate="true"] | [class*="SuperDestaque"] | [class*="ad-listing-item--highlighted"] | [class*="listing-promoted"] | [class*="AdCard--featured"] | [data-testid*="promoted"] | [class*="highlight-badge"] | [class*="PatrocinadorBadge"]
+direct_hide_selectors = [class*="olx-ad"] | .promoted-badge | [data-adsstate="true"] | [class*="SuperDestaque"] | [class*="ad-listing-item--highlighted"] | [class*="listing-promoted"] | [class*="AdCard--featured"] | [data-testid*="promoted"] | [class*="highlight-badge"] | [class*="PatrocinadorBadge"] | #advertising-home-banner-top | div[data-testid="advertising-home-banner-top_div"] | div[data-testid="advertising-wrapper"] | div[data-testid="adv-placeholder-adview"] | .olx-ad-card:has([aria-label="Impulsionado"]) | #stick-to-top
 selectors = [class*="AdCard"] | li[class*="ad-list-item"]
 innertext_selectors = [class*="AdCard"] | li[class*="ad-list-item"]
 innertext_labels = Destaque | Super Destaque | Patrocinado
