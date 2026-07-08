@@ -15,9 +15,10 @@ class CustomEventStub {
   constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; }
 }
 
+const docClickHandlers = [];
 const documentStub = {
   readyState: 'loading',
-  addEventListener() {},
+  addEventListener(type, fn) { if (type === 'click') docClickHandlers.push(fn); },
   createElement(tag) {
     return { tagName: tag.toUpperCase(), style: { cssText: '' }, remove() {}, contentWindow: { closed: false } };
   },
@@ -41,6 +42,15 @@ class HTMLElementStub extends ElementStub {}
 class EventTargetStub {}
 class MutationObserverStub { observe() {} disconnect() {} }
 class HistoryStub { pushState() {} replaceState() {} }
+// Location stub with a real href accessor so blockAdNavigations can patch it.
+class LocationStub {}
+Object.defineProperty(LocationStub.prototype, 'href', {
+  get() { return this._href; }, set(v) { this._href = v; }, configurable: true, enumerable: true,
+});
+const locationStub = new LocationStub();
+locationStub._href = 'https://test.example.com/';
+locationStub.hostname = 'test.example.com';
+locationStub.origin = 'https://test.example.com';
 
 const sandbox = {
   Node: NodeStub, Element: ElementStub, HTMLElement: HTMLElementStub,
@@ -51,10 +61,11 @@ const sandbox = {
   setTimeout, clearTimeout, setInterval, clearInterval, queueMicrotask,
   CustomEvent: CustomEventStub,
   XMLHttpRequest: FakeXHR,
-  Location: class Location {},
+  Location: LocationStub,
+  URL,
   Request: class Request { clone() { return this; } },
   document: documentStub,
-  location: { href: 'https://test.example.com/', hostname: 'test.example.com' },
+  location: locationStub,
   navigator: { userAgent: 'test' },
   open: () => ({ close() {}, closed: false }), // window.open
 };
@@ -233,14 +244,62 @@ function sendRules(rules) {
     !!cached && Array.isArray(cached.json_prune_xhr) && Array.isArray(cached.no_window_open_if),
     JSON.stringify(cached));
   // Rules WITHOUT response-filter keys → cache cleared (site no longer needs
-  // boot wrappers, e.g. after a rules update removed them)
-  sendRules({ no_window_open_if: ['/x\\.com/'] });
+  // boot wrappers, e.g. after a rules update removed them). no_window_open_if
+  // now counts as a boot-cached key, so use a cosmetic-only rule set here.
+  sendRules({ direct_hide_selectors: ['.ad'] });
   check('cache cleared when rules have no response-filter keys',
     !localStorageStore.has('__abrules'));
   sendRules({ json_prune_fetch: ['adPlacements'] });
   const recached = JSON.parse(localStorageStore.get('__abrules') || 'null');
   check('cache re-saved on next dispatch with response-filter keys',
     !!recached && Array.isArray(recached.json_prune_fetch));
+
+  console.log('\n== 7. blockAdNavigations — back-button hijack vectors ==');
+  // Protocol-relative cross-origin URL via the patched location.href setter.
+  sandbox.location.href = '//ads.evil.example/land';
+  check('protocol-relative cross-origin href blocked',
+    sandbox.location._href === 'https://test.example.com/', sandbox.location._href);
+  // Same-origin absolute URL passes through.
+  sandbox.location.href = 'https://test.example.com/next';
+  check('same-origin href allowed', sandbox.location._href === 'https://test.example.com/next');
+  sandbox.location._href = 'https://test.example.com/'; // reset for URL resolution
+
+  // window.open with a same-tab target must obey the same origin policy.
+  check('window.open _self to ad origin blocked',
+    sandbox.open('https://ads.evil.example/p', '_self') === null);
+  check('window.open _top protocol-relative blocked',
+    sandbox.open('//ads.evil.example/p', '_top') === null);
+  check('window.open _self same-origin allowed',
+    sandbox.open('https://test.example.com/page', '_self') !== null);
+  check('window.open _blank not intercepted here',
+    sandbox.open('https://ads.evil.example/p', '_blank') !== null);
+
+  // Synthetic (isTrusted=false) clicks on cross-origin anchors are cancelled.
+  function fireClick(ev) { docClickHandlers.forEach(h => h(ev)); return ev; }
+  let prevented = false;
+  fireClick({
+    isTrusted: false,
+    target: { localName: 'a', href: 'https://ads.evil.example/land', parentNode: null },
+    preventDefault() { prevented = true; }, stopPropagation() {},
+  });
+  check('synthetic click on cross-origin anchor cancelled', prevented);
+  prevented = false;
+  fireClick({
+    isTrusted: false,
+    target: { localName: 'a', href: 'https://test.example.com/ok', parentNode: null },
+    preventDefault() { prevented = true; }, stopPropagation() {},
+  });
+  check('synthetic click on same-origin anchor untouched', !prevented);
+  // A real user click toward an origin then permits that origin briefly.
+  fireClick({
+    isTrusted: true,
+    target: { localName: 'a', href: 'https://partner.example/out', parentNode: null },
+    preventDefault() {}, stopPropagation() {},
+  });
+  sandbox.location.href = 'https://partner.example/out';
+  check('user-clicked origin allowed through href',
+    sandbox.location._href === 'https://partner.example/out', sandbox.location._href);
+  sandbox.location._href = 'https://test.example.com/';
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
