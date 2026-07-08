@@ -1173,20 +1173,30 @@
     var _allowedTimer = 0;
 
     // Record the origin the user is navigating toward when they click an <a>.
-    // Synthetic/programmatic clicks (isTrusted=false) are ignored.
+    // Synthetic/programmatic clicks (isTrusted=false) never grant an origin —
+    // and if they target a cross-origin anchor, the native navigation itself
+    // is cancelled (ad scripts fabricate <a>.click() to escape the Location
+    // wrappers below, e.g. from a popstate handler on Back-button hijacks).
     document.addEventListener('click', function(ev) {
-      if (!ev.isTrusted) return;
       var t = ev.target;
       while (t) {
-        if (t.localName === 'a' && t.href && t.href.indexOf('javascript') !== 0) {
-          try {
-            _allowedOrigin = new URL(t.href).origin;
-            clearTimeout(_allowedTimer);
-            _allowedTimer = setTimeout(function() { _allowedOrigin = null; }, 1000);
-          } catch(e) {}
-          return;
-        }
+        if (t.localName === 'a' && t.href && t.href.indexOf('javascript') !== 0) break;
         t = t.parentNode;
+      }
+      if (!ev.isTrusted) {
+        if (t && !_isSafeNavigation(t.href)) {
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+        return;
+      }
+      if (t) {
+        try {
+          _allowedOrigin = new URL(t.href).origin;
+          clearTimeout(_allowedTimer);
+          _allowedTimer = setTimeout(function() { _allowedOrigin = null; }, 1000);
+        } catch(e) {}
+        return;
       }
       // Click was on a non-anchor element — no cross-origin navigation expected.
       clearTimeout(_allowedTimer);
@@ -1194,12 +1204,13 @@
     }, { capture: true });
 
     function _isSafeNavigation(url) {
-      if (typeof url !== 'string' || !url.startsWith('http')) return true;
-      try {
-        var targetOrigin = new URL(url).origin;
-        if (targetOrigin === location.origin) return true;
-        if (_allowedOrigin !== null && targetOrigin === _allowedOrigin) return true;
-      } catch(e) { return true; }
+      // Resolve relative and protocol-relative forms ("//ads.example/x") against
+      // the page URL — comparing the raw string lets "//" and "HTTP://" slip by.
+      var abs;
+      try { abs = new URL(url, location.href); } catch(e) { return true; }
+      if (abs.protocol !== 'http:' && abs.protocol !== 'https:') return true;
+      if (abs.origin === location.origin) return true;
+      if (_allowedOrigin !== null && abs.origin === _allowedOrigin) return true;
       return false;
     }
 
@@ -1228,6 +1239,18 @@
     }
     _wrapLocationFn('assign');
     _wrapLocationFn('replace');
+
+    // window.open(url, '_self'/'_top'/'_parent') navigates the current tab
+    // without touching the Location accessors patched above — the remaining
+    // same-tab escape hatch for popstate/back-button redirect scripts.
+    try {
+      var _origOpen = window.open;
+      window.open = function (url, target) {
+        var t = target == null ? '' : String(target).toLowerCase();
+        if ((t === '_self' || t === '_top' || t === '_parent') && !_isSafeNavigation(url)) return null;
+        return _origOpen.apply(this, arguments);
+      };
+    } catch (e) {}
   }
 
   // ── preventSetTimeout ────────────────────────────────────────────
@@ -1917,7 +1940,7 @@
   // response-filter rules arrive anyway (very first visit, rules update),
   // the registration functions install the wrappers lazily mid-session.
   var _RULES_CACHE_KEY = '__abrules';
-  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit'];
+  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'no_window_open_if'];
 
   function _saveScriptletRulesCache(rules) {
     var has = false;
