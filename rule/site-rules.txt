@@ -108,9 +108,9 @@ direct_hide_selectors =  ytd-banner-promo-renderer | ytd-statement-banner-render
 
 [facebook]
 json_prune_fetch = require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer.sideFeedUnit.nodes.[].new_adverts.nodes.[-].sponsored_data | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.serpResponse.results.edges.[-].rendering_strategy.view_model.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.marketplace_search.feed_units.edges.[-].node.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer.marketplace_feed_stories.edges.[-].node.story.sponsored_data.ad_id
-json_prune_xhr = data.viewer.sideFeedUnit.nodes.[].new_adverts.nodes.[-].sponsored_data 
-json_edit = ..data.viewer..nodes.*[?.__typename=="AdsSideFeedUnit"] | ..node[?.*.__typename=="SponsoredData"] | ..node[?.__typename=="MarketplaceFeedAdStory"]
-jsonl_edit_xhr = .data[?.category=="SPONSORED"].node | ..node[?.*.__typename=="SponsoredData"] | .data.viewer.news_feed.edges.*[?.category=="SPONSORED"].node | ..node[?.__typename=="MarketplaceFeedAdStory"] | data.viewer.instream_video_ads data.scrubber
+json_prune_xhr = data.viewer.sideFeedUnit.nodes.[].new_adverts.nodes.[-].sponsored_data | data.viewer.instream_video_ads data.scrubber
+json_edit = ..data.viewer..nodes.*[?.__typename=="AdsSideFeedUnit"] | ..node[?.*.__typename=="SponsoredData"] | ..node[?.__typename=="MarketplaceFeedAdStory"] | ..instream_video_ad_breaks_comet
+jsonl_edit_xhr = .data[?.category=="SPONSORED"].node | ..node[?.*.__typename=="SponsoredData"] | .data.viewer.news_feed.edges.*[?.category=="SPONSORED"].node | ..node[?.__typename=="MarketplaceFeedAdStory"]
 prevent_dom_bypass = Node.prototype.appendChild | Element.prototype.insertAdjacentElement | Element.prototype.insertAdjacentElement
 selectors = [role="feed"] [role="article"] | [role="feed"] [role="group"] | div[data-pagelet*="FeedUnit"] | div[data-pagelet*="VideoFeed"] [role="article"] | div[data-pagelet*="Reels"] [role="article"] | [role="complementary"] [data-visualcompletion="ignore-dynamic"]
 labels = Sponsored | Sponsorisé | Gesponsert | Patrocinado | Sponsorizzato | Gesponsord | Sponsorowane | Sponsorlu | Bersponsor | Ditaja
