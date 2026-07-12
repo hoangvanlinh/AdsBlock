@@ -12,8 +12,10 @@
 #                                     '|' inside is regex alternation.
 #                                     Do NOT use '=' inside a regex.
 [host_patterns]
+m.youtube.com = youtube
 youtube.com = youtube
 facebook.com = facebook
+web.facebook.com = facebook
 reddit.com = reddit
 instagram.com = instagram
 tiktok.com = tiktok
@@ -113,12 +115,12 @@ json_edit = ..data.viewer..nodes.*[?.__typename=="AdsSideFeedUnit"] | ..node[?.*
 jsonl_edit_xhr = .data[?.category=="SPONSORED"].node | ..node[?.*.__typename=="SponsoredData"] | .data.viewer.news_feed.edges.*[?.category=="SPONSORED"].node | ..node[?.__typename=="MarketplaceFeedAdStory"]
 prevent_dom_bypass = Node.prototype.appendChild | Element.prototype.insertAdjacentElement | Element.prototype.insertAdjacentElement
 selectors = [role="feed"] [role="article"] | [role="feed"] [role="group"] | div[data-pagelet*="FeedUnit"] | div[data-pagelet*="VideoFeed"] [role="article"] | div[data-pagelet*="Reels"] [role="article"] | [role="complementary"] [data-visualcompletion="ignore-dynamic"]
-labels = Sponsored | Sponsorisé | Gesponsert | Patrocinado | Sponsorizzato | Gesponsord | Sponsorowane | Sponsorlu | Bersponsor | Ditaja
+labels = Sponsored | Sponsorisé | Gesponsert | Patrocinado | Sponsorizzato | Gesponsord | Sponsorowane | Sponsorlu | Bersponsor | Ditaja | Được tài trợ
 link_patterns = /ads/about/ | sponsorships | sponsored
 context_selectors = [aria-label] | a[aria-label] | span[aria-label] | a[href] | span | div[dir="auto"]
 attr_keys = aria-label | data-ad-rendering-role | data-ad-comet-preview | data-ad-preview | data-pagelet | role
 direct_hide_selectors = [role="article"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="group"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | div[data-pagelet]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="feed"] [role="article"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has([data-ad-comet-preview]) | div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="FeedUnit"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="Reels"] [role="article"]:has([data-ad-rendering-role]) | div[data-pagelet*="Reels"] [role="group"]:has([data-ad-rendering-role]) | div[data-pagelet*="VideoFeed"] [role="article"]:has([data-ad-rendering-role]) | div[data-visualcompletion="ignore-late-mutation"]:has([data-ad-rendering-role]) | div[role="complementary"] > div > div > div > div > div > div > div[data-visualcompletion="ignore-late-mutation"] | a[aria-label="Advertiser link"] | a[aria-label="Advertiser"]
-ad_host_selectors = a[href^="/ads/about/"] | a[href*="/ads/about/"] | a[aria-label^="Sponsored"] | a[aria-label^="Sponsorisé"] | a[aria-label^="Gesponsert"] | a[aria-label^="Patrocinado"] | a[aria-label^="Sponsorizzato"] | a[aria-label^="Gesponsord"] | a[aria-label^="Sponsorowane"] | a[aria-label^="Sponsorlu"] | a[aria-label^="Bersponsor"] | a[aria-label^="Ditaja"] | span[aria-label^="Sponsored"] | div[aria-label*="sponsored content"] | a[attributionsrc*="privacy_sandbox/comet/register/source"]
+ad_host_selectors = a[href^="/ads/about/"] | a[href*="/ads/about/"] | a[aria-label^="Sponsored"] | a[aria-label^="Sponsorisé"] | a[aria-label^="Gesponsert"] | a[aria-label^="Patrocinado"] | a[aria-label^="Sponsorizzato"] | a[aria-label^="Gesponsord"] | a[aria-label^="Sponsorowane"] | a[aria-label^="Sponsorlu"] | a[aria-label^="Bersponsor"] | a[aria-label^="Ditaja"] | span[aria-label^="Sponsored"] | div[aria-label*="sponsored content"] | a[aria-label^="Được tài trợ"] | span[aria-label^="Được tài trợ"] | a[attributionsrc*="privacy_sandbox/comet/register/source"]
 hide_closest = [role="article"] | [role="group"] | div[data-pagelet] | div[data-visualcompletion="ignore-late-mutation"]
 
 
