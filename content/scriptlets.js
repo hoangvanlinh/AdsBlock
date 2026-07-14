@@ -802,10 +802,7 @@
   // resolves — not when fetch() is called — so requests fired during the
   // config round-trip are still pruned.
   var _fetchPruneRules = [];
-  var _fetchProxyInstalled = false;
   function _installFetchResponseProxy() {
-    if (_fetchProxyInstalled) return;
-    _fetchProxyInstalled = true;
     const safe = safeSelf();
     const applyHandler = function (target, thisArg, args) {
       const fetchPromise = Reflect.apply(target, thisArg, args);
@@ -848,7 +845,7 @@
         }).catch(() => responseBefore);
       }).catch(() => fetchPromise);
     };
-    self.fetch = new Proxy(self.fetch, { apply: applyHandler });
+    self.fetch = new proxyApplyFn(self.fetch, { apply: applyHandler });
   }
 
   function jsonPruneFetchResponse(rawPrunePaths, rawNeedlePaths) {
@@ -873,10 +870,7 @@
   var _xhrPruneRules = []; // { prunePaths, needlePaths, propNeedles }
   var _xhrJsonlRules = []; // { jsonp, propNeedles }
   var _xhrReplaceRules = []; // { re, replacement, propNeedles } — trusted_replace_xhr_response
-  var _xhrProxyInstalled = false;
   function _installXhrResponseProxy() {
-    if (_xhrProxyInstalled) return;
-    _xhrProxyInstalled = true;
     const safe = safeSelf();
     const xhrInstances = new WeakMap();
     const applicableRules = function (rules, xhrDetails) {
@@ -1941,10 +1935,7 @@
   // rules land in _jsonEditRules when the async config arrives.
   var _jsonEditRules = [];
   var _jsonPruneRules = []; // { prunePaths, needlePaths } — applied by the same JSON.parse proxy
-  var _jsonEditProxyInstalled = false;
   function _installJsonEditProxy() {
-    if (_jsonEditProxyInstalled) return;
-    _jsonEditProxyInstalled = true;
     proxyApplyFn('JSON.parse', function(context) {
       const obj = context.reflect();
       if (!_scriptletsEnabled) return obj;
@@ -2274,33 +2265,33 @@
   var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if'];
 
   function _saveScriptletRulesCache(rules) {
-    var has = false;
-    for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
-      var v = rules[_RESPONSE_FILTER_RULE_KEYS[i]];
-      if (v && v.length) { has = true; break; }
-    }
-    // Only sites with response-filter rules ever get the key written;
-    // removeItem on all others is a no-op that leaves no trace.
-    try {
-      if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(rules));
-      else localStorage.removeItem(_RULES_CACHE_KEY);
-    } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
+    // var has = false;
+    // for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
+    //   var v = rules[_RESPONSE_FILTER_RULE_KEYS[i]];
+    //   if (v && v.length) { has = true; break; }
+    // }
+    // // Only sites with response-filter rules ever get the key written;
+    // // removeItem on all others is a no-op that leaves no trace.
+    // try {
+    //   if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(rules));
+    //   else localStorage.removeItem(_RULES_CACHE_KEY);
+    // } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
   }
 
   (function () {
     var cached = null;
-    try { cached = localStorage.getItem(_RULES_CACHE_KEY); } catch (e) {}
-    if (!cached) return;
-    try { _installFetchResponseProxy(); } catch (e) {}
-    try { _installXhrResponseProxy(); } catch (e) {}
-    try { _installJsonEditProxy(); } catch (e) {}
-    try {
-      var rules = JSON.parse(cached);
-      // The cache lives in page-writable storage, so treat it as untrusted
-      // input: anything non-object is ignored. A page corrupting it can only
-      // affect its own MAIN world — same privilege it already has.
-      if (rules && typeof rules === 'object') _applyScriptletRules(rules);
-    } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
+    /// try { cached = localStorage.getItem(_RULES_CACHE_KEY); } catch (e) {}
+    /// if (!cached) return;
+    /// try { _installFetchResponseProxy(); } catch (e) {}
+    /// try { _installXhrResponseProxy(); } catch (e) {}
+    /// try { _installJsonEditProxy(); } catch (e) {}
+    /// try {
+    ///   var rules = JSON.parse(cached);
+    ///   // The cache lives in page-writable storage, so treat it as untrusted
+    ///   // input: anything non-object is ignored. A page corrupting it can only
+    ///   // affect its own MAIN world — same privilege it already has.
+    ///   if (rules && typeof rules === 'object') _applyScriptletRules(rules);
+    /// } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
   })();
 
   // Bridge: content.js dispatches '__adblock_scriptlet_rules__' after async rule load.
@@ -2316,5 +2307,34 @@
     _noWinOpenRules.length = 0;
   });
 
+  const original = EventTarget.prototype.addEventListener;
 
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (type === "unload" || type === "beforeunload") {
+      console.debug("[Blocked]", type);
+      return;
+    }
+    return Reflect.apply(original, this, [type, listener, options]);
+  };
+  const desc = Object.getOwnPropertyDescriptor(Window.prototype, "onunload");
+
+  Object.defineProperty(window, "onunload", {
+    configurable: true,
+    enumerable: true,
+    get() {
+      return desc?.get?.call(this);
+    },
+    set(fn) {
+      console.debug("Blocked onunload");
+      // Không lưu callback
+    }
+  });
+  const remove = EventTarget.prototype.removeEventListener;
+
+  EventTarget.prototype.removeEventListener = function(type, listener, options) {
+    if (type === "unload" || type === "beforeunload") {
+      return;
+    }
+    return Reflect.apply(remove, this, [type, listener, options]);
+  };
 }());
