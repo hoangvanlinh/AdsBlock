@@ -50,7 +50,9 @@ function parseRuleText(text) {
     const key = line.slice(0, eq).trim().toLowerCase();
     const value = line.slice(eq + 1).trim();
     if (!key) continue;
-    const newVals = value ? value.split('|').map(part => part.trim()).filter(Boolean) : [];
+    // Values are '|'-separated; a literal '|' inside a value (regex
+    // alternation in scriptlet args) is written as '\\|' and unescaped here.
+    const newVals = value ? value.split(/(?<!\\)\|/).map(part => part.trim().replace(/\\\|/g, '|')).filter(Boolean) : [];
     // Merge duplicate keys across multiple source files (same semantics as the
     // content-side parser): append values not already present.
     if (out[section][key] && out[section][key].length) {
