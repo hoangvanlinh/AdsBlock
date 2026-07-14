@@ -83,6 +83,37 @@ rumble.com = rumble
 # Format:
 # [section]
 # key = value1 | value2 | value3
+#
+# ── Scriptlet keys (run in MAIN world, see content/scriptlets.js) ────────────
+# Multiple rules per key are separated by '|'. Multi-argument rules separate
+# arguments with a comma unless noted otherwise.
+#   json_prune_fetch        = prunePaths                 (fetch JSON responses)
+#   json_prune_xhr          = prunePaths                 (XHR JSON responses)
+#   json_prune              = prunePaths[, needlePaths]  (every JSON.parse)
+#   json_edit               = JSONPath query             (every JSON.parse)
+#   jsonl_edit_xhr          = JSONPath query [urlPattern](JSONL XHR responses)
+#   trusted_replace_xhr_response = pattern, replacement[, propsToMatch]
+#                             (regex text replace on XHR bodies; write a
+#                              literal '|' as '\|', empty replacement as ", ,")
+#   set_constant            = chain value                (space-separated)
+#   no_window_open_if       = pattern [delay [decoy]]    (space-separated)
+#   prevent_xhr             = propsToMatch
+#   prevent_fetch           = propsToMatch[, responseBody[, responseType]]
+#   prevent_dom_bypass      = methodPath [targetProp]    (space-separated)
+#   prevent_settimeout      = pattern    (block matching setTimeout callbacks)
+#   prevent_setinterval     = pattern    (block matching setInterval callbacks)
+#   prevent_raf             = pattern    (noop matching rAF callbacks, ! inverts)
+#   prevent_aeld            = eventType[, handlerPattern] (block addEventListener)
+#   adjust_settimeout       = needle[, delay[, boost]]   (rescale timer delays)
+#   adjust_setinterval      = needle[, delay[, boost]]
+#   abort_current_script    = target[, needle[, context]]
+#   abort_on_property_read  = property.chain
+#   abort_on_property_write = property.chain
+#   abort_on_stack_trace    = property.chain[, stackNeedle]
+#   no_eval_if              = pattern    (block matching eval payloads)
+#   no_webrtc               = 1          (neuter RTCPeerConnection)
+#   prevent_bab             = 1          (defuse BlockAdBlock)
+#   disable_newtab_links    = 1          (kill target=_blank link popups)
 
 [global]
 # Block window.open() calls to ad/tracker domains (popup ads & redirect tabs).
@@ -109,8 +140,10 @@ set_constant = ytInitialPlayerResponse.playerAds undefined | ytInitialPlayerResp
 direct_hide_selectors =  ytd-banner-promo-renderer | ytd-statement-banner-renderer | ytd-promoted-sparkles-web-renderer | ytd-promoted-video-renderer | ytd-display-ad-renderer | ytd-compact-promoted-video-renderer | ytd-action-companion-ad-renderer | ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | #player-ads | #masthead-ad | #panels > ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"] | tp-yt-paper-dialog:has(ytd-enforcement-message-view-model) | ytd-mealbar-promo-renderer | ytd-popup-container:has(ytd-mealbar-promo-renderer) | ytd-background-promo-renderer | ytd-official-card-renderer | tp-yt-paper-dialog:has(yt-premium-offer-renderer) | ytd-companion-slot-renderer:has([data-style-type="PREMIUM"]) | .ytd-mealbar-promo-renderer | ytd-survey-notification-renderer | #offer-module | .ytp-paid-content-overlay | .ytp-premium-yoodle | ytd-rich-section-renderer:has(ytd-statement-banner-renderer) | ytd-enforcement-message-view-model | tp-yt-paper-dialog:has(yt-upsell-dialog-renderer) | ytd-rich-item-renderer:has(ytd-ad-slot-renderer) | ytd-video-renderer[is-ad] | ytd-rich-item-renderer[is-ad] | ytd-reel-item-renderer[is-ad] | ytd-search-pyv-renderer | ytd-promoted-sparkles-text-search-renderer | ytd-movie-offer-module-renderer | ytd-compact-movie-renderer[is-ad] | #shopping-timely-shelf | yt-shopping-timely-shelf-content-view-model | yt-overlay-sticker | ytd-ad-slot-renderer | .yt-notification-action-renderer | #description-inner > ytd-merch-shelf-renderer > #main.ytd-merch-shelf-renderer | .ytd-watch-flexy > ytd-merch-shelf-renderer > #main.ytd-merch-shelf-renderer | #shorts-inner-container > .ytd-shorts:has(> .ytd-reel-video-renderer > ytd-ad-slot-renderer) | .ytp-suggested-action > .ytp-suggested-action-badge | .ytReelMetapanelViewModelHost > .ytReelMetapanelViewModelMetapanelItem > .ytShortsSuggestedActionViewModelStaticHost | lazy-list > ad-slot-renderer | ytm-rich-item-renderer > ad-slot-renderer | ytm-companion-slot[data-content-type] > ytm-companion-ad-renderer
 
 [facebook]
-json_prune_fetch = require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer.sideFeedUnit.nodes.[].new_adverts.nodes.[-].sponsored_data | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.serpResponse.results.edges.[-].rendering_strategy.view_model.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.marketplace_search.feed_units.edges.[-].node.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer.marketplace_feed_stories.edges.[-].node.story.sponsored_data.ad_id
+json_prune_fetch = require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer.sideFeedUnit.nodes.[].new_adverts.nodes.[-].sponsored_data | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.serpResponse.results.edges.[-].rendering_strategy.view_model.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.serpResponse.results.edges.[-].relay_rendering_strategy.view_model.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.marketplace_search.feed_units.edges.[-].node.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer.marketplace_feed_stories.edges.[-].node.story.sponsored_data.ad_id
 json_prune_xhr = data.viewer.sideFeedUnit.nodes.[].new_adverts.nodes.[-].sponsored_data | data.viewer.instream_video_ads data.scrubber
+json_prune = require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.node, require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.node.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.serpResponse.results.edges.[-].relay_rendering_strategy.view_model.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.marketplace_search.feed_units.edges.[-].node.story.sponsored_data.ad_id | require.0.3.0.__bbox.require.[].3.1.__bbox.result.data.viewer.marketplace_feed_stories.edges.[-].node.story.sponsored_data.ad_id
+trusted_replace_xhr_response = /\{"node":\{"role":"SEARCH_ADS"[^\n]+?cursor":[^}]+\}/g, {}, /api/graphql | /\{"node":\{"__typename":"MarketplaceFeedAdStory"[^\n]+?"cursor":(?:null\|"\{[^\n]+?\}"\|[^\n]+?MarketplaceSearchFeedStoriesEdge")\}/g, {}, /api/graphql | /\{"node":\{"__typename":"VideoHomeFeedUnitSectionComponent"[^\n]+?"sponsored_data":\{"ad_id"[^\n]+?"cursor":null\}/, {}, /api/graphql
 json_edit = ..data.viewer..nodes.*[?.__typename=="AdsSideFeedUnit"] | ..node[?.*.__typename=="SponsoredData"] | ..node[?.__typename=="MarketplaceFeedAdStory"] | ..instream_video_ad_breaks_comet | ..sponsored_data[?.ad_id]
 jsonl_edit_xhr = .data[?.category=="SPONSORED"].node | ..node[?.*.__typename=="SponsoredData"] | .data.viewer.news_feed.edges.*[?.category=="SPONSORED"].node | ..node[?.__typename=="MarketplaceFeedAdStory"]
 prevent_dom_bypass = Node.prototype.appendChild | Element.prototype.insertAdjacentElement | Element.prototype.insertAdjacentElement
@@ -119,7 +152,7 @@ labels = Sponsored | Sponsorisé | Gesponsert | Patrocinado | Sponsorizzato | Ge
 link_patterns = /ads/about/ | sponsorships | sponsored
 context_selectors = [aria-label] | a[aria-label] | span[aria-label] | a[href] | span | div[dir="auto"]
 attr_keys = aria-label | data-ad-rendering-role | data-ad-comet-preview | data-ad-preview | data-pagelet | role
-direct_hide_selectors = [role="article"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="group"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | div[data-pagelet]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="feed"] [role="article"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has([data-ad-comet-preview]) | div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="FeedUnit"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="Reels"] [role="article"]:has([data-ad-rendering-role]) | div[data-pagelet*="Reels"] [role="group"]:has([data-ad-rendering-role]) | div[data-pagelet*="VideoFeed"] [role="article"]:has([data-ad-rendering-role]) | div[data-visualcompletion="ignore-late-mutation"]:has([data-ad-rendering-role]) | div[role="complementary"] > div > div > div > div > div > div > div[data-visualcompletion="ignore-late-mutation"] | a[aria-label="Advertiser link"] | a[aria-label="Advertiser"]
+direct_hide_selectors = [role="article"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="group"]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | div[data-pagelet]:has([aria-hidden="true"][data-0="0"][data-1="1"]) | [role="feed"] [role="article"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has([data-ad-comet-preview]) | div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) | [role="feed"] [role="article"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="FeedUnit"]:has(a[href*="/ads/about/"]) | div[data-pagelet*="Reels"] [role="article"]:has([data-ad-rendering-role]) | div[data-pagelet*="Reels"] [role="group"]:has([data-ad-rendering-role]) | div[data-pagelet*="VideoFeed"] [role="article"]:has([data-ad-rendering-role]) | div[data-visualcompletion="ignore-late-mutation"]:has([data-ad-rendering-role]) | div[role="complementary"] > div > div > div > div > div > div > div[data-visualcompletion="ignore-late-mutation"] | a[aria-label="Advertiser link"] | a[aria-label="Advertiser"] | #seo_pivots ~ div > div[style^="max-width"] > div[class] > div[style^="max-width"]:has(a[href^="/ads/about/?"])
 ad_host_selectors = a[href^="/ads/about/"] | a[href*="/ads/about/"] | a[aria-label^="Sponsored"] | a[aria-label^="Sponsorisé"] | a[aria-label^="Gesponsert"] | a[aria-label^="Patrocinado"] | a[aria-label^="Sponsorizzato"] | a[aria-label^="Gesponsord"] | a[aria-label^="Sponsorowane"] | a[aria-label^="Sponsorlu"] | a[aria-label^="Bersponsor"] | a[aria-label^="Ditaja"] | span[aria-label^="Sponsored"] | div[aria-label*="sponsored content"] | a[aria-label^="Được tài trợ"] | span[aria-label^="Được tài trợ"] | a[attributionsrc*="privacy_sandbox/comet/register/source"]
 hide_closest = [role="article"] | [role="group"] | div[data-pagelet] | div[data-visualcompletion="ignore-late-mutation"]
 

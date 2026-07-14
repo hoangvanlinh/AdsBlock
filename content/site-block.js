@@ -3,8 +3,8 @@
 var siteKey='';
 
 var _enabled=true,_observer=null,_hidden=0,_raf=0,_config=null;
-// requestIdleCallback scheduling — from uBO removeAttr/onIdle pattern: run cosmetic
-// work when browser is idle; fall back to setTimeout(fn,50) if rIC not available.
+// requestIdleCallback scheduling — run cosmetic work when the browser is
+// idle; fall back to setTimeout(fn,50) if rIC not available.
 var _ric=window.requestIdleCallback?function(fn){return requestIdleCallback(fn,{timeout:100});}:function(fn){return setTimeout(fn,50);};
 // Track widened scan root across multiple schedule() calls in the same mutation batch.
 var _pendingScanRoot=null;
@@ -387,7 +387,13 @@ function attachShadowListeners(){
 // scriptlets in the MAIN world, so rules must only be dispatched while
 // _enabled. _scriptletRulesActive tracks the MAIN-world state so sync() can
 // re-dispatch after an unpause without re-wrapping APIs on every sync.
-var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if','prevent_xhr','json_edit','jsonl_edit_xhr','prevent_dom_bypass'];
+var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if','prevent_xhr','json_edit','jsonl_edit_xhr','prevent_dom_bypass',
+  // Wired 2026-07: previously defined in scriptlets.js but unreachable from rules,
+  // plus newly ported scriptlets (see _applyScriptletRules for value formats).
+  'json_prune','prevent_fetch','prevent_settimeout','prevent_setinterval','prevent_raf','prevent_aeld',
+  'adjust_settimeout','adjust_setinterval','abort_current_script','abort_on_property_read',
+  'abort_on_property_write','abort_on_stack_trace','no_eval_if','no_webrtc','prevent_bab','disable_newtab_links',
+  'trusted_replace_xhr_response'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;

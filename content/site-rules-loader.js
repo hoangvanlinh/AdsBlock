@@ -36,7 +36,8 @@ function parseRules(text){
     var key=line.slice(0,eq).trim().toLowerCase();
     var value=line.slice(eq+1).trim();
     if(!key)continue;
-    var newVals=value?value.split('|').map(function(part){return part.trim();}).filter(Boolean):[];
+    // '\\|' escapes a literal '|' inside a value (kept in sync with background.js).
+    var newVals=value?value.split(/(?<!\\)\|/).map(function(part){return part.trim().replace(/\\\|/g,'|');}).filter(Boolean):[];
     if(out[section][key]&&out[section][key].length){
       // Merge: append values not already present (supports multiple source files)
       var seen=new Set(out[section][key]);

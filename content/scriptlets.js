@@ -132,6 +132,7 @@
     var me = document.currentScript;
 
     function chk() {
+      if (!_scriptletsEnabled) return;
       var e = document.currentScript;
       if (!(e instanceof HTMLScriptElement) || e === me) return;
       if (ctx && !reC.test(e.src)) return;
@@ -154,7 +155,7 @@
   function abortOnPropertyRead(chain) {
     if (typeof chain !== 'string' || !chain) return;
     var tok = _mkToken();
-    function abort() { throw new ReferenceError(tok); }
+    function abort() { if (_scriptletsEnabled) throw new ReferenceError(tok); }
     function proxy(obj, ch) {
       var dot = ch.indexOf('.');
       if (dot === -1) {
@@ -185,7 +186,7 @@
   function abortOnStackTrace(chain, needle) {
     if (typeof chain !== 'string') return;
     var tok = _mkToken();
-    function abort() { throw new ReferenceError(tok); }
+    function abort() { if (_scriptletsEnabled) throw new ReferenceError(tok); }
     function matchesStack(n) {
       if (!n) return true;
       var re = _toRegex(n);
@@ -871,6 +872,7 @@
   // filtered.
   var _xhrPruneRules = []; // { prunePaths, needlePaths, propNeedles }
   var _xhrJsonlRules = []; // { jsonp, propNeedles }
+  var _xhrReplaceRules = []; // { re, replacement, propNeedles } — trusted_replace_xhr_response
   var _xhrProxyInstalled = false;
   function _installXhrResponseProxy() {
     if (_xhrProxyInstalled) return;
@@ -896,7 +898,8 @@
       get response() {
         const innerResponse = super.response;
         if (!_scriptletsEnabled) return innerResponse;
-        if (_xhrPruneRules.length === 0 && _xhrJsonlRules.length === 0) return innerResponse;
+        if (_xhrPruneRules.length === 0 && _xhrJsonlRules.length === 0 &&
+            _xhrReplaceRules.length === 0) return innerResponse;
         const xhrDetails = xhrInstances.get(this);
         if (xhrDetails === undefined) return innerResponse;
         const responseLength = typeof innerResponse === 'string'
@@ -933,6 +936,17 @@
             }
           }
         }
+        // Regex text replacement (string responses only) — runs before the
+        // JSONL pass so line-wise rules see the post-replace text.
+        if (typeof result === 'string') {
+          const replaceRules = applicableRules(_xhrReplaceRules, xhrDetails);
+          for (const rule of replaceRules) {
+            const after = result.replace(rule.re, rule.replacement);
+            if (after === result) continue;
+            result = after;
+            try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+          }
+        }
         // Line-wise JSONL editing (string responses only)
         if (typeof result === 'string') {
           const jsonlRules = applicableRules(_xhrJsonlRules, xhrDetails);
@@ -956,6 +970,22 @@
       prunePaths: rawPrunePaths || '',
       needlePaths: rawNeedlePaths || '',
       propNeedles: parsePropertiesToMatchFn(extraArgs.propsToMatch, 'url'),
+    });
+    _installXhrResponseProxy();
+  }
+
+  // ── trusted-replace-xhr-response ─────────────────────────────────
+  // Regex-replaces text in XHR response bodies whose request matches
+  // `propsToMatch` — e.g. blank out "adPlacements" blobs in raw JSON
+  // before the page script parses them. Registers into the shared XHR
+  // response proxy; no extra XMLHttpRequest layer per rule.
+  function trustedReplaceXhrResponse(pattern, replacement, propsToMatch) {
+    if (!pattern) return;
+    var re = pattern === '*' ? /[\s\S]*/ : _toRegex(pattern);
+    _xhrReplaceRules.push({
+      re: re,
+      replacement: replacement || '',
+      propNeedles: parsePropertiesToMatchFn(propsToMatch || '', 'url'),
     });
     _installXhrResponseProxy();
   }
@@ -1035,6 +1065,7 @@
     const shouldPrevent = (t, h) =>
       reType.test(t) && rePattern.test(typeof h === 'string' ? h : '');
     const proxyFn = function (context) {
+      if (!_scriptletsEnabled) return context.reflect();
       const { callArgs } = context;
       let t = '', h = '';
       try { t = String(callArgs[0]); } catch (e) {}
@@ -1263,6 +1294,7 @@
     // timers in a loop, and each retry is the same block, not a new one.
     var _reported = false;
     proxyApplyFn('setTimeout', function(context) {
+      if (!_scriptletsEnabled) return context.reflect();
       var fn = context.callArgs[0];
       var fnStr = '';
       try {
@@ -1286,6 +1318,7 @@
     var rePattern = (pattern instanceof RegExp) ? pattern : _toRegex(pattern || '');
     var _matchAll = !pattern;
     proxyApplyFn('setInterval', function(context) {
+      if (!_scriptletsEnabled) return context.reflect();
       var fn = context.callArgs[0];
       var fnStr = '';
       try {
@@ -1297,8 +1330,163 @@
     });
   }
 
+  // ── abortOnPropertyWrite ─────────────────────────────────────────
+  // Throws when any script WRITES the target property chain — blocks
+  // ad scripts from installing their globals.
+  function abortOnPropertyWrite(prop) {
+    if (typeof prop !== 'string' || !prop) return;
+    var tok = _mkToken();
+    var owner = window;
+    for (;;) {
+      var pos = prop.indexOf('.');
+      if (pos === -1) break;
+      owner = owner[prop.slice(0, pos)];
+      if (owner instanceof Object === false) return;
+      prop = prop.slice(pos + 1);
+    }
+    try { delete owner[prop]; } catch (e) {}
+    try {
+      Object.defineProperty(owner, prop, {
+        set: function () { if (_scriptletsEnabled) throw new ReferenceError(tok); }
+      });
+    } catch (e) {}
+  }
+
+  // ── noEvalIf ─────────────────────────────────────────────────────
+  // Blocks eval() calls whose source matches `pattern`.
+  function noEvalIf(pattern) {
+    if (!pattern) return;
+    var re = _toRegex(pattern);
+    proxyApplyFn('eval', function (context) {
+      var a = '';
+      try { a = String(context.callArgs[0]); } catch (e) {}
+      if (_scriptletsEnabled && re.test(a)) return;
+      return context.reflect();
+    });
+  }
+
+  // ── noWebrtc ─────────────────────────────────────────────────────
+  // Neuters RTCPeerConnection — kills WebRTC-based popup/tracking tricks.
+  function noWebrtc() {
+    var rtcName = window.RTCPeerConnection ? 'RTCPeerConnection'
+      : (window.webkitRTCPeerConnection ? 'webkitRTCPeerConnection' : '');
+    if (rtcName === '') return;
+    var noop = function () {};
+    var pc = function () {};
+    pc.prototype = {
+      close: noop,
+      createDataChannel: noop,
+      createOffer: noop,
+      setRemoteDescription: noop,
+      toString: function () { return '[object RTCPeerConnection]'; }
+    };
+    var z = window[rtcName];
+    window[rtcName] = pc.bind(window);
+    if (z.prototype) {
+      z.prototype.createDataChannel = function () {
+        return { close: function () {}, send: function () {} };
+      }.bind(null);
+    }
+  }
+
+  // ── preventBab ───────────────────────────────────────────────────
+  // Defuses BlockAdBlock/FuckAdBlock detection:
+  // recognizes its eval'd payload by signature and skips execution.
+  function preventBab() {
+    var signatures = [
+      ['blockadblock'],
+      ['babasbm'],
+      [/getItem\('babn'\)/],
+      [
+        'getElementById', 'String.fromCharCode',
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+        'charAt', 'DOMContentLoaded', 'AdBlock', 'addEventListener',
+        'doScroll', 'fromCharCode', '<<2|r>>4', 'sessionStorage',
+        'clientWidth', 'localStorage', 'Math', 'random'
+      ]
+    ];
+    function check(s) {
+      if (typeof s !== 'string') return false;
+      for (var i = 0; i < signatures.length; i++) {
+        var tokens = signatures[i], match = 0;
+        for (var j = 0; j < tokens.length; j++) {
+          var token = tokens[j];
+          var hit = token instanceof RegExp ? token.test(s) : s.includes(token);
+          if (hit) match += 1;
+        }
+        if (match / tokens.length >= 0.8) return true;
+      }
+      return false;
+    }
+    proxyApplyFn('eval', function (context) {
+      var a = context.callArgs[0];
+      if (!_scriptletsEnabled || !check(a)) return context.reflect();
+      if (document.body) document.body.style.removeProperty('visibility');
+      var el = document.getElementById('babasbmsgx');
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    });
+    proxyApplyFn('setTimeout', function (context) {
+      var a = context.callArgs[0];
+      if (_scriptletsEnabled && typeof a === 'string' && /\.bab_elementid.$/.test(a)) {
+        context.callArgs[0] = function () {};
+      }
+      return context.reflect();
+    });
+  }
+
+  // ── preventRequestAnimationFrame ─────────────────────────────────
+  // Replaces rAF callbacks whose source matches `pattern` with a noop.
+  // Prefix '!' inverts the match.
+  function preventRequestAnimationFrame(pattern) {
+    if (!pattern) return;
+    var not = pattern.charAt(0) === '!';
+    var re = _toRegex(not ? pattern.slice(1) : pattern);
+    proxyApplyFn('requestAnimationFrame', function (context) {
+      if (_scriptletsEnabled) {
+        var a = '';
+        try {
+          a = typeof context.callArgs[0] === 'function'
+            ? context.callArgs[0].toString()
+            : String(context.callArgs[0]);
+        } catch (e) {}
+        if (re.test(a) !== not) context.callArgs[0] = function () {};
+      }
+      return context.reflect();
+    });
+  }
+
+  // ── adjustSetTimeout / adjustSetInterval ─────────────────────────
+  // Rescales timer delays for matching callbacks — e.g. turn a 10s
+  // "please wait" countdown into 0.5s.
+  function _adjustTimerFn(name, needle, delayArg, boostArg) {
+    var re = _toRegex(needle || '');
+    var delay = delayArg !== '*' ? parseInt(delayArg, 10) : -1;
+    if (isNaN(delay) || !isFinite(delay)) delay = 1000;
+    var boost = parseFloat(boostArg);
+    boost = !isNaN(boost) && isFinite(boost)
+      ? Math.min(Math.max(boost, 0.001), 50)
+      : 0.05;
+    proxyApplyFn(name, function (context) {
+      if (_scriptletsEnabled) {
+        var a = context.callArgs[0], b = context.callArgs[1];
+        var s = '';
+        try { s = String(a); } catch (e) {}
+        if ((delay === -1 || b === delay) && re.test(s)) {
+          context.callArgs[1] = b * boost;
+        }
+      }
+      return context.reflect();
+    });
+  }
+  function adjustSetTimeout(needle, delay, boost) {
+    _adjustTimerFn('setTimeout', needle, delay, boost);
+  }
+  function adjustSetInterval(needle, delay, boost) {
+    _adjustTimerFn('setInterval', needle, delay, boost);
+  }
+
   // ── JSONPath ─────────────────────────────────────────────────────
-  // Ported from uBlock Origin. Required by json-edit.
+  // JSONPath query engine. Required by json-edit.
   class JSONPath {
     static create(query) {
         const jsonp = new JSONPath();
@@ -1752,20 +1940,38 @@
   // JSON.parse proxy installed ONCE at document_start; compiled JSONPath
   // rules land in _jsonEditRules when the async config arrives.
   var _jsonEditRules = [];
+  var _jsonPruneRules = []; // { prunePaths, needlePaths } — applied by the same JSON.parse proxy
   var _jsonEditProxyInstalled = false;
   function _installJsonEditProxy() {
     if (_jsonEditProxyInstalled) return;
     _jsonEditProxyInstalled = true;
     proxyApplyFn('JSON.parse', function(context) {
       const obj = context.reflect();
-      if (!_scriptletsEnabled || _jsonEditRules.length === 0) return obj;
+      if (!_scriptletsEnabled) return obj;
+      if (_jsonEditRules.length === 0 && _jsonPruneRules.length === 0) return obj;
       let objAfter = obj;
+      for (const rule of _jsonPruneRules) {
+        const r = objectPruneFn(objAfter, rule.prunePaths, rule.needlePaths);
+        if (typeof r === 'object' && r !== null) objAfter = r;
+      }
       for (const jsonp of _jsonEditRules) {
         const r = jsonp.apply(objAfter);
         if (r !== undefined) objAfter = r;
       }
       return objAfter;
     });
+  }
+
+  // ── json-prune (JSON.parse level) ────────────────────────────────
+  // Prunes ad fields from EVERY JSON.parse result — catches payloads
+  // embedded in inline scripts that never touch fetch/XHR.
+  function jsonPrune(rawPrunePaths, rawNeedlePaths) {
+    if (!rawPrunePaths) return;
+    _jsonPruneRules.push({
+      prunePaths: rawPrunePaths,
+      needlePaths: rawNeedlePaths || '',
+    });
+    _installJsonEditProxy();
   }
 
   function jsonEdit(jsonq) {
@@ -1858,8 +2064,38 @@
   // RULES_CHANGED must not stack duplicate rules or proxy layers.
 
   // Dedup for scriptlets that still wrap an API per call (prevent_xhr,
-  // prevent_dom_bypass) — re-dispatching the same rule must not add layers.
+  // prevent_dom_bypass, prevent_fetch, abort_*, …) — re-dispatching the
+  // same rule must not add layers.
   var _appliedWrapOnce = new Set();
+
+  function _wrapOnce(key, value, fn) {
+    var id = key + ' ' + value;
+    if (_appliedWrapOnce.has(id)) return;
+    _appliedWrapOnce.add(id);
+    try { fn(); } catch (e) {}
+  }
+
+  // Iterate the truthy entries of a rule-value array.
+  function _eachRule(list, fn) {
+    if (!list) return;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i]) fn(list[i]);
+    }
+  }
+
+  // Multi-arg scriptlet values use ", " between arguments — '|' is
+  // already the loader's value separator and single
+  // args (regex patterns, JSON paths) may contain spaces.
+  function _argsOf(value) {
+    return value.split(',').map(function (s) { return s.trim(); });
+  }
+
+  // Flag-style keys: any first value other than 0/false/off enables.
+  function _flagOn(list) {
+    if (!list || !list.length) return false;
+    var v = String(list[0]).toLowerCase();
+    return v !== '' && v !== '0' && v !== 'false' && v !== 'off';
+  }
 
   function _applyScriptletRules(rules) {
     if (!rules) return;
@@ -1869,7 +2105,9 @@
     _fetchPruneRules.length = 0;
     _xhrPruneRules.length = 0;
     _xhrJsonlRules.length = 0;
+    _xhrReplaceRules.length = 0;
     _jsonEditRules.length = 0;
+    _jsonPruneRules.length = 0;
     _noWinOpenRules.length = 0;
     var pruneF  = rules.json_prune_fetch          || [];
     var pruneX  = rules.json_prune_xhr            || [];
@@ -1922,6 +2160,99 @@
       var dbParts = prevDomBypass[s].trim().split(/\s+/);
       trustedPreventDomBypass(dbParts[0] || '', dbParts[1] || '');
     }
+
+    // ── json_prune — registry-based (replace semantics, like json_edit) ──
+    // Value: "prunePaths[, needlePaths]" — each a space-separated path list.
+    _eachRule(rules.json_prune, function (v) {
+      var a = _argsOf(v);
+      jsonPrune(a[0] || '', a[1] || '');
+    });
+
+    // ── trusted_replace_xhr_response — registry-based ────────────────
+    // Value: "pattern, replacement[, propsToMatch]". Args separated by
+    // ",<space>" so regex quantifiers like {2,4} survive; write a literal
+    // '|' (regex alternation) as '\|' — the rules loader splits values
+    // on unescaped '|'. Empty replacement: "pattern, , propsToMatch".
+    _eachRule(rules.trusted_replace_xhr_response, function (v) {
+      var a = v.split(/,\s/).map(function (s) { return s.trim(); });
+      trustedReplaceXhrResponse(a[0] || '', a[1] || '', a.slice(2).join(', '));
+    });
+
+    // ── Wrap-once scriptlets ─────────────────────────────────────────
+    // prevent_fetch = propsToMatch[, responseBody[, responseType]]
+    _eachRule(rules.prevent_fetch, function (v) {
+      _wrapOnce('prevent_fetch', v, function () {
+        var a = _argsOf(v);
+        preventFetch(a[0] || '', a[1] || '', a[2] || '');
+      });
+    });
+    // prevent_settimeout / prevent_setinterval = pattern (whole value)
+    _eachRule(rules.prevent_settimeout, function (v) {
+      _wrapOnce('prevent_settimeout', v, function () { preventSetTimeout(v); });
+    });
+    _eachRule(rules.prevent_setinterval, function (v) {
+      _wrapOnce('prevent_setinterval', v, function () { preventSetInterval(v); });
+    });
+    // prevent_raf = pattern ('!' prefix inverts)
+    _eachRule(rules.prevent_raf, function (v) {
+      _wrapOnce('prevent_raf', v, function () { preventRequestAnimationFrame(v); });
+    });
+    // prevent_aeld = eventType[, handlerPattern]
+    var hadAeld = false;
+    _eachRule(rules.prevent_aeld, function (v) {
+      _wrapOnce('prevent_aeld', v, function () {
+        var a = _argsOf(v);
+        preventAddEventListener(a[0] || '', a[1] || '');
+        hadAeld = true;
+      });
+    });
+    // Freeze addEventListener once, AFTER all aeld proxies stacked.
+    if (hadAeld && !_appliedWrapOnce.has('_protect_aeld')) {
+      _appliedWrapOnce.add('_protect_aeld');
+      _protectAddEventListener();
+    }
+    // adjust_settimeout / adjust_setinterval = needle[, delay[, boost]]
+    _eachRule(rules.adjust_settimeout, function (v) {
+      _wrapOnce('adjust_settimeout', v, function () {
+        var a = _argsOf(v);
+        adjustSetTimeout(a[0] || '', a[1] || '', a[2] || '');
+      });
+    });
+    _eachRule(rules.adjust_setinterval, function (v) {
+      _wrapOnce('adjust_setinterval', v, function () {
+        var a = _argsOf(v);
+        adjustSetInterval(a[0] || '', a[1] || '', a[2] || '');
+      });
+    });
+    // abort_current_script = target[, needle[, context]]
+    _eachRule(rules.abort_current_script, function (v) {
+      _wrapOnce('abort_current_script', v, function () {
+        var a = _argsOf(v);
+        abortCurrentScript(a[0] || '', a[1] || '', a[2] || '');
+      });
+    });
+    // abort_on_property_read / abort_on_property_write = property chain
+    _eachRule(rules.abort_on_property_read, function (v) {
+      _wrapOnce('abort_on_property_read', v, function () { abortOnPropertyRead(v); });
+    });
+    _eachRule(rules.abort_on_property_write, function (v) {
+      _wrapOnce('abort_on_property_write', v, function () { abortOnPropertyWrite(v); });
+    });
+    // abort_on_stack_trace = chain[, stackNeedle]
+    _eachRule(rules.abort_on_stack_trace, function (v) {
+      _wrapOnce('abort_on_stack_trace', v, function () {
+        var a = _argsOf(v);
+        abortOnStackTrace(a[0] || '', a[1] || '');
+      });
+    });
+    // no_eval_if = pattern
+    _eachRule(rules.no_eval_if, function (v) {
+      _wrapOnce('no_eval_if', v, function () { noEvalIf(v); });
+    });
+    // Flag-style: no_webrtc / prevent_bab / disable_newtab_links = 1
+    if (_flagOn(rules.no_webrtc)) _wrapOnce('no_webrtc', '1', noWebrtc);
+    if (_flagOn(rules.prevent_bab)) _wrapOnce('prevent_bab', '1', preventBab);
+    if (_flagOn(rules.disable_newtab_links)) _wrapOnce('disable_newtab_links', '1', disableNewtabLinks);
   }
 
   // ── Install response-filtering wrappers at document_start ────────
@@ -1940,7 +2271,7 @@
   // response-filter rules arrive anyway (very first visit, rules update),
   // the registration functions install the wrappers lazily mid-session.
   var _RULES_CACHE_KEY = '__abrules';
-  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'no_window_open_if'];
+  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if'];
 
   function _saveScriptletRulesCache(rules) {
     var has = false;
