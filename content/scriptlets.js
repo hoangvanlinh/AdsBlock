@@ -845,7 +845,7 @@
         }).catch(() => responseBefore);
       }).catch(() => fetchPromise);
     };
-    self.fetch = new proxyApplyFn(self.fetch, { apply: applyHandler });
+    self.fetch = new Proxy(self.fetch, { apply: applyHandler });
   }
 
   function jsonPruneFetchResponse(rawPrunePaths, rawNeedlePaths) {
@@ -2265,33 +2265,33 @@
   var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if'];
 
   function _saveScriptletRulesCache(rules) {
-    // var has = false;
-    // for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
-    //   var v = rules[_RESPONSE_FILTER_RULE_KEYS[i]];
-    //   if (v && v.length) { has = true; break; }
-    // }
-    // // Only sites with response-filter rules ever get the key written;
-    // // removeItem on all others is a no-op that leaves no trace.
-    // try {
-    //   if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(rules));
-    //   else localStorage.removeItem(_RULES_CACHE_KEY);
-    // } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
+    var has = false;
+    for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
+      var v = rules[_RESPONSE_FILTER_RULE_KEYS[i]];
+      if (v && v.length) { has = true; break; }
+    }
+    // Only sites with response-filter rules ever get the key written;
+    // removeItem on all others is a no-op that leaves no trace.
+    try {
+      if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(rules));
+      else localStorage.removeItem(_RULES_CACHE_KEY);
+    } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
   }
 
   (function () {
     var cached = null;
-    /// try { cached = localStorage.getItem(_RULES_CACHE_KEY); } catch (e) {}
-    /// if (!cached) return;
-    /// try { _installFetchResponseProxy(); } catch (e) {}
-    /// try { _installXhrResponseProxy(); } catch (e) {}
-    /// try { _installJsonEditProxy(); } catch (e) {}
-    /// try {
-    ///   var rules = JSON.parse(cached);
-    ///   // The cache lives in page-writable storage, so treat it as untrusted
-    ///   // input: anything non-object is ignored. A page corrupting it can only
-    ///   // affect its own MAIN world — same privilege it already has.
-    ///   if (rules && typeof rules === 'object') _applyScriptletRules(rules);
-    /// } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
+    try { cached = localStorage.getItem(_RULES_CACHE_KEY); } catch (e) {}
+    if (!cached) return;
+    try { _installFetchResponseProxy(); } catch (e) {}
+    try { _installXhrResponseProxy(); } catch (e) {}
+    try { _installJsonEditProxy(); } catch (e) {}
+    try {
+      var rules = JSON.parse(cached);
+      // The cache lives in page-writable storage, so treat it as untrusted
+      // input: anything non-object is ignored. A page corrupting it can only
+      // affect its own MAIN world — same privilege it already has.
+      if (rules && typeof rules === 'object') _applyScriptletRules(rules);
+    } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
   })();
 
   // Bridge: content.js dispatches '__adblock_scriptlet_rules__' after async rule load.
