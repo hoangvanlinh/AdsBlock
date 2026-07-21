@@ -60,6 +60,7 @@ const sandbox = {
   WeakMap, WeakSet, Proxy, Reflect, Symbol, Error, TypeError, Date, parseFloat, parseInt,
   setTimeout, clearTimeout, setInterval, clearInterval, queueMicrotask,
   CustomEvent: CustomEventStub,
+  Window: class Window {},
   XMLHttpRequest: FakeXHR,
   Location: LocationStub,
   URL,
@@ -108,6 +109,13 @@ sandbox.dispatchEvent = (ev) => {
   return true;
 };
 
+// Getter gốc của FakeXHR, chụp TRƯỚC khi scriptlet cài — dùng để xác nhận
+// scriptlet đã ghi đè getter (fix #1 ghi đè thẳng trên prototype nên
+// window.XMLHttpRequest giữ nguyên identity; không thể kiểm tra bằng !==).
+const _origResponseGetter = Object.getOwnPropertyDescriptor(FakeXHR.prototype, 'response').get;
+const xhrWrapped = () =>
+  Object.getOwnPropertyDescriptor(sandbox.XMLHttpRequest.prototype, 'response').get !== _origResponseGetter;
+
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox, { filename: 'scriptlets.js' });
 
@@ -125,7 +133,7 @@ function sendRules(rules) {
   console.log('== 0. cached rules apply synchronously at boot (before any dispatch) ==');
   blockedEvents = [];
   const BootXHR = sandbox.XMLHttpRequest;
-  check('wrappers installed at boot from cache', BootXHR !== FakeXHR);
+  check('wrappers installed at boot from cache', xhrWrapped());
   const xhrBoot = new BootXHR();
   xhrBoot.open('GET', 'https://www.youtube.com/youtubei/v1/player');
   xhrBoot._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }], videoDetails: { title: 'boot' } });
@@ -166,7 +174,7 @@ function sendRules(rules) {
   console.log('\n== 2. json_prune_xhr counts ONLY real prunes ==');
   sendRules({ json_prune_xhr: ['adPlacements adSlots'] });
   const XHR = sandbox.XMLHttpRequest;
-  check('XMLHttpRequest was wrapped by scriptlet', XHR !== FakeXHR);
+  check('XMLHttpRequest was wrapped by scriptlet', xhrWrapped());
 
   // Response WITH ads → prune happens → 1 event
   blockedEvents = [];
