@@ -870,8 +870,12 @@
   var _xhrPruneRules = []; // { prunePaths, needlePaths, propNeedles }
   var _xhrJsonlRules = []; // { jsonp, propNeedles }
   var _xhrReplaceRules = []; // { re, replacement, propNeedles } — trusted_replace_xhr_response
+  var _xhrProxyInstalled = false;
   function _installXhrResponseProxy() {
+    if (_xhrProxyInstalled) return;
     const safe = safeSelf();
+    const XHR = self.XMLHttpRequest;
+    if (!XHR || !XHR.prototype) return;
     const xhrInstances = new WeakMap();
     const applicableRules = function (rules, xhrDetails) {
       const out = [];
@@ -882,79 +886,146 @@
       }
       return out;
     };
-    self.XMLHttpRequest = class extends self.XMLHttpRequest {
+    // Lõi prune dùng chung cho cả 2 cách cài (prototype getter / subclass).
+    // `innerResponse` = giá trị response GỐC đã đọc từ getter native.
+    const computeResponse = function (xhr, innerResponse) {
+      if (!_scriptletsEnabled) return innerResponse;
+      if (_xhrPruneRules.length === 0 && _xhrJsonlRules.length === 0 &&
+          _xhrReplaceRules.length === 0) return innerResponse;
+      const xhrDetails = xhrInstances.get(xhr);
+      if (xhrDetails === undefined) return innerResponse;
+      const responseLength = typeof innerResponse === 'string'
+        ? innerResponse.length
+        : undefined;
+      if (xhrDetails.lastResponseLength !== responseLength) {
+        xhrDetails.response = undefined;
+        xhrDetails.lastResponseLength = responseLength;
+      }
+      if (xhrDetails.response !== undefined) return xhrDetails.response;
+      let result = innerResponse;
+      // Whole-body JSON pruning
+      const pruneRules = applicableRules(_xhrPruneRules, xhrDetails);
+      if (pruneRules.length !== 0) {
+        let objBefore;
+        if (typeof result === 'object' && result !== null) {
+          objBefore = result;
+        } else if (typeof result === 'string') {
+          try { objBefore = safe.JSON_parse(result); } catch (e) {}
+        }
+        if (typeof objBefore === 'object' && objBefore !== null) {
+          let pruned = false;
+          for (const rule of pruneRules) {
+            // objectPruneFn returns the object only when it actually pruned
+            // something — only that counts as a block for stats.
+            const objAfter = objectPruneFn(objBefore, rule.prunePaths, rule.needlePaths);
+            if (typeof objAfter !== 'object' || objAfter === null) continue;
+            objBefore = objAfter;
+            pruned = true;
+            try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+          }
+          if (pruned) {
+            result = typeof result === 'string' ? safe.JSON_stringify(objBefore) : objBefore;
+          }
+        }
+      }
+      // Regex text replacement (string responses only) — runs before the
+      // JSONL pass so line-wise rules see the post-replace text.
+      if (typeof result === 'string') {
+        const replaceRules = applicableRules(_xhrReplaceRules, xhrDetails);
+        for (const rule of replaceRules) {
+          const after = result.replace(rule.re, rule.replacement);
+          if (after === result) continue;
+          result = after;
+          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+        }
+      }
+      // Line-wise JSONL editing (string responses only)
+      if (typeof result === 'string') {
+        const jsonlRules = applicableRules(_xhrJsonlRules, xhrDetails);
+        for (const rule of jsonlRules) {
+          result = jsonlEditFn(rule.jsonp, result);
+        }
+      }
+      return (xhrDetails.response = result);
+    };
+
+    const proto = XHR.prototype;
+    const descResp = Object.getOwnPropertyDescriptor(proto, 'response');
+    const descText = Object.getOwnPropertyDescriptor(proto, 'responseText');
+    const nativeOpen = proto.open;
+    const nativeSend = proto.send;
+
+    // Fix #1: ghi đè getter TRỰC TIẾP trên XMLHttpRequest.prototype thay vì
+    // dùng subclass. Chống kiểu né phổ biến của anti-adblock: lấy native
+    // getter qua Object.getOwnPropertyDescriptor(...proto chain...) rồi gọi
+    // thẳng để bỏ qua bản subclass. Khi override tại chính prototype gốc,
+    // không còn getter native "sạch" bên dưới để lấy. Chỉ áp dụng khi getter
+    // gốc configurable (mọi trình duyệt hiện đại đều vậy); nếu không, rơi
+    // xuống subclass như cũ.
+    //
+    // Fix #2 — tự vá liên tục (self-healing), xác nhận CẦN THIẾT trên
+    // facebook.com 2026-07-21: FB có code nội bộ (module hệ thống Haste,
+    // gọi qua React Scheduler + đồng bộ ngay trong xhr.send()) chủ động
+    // Object.defineProperty lại open/response/responseText về bản native
+    // SAU khi ta cài — không phải 1 lần, mà LẶP LẠI (1 lần sau mount qua
+    // 'open', và MỖI LẦN send() qua 'response'/'responseText'). Khoá cứng
+    // defineProperty không ăn được (họ có thể delete+gán lại, né hẳn
+    // defineProperty). Thay vào đó: để họ ghi đè xong rồi VÁ LẠI NGAY SAU —
+    // tại 2 chốt ta biết chắc lượt ghi đè của họ đã xảy ra:
+    //   - đầu mỗi open()  -> vá lại trước khi ghi nhận request mới
+    //   - cuối mỗi send() -> vá lại ngay sau khi native send() trả về
+    // Dữ liệu response chỉ tới BẤT ĐỒNG BỘ (sau tick hiện tại), nên bất kỳ
+    // lượt đọc .response/.responseText nào sau đó đều thấy bản của ta.
+    if (descResp && descResp.get && descText && descText.get &&
+        descResp.configurable !== false && descText.configurable !== false &&
+        typeof nativeOpen === 'function' && typeof nativeSend === 'function') {
+      const openImpl = function (method, url) {
+        reassert();
+        xhrInstances.set(this, { method, url });
+        return nativeOpen.apply(this, arguments);
+      };
+      const sendImpl = function () {
+        const r = nativeSend.apply(this, arguments);
+        reassert();
+        return r;
+      };
+      const reassert = function () {
+        try {
+          Object.defineProperty(proto, 'open', { configurable: true, writable: true, value: openImpl });
+          Object.defineProperty(proto, 'send', { configurable: true, writable: true, value: sendImpl });
+          Object.defineProperty(proto, 'response', {
+            configurable: true, enumerable: descResp.enumerable,
+            get: function () { return computeResponse(this, descResp.get.call(this)); },
+          });
+          Object.defineProperty(proto, 'responseText', {
+            configurable: true, enumerable: descText.enumerable,
+            get: function () {
+              const r = this.response;
+              return typeof r !== 'string' ? descText.get.call(this) : r;
+            },
+          });
+        } catch (e) { /* bỏ qua — lần vá kế tiếp (open/send) sẽ thử lại */ }
+      };
+      try {
+        reassert();
+        _xhrProxyInstalled = true;
+        return;
+      } catch (e) { /* rơi xuống fallback subclass */ }
+    }
+
+    // Fallback: subclass (khi getter gốc không ghi đè được trên prototype).
+    self.XMLHttpRequest = class extends XHR {
       open(method, url, ...args) {
-        // Details are always recorded — rules may arrive between open()
-        // and the page reading .response.
         xhrInstances.set(this, { method, url });
         return super.open(method, url, ...args);
       }
-      get response() {
-        const innerResponse = super.response;
-        if (!_scriptletsEnabled) return innerResponse;
-        if (_xhrPruneRules.length === 0 && _xhrJsonlRules.length === 0 &&
-            _xhrReplaceRules.length === 0) return innerResponse;
-        const xhrDetails = xhrInstances.get(this);
-        if (xhrDetails === undefined) return innerResponse;
-        const responseLength = typeof innerResponse === 'string'
-          ? innerResponse.length
-          : undefined;
-        if (xhrDetails.lastResponseLength !== responseLength) {
-          xhrDetails.response = undefined;
-          xhrDetails.lastResponseLength = responseLength;
-        }
-        if (xhrDetails.response !== undefined) return xhrDetails.response;
-        let result = innerResponse;
-        // Whole-body JSON pruning
-        const pruneRules = applicableRules(_xhrPruneRules, xhrDetails);
-        if (pruneRules.length !== 0) {
-          let objBefore;
-          if (typeof result === 'object' && result !== null) {
-            objBefore = result;
-          } else if (typeof result === 'string') {
-            try { objBefore = safe.JSON_parse(result); } catch (e) {}
-          }
-          if (typeof objBefore === 'object' && objBefore !== null) {
-            let pruned = false;
-            for (const rule of pruneRules) {
-              // objectPruneFn returns the object only when it actually pruned
-              // something — only that counts as a block for stats.
-              const objAfter = objectPruneFn(objBefore, rule.prunePaths, rule.needlePaths);
-              if (typeof objAfter !== 'object' || objAfter === null) continue;
-              objBefore = objAfter;
-              pruned = true;
-              try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
-            }
-            if (pruned) {
-              result = typeof result === 'string' ? safe.JSON_stringify(objBefore) : objBefore;
-            }
-          }
-        }
-        // Regex text replacement (string responses only) — runs before the
-        // JSONL pass so line-wise rules see the post-replace text.
-        if (typeof result === 'string') {
-          const replaceRules = applicableRules(_xhrReplaceRules, xhrDetails);
-          for (const rule of replaceRules) {
-            const after = result.replace(rule.re, rule.replacement);
-            if (after === result) continue;
-            result = after;
-            try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
-          }
-        }
-        // Line-wise JSONL editing (string responses only)
-        if (typeof result === 'string') {
-          const jsonlRules = applicableRules(_xhrJsonlRules, xhrDetails);
-          for (const rule of jsonlRules) {
-            result = jsonlEditFn(rule.jsonp, result);
-          }
-        }
-        return (xhrDetails.response = result);
-      }
+      get response() { return computeResponse(this, super.response); }
       get responseText() {
-        const response = this.response;
-        return typeof response !== 'string' ? super.responseText : response;
+        const r = this.response;
+        return typeof r !== 'string' ? super.responseText : r;
       }
     };
+    _xhrProxyInstalled = true;
   }
 
   function jsonPruneXhrResponse(rawPrunePaths, rawNeedlePaths) {

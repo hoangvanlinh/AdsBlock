@@ -44,7 +44,8 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         stackDepth: 6,        // số dòng call-stack hiển thị
         logToConsole: true,   // in ra console theo thời gian thực
         color: true,          // tô màu log
-        paused: false         // tạm dừng ghi log (hook vẫn chạy)
+        paused: false,        // tạm dừng ghi log (hook vẫn chạy)
+        maxExpand: 500000     // payload net <= mức này thì log cây JSON "full ▶" để mở rộng
       };
 
       var records = [];       // lịch sử tất cả sự kiện bắt được
@@ -143,6 +144,21 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         }
         if (entry.detail.input !== undefined) console.log('  in :', entry.detail.input);
         if (entry.detail.output !== undefined) console.log('  out:', entry.detail.output);
+        // "View all": với record net (có payload đầy đủ trong detail.raw), log
+        // thẳng CÂY JSON đã bung — DevTools hiện tam giác ▶ để mở rộng xem full,
+        // chuột phải -> Copy object/string. Payload quá to thì chỉ gợi ý dùng
+        // RTI.raw() để tránh treo console khi dựng cây.
+        var rw = entry.detail.raw;
+        if (rw && (rw.res || rw.req)) {
+          var body = rw.res || rw.req;
+          if (typeof body === 'string' && body.length <= config.maxExpand) {
+            var tree; try { tree = deepParse(body); } catch (e) { tree = body; }
+            console.log('  full ▶', tree);
+          } else {
+            console.log('  full ▶ (' + (body ? body.length : 0) + ' ký tự, quá lớn) → copy(RTI.raw(' +
+              entry.id + ',"res",true)) hoặc RTI.raw(' + entry.id + ')');
+          }
+        }
         if (entry.detail.extra) console.log('  ', entry.detail.extra);
         console.log('%c  ' + entry.stack.join('\n  '), config.color ? styles.dim : '');
         console.groupEnd();
@@ -304,9 +320,23 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
       // ---------------------------------------------------------------
       // Trên các site như Facebook, quảng cáo được nạp qua GraphQL/XHR chứ
       // không có biến global dễ đọc. Hook mạng cho phép soi thẳng payload.
+      function escapeRe(s) {
+        return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
+      // Chuyển 1 giá trị -> RegExp:
+      //   RegExp   -> giữ nguyên
+      //   Array    -> danh sách chuỗi LITERAL, ghép OR (tự escape) — dùng cho
+      //               danh sách URL, vd ['/api/graphql/', '/ajax/bulk-route-definitions/']
+      //   String   -> coi như mẫu regex (giữ hành vi cũ cho FB_AD_MARKER...)
       function toRegExp(x) {
         if (!x) return null;
-        return x instanceof RegExp ? x : new RegExp(String(x), 'i');
+        if (x instanceof RegExp) return x;
+        if (Array.isArray(x)) {
+          var parts = x.filter(Boolean).map(escapeRe);
+          return parts.length ? new RegExp(parts.join('|'), 'i') : null;
+        }
+        return new RegExp(String(x), 'i');
       }
 
       // Giải mã bytes -> chuỗi bằng decode gốc (tránh đụng hook).
@@ -463,6 +493,22 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           : FB_AD_MARKER;
         hookNetwork({ match: marker });
         log('findFbAds: đã bật. Lướt news feed vài giây rồi gọi RTI.dump("net") / RTI.grep("sponsored").');
+      }
+
+      // Danh sách URL mặc định để theo dõi (Facebook GraphQL + bulk-route).
+      var URL_WATCH_DEFAULT = ['/api/graphql/', '/ajax/bulk-route-definitions/'];
+
+      // CHỈ bắt lưu lượng từ các URL trong danh sách (không lọc theo nội dung).
+      //   RTI.watchUrls();                              // dùng danh sách mặc định
+      //   RTI.watchUrls(['/api/graphql/']);             // danh sách riêng
+      //   RTI.watchUrls(['/api/graphql/'], {match:/ad_id/});  // kèm lọc nội dung
+      // Payload đầy đủ lưu trong records -> RTI.dump('net') / RTI.decodeAds().
+      function watchUrls(urls, opts) {
+        opts = opts || {};
+        var list = (urls && urls.length) ? urls : URL_WATCH_DEFAULT;
+        hookNetwork({ url: list, match: opts.match, maxBody: opts.maxBody });
+        log('watchUrls: chỉ bắt các URL ~ ' + list.join(' | ') +
+          (opts.match ? '  (lọc nội dung ~ ' + toRegExp(opts.match) + ')' : ''));
       }
 
       // ---------------------------------------------------------------
@@ -666,6 +712,32 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         return hits;
       }
 
+      // Lấy payload ĐẦY ĐỦ (không bị cắt như phần out: trong console) của 1 record
+      // net, để copy trong DevTools:
+      //   copy(RTI.raw())            // response đầy đủ của record net MỚI NHẤT
+      //   copy(RTI.raw(1708))        // theo id record (xem id ở RTI.dump('net'))
+      //   copy(RTI.raw(1708,'req'))  // lấy request body thay vì response
+      //   copy(RTI.raw(1708,'res',true))  // deep-parse JSON lồng -> copy cây object
+      // Trả về chuỗi (hoặc object nếu parse=true) để truyền thẳng vào copy().
+      function raw(id, which, parse) {
+        var r;
+        if (id == null) {
+          for (var i = records.length - 1; i >= 0; i--) {
+            if (records[i].kind === 'net') { r = records[i]; break; }
+          }
+        } else {
+          for (var j = 0; j < records.length; j++) {
+            if (records[j].id === id) { r = records[j]; break; }
+          }
+        }
+        if (!r) { log('raw: không tìm thấy record' + (id != null ? ' #' + id : ' net nào')); return; }
+        var rw = (r.detail && r.detail.raw) || {};
+        var src = which === 'req' ? rw.req : rw.res;
+        if (src == null) src = which === 'req' ? r.detail.input : r.detail.output;
+        if (parse) { try { return deepParse(src); } catch (e) { return src; } }
+        return src;
+      }
+
       // ---------------------------------------------------------------
       // whyAd($0): đọc React fiber props của 1 ad ĐANG HIỂN THỊ để tìm
       // field nào đánh dấu nó là ad — KHÔNG đoán tên field trước.
@@ -857,6 +929,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         hookDynamic: hookDynamic,
         hookNetwork: hookNetwork,
         findFbAds: findFbAds,
+        watchUrls: watchUrls,
         watch: watch,
         watchGlobal: watchGlobal,
         watchAll: watchAll,
@@ -865,6 +938,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         grep: grep,
         deepParse: deepParse,
         decodeAds: decodeAds,
+        raw: raw,
         whyAd: whyAd,
         scan: scan,
         findAds: findAds,
