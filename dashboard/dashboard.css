@@ -975,3 +975,67 @@ body::before {
   background: var(--surface-3);
   border-radius: 999px;
 }
+
+/* ───────────────────────────────────────────────
+   Responsive — tablet & phone
+   Desktop is untouched; only narrow screens are adjusted.
+─────────────────────────────────────────────── */
+
+/* Tablet: collapse multi-column grids + reduce padding, keep sidebar vertical */
+@media (max-width: 980px) {
+  .main      { padding: 24px 20px; }
+  .kpi-grid  { grid-template-columns: repeat(2, 1fr); }
+  .form-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Phone: sidebar becomes a top bar, all grids stack.
+   body switches to scrolling the whole page (instead of sidebar/main
+   scrolling independently). */
+@media (max-width: 640px) {
+  html, body { height: auto; }
+  body { flex-direction: column; overflow: auto; }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .sidebar-brand { margin-bottom: 0; flex-shrink: 0; }
+  .brand-name    { display: none; }            /* icon only, to save space */
+  .nav {
+    flex-direction: row;
+    flex: 1;
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-item { white-space: nowrap; padding: 8px 10px; }
+  .sidebar-footer { display: none; }           /* hide badge/donate on phone */
+
+  .main { overflow-y: visible; padding: 16px 14px; }
+
+  .page-header    { flex-wrap: wrap; gap: 12px; }
+  .header-actions { flex-wrap: wrap; }
+  .kpi-grid       { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .kpi-value      { font-size: 24px; }
+  .two-col        { grid-template-columns: 1fr; }
+  .form-grid      { grid-template-columns: 1fr; }
+  .duration-grid  { grid-template-columns: repeat(2, 1fr); }
+  .score-row      { grid-template-columns: 92px 1fr 30px; gap: 8px; }
+  .search-input   { width: 100%; }
+  .focus-timer    { font-size: 40px; }
+  .card           { padding: 16px; }
+}
+
+/* Small phone: KPI back to a single column */
+@media (max-width: 430px) {
+  .kpi-grid   { grid-template-columns: 1fr; }
+  .page-title { font-size: 19px; }
+}

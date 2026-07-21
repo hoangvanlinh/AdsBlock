@@ -429,3 +429,20 @@ body::-webkit-scrollbar { width: 4px; }
 body::-webkit-scrollbar-track { background: transparent; }
 body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 body::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ───────────────────────────────────────────────
+   Responsive
+   On desktop the popup is only ~320px wide (viewport = 320), so
+   @media (min-width:360px) does NOT match → left untouched. On mobile
+   browsers (Kiwi/Edge Android) the popup renders as a full-screen page
+   (viewport = device width ≥360px) → matches → fill full width and drop
+   the 600px max-height cap.
+─────────────────────────────────────────────── */
+@media (min-width: 360px) {
+  body { width: 100%; max-height: none; }
+}
+
+/* Safety for very narrow screens: collapse the 2-col grids to 1 */
+@media (max-width: 280px) {
+  .stats-grid, .actions { grid-template-columns: 1fr; }
+}
