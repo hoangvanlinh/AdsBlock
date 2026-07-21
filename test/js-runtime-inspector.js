@@ -667,6 +667,94 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
       }
 
       // ---------------------------------------------------------------
+      // whyAd($0): đọc React fiber props của 1 ad ĐANG HIỂN THỊ để tìm
+      // field nào đánh dấu nó là ad — KHÔNG đoán tên field trước.
+      // ---------------------------------------------------------------
+      // Cách dùng: right-click vào ad → Inspect (element vào $0) → RTI.whyAd($0)
+      // In ra: các object dữ liệu bài (story/node/feedEdge...) tìm thấy dọc cây
+      // fiber, kèm danh sách key — soi bằng MẮT xem key lạ nào chỉ ad mới có
+      // (vd th_dat_spo, sponsored_data, whatsapp_ad_context có giá trị, ad_id...).
+      // Vì đọc thẳng data đã render nên đúng dù FB đổi tên field theo release.
+      // Tìm React fiber gắn trên 1 DOM node. FB gắn key '__reactFiber$<rand>'
+      // (và '__reactProps$', '__reactContainer$') dưới dạng NON-ENUMERABLE →
+      // Object.keys bỏ sót; PHẢI dùng getOwnPropertyNames. Đi lên cây cha đến
+      // khi thấy fiber, và cũng dò trong shadow root nếu có.
+      function _fiberKey(node) {
+        var ks;
+        try { ks = Object.getOwnPropertyNames(node); } catch (e) { return null; }
+        for (var i = 0; i < ks.length; i++) {
+          var k = ks[i];
+          if (k.indexOf('__reactFiber$') === 0 ||
+              k.indexOf('__reactInternalInstance$') === 0 ||
+              k.indexOf('__reactContainer$') === 0) return k;
+        }
+        return null;
+      }
+      function _fiberOf(el) {
+        while (el) {
+          var k = _fiberKey(el);
+          if (k) return el[k];
+          // qua ranh giới shadow DOM nếu có host
+          el = el.parentElement || (el.parentNode && el.parentNode.host) || null;
+        }
+        return null;
+      }
+
+      // Regex "rộng" chỉ để TÔ ĐẬM key nghi ngờ — không dùng để quyết định.
+      var WHYAD_HINT = /sponsor|sposnsor|th_dat_spo|_ad_|ad_id|adid|client_token|auction|distac|boost|promoted|whatsapp_ad|is_demo_ad|brs_filter/i;
+
+      function whyAd(el) {
+        if (!el || el.nodeType !== 1) {
+          log('Cách dùng: right-click vào ad → Inspect → RTI.whyAd($0)');
+          return;
+        }
+        var fiber = _fiberOf(el);
+        if (!fiber) { log('whyAd: element không thuộc cây React (không có __reactFiber$).'); return; }
+
+        // Các prop hay chứa dữ liệu bài đăng/đơn vị feed.
+        var DATA_PROPS = ['story', 'node', 'feedUnit', 'feedEdge', 'edge', 'adStory', 'unit', 'post', 'row', 'group'];
+        var found = [], depth = 0, seen = (typeof WeakSet === 'function') ? new WeakSet() : null;
+
+        while (fiber && depth < 120 && found.length < 6) {
+          var props = fiber.memoizedProps;
+          if (props && typeof props === 'object') {
+            for (var i = 0; i < DATA_PROPS.length; i++) {
+              var cand = props[DATA_PROPS[i]];
+              if (!cand || typeof cand !== 'object') continue;
+              if (seen) { if (seen.has(cand)) continue; seen.add(cand); }
+              var keys = Object.keys(cand);
+              if (keys.length < 2) continue;
+              var hintKeys = keys.filter(function (k) {
+                var v = cand[k];
+                var meaningful = v !== null && v !== undefined && v !== false && v !== 0 && v !== '';
+                return WHYAD_HINT.test(k) && meaningful;
+              });
+              found.push({ prop: DATA_PROPS[i], depth: depth, obj: cand, keys: keys, hintKeys: hintKeys });
+            }
+          }
+          fiber = fiber.return;
+          depth++;
+        }
+
+        if (!found.length) {
+          log('whyAd: không thấy props.story/node/feedUnit dọc fiber. Thử console.dir($0) rồi tự đào, ' +
+              'hoặc chọn element cha/con của ad rồi gọi lại.');
+          return;
+        }
+        if (config.color) console.groupCollapsed('%c[RTI:whyAd]%c ' + found.length + ' object dữ liệu bài', styles.net, '');
+        else console.group('[RTI:whyAd] ' + found.length + ' object dữ liệu bài');
+        found.forEach(function (f) {
+          log('props.' + f.prop + ' (fiber depth ' + f.depth + ') — ' + f.keys.length + ' key' +
+              (f.hintKeys.length ? ' | KEY NGHI NGỜ: ' + f.hintKeys.join(', ') : ' | (không key nào khớp gợi ý — soi tay bên dưới)'));
+          console.log('  keys:', f.keys.join(', '));
+          console.dir(f.obj);
+        });
+        console.groupEnd();
+        log('whyAd: so sánh object của 1 AD với 1 bài THƯỜNG — key/nhánh nào chỉ ad có = field cần viết rule.');
+        return found;
+      }
+
+      // ---------------------------------------------------------------
       // Quét biến global theo tên (mặc định: các thư viện quảng cáo)
       // ---------------------------------------------------------------
       // Danh sách token ad-tech phổ biến. Dùng \b để tránh khớp nhầm
@@ -777,6 +865,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         grep: grep,
         deepParse: deepParse,
         decodeAds: decodeAds,
+        whyAd: whyAd,
         scan: scan,
         findAds: findAds,
         clear: clear,
