@@ -1,15 +1,15 @@
 # ── Movie & Streaming Sites Rule List ──────────────────────────────────────────
-# Merge file này vào Rule Source (local file) trong dashboard AdBlock.
-# Định dạng giống site-rules.txt chính — mỗi section là 1 trang phim.
+# Merge this file into Rule Source (local file) in the AdBlock dashboard.
+# Same format as the main site-rules.txt — each section is one movie site.
 #
-# [host_patterns]  →  map hostname → sitekey
-# [sitekey]        →  các rule cho trang đó
+# [host_patterns]  →  maps hostname → sitekey
+# [sitekey]        →  rules for that site
 #
-# Lưu ý: subdomains khớp tự động (vd: "phimmoi.net" khớp "www.phimmoi.net", "m.phimmoi.net")
+# Note: subdomains match automatically (e.g. "phimmoi.net" matches "www.phimmoi.net", "m.phimmoi.net")
 
 [host_patterns]
 
-# ── Phim lậu Việt Nam ────────────────────────────────────────────────────────
+# ── Vietnamese movie sites ──────────────────────────────────────────
 phimmoi.net         = phimmoi
 phimmoizz.net       = phimmoi
 phimmoiz.net        = phimmoi
@@ -55,7 +55,7 @@ zoro.to             = zoro
 zoroanime.com       = zoro
 hianime.to          = zoro
 
-# ── Phim quốc tế (stream lậu) ────────────────────────────────────────────────
+# ── International pirate streaming sites ─────────────────────────────────────
 fmovies.ps          = fmovies
 fmovies.to          = fmovies
 fmovies.wtf         = fmovies
@@ -100,17 +100,17 @@ cineb.net           = cineb
 # SECTIONS
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ── Shared popup block (áp dụng cho tất cả stream lậu) ──────────────────────
-# Không override [global] — khai báo per-section bên dưới
+# ── Shared popup block (applies to all pirate streaming sites) ──────────────
+# Not overriding [global] — declared per-section below
 
-# ── Common overlay/ad selectors (dùng lại trong nhiều section) ───────────────
-# Khai báo trong [global] sẽ áp dụng toàn site, đây là file merge nên để per-section.
+# ── Common overlay/ad selectors (reused across multiple sections) ───────────
+# Declaring in [global] would apply site-wide; since this is a merge file, keep it per-section.
 
 [global]
 prevent_xhr = /exoclick\.com|adsterra\.com|hilltopads\.net|monetag\.com|propellerads\.com|clickadilla\.com|trafficjunky\.net|mgid\.com|popcash\.net|popads\.net|adcash\.com|clickunder\.net/
 
 # =============================================================================
-# PHIM VIỆT NAM
+# VIETNAMESE MOVIES
 # =============================================================================
 
 [phimmoi]
@@ -197,11 +197,11 @@ no_window_open_if = /.*/ 0 blank
 direct_hide_selectors = .banner | .ad-slot | .ads-container | [id^="div-gpt-ad"] | .popup-ads | #popup-modal | .overlay-ad | .modal-backdrop | iframe[src*="googlesyndication"] | iframe[src*="exoclick.com"] | .ima-ad-container | [id*="preroll"] | .video-ads | div[style*="z-index: 9999"] | div[style*="z-index:9999"] | #fc-overlay | .film-ads | [class*="-advertisement"] | .tpAds | #tpAds
 
 # =============================================================================
-# PHIM QUỐC TẾ (STREAM LẬU)
+# INTERNATIONAL STREAMING SITES
 # =============================================================================
 
 [fmovies]
-# Override: chặn ALL window.open trên fmovies
+# Override: block ALL window.open on fmovies
 no_window_open_if = /.*/ 0 blank
 direct_hide_selectors = #ngx-overlay | .ngx-overlay | [class*="overlay-ad"] | [id*="overlay-ad"] | .ad-overlay | #ad-overlay | .popup-wrapper | .popup-ad | #popup-ad | [class*="modal-ad"] | [id*="modal-ad"] | div[id^="adb"] | .jw-advertisement | .jw-ad-container | [class*="preroll"] | [id*="preroll"] | .video-ads | #video-ads | .vjs-ad-playing .vjs-poster | .ima-ad-container | [class*="ima-ad"] | div[style*="z-index: 999"] iframe | div[style*="z-index:999"] iframe | .overlay:not(.player-overlay) | #overlay:not(.player-overlay) | .modal-backdrop | .ads-container | [id^="div-gpt-ad"] | iframe[src*="googlesyndication"] | iframe[src*="exoclick.com"] | iframe[src*="trafficjunky"] | iframe[src*="adsterra.com"] | iframe[src*="hilltopads.net"]
 

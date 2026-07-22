@@ -1,72 +1,73 @@
     /*!
     * JS Runtime Inspector
     * ------------------------------------------------------------------
-    * Công cụ theo dõi runtime của JavaScript trong trình duyệt, phục vụ
-    * phân tích / reverse-engineering code bị obfuscate:
+    * Runtime monitoring tool for JavaScript in the browser, built for
+    * analyzing / reverse-engineering obfuscated code:
     *
-    *   - Bắt hàm mã hoá / giải mã (atob, btoa, JSON.parse, TextDecoder,
+    *   - Catches encode/decode functions (atob, btoa, JSON.parse, TextDecoder,
     *     escape/unescape, String.fromCharCode, crypto.subtle...)
-    *   - Bắt code chạy động (eval, Function, setTimeout/setInterval với
-    *     tham số là chuỗi)
-    *   - Theo dõi biến / thuộc tính của object thay đổi khi runtime
-    *   - Trace mọi lời gọi hàm trên một object (đối số vào / giá trị ra)
+    *   - Catches dynamically-run code (eval, Function, setTimeout/setInterval
+    *     with a string argument)
+    *   - Watches an object's variables/properties for changes at runtime
+    *   - Traces every function call on an object (input args / return value)
     *
-    * Cách dùng nhanh (dán toàn bộ file này vào DevTools Console):
+    * Quick usage (paste this whole file into DevTools Console):
     *
-    *   RTI.start();                      // bật hook mã hoá + eval động
-    *   RTI.watch(obj, 'token');          // theo dõi obj.token thay đổi
-    *   RTI.watchGlobal('secretKey');     // theo dõi biến global window.secretKey
-    *   RTI.trace(obj, 'CryptoModule');   // trace mọi hàm của obj
-    *   RTI.dump();                       // in bảng thống kê các lần bắt được
-    *   RTI.stop();                       // gỡ toàn bộ hook, trả lại nguyên bản
-    * 
+    *   RTI.start();                      // enable encode/decode + dynamic-eval hooks
+    *   RTI.watch(obj, 'token');          // watch obj.token for changes
+    *   RTI.watchGlobal('secretKey');     // watch the global variable window.secretKey
+    *   RTI.trace(obj, 'CryptoModule');   // trace every function on obj
+    *   RTI.dump();                       // print a summary table of everything captured
+    *   RTI.stop();                       // remove all hooks, restore originals
+    *
     * RTI.start();          // hook crypto + eval
-RTI.findFbAds();      // bật hook mạng, lọc theo marker (đã có tên mới)
+RTI.findFbAds();      // enable network hook, filter by marker (renamed field included)
 // … scroll feed …
-RTI.dump('net');      // xem request/response dính ad
-RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
+RTI.dump('net');      // view ad-related request/response
+RTI.decodeAds();      // unwrap nested JSON, expand the tree to find th_dat_spo
     *
-    * Không phụ thuộc thư viện ngoài. An toàn để gỡ (stop khôi phục bản gốc).
+    * No external dependencies. Safe to remove (stop restores the originals).
     */
     (function (globalScope) {
       'use strict';
 
       if (globalScope.RTI && globalScope.RTI.__installed) {
-        globalScope.RTI.log('RTI đã được nạp rồi — gọi RTI.stop() trước nếu muốn nạp lại.');
+        globalScope.RTI.log('RTI is already loaded — call RTI.stop() first if you want to reload.');
         return;
       }
 
       // ---------------------------------------------------------------
-      // Cấu hình & trạng thái
+      // Config & state
       // ---------------------------------------------------------------
       var config = {
-        maxArgLen: 300,       // độ dài tối đa khi in một giá trị chuỗi
-        stackDepth: 6,        // số dòng call-stack hiển thị
-        logToConsole: true,   // in ra console theo thời gian thực
-        color: true,          // tô màu log
-        paused: false,        // tạm dừng ghi log (hook vẫn chạy)
-        maxExpand: 500000     // payload net <= mức này thì log cây JSON "full ▶" để mở rộng
+        maxArgLen: 300,       // max length when printing a string value
+        stackDepth: 6,        // number of call-stack lines to show
+        logToConsole: true,   // print to console in real time
+        color: true,          // color the log output
+        paused: false,        // pause logging (hooks keep running)
+        maxExpand: 500000     // net payloads <= this size get logged as an expandable "full ▶" JSON tree
       };
 
-      var records = [];       // lịch sử tất cả sự kiện bắt được
-      var restorers = [];     // các hàm khôi phục hook -> gọi khi stop()
+      var records = [];       // history of every captured event
+      var restorers = [];     // hook-restore functions -> called on stop()
       var seqId = 0;
-      var inHook = false;     // cờ chống đệ quy: đang trong lúc ghi log?
+      var inHook = false;     // recursion guard: currently inside a log write?
 
-      // Chụp tham chiếu NATIVE trước khi hook bất cứ thứ gì. Bộ logger nội bộ
-      // PHẢI dùng các bản này — nếu không, khi ta hook chính JSON.stringify thì
-      // việc log lại gọi vào hàm đã hook -> đệ quy bùng nổ / treo.
+      // Capture NATIVE references before hooking anything. The internal
+      // logger MUST use these — otherwise, once we hook JSON.stringify
+      // itself, logging would call back into the hooked function ->
+      // recursion blow-up / hang.
       var NATIVE = {
         stringify: JSON.stringify,
         parse: JSON.parse,
         fromCharCode: String.fromCharCode,
-        // decode gốc của TextDecoder — lưu TRƯỚC khi hookCrypto bọc nó, để giải
-        // mã bytes của beacon mà không tự sinh thêm bản ghi.
+        // TextDecoder's original decode — saved BEFORE hookCrypto wraps it, so
+        // beacon bytes can be decoded without generating an extra record.
         textDecode: (globalScope.TextDecoder && globalScope.TextDecoder.prototype.decode) || null
       };
 
       // ---------------------------------------------------------------
-      // Tiện ích
+      // Utilities
       // ---------------------------------------------------------------
       function now() {
         return (performance && performance.now) ? performance.now().toFixed(1) + 'ms' : Date.now();
@@ -75,11 +76,11 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
       function truncate(str) {
         if (typeof str !== 'string') return str;
         return str.length > config.maxArgLen
-          ? str.slice(0, config.maxArgLen) + '…(' + str.length + ' ký tự)'
+          ? str.slice(0, config.maxArgLen) + '…(' + str.length + ' chars)'
           : str;
       }
 
-      // Biểu diễn an toàn 1 giá trị bất kỳ để log (không làm vỡ do vòng lặp/ném lỗi)
+      // Safely render any value for logging (won't break on cycles/throws)
       function preview(val) {
         try {
           if (val === null) return 'null';
@@ -102,7 +103,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         return Array.prototype.map.call(args, preview).join(', ');
       }
 
-      // Lấy call-stack gọn (bỏ các frame nội bộ của RTI)
+      // Get a trimmed call-stack (strips RTI's own internal frames)
       function getStack() {
         var raw = (new Error()).stack || '';
         var lines = raw.split('\n').slice(1)
@@ -125,8 +126,8 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           id: ++seqId,
           time: now(),
           kind: kind,          // 'crypto' | 'eval' | 'watch' | 'trace'
-          name: name,          // tên hook/biến
-          detail: detail,      // object mô tả chi tiết
+          name: name,          // hook/variable name
+          detail: detail,      // detail description object
           stack: getStack()
         };
         records.push(entry);
@@ -144,10 +145,11 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         }
         if (entry.detail.input !== undefined) console.log('  in :', entry.detail.input);
         if (entry.detail.output !== undefined) console.log('  out:', entry.detail.output);
-        // "View all": với record net (có payload đầy đủ trong detail.raw), log
-        // thẳng CÂY JSON đã bung — DevTools hiện tam giác ▶ để mở rộng xem full,
-        // chuột phải -> Copy object/string. Payload quá to thì chỉ gợi ý dùng
-        // RTI.raw() để tránh treo console khi dựng cây.
+        // "View all": for net records (full payload available in detail.raw), log
+        // the unwrapped JSON tree directly — DevTools shows a ▶ triangle to expand
+        // and view the full thing, right-click -> Copy object/string. If the
+        // payload is too large, just suggest RTI.raw() to avoid hanging the
+        // console while building the tree.
         var rw = entry.detail.raw;
         if (rw && (rw.res || rw.req)) {
           var body = rw.res || rw.req;
@@ -155,8 +157,8 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
             var tree; try { tree = deepParse(body); } catch (e) { tree = body; }
             console.log('  full ▶', tree);
           } else {
-            console.log('  full ▶ (' + (body ? body.length : 0) + ' ký tự, quá lớn) → copy(RTI.raw(' +
-              entry.id + ',"res",true)) hoặc RTI.raw(' + entry.id + ')');
+            console.log('  full ▶ (' + (body ? body.length : 0) + ' chars, too large) → copy(RTI.raw(' +
+              entry.id + ',"res",true)) or RTI.raw(' + entry.id + ')');
           }
         }
         if (entry.detail.extra) console.log('  ', entry.detail.extra);
@@ -165,7 +167,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
       }
 
       // ---------------------------------------------------------------
-      // Bọc một phương thức trên object và ghi lại input/output
+      // Wrap a method on an object and record input/output
       // ---------------------------------------------------------------
       function wrapMethod(target, propName, kind, label) {
         var original = target[propName];
@@ -178,17 +180,18 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
             out = original.apply(this, args);
           } catch (e) { threw = true; err = e; }
 
-          // Chỉ ghi log khi không đang ở trong một lượt ghi log khác. Nhờ vậy
-          // việc dựng preview/record (nếu vô tình chạm hàm đã hook) không tự
-          // sinh ra bản ghi lồng nhau. Lời gọi apply ở trên nằm NGOÀI guard nên
-          // các lời gọi lồng nhau THẬT của ứng dụng vẫn được ghi lại.
+          // Only log when not already inside another log write. This way,
+          // building a preview/record (if it happens to touch an already-hooked
+          // function) doesn't generate a nested record on its own. The apply()
+          // call above sits OUTSIDE the guard, so genuinely nested calls from
+          // the application are still recorded.
           if (!inHook) {
             inHook = true;
             try {
               record(kind, label || propName, {
                 summary: '(' + previewArgs(args) + ')' + (threw ? ' ✗' : ''),
                 input: args.length === 1 ? preview(args[0]) : previewArgs(args),
-                output: threw ? '⚠ ném lỗi: ' + err : preview(out)
+                output: threw ? '⚠ threw: ' + err : preview(out)
               });
             } finally { inHook = false; }
           }
@@ -197,7 +200,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           return out;
         };
 
-        // giữ nguyên tên & prototype để ít gây phát hiện
+        // keep the original name & prototype to reduce detectability
         try {
           Object.defineProperty(wrapped, 'name', { value: original.name, configurable: true });
           Object.defineProperty(wrapped, 'length', { value: original.length, configurable: true });
@@ -211,12 +214,12 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           restorers.push(function () { target[propName] = original; });
           return true;
         } catch (e) {
-          return false; // property không ghi được (non-writable)
+          return false; // property is not writable
         }
       }
 
       // ---------------------------------------------------------------
-      // 1) Hook các hàm mã hoá / giải mã phổ biến
+      // 1) Hook common encode/decode functions
       // ---------------------------------------------------------------
       var CRYPTO_TARGETS = [
         [globalScope, 'atob',   'base64 decode'],
@@ -238,9 +241,9 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           if (t[0] && t[0][t[1]]) wrapMethod(t[0], t[1], 'crypto', t[2]);
         });
 
-        // Các phương thức trên String.prototype thường dùng để giải mã
+        // Methods on String.prototype often used for decoding
         ['charCodeAt', 'codePointAt'].forEach(function (m) {
-          // Bỏ qua vì gọi quá thường xuyên -> gây nhiễu. Chỉ bật khi cần.
+          // Skipped — called too frequently, causes noise. Enable only when needed.
         });
 
         // Web Crypto API
@@ -256,7 +259,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
       }
 
       // ---------------------------------------------------------------
-      // 2) Hook code chạy động: eval, Function, setTimeout/Interval(string)
+      // 2) Hook dynamically-run code: eval, Function, setTimeout/Interval(string)
       // ---------------------------------------------------------------
       function hookDynamic() {
         // eval
@@ -267,7 +270,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
               summary: preview(code),
               input: typeof code === 'string' ? truncate(code) : preview(code)
             });
-            return _eval.apply(this, arguments); // gọi gián tiếp -> eval global scope
+            return _eval.apply(this, arguments); // indirect call -> evaluates in global scope
           };
           try {
             globalScope.eval = evalWrap;
@@ -282,9 +285,9 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           record('eval', 'new Function', {
             summary: preview(args[args.length - 1]),
             input: args.map(truncate).join(' , '),
-            extra: 'tham số cuối là thân hàm được biên dịch động'
+            extra: 'last argument is the dynamically-compiled function body'
           });
-          // dùng bind để giữ hoạt động của cả `Function(...)` và `new Function(...)`
+          // use bind to preserve both `Function(...)` and `new Function(...)` behavior
           var bound = Function.prototype.bind.apply(_Function, [null].concat(args));
           return new bound();
         };
@@ -294,7 +297,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           restorers.push(function () { globalScope.Function = _Function; });
         } catch (e) {}
 
-        // setTimeout / setInterval khi callback là chuỗi (dạng eval ẩn)
+        // setTimeout / setInterval when the callback is a string (hidden eval form)
         ['setTimeout', 'setInterval'].forEach(function (fn) {
           var orig = globalScope[fn];
           if (typeof orig !== 'function') return;
@@ -303,7 +306,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
               record('eval', fn + '(string)', {
                 summary: preview(handler),
                 input: truncate(handler),
-                extra: 'chuỗi truyền vào ' + fn + ' sẽ được eval'
+                extra: 'the string passed to ' + fn + ' will be eval\'d'
               });
             }
             return orig.apply(this, arguments);
@@ -316,19 +319,20 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
       }
 
       // ---------------------------------------------------------------
-      // 2b) Hook mạng: fetch + XMLHttpRequest
+      // 2b) Network hooks: fetch + XMLHttpRequest
       // ---------------------------------------------------------------
-      // Trên các site như Facebook, quảng cáo được nạp qua GraphQL/XHR chứ
-      // không có biến global dễ đọc. Hook mạng cho phép soi thẳng payload.
+      // On sites like Facebook, ads are loaded via GraphQL/XHR rather than
+      // sitting in an easily-readable global variable. The network hook lets
+      // us inspect the payload directly.
       function escapeRe(s) {
         return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       }
 
-      // Chuyển 1 giá trị -> RegExp:
-      //   RegExp   -> giữ nguyên
-      //   Array    -> danh sách chuỗi LITERAL, ghép OR (tự escape) — dùng cho
-      //               danh sách URL, vd ['/api/graphql/', '/ajax/bulk-route-definitions/']
-      //   String   -> coi như mẫu regex (giữ hành vi cũ cho FB_AD_MARKER...)
+      // Convert a value -> RegExp:
+      //   RegExp   -> kept as-is
+      //   Array    -> list of LITERAL strings, joined with OR (auto-escaped) — for
+      //               URL lists, e.g. ['/api/graphql/', '/ajax/bulk-route-definitions/']
+      //   String   -> treated as a regex pattern (keeps old behavior for FB_AD_MARKER...)
       function toRegExp(x) {
         if (!x) return null;
         if (x instanceof RegExp) return x;
@@ -339,7 +343,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         return new RegExp(String(x), 'i');
       }
 
-      // Giải mã bytes -> chuỗi bằng decode gốc (tránh đụng hook).
+      // Decode bytes -> string using the original decoder (avoid touching the hook).
       function decodeBytes(view) {
         if (NATIVE.textDecode && globalScope.TextDecoder) {
           try { return NATIVE.textDecode.call(new globalScope.TextDecoder(), view); } catch (e) {}
@@ -350,7 +354,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         return s;
       }
 
-      // sendBeacon nhận nhiều kiểu data — quy về chuỗi để soi được.
+      // sendBeacon accepts many data types — normalize to a string so it can be inspected.
       function beaconDataToText(data) {
         try {
           if (data == null) return '';
@@ -358,10 +362,10 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           if (typeof URLSearchParams !== 'undefined' && data instanceof URLSearchParams) return data.toString();
           if (data instanceof ArrayBuffer) return decodeBytes(new Uint8Array(data));
           if (ArrayBuffer.isView(data)) return decodeBytes(data);
-          if (typeof Blob !== 'undefined' && data instanceof Blob) return '[Blob ' + data.size + ' bytes — không đọc đồng bộ được]';
+          if (typeof Blob !== 'undefined' && data instanceof Blob) return '[Blob ' + data.size + ' bytes — cannot read synchronously]';
           if (typeof FormData !== 'undefined' && data instanceof FormData) return '[FormData]';
           return '[' + ((data.constructor && data.constructor.name) || typeof data) + ']';
-        } catch (e) { return '[không đọc được beacon]'; }
+        } catch (e) { return '[could not read beacon]'; }
       }
 
       function hookNetwork(opts) {
@@ -371,16 +375,17 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         var maxBody = opts.maxBody || 2000;
 
         function reportNet(label, url, reqBody, text) {
-          // Chỉ ghi khi khớp bộ lọc nội dung (nếu có) — ở request HOẶC response.
+          // Only record when the content filter (if any) matches — in either the
+          // request OR the response.
           if (bodyFilter &&
               !bodyFilter.test(text || '') &&
               !(typeof reqBody === 'string' && bodyFilter.test(reqBody))) return;
           record('net', label, {
             summary: url.length > 120 ? url.slice(0, 120) + '…' : url,
             input: (reqBody != null && reqBody !== '') ? truncate(String(reqBody)) : undefined,
-            output: !text ? '(rỗng)'
-              : (text.length > maxBody ? text.slice(0, maxBody) + '…(' + text.length + ' ký tự)' : text),
-            // Lưu payload ĐẦY ĐỦ (không bị cắt) để RTI.decodeAds() giải mã sau.
+            output: !text ? '(empty)'
+              : (text.length > maxBody ? text.slice(0, maxBody) + '…(' + text.length + ' chars)' : text),
+            // Store the FULL (untruncated) payload for RTI.decodeAds() to decode later.
             raw: {
               req: (reqBody != null && reqBody !== '') ? String(reqBody) : undefined,
               res: text || undefined
@@ -388,7 +393,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           });
         }
 
-        // fetch — dùng response.clone() để không tiêu thụ mất body gốc.
+        // fetch — uses response.clone() so the original body isn't consumed.
         if (typeof globalScope.fetch === 'function' && !globalScope.fetch.__rtiWrapped) {
           var _fetch = globalScope.fetch;
           var fetchWrap = function (input, init) {
@@ -416,7 +421,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           } catch (e) {}
         }
 
-        // XMLHttpRequest — bọc open() để nhớ url, và load event để đọc response.
+        // XMLHttpRequest — wraps open() to remember the url, and the load event to read the response.
         var XHR = globalScope.XMLHttpRequest;
         if (XHR && XHR.prototype && XHR.prototype.open && !XHR.prototype.open.__rtiWrapped) {
           var _open = XHR.prototype.open;
@@ -447,14 +452,15 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           });
         }
 
-        // navigator.sendBeacon — Facebook bắn telemetry (gồm log SPONSORED
-        // "render_attempt", "click"...) qua đây. Không có response, payload nằm
-        // ở tham số thứ 2.
+        // navigator.sendBeacon — Facebook fires telemetry through this (including
+        // SPONSORED "render_attempt", "click" logs...). No response; the payload
+        // is in the 2nd argument.
         var nav = globalScope.navigator;
         if (nav && typeof nav.sendBeacon === 'function' && !nav.sendBeacon.__rtiWrapped) {
           var _sb = nav.sendBeacon;
-          // sendBeacon thường nằm trên Navigator.prototype (không phải own prop);
-          // nhớ lại trạng thái để khôi phục đúng: xoá override, hoặc gán lại bản gốc.
+          // sendBeacon usually lives on Navigator.prototype (not an own prop);
+          // remember that so restore is correct: either delete the override, or
+          // reassign the original.
           var hadOwn = Object.prototype.hasOwnProperty.call(nav, 'sendBeacon');
           var sbWrap = function (url, data) {
             if (!urlFilter || urlFilter.test(String(url))) {
@@ -468,55 +474,55 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
             restorers.push(function () {
               try {
                 if (hadOwn) nav.sendBeacon = _sb;
-                else delete nav.sendBeacon;   // để lộ lại bản native trên prototype
+                else delete nav.sendBeacon;   // expose the native prototype version again
               } catch (e) { nav.sendBeacon = _sb; }
             });
           } catch (e) {}
         }
 
-        log('hookNetwork: đang bắt fetch + XHR + sendBeacon' +
+        log('hookNetwork: capturing fetch + XHR + sendBeacon' +
           (urlFilter ? ' (url ~ ' + urlFilter + ')' : '') +
-          (bodyFilter ? ' (nội dung ~ ' + bodyFilter + ')' : ' — CHÚ Ý: không lọc sẽ rất nhiều log') + '.');
+          (bodyFilter ? ' (content ~ ' + bodyFilter + ')' : ' — NOTE: no filter means a LOT of logs') + '.');
       }
 
-      // Dấu hiệu quảng cáo trong payload GraphQL của Facebook & tương tự.
-      // th_dat_spo / sposnsor / distac: tên MỚI của sponsored_data /
-      // SponsoredAuctionDistance khi cờ GHL...FieldName bật (xác nhận 2026-07-20).
-      // FB cố tình viết sai chính tả để né regex /sponsor/.
+      // Ad markers in Facebook's (and similar sites') GraphQL payloads.
+      // th_dat_spo / sposnsor / distac: the NEW names for sponsored_data /
+      // SponsoredAuctionDistance once the GHL...FieldName flag is on (confirmed 2026-07-20).
+      // FB deliberately misspells these to dodge the /sponsor/ regex.
       var FB_AD_MARKER =
         /sponsored|is_sponsored|sponsored_data|sponsored_label|"ad_id"|ad_client|ad_delivery|SponsoredAd|Được tài trợ|th_dat_spo|sposnsor|distac/i;
 
-      // Bắt riêng lưu lượng chứa dấu hiệu quảng cáo (khuyên dùng cho Facebook).
+      // Capture only traffic containing an ad marker (recommended for Facebook).
       function findFbAds(extraMarker) {
         var marker = extraMarker
           ? new RegExp(FB_AD_MARKER.source + '|' + toRegExp(extraMarker).source, 'i')
           : FB_AD_MARKER;
         hookNetwork({ match: marker });
-        log('findFbAds: đã bật. Lướt news feed vài giây rồi gọi RTI.dump("net") / RTI.grep("sponsored").');
+        log('findFbAds: enabled. Scroll the news feed for a few seconds then call RTI.dump("net") / RTI.grep("sponsored").');
       }
 
-      // Danh sách URL mặc định để theo dõi (Facebook GraphQL + bulk-route).
+      // Default URL list to watch (Facebook GraphQL + bulk-route).
       var URL_WATCH_DEFAULT = ['/api/graphql/', '/ajax/bulk-route-definitions/'];
 
-      // CHỈ bắt lưu lượng từ các URL trong danh sách (không lọc theo nội dung).
-      //   RTI.watchUrls();                              // dùng danh sách mặc định
-      //   RTI.watchUrls(['/api/graphql/']);             // danh sách riêng
-      //   RTI.watchUrls(['/api/graphql/'], {match:/ad_id/});  // kèm lọc nội dung
-      // Payload đầy đủ lưu trong records -> RTI.dump('net') / RTI.decodeAds().
+      // Capture ONLY traffic from the URLs in the list (no content filtering).
+      //   RTI.watchUrls();                              // use the default list
+      //   RTI.watchUrls(['/api/graphql/']);             // custom list
+      //   RTI.watchUrls(['/api/graphql/'], {match:/ad_id/});  // with content filter too
+      // Full payload is stored in records -> RTI.dump('net') / RTI.decodeAds().
       function watchUrls(urls, opts) {
         opts = opts || {};
         var list = (urls && urls.length) ? urls : URL_WATCH_DEFAULT;
         hookNetwork({ url: list, match: opts.match, maxBody: opts.maxBody });
-        log('watchUrls: chỉ bắt các URL ~ ' + list.join(' | ') +
-          (opts.match ? '  (lọc nội dung ~ ' + toRegExp(opts.match) + ')' : ''));
+        log('watchUrls: capturing only URLs ~ ' + list.join(' | ') +
+          (opts.match ? '  (content filter ~ ' + toRegExp(opts.match) + ')' : ''));
       }
 
       // ---------------------------------------------------------------
-      // 3) Theo dõi biến / thuộc tính thay đổi
+      // 3) Watch a variable/property for changes
       // ---------------------------------------------------------------
       function watch(target, propName, label) {
         if (!target || typeof target !== 'object') {
-          log('watch: target không phải object hợp lệ');
+          log('watch: target is not a valid object');
           return;
         }
         label = label || propName;
@@ -524,7 +530,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         var existingDesc = Object.getOwnPropertyDescriptor(target, propName);
 
         if (existingDesc && !existingDesc.configurable) {
-          log('watch: thuộc tính "' + propName + '" không configurable, không theo dõi được.');
+          log('watch: property "' + propName + '" is not configurable, cannot be watched.');
           return;
         }
 
@@ -540,7 +546,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
                 summary: preview(old) + ' → ' + preview(v),
                 input: preview(old),
                 output: preview(v),
-                extra: 'gán giá trị mới'
+                extra: 'value assigned'
               });
             }
           });
@@ -551,9 +557,9 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
               });
             } catch (e) {}
           });
-          log('Đang theo dõi thuộc tính: ' + label);
+          log('Watching property: ' + label);
         } catch (e) {
-          log('watch lỗi: ' + e.message);
+          log('watch error: ' + e.message);
         }
       }
 
@@ -561,10 +567,10 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         watch(globalScope, propName, 'window.' + propName);
       }
 
-      // Bọc toàn bộ object bằng Proxy -> bắt MỌI thuộc tính đọc/ghi (kể cả mới thêm)
+      // Wrap the entire object in a Proxy -> catch EVERY property read/write (including newly-added ones)
       function watchAll(target, label) {
         if (!target || typeof target !== 'object') {
-          log('watchAll: cần một object');
+          log('watchAll: needs an object');
           return target;
         }
         label = label || 'object';
@@ -582,15 +588,16 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
             return true;
           }
         });
-        log('watchAll: trả về Proxy — hãy gán lại biến của bạn = proxy này để theo dõi.');
+        log('watchAll: returning a Proxy — reassign your variable = this proxy to watch it.');
         return proxy;
       }
 
       // ---------------------------------------------------------------
-      // 4) Trace mọi hàm trên một object
+      // 4) Trace every function on an object
       // ---------------------------------------------------------------
-      // Các prototype dựng sẵn — TUYỆT ĐỐI không bọc method trên đây, vì làm
-      // vậy sẽ ảnh hưởng MỌI object/array của cả trang (và cả code nội bộ RTI).
+      // Built-in prototypes — NEVER wrap methods on these, since doing so
+      // would affect EVERY object/array on the entire page (including RTI's
+      // own internal code).
       var BUILTIN_PROTOS = [
         Object.prototype, Array.prototype, Function.prototype,
         String.prototype, Number.prototype, Boolean.prototype
@@ -605,15 +612,15 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
 
       function trace(target, label) {
         if (!target || (typeof target !== 'object' && typeof target !== 'function')) {
-          log('trace: target phải là object hoặc function');
+          log('trace: target must be an object or function');
           return;
         }
         label = label || (target.constructor && target.constructor.name) || 'obj';
         var count = 0;
         var seen = {};
 
-        // Bọc method trực tiếp trên target, và trên prototype 1 cấp NẾU đó là
-        // prototype của một class tự định nghĩa (không phải built-in).
+        // Wrap methods directly on target, and on the prototype one level up IF
+        // that's the prototype of a user-defined class (not a built-in).
         [target, Object.getPrototypeOf(target)].forEach(function (obj) {
           if (!obj || isBuiltinProto(obj)) return;
           Object.getOwnPropertyNames(obj).forEach(function (key) {
@@ -627,12 +634,12 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
             }
           });
         });
-        log('trace: đã bọc ' + count + ' hàm trên ' + label +
-          (count === 0 && Array.isArray(target) ? ' (array không có method riêng — bỏ qua)' : ''));
+        log('trace: wrapped ' + count + ' function(s) on ' + label +
+          (count === 0 && Array.isArray(target) ? ' (array has no own methods — skipped)' : ''));
       }
 
       // ---------------------------------------------------------------
-      // Truy vấn / báo cáo
+      // Query / reporting
       // ---------------------------------------------------------------
       function dump(filterKind) {
         var rows = records
@@ -647,25 +654,25 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           });
         if (console.table) console.table(rows);
         else console.log(rows);
-        log('Tổng cộng ' + rows.length + ' sự kiện' + (filterKind ? ' (' + filterKind + ')' : '') + '.');
+        log('Total: ' + rows.length + ' event(s)' + (filterKind ? ' (' + filterKind + ')' : '') + '.');
         return records;
       }
 
-      // Lọc bản ghi mà giá trị (in/out/summary) khớp một chuỗi/regex — hữu ích khi
-      // đã biết một mẩu dữ liệu và muốn tìm hàm nào đã xử lý nó.
+      // Filter records whose value (in/out/summary) matches a string/regex — useful
+      // when you already know a piece of data and want to find which function handled it.
       function grep(needle) {
         var re = needle instanceof RegExp ? needle : new RegExp(String(needle), 'i');
         var hits = records.filter(function (r) {
           return re.test(NATIVE.stringify(r.detail));
         });
         hits.forEach(emit);
-        log('grep "' + needle + '": ' + hits.length + ' kết quả.');
+        log('grep "' + needle + '": ' + hits.length + ' result(s).');
         return hits;
       }
 
-      // Facebook (và nhiều nơi) nhét JSON dưới dạng CHUỖI bên trong JSON, nhiều
-      // lớp (extra -> "{...}" -> payload...). deepParse bung tất cả các lớp đó
-      // thành cây object để đọc/expand trong console.
+      // Facebook (and many other sites) embeds JSON as a STRING inside JSON,
+      // multiple layers deep (extra -> "{...}" -> payload...). deepParse unwraps
+      // all of those layers into an object tree, readable/expandable in the console.
       function deepParse(value, depth) {
         depth = depth || 0;
         if (depth > 20) return value;
@@ -689,8 +696,8 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         return value;
       }
 
-      // Giải mã các bản ghi quảng cáo: bung JSON lồng nhau và in cây object.
-      // Ưu tiên dùng payload ĐẦY ĐỦ (detail.raw) nếu có, nếu không dùng bản đã cắt.
+      // Decode ad records: unwrap nested JSON and print the object tree.
+      // Prefers the FULL payload (detail.raw) when available, falls back to the truncated version.
       function decodeAds(needle) {
         var re = needle ? toRegExp(needle)
           : /sponsored|is_sponsored|"ad_id"|ad_client|Được tài trợ|th_dat_spo|sposnsor|distac/i;
@@ -708,17 +715,17 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           console.log(parsed);
           console.groupEnd();
         });
-        log('decodeAds: đã bung ' + hits.length + ' bản ghi (deep-parse JSON lồng). Mở cây object để xem.');
+        log('decodeAds: unwrapped ' + hits.length + ' record(s) (deep-parsed nested JSON). Expand the tree to view.');
         return hits;
       }
 
-      // Lấy payload ĐẦY ĐỦ (không bị cắt như phần out: trong console) của 1 record
-      // net, để copy trong DevTools:
-      //   copy(RTI.raw())            // response đầy đủ của record net MỚI NHẤT
-      //   copy(RTI.raw(1708))        // theo id record (xem id ở RTI.dump('net'))
-      //   copy(RTI.raw(1708,'req'))  // lấy request body thay vì response
-      //   copy(RTI.raw(1708,'res',true))  // deep-parse JSON lồng -> copy cây object
-      // Trả về chuỗi (hoặc object nếu parse=true) để truyền thẳng vào copy().
+      // Get the FULL payload (not truncated like the out: field in the console) of
+      // one net record, for copying in DevTools:
+      //   copy(RTI.raw())            // full response of the MOST RECENT net record
+      //   copy(RTI.raw(1708))        // by record id (see the id in RTI.dump('net'))
+      //   copy(RTI.raw(1708,'req'))  // request body instead of response
+      //   copy(RTI.raw(1708,'res',true))  // deep-parse nested JSON -> copy the object tree
+      // Returns a string (or an object if parse=true) to feed straight into copy().
       function raw(id, which, parse) {
         var r;
         if (id == null) {
@@ -730,7 +737,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
             if (records[j].id === id) { r = records[j]; break; }
           }
         }
-        if (!r) { log('raw: không tìm thấy record' + (id != null ? ' #' + id : ' net nào')); return; }
+        if (!r) { log('raw: no record found' + (id != null ? ' #' + id : ' of kind net')); return; }
         var rw = (r.detail && r.detail.raw) || {};
         var src = which === 'req' ? rw.req : rw.res;
         if (src == null) src = which === 'req' ? r.detail.input : r.detail.output;
@@ -739,18 +746,20 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
       }
 
       // ---------------------------------------------------------------
-      // whyAd($0): đọc React fiber props của 1 ad ĐANG HIỂN THỊ để tìm
-      // field nào đánh dấu nó là ad — KHÔNG đoán tên field trước.
+      // whyAd($0): reads the React fiber props of a CURRENTLY-DISPLAYED ad to
+      // find which field marks it as an ad — WITHOUT guessing the field name upfront.
       // ---------------------------------------------------------------
-      // Cách dùng: right-click vào ad → Inspect (element vào $0) → RTI.whyAd($0)
-      // In ra: các object dữ liệu bài (story/node/feedEdge...) tìm thấy dọc cây
-      // fiber, kèm danh sách key — soi bằng MẮT xem key lạ nào chỉ ad mới có
-      // (vd th_dat_spo, sponsored_data, whatsapp_ad_context có giá trị, ad_id...).
-      // Vì đọc thẳng data đã render nên đúng dù FB đổi tên field theo release.
-      // Tìm React fiber gắn trên 1 DOM node. FB gắn key '__reactFiber$<rand>'
-      // (và '__reactProps$', '__reactContainer$') dưới dạng NON-ENUMERABLE →
-      // Object.keys bỏ sót; PHẢI dùng getOwnPropertyNames. Đi lên cây cha đến
-      // khi thấy fiber, và cũng dò trong shadow root nếu có.
+      // Usage: right-click an ad → Inspect (element becomes $0) → RTI.whyAd($0)
+      // Prints: the post/feed-unit data objects (story/node/feedEdge...) found
+      // along the fiber tree, with their key lists — eyeball which unusual key
+      // only ads have (e.g. th_dat_spo, sponsored_data, whatsapp_ad_context with
+      // a value, ad_id...). Since it reads already-rendered data directly, it
+      // stays correct even as FB renames fields across releases.
+      // Find the React fiber attached to a DOM node. FB attaches it under a key
+      // like '__reactFiber$<rand>' (and '__reactProps$', '__reactContainer$') as
+      // NON-ENUMERABLE → Object.keys misses it; MUST use getOwnPropertyNames.
+      // Walk up the parent tree until a fiber is found, also crossing into the
+      // shadow root if present.
       function _fiberKey(node) {
         var ks;
         try { ks = Object.getOwnPropertyNames(node); } catch (e) { return null; }
@@ -766,24 +775,24 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         while (el) {
           var k = _fiberKey(el);
           if (k) return el[k];
-          // qua ranh giới shadow DOM nếu có host
+          // cross the shadow-DOM boundary if there's a host
           el = el.parentElement || (el.parentNode && el.parentNode.host) || null;
         }
         return null;
       }
 
-      // Regex "rộng" chỉ để TÔ ĐẬM key nghi ngờ — không dùng để quyết định.
+      // "Broad" regex used ONLY to highlight suspicious keys — not used to decide.
       var WHYAD_HINT = /sponsor|sposnsor|th_dat_spo|_ad_|ad_id|adid|client_token|auction|distac|boost|promoted|whatsapp_ad|is_demo_ad|brs_filter/i;
 
       function whyAd(el) {
         if (!el || el.nodeType !== 1) {
-          log('Cách dùng: right-click vào ad → Inspect → RTI.whyAd($0)');
+          log('Usage: right-click an ad → Inspect → RTI.whyAd($0)');
           return;
         }
         var fiber = _fiberOf(el);
-        if (!fiber) { log('whyAd: element không thuộc cây React (không có __reactFiber$).'); return; }
+        if (!fiber) { log('whyAd: element is not part of a React tree (no __reactFiber$).'); return; }
 
-        // Các prop hay chứa dữ liệu bài đăng/đơn vị feed.
+        // Props that commonly hold post/feed-unit data.
         var DATA_PROPS = ['story', 'node', 'feedUnit', 'feedEdge', 'edge', 'adStory', 'unit', 'post', 'row', 'group'];
         var found = [], depth = 0, seen = (typeof WeakSet === 'function') ? new WeakSet() : null;
 
@@ -809,29 +818,29 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         }
 
         if (!found.length) {
-          log('whyAd: không thấy props.story/node/feedUnit dọc fiber. Thử console.dir($0) rồi tự đào, ' +
-              'hoặc chọn element cha/con của ad rồi gọi lại.');
+          log('whyAd: no props.story/node/feedUnit found along the fiber tree. Try console.dir($0) and dig ' +
+              'manually, or select a parent/child element of the ad and call this again.');
           return;
         }
-        if (config.color) console.groupCollapsed('%c[RTI:whyAd]%c ' + found.length + ' object dữ liệu bài', styles.net, '');
-        else console.group('[RTI:whyAd] ' + found.length + ' object dữ liệu bài');
+        if (config.color) console.groupCollapsed('%c[RTI:whyAd]%c ' + found.length + ' post-data object(s)', styles.net, '');
+        else console.group('[RTI:whyAd] ' + found.length + ' post-data object(s)');
         found.forEach(function (f) {
-          log('props.' + f.prop + ' (fiber depth ' + f.depth + ') — ' + f.keys.length + ' key' +
-              (f.hintKeys.length ? ' | KEY NGHI NGỜ: ' + f.hintKeys.join(', ') : ' | (không key nào khớp gợi ý — soi tay bên dưới)'));
+          log('props.' + f.prop + ' (fiber depth ' + f.depth + ') — ' + f.keys.length + ' key(s)' +
+              (f.hintKeys.length ? ' | SUSPECT KEYS: ' + f.hintKeys.join(', ') : ' | (no key matched the hint — inspect manually below)'));
           console.log('  keys:', f.keys.join(', '));
           console.dir(f.obj);
         });
         console.groupEnd();
-        log('whyAd: so sánh object của 1 AD với 1 bài THƯỜNG — key/nhánh nào chỉ ad có = field cần viết rule.');
+        log('whyAd: compare an AD object against a REGULAR post — whichever key/branch only the ad has is the field to write a rule for.');
         return found;
       }
 
       // ---------------------------------------------------------------
-      // Quét biến global theo tên (mặc định: các thư viện quảng cáo)
+      // Scan global variables by name (default: ad-tech libraries)
       // ---------------------------------------------------------------
-      // Danh sách token ad-tech phổ biến. Dùng \b để tránh khớp nhầm
-      // (vd "addEventListener", "address"). Khớp không phân biệt hoa/thường
-      // nên "adSlot", "adUnit"... đều bắt được.
+      // List of common ad-tech tokens. Uses \b to avoid false matches (e.g.
+      // "addEventListener", "address"). Case-insensitive, so "adSlot",
+      // "adUnit"... all get caught.
       var AD_PATTERN = new RegExp(
         '\\b(' + [
           'ads', 'adsbygoogle', 'advert(ising|isement)?',
@@ -847,8 +856,8 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         'i'
       );
 
-      // Quét tất cả biến ở phạm vi global khớp một mẫu (mặc định AD_PATTERN).
-      // Trả về mảng {name,type,preview}. Không làm thay đổi gì — chỉ liệt kê.
+      // Scan every variable in global scope matching a pattern (default AD_PATTERN).
+      // Returns an array of {name,type,preview}. Read-only — doesn't change anything.
       function scan(pattern) {
         var re = pattern
           ? (pattern instanceof RegExp ? pattern : new RegExp(String(pattern), 'i'))
@@ -863,7 +872,7 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           if (!re.test(key)) return;
           var val, typ;
           try { val = globalScope[key]; typ = typeof val; }
-          catch (e) { typ = '<không đọc được>'; val = undefined; }
+          catch (e) { typ = '<could not read>'; val = undefined; }
           results.push({ name: key, type: typ, preview: preview(val) });
         });
         results.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
@@ -872,13 +881,13 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
           return { name: r.name, type: r.type, preview: r.preview };
         }));
         else results.forEach(function (r) { log(r.name + ' : ' + r.type + ' = ' + r.preview); });
-        log('scan: tìm thấy ' + results.length + ' biến khớp mẫu.');
+        log('scan: found ' + results.length + ' matching variable(s).');
         return results;
       }
 
-      // Tiện ích: quét biến quảng cáo. action tuỳ chọn:
-      //   'watch' -> theo dõi mọi biến ad tìm được bị gán lại
-      //   'trace' -> bọc mọi hàm của các object/hàm ad tìm được
+      // Convenience: scan for ad-related variables. Optional action:
+      //   'watch' -> watch every found ad variable for reassignment
+      //   'trace' -> wrap every function on the found ad objects/functions
       function findAds(action) {
         var found = scan(AD_PATTERN);
         found.forEach(function (r) {
@@ -890,31 +899,31 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
             trace(val, r.name);
           }
         });
-        if (action) log('findAds: đã áp "' + action + '" cho ' + found.length + ' biến.');
+        if (action) log('findAds: applied "' + action + '" to ' + found.length + ' variable(s).');
         return found;
       }
 
-      function clear() { records.length = 0; log('Đã xoá lịch sử.'); }
+      function clear() { records.length = 0; log('History cleared.'); }
 
       function log(msg) {
         console.log('%c[RTI]%c ' + msg, config.color ? 'color:#9c27b0;font-weight:bold' : '', '');
       }
 
       // ---------------------------------------------------------------
-      // Vòng đời
+      // Lifecycle
       // ---------------------------------------------------------------
       function start(opts) {
         if (opts) for (var k in opts) if (k in config) config[k] = opts[k];
         hookCrypto();
         hookDynamic();
-        log('Đã bật hook mã hoá + code động. Dùng RTI.watch / RTI.trace cho object cụ thể, RTI.dump() để xem.');
+        log('Encode/decode + dynamic-code hooks enabled. Use RTI.watch / RTI.trace on a specific object, RTI.dump() to view.');
       }
 
       function stop() {
         while (restorers.length) {
           try { restorers.pop()(); } catch (e) {}
         }
-        log('Đã gỡ toàn bộ hook, khôi phục hàm gốc.');
+        log('All hooks removed, originals restored.');
       }
 
       // ---------------------------------------------------------------
@@ -944,11 +953,11 @@ RTI.decodeAds();      // bung JSON lồng, mở cây tìm th_dat_spo
         findAds: findAds,
         clear: clear,
         records: records,
-        pause: function () { config.paused = true; log('Tạm dừng log (vẫn ghi lịch sử).'); },
-        resume: function () { config.paused = false; log('Tiếp tục log.'); },
+        pause: function () { config.paused = true; log('Logging paused (history still recorded).'); },
+        resume: function () { config.paused = false; log('Logging resumed.'); },
         log: log
       };
 
       globalScope.RTI = RTI;
-      log('JS Runtime Inspector đã sẵn sàng. Gõ RTI.start() để bắt đầu.');
+      log('JS Runtime Inspector ready. Type RTI.start() to begin.');
     })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
