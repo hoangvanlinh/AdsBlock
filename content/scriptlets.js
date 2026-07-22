@@ -2043,7 +2043,7 @@
   // runs after every later <script> executes, so this always wins the race
   // against whatever later reads the tag) and applies the same
   // _jsonPruneRules/_jsonEditRules directly on the tag's textContent.
-  var _sjsGuardInstalled = false;
+  var _sjsGuardInstalled = true;
   function _installSjsGuard() {
     if (_sjsGuardInstalled) return;
     if (typeof MutationObserver === 'undefined') return;
