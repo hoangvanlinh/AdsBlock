@@ -802,7 +802,10 @@
   // resolves — not when fetch() is called — so requests fired during the
   // config round-trip are still pruned.
   var _fetchPruneRules = [];
+  var _fetchProxyInstalled = false;
   function _installFetchResponseProxy() {
+    if (_fetchProxyInstalled) return;
+    _fetchProxyInstalled = true;
     const safe = safeSelf();
     const applyHandler = function (target, thisArg, args) {
       const fetchPromise = Reflect.apply(target, thisArg, args);
@@ -886,8 +889,8 @@
       }
       return out;
     };
-    // Lõi prune dùng chung cho cả 2 cách cài (prototype getter / subclass).
-    // `innerResponse` = giá trị response GỐC đã đọc từ getter native.
+    // Prune core shared by both install strategies (prototype getter / subclass).
+    // `innerResponse` = the ORIGINAL response value already read from the native getter.
     const computeResponse = function (xhr, innerResponse) {
       if (!_scriptletsEnabled) return innerResponse;
       if (_xhrPruneRules.length === 0 && _xhrJsonlRules.length === 0 &&
@@ -955,27 +958,30 @@
     const nativeOpen = proto.open;
     const nativeSend = proto.send;
 
-    // Fix #1: ghi đè getter TRỰC TIẾP trên XMLHttpRequest.prototype thay vì
-    // dùng subclass. Chống kiểu né phổ biến của anti-adblock: lấy native
-    // getter qua Object.getOwnPropertyDescriptor(...proto chain...) rồi gọi
-    // thẳng để bỏ qua bản subclass. Khi override tại chính prototype gốc,
-    // không còn getter native "sạch" bên dưới để lấy. Chỉ áp dụng khi getter
-    // gốc configurable (mọi trình duyệt hiện đại đều vậy); nếu không, rơi
-    // xuống subclass như cũ.
+    // Fix #1: override the getters DIRECTLY on XMLHttpRequest.prototype
+    // instead of subclassing. Defeats a common anti-adblock bypass: grabbing
+    // the native getter via Object.getOwnPropertyDescriptor(...prototype
+    // chain...) and calling it directly to skip the subclass. By overriding
+    // right on the original prototype, there is no "clean" native getter left
+    // underneath to grab. Only applies when the original getter is
+    // configurable (true in every modern browser); otherwise falls back to
+    // the subclass approach as before.
     //
-    // Fix #2 — tự vá liên tục (self-healing), xác nhận CẦN THIẾT trên
-    // facebook.com 2026-07-21: FB có code nội bộ (module hệ thống Haste,
-    // gọi qua React Scheduler + đồng bộ ngay trong xhr.send()) chủ động
-    // Object.defineProperty lại open/response/responseText về bản native
-    // SAU khi ta cài — không phải 1 lần, mà LẶP LẠI (1 lần sau mount qua
-    // 'open', và MỖI LẦN send() qua 'response'/'responseText'). Khoá cứng
-    // defineProperty không ăn được (họ có thể delete+gán lại, né hẳn
-    // defineProperty). Thay vào đó: để họ ghi đè xong rồi VÁ LẠI NGAY SAU —
-    // tại 2 chốt ta biết chắc lượt ghi đè của họ đã xảy ra:
-    //   - đầu mỗi open()  -> vá lại trước khi ghi nhận request mới
-    //   - cuối mỗi send() -> vá lại ngay sau khi native send() trả về
-    // Dữ liệu response chỉ tới BẤT ĐỒNG BỘ (sau tick hiện tại), nên bất kỳ
-    // lượt đọc .response/.responseText nào sau đó đều thấy bản của ta.
+    // Fix #2 — continuous self-healing, confirmed NECESSARY on facebook.com
+    // 2026-07-21: FB has internal code (Haste module system, invoked via
+    // React Scheduler, running synchronously inside xhr.send()) that
+    // actively re-runs Object.defineProperty on open/response/responseText
+    // back to native — not once, but REPEATEDLY (once after mount via
+    // 'open', and on EVERY send() via 'response'/'responseText'). Hard-
+    // locking defineProperty doesn't work (they can delete+reassign,
+    // sidestepping defineProperty entirely). Instead: let their overwrite
+    // happen, then RE-PATCH RIGHT AFTER — at the 2 checkpoints where we know
+    // for certain their overwrite has already occurred:
+    //   - start of every open()  -> re-patch before registering the new request
+    //   - end of every send()    -> re-patch right after native send() returns
+    // Response data only ever arrives ASYNCHRONOUSLY (after the current
+    // tick), so any read of .response/.responseText after that point is
+    // guaranteed to see our version.
     if (descResp && descResp.get && descText && descText.get &&
         descResp.configurable !== false && descText.configurable !== false &&
         typeof nativeOpen === 'function' && typeof nativeSend === 'function') {
@@ -1004,16 +1010,16 @@
               return typeof r !== 'string' ? descText.get.call(this) : r;
             },
           });
-        } catch (e) { /* bỏ qua — lần vá kế tiếp (open/send) sẽ thử lại */ }
+        } catch (e) { /* ignore — the next re-patch (open/send) will retry */ }
       };
       try {
         reassert();
         _xhrProxyInstalled = true;
         return;
-      } catch (e) { /* rơi xuống fallback subclass */ }
+      } catch (e) { /* fall through to the subclass fallback */ }
     }
 
-    // Fallback: subclass (khi getter gốc không ghi đè được trên prototype).
+    // Fallback: subclass (when the original getter isn't overridable on the prototype).
     self.XMLHttpRequest = class extends XHR {
       open(method, url, ...args) {
         xhrInstances.set(this, { method, url });
@@ -2006,7 +2012,10 @@
   // rules land in _jsonEditRules when the async config arrives.
   var _jsonEditRules = [];
   var _jsonPruneRules = []; // { prunePaths, needlePaths } — applied by the same JSON.parse proxy
+  var _jsonEditProxyInstalled = false;
   function _installJsonEditProxy() {
+    if (_jsonEditProxyInstalled) return;
+    _jsonEditProxyInstalled = true;
     proxyApplyFn('JSON.parse', function(context) {
       const obj = context.reflect();
       if (!_scriptletsEnabled) return obj;
@@ -2024,6 +2033,82 @@
     });
   }
 
+  // ── data-sjs guard ────────────────────────────────────────────────
+  // Some SSR payloads (Facebook's RelayPrefetchedStreamCache bootloader
+  // format) ship inside inert <script type="application/json" data-sjs>
+  // tags and are never handed to the global JSON.parse — confirmed live by
+  // logging every JSON.parse call and finding none matching the tag's
+  // content. A MutationObserver installed at document_start catches these
+  // tags the instant the HTML parser inserts them (a microtask checkpoint
+  // runs after every later <script> executes, so this always wins the race
+  // against whatever later reads the tag) and applies the same
+  // _jsonPruneRules/_jsonEditRules directly on the tag's textContent.
+  var _sjsGuardInstalled = false;
+  function _installSjsGuard() {
+    if (_sjsGuardInstalled) return;
+    if (typeof MutationObserver === 'undefined') return;
+    _sjsGuardInstalled = true;
+    const safe = safeSelf();
+    const processNode = function (node) {
+      if (node.nodeType !== 1 || node.tagName !== 'SCRIPT') return;
+      if (node.type !== 'application/json' || !node.hasAttribute('data-sjs')) return;
+      if (!_scriptletsEnabled) return;
+      if (_jsonEditRules.length === 0 && _jsonPruneRules.length === 0) return;
+      const text = node.textContent;
+      if (!text || text.length < 100) return;
+      let obj;
+      try { obj = safe.JSON_parse(text); } catch (e) { return; }
+      if (typeof obj !== 'object' || obj === null) return;
+      let objAfter = obj;
+      for (const rule of _jsonPruneRules) {
+        const r = objectPruneFn(objAfter, rule.prunePaths, rule.needlePaths);
+        if (typeof r === 'object' && r !== null) objAfter = r;
+      }
+      for (const jsonp of _jsonEditRules) {
+        const r = jsonp.apply(objAfter);
+        if (r !== undefined) objAfter = r;
+      }
+      // Compare serialized output rather than object identity: safe.JSON_parse
+      // may itself be the already-hooked JSON.parse (installed above), which
+      // can prune objAfter in place during parsing, making an `objAfter === obj`
+      // check wrongly skip the textContent rewrite.
+      let textAfter;
+      try { textAfter = safe.JSON_stringify(objAfter); } catch (e) { return; }
+      if (textAfter === text) return;
+      // data-content-len must track the new length: Facebook's BigPipe
+      // loader appears to validate it before parsing the tag, and this one
+      // script often bundles unrelated Haste modules — a stale length
+      // fails that check and cascades into unrelated module init errors.
+      try {
+        if (node.hasAttribute('data-content-len')) {
+          node.setAttribute('data-content-len', String(textAfter.length));
+        }
+        node.textContent = textAfter;
+      } catch (e) {}
+    };
+    try {
+      const existing = document.querySelectorAll('script[type="application/json"][data-sjs]');
+      for (let i = 0; i < existing.length; i++) processNode(existing[i]);
+      // data-sjs tags are an SSR-only mechanism written by the initial HTML
+      // parse — later SPA updates (infinite scroll, etc.) never add more of
+      // them, that traffic goes through fetch/XHR instead. Observing the
+      // whole document subtree past DOMContentLoaded just taxes every React
+      // re-render for the rest of the tab's life for zero benefit, so
+      // disconnect as soon as the initial parse is done.
+      if (document.readyState !== 'loading') return;
+      const mo = new MutationObserver(function (mutList) {
+        if (_jsonEditRules.length === 0 && _jsonPruneRules.length === 0) return;
+        for (const mut of mutList) {
+          for (const node of mut.addedNodes) processNode(node);
+        }
+      });
+      mo.observe(document, { childList: true, subtree: true });
+      document.addEventListener('DOMContentLoaded', function () {
+        mo.disconnect();
+      }, { once: true });
+    } catch (e) {}
+  }
+
   // ── json-prune (JSON.parse level) ────────────────────────────────
   // Prunes ad fields from EVERY JSON.parse result — catches payloads
   // embedded in inline scripts that never touch fetch/XHR.
@@ -2034,6 +2119,7 @@
       needlePaths: rawNeedlePaths || '',
     });
     _installJsonEditProxy();
+    _installSjsGuard();
   }
 
   function jsonEdit(jsonq) {
@@ -2042,6 +2128,7 @@
     if (!jsonp.valid || jsonp.value !== undefined) return;
     _jsonEditRules.push(jsonp);
     _installJsonEditProxy();
+    _installSjsGuard();
   }
 
   // ── jsonl-edit-xhr-response ───────────────────────────────────────
@@ -2356,6 +2443,7 @@
     try { _installFetchResponseProxy(); } catch (e) {}
     try { _installXhrResponseProxy(); } catch (e) {}
     try { _installJsonEditProxy(); } catch (e) {}
+    try { _installSjsGuard(); } catch (e) {}
     try {
       var rules = JSON.parse(cached);
       // The cache lives in page-writable storage, so treat it as untrusted
@@ -2397,7 +2485,7 @@
     },
     set(fn) {
       console.debug("Blocked onunload");
-      // Không lưu callback
+      // Callback is not stored
     }
   });
   const remove = EventTarget.prototype.removeEventListener;

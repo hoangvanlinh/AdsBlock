@@ -258,7 +258,7 @@ no_window_open_if = /.*/ 0 blank
 direct_hide_selectors = #ngx-overlay | .ngx-overlay | [class*="overlay-ad"] | [id*="overlay-ad"] | .ad-overlay | #ad-overlay | .popup-wrapper | .popup-ad | #popup-ad | [class*="modal-ad"] | [id*="modal-ad"] | div[id^="adb"] | .jw-advertisement | .jw-ad-container | [class*="preroll"] | [id*="preroll"] | .video-ads | #video-ads | .vjs-ad-playing .vjs-poster | .ima-ad-container | [class*="ima-ad"] | div[style*="z-index: 999"] iframe | div[style*="z-index:999"] iframe | .overlay:not(.player-overlay) | #overlay:not(.player-overlay) | .modal-backdrop
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ── Việt Nam ─────────────────────────────────────────────────────────────────
+# ── Vietnam ──────────────────────────────────────────────────────────────────
 # ═══════════════════════════════════════════════════════════════════════════════
 
 [dantri]
@@ -303,7 +303,7 @@ context_selectors = span | a | .label | .category
 hide_closest = article | .story | .news-item | .bm-item
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ── Mỹ / Global ──────────────────────────────────────────────────────────────
+# ── US / Global ──────────────────────────────────────────────────────────────
 # ═══════════════════════════════════════════════════════════════════════════════
 
 [twitch]
@@ -333,7 +333,7 @@ context_selectors = span | a | .post-tag
 hide_closest = .post-item | .image-list-item | .hoverable
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ── Nhật Bản ─────────────────────────────────────────────────────────────────
+# ── Japan ────────────────────────────────────────────────────────────────────
 # ═══════════════════════════════════════════════════════════════════════════════
 
 [yahoo_jp]
@@ -360,7 +360,7 @@ no_window_open_if = /.*/ 0 blank
 direct_hide_selectors = [id^="ameba-ad-"] | .ad_ameba | #ameba_ad | [class*="ameba_ad"] | .skinAdModule | #sideAd | [class*="AmebaAd"] | [class*="ameba-ad"] | .ameba-ads | .amr-container | #AMR_SLOT | [class*="sp_ad"] | .theme-ad-area | [class*="amr-"]
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ── Hàn Quốc ─────────────────────────────────────────────────────────────────
+# ── Korea ────────────────────────────────────────────────────────────────────
 # ═══════════════════════════════════════════════════════════════════════════════
 
 [naver]

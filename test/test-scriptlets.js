@@ -109,9 +109,9 @@ sandbox.dispatchEvent = (ev) => {
   return true;
 };
 
-// Getter gốc của FakeXHR, chụp TRƯỚC khi scriptlet cài — dùng để xác nhận
-// scriptlet đã ghi đè getter (fix #1 ghi đè thẳng trên prototype nên
-// window.XMLHttpRequest giữ nguyên identity; không thể kiểm tra bằng !==).
+// FakeXHR's original getter, captured BEFORE the scriptlet installs — used to
+// confirm the scriptlet overrode the getter (fix #1 overrides directly on the
+// prototype, so window.XMLHttpRequest keeps its identity; can't check with !==).
 const _origResponseGetter = Object.getOwnPropertyDescriptor(FakeXHR.prototype, 'response').get;
 const xhrWrapped = () =>
   Object.getOwnPropertyDescriptor(sandbox.XMLHttpRequest.prototype, 'response').get !== _origResponseGetter;
