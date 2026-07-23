@@ -746,7 +746,17 @@ statsToggle?.addEventListener('change', (e) => {
 
 document.getElementById('resetBtn')?.addEventListener('click', () => {
   if (!confirm('Reset all AdBlock data? This cannot be undone.')) return;
-  chrome.storage.local.clear(() => {
+  chrome.storage.local.clear(async () => {
+    // chrome.storage.local.clear() only touches extension storage — it can't
+    // reach __abrules, which content/scriptlets.js caches in each site's OWN
+    // localStorage. Broadcast to every open tab so each can drop its copy;
+    // tabs not currently open self-correct next visit once fresh rules land.
+    try {
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        chrome.tabs.sendMessage(tab.id, { type: 'CLEAR_SCRIPTLET_CACHE' }).catch(() => {});
+      }
+    } catch (e) { /* best-effort */ }
     alert('All data cleared. Reloading…');
     location.reload();
   });

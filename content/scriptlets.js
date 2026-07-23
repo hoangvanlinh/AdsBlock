@@ -2235,8 +2235,20 @@
   // Multi-arg scriptlet values use ", " between arguments — '|' is
   // already the loader's value separator and single
   // args (regex patterns, JSON paths) may contain spaces.
+  // Splits on commas EXCEPT ones inside a /.../ regex span — a needle like
+  // /^[\S\s]{2000,6000}$/ contains a comma that's part of the pattern, not
+  // an argument separator. Toggles an "inside regex" flag on every '/'
+  // seen, which is correct as long as regex spans are well-formed.
   function _argsOf(value) {
-    return value.split(',').map(function (s) { return s.trim(); });
+    var out = [], cur = '', inRe = false, ch;
+    for (var i = 0; i < value.length; i++) {
+      ch = value.charAt(i);
+      if (ch === '/') { inRe = !inRe; cur += ch; continue; }
+      if (ch === ',' && !inRe) { out.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    out.push(cur.trim());
+    return out;
   }
 
   // Flag-style keys: any first value other than 0/false/off enables.
@@ -2458,6 +2470,14 @@
   window.addEventListener('__adblock_scriptlet_rules__', function(ev) {
     _scriptletsEnabled = true;
     try { _applyScriptletRules(ev.detail); } catch (e) {}
+  });
+
+  // Bridge: "Reset all data" in the dashboard only clears chrome.storage.local
+  // (extension storage) — it has no reach into this page's own localStorage,
+  // where __abrules actually lives. content.js relays this event after the
+  // dashboard broadcasts CLEAR_SCRIPTLET_CACHE to every open tab.
+  window.addEventListener('__adblock_clear_scriptlet_cache__', function() {
+    try { localStorage.removeItem(_RULES_CACHE_KEY); } catch (e) {}
   });
 
   // When protection is toggled OFF or domain paused, disable all scriptlet logic.
