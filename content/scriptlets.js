@@ -2469,7 +2469,7 @@
   const original = EventTarget.prototype.addEventListener;
 
   EventTarget.prototype.addEventListener = function(type, listener, options) {
-    if (type === "unload" || type === "beforeunload") {
+    if (_scriptletsEnabled && (type === "unload" || type === "beforeunload")) {
       console.debug("[Blocked]", type);
       return;
     }
@@ -2484,6 +2484,7 @@
       return desc?.get?.call(this);
     },
     set(fn) {
+      if (!_scriptletsEnabled) { desc?.set?.call(this, fn); return; }
       console.debug("Blocked onunload");
       // Callback is not stored
     }
@@ -2491,7 +2492,7 @@
   const remove = EventTarget.prototype.removeEventListener;
 
   EventTarget.prototype.removeEventListener = function(type, listener, options) {
-    if (type === "unload" || type === "beforeunload") {
+    if (_scriptletsEnabled && (type === "unload" || type === "beforeunload")) {
       return;
     }
     return Reflect.apply(remove, this, [type, listener, options]);
