@@ -394,6 +394,16 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     });
     return true;
   }
+
+  if (msg.type === 'CLEAR_SCRIPTLET_CACHE') {
+    // Relay into the MAIN world — __abrules lives in this page's own
+    // localStorage, which content.js (isolated world) can't touch directly.
+    // Dispatched on window (not document) to match how site-block.js
+    // dispatches '__adblock_scriptlet_rules__', which scriptlets.js listens
+    // for the same way.
+    window.dispatchEvent(new CustomEvent('__adblock_clear_scriptlet_cache__'));
+    sendResponse({ ok: true });
+  }
 });
 
 
