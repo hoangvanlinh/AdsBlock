@@ -12,8 +12,13 @@ var DEFAULT_ATTR_KEYS=['aria-label','data-promoted','post-type','recommendation-
 var CANDIDATE_KEYS=['selectors','feed_selectors','market_selectors','right_rail_selectors','post_selectors'];
 var HOST_KEYS=['ad_host_selectors'];
 var DIRECT_HIDE_KEYS=['direct_hide_selectors'];
+// strip_page_classes — class names some pages toggle on <html>/<body> to drive
+// a CSS-only takeover overlay (e.g. Taboola's "Explore More" gray backdrop).
+// Hiding the element itself doesn't help when the backdrop is painted purely
+// from the root class (::before/background-on-root), so we strip the class instead.
+var STRIP_PAGE_CLASS_KEYS=['strip_page_classes'];
 // Selector caches — rebuilt once when _config changes, reused on every scan/mutation
-var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[];
+var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[], _cachedStripClasses=[];
 var _cachedDirectStr='', _cachedCandidateStr='', _cachedHostStr='';
 
 function extValid(){
@@ -74,13 +79,46 @@ function collectFast(root,selectorStr){
 // _rebuildSelectorCache — compute and cache flattened+joined selector strings from _config.
 // Called once after _config is assigned so scan() and the observer don't recompute per call.
 function _rebuildSelectorCache(){
-  if(!_config){_cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';return;}
+  if(!_config){_cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedStripClasses=[];_cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';return;}
   _cachedDirect=flattenSelectors(_config,DIRECT_HIDE_KEYS);
   _cachedCandidates=flattenSelectors(_config,CANDIDATE_KEYS);
   _cachedHosts=flattenSelectors(_config,HOST_KEYS);
+  _cachedStripClasses=flattenSelectors(_config,STRIP_PAGE_CLASS_KEYS);
   _cachedDirectStr=_cachedDirect.join(',');
   _cachedCandidateStr=_cachedCandidates.join(',');
   _cachedHostStr=_cachedHosts.join(',');
+}
+
+// _stripClassesFrom — remove any cached class from a single root element
+// (<html> or <body>) the instant it's present.
+function _stripClassesFrom(el){
+  if(!el||!_cachedStripClasses.length)return;
+  for(var i=0;i<_cachedStripClasses.length;i++){
+    if(el.classList.contains(_cachedStripClasses[i]))el.classList.remove(_cachedStripClasses[i]);
+  }
+}
+
+// Two dedicated class-only observers (one per root element) rather than a
+// subtree observer — we only ever care about these two nodes' own class
+// attribute, so watching the whole tree for 'class' changes would be wasteful.
+var _htmlClassObserver=null,_bodyClassObserver=null;
+function watchPageClasses(){
+  if(!_cachedStripClasses.length)return;
+  if(!_htmlClassObserver&&document.documentElement){
+    _stripClassesFrom(document.documentElement);
+    _htmlClassObserver=new MutationObserver(function(){_stripClassesFrom(document.documentElement);});
+    _htmlClassObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  }
+  if(!_bodyClassObserver&&document.body){
+    _stripClassesFrom(document.body);
+    _bodyClassObserver=new MutationObserver(function(){_stripClassesFrom(document.body);});
+    _bodyClassObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
+  }
+}
+
+function stopPageClassWatch(){
+  if(_htmlClassObserver){_htmlClassObserver.disconnect();_htmlClassObserver=null;}
+  if(_bodyClassObserver){_bodyClassObserver.disconnect();_bodyClassObserver=null;}
 }
 
 // _injectDirectStyle — direct_hide_selectors go into ONE stylesheet scoped under
@@ -312,6 +350,7 @@ function startObserver(){
         for(var j=0;j<mut.addedNodes.length;j++){
           var node=mut.addedNodes[j];
           if(node.nodeType!==1)continue;
+          if(node===document.body)watchPageClasses();
           schedule(node);
         }
       } else if(mut.type==='attributes'){
@@ -414,11 +453,12 @@ function sync(cb){
     var paused=(res.pausedDomains||[]).indexOf(location.hostname)!==-1;
     _enabled=(res.enabled!==false)&&res.cosmeticFiltering!==false&&!paused;
     if(_enabled){
-      schedule(document);startObserver();attachShadowListeners();
+      schedule(document);startObserver();attachShadowListeners();watchPageClasses();
       if(_config&&!_scriptletRulesActive)_dispatchScriptletRules(_config);
     }
     else{
       stopObserver();
+      stopPageClassWatch();
       try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_disable__'));}catch(_e){}
       _scriptletRulesActive=false;
     }
@@ -470,7 +510,7 @@ function boot(){
     // sync below sends it (but only if the site turns out to be enabled).
     _scriptletRulesActive=false;
     sync();
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();});
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();watchPageClasses();});
   });
 }
 
@@ -506,6 +546,7 @@ chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
     _config=null;
     siteKey='';
     stopObserver();
+    stopPageClassWatch();
     boot();
   }
 });
