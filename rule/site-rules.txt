@@ -233,7 +233,7 @@ query_keys = q
 # ── VNExpress ────────────────────────────────────────────────────────────────
 [vnexpress]
 # Admicro/VCCorp ad zones specific to vnexpress.net
-direct_hide_selectors = .box-tinquangcao | .tinquangcao | .block-ads | [class*="quang-cao"] | [class*="quangcao"] | .banner-ads | .ads-300 | .ads-728 | .ads-970 | .sidebar-ads | div[id^="zone_"] | div[id^="admzone_"] | .article-footer-ads | .article-top-ads | .article-middle-ads | .float-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | .box-video-ads | div#sis_outstream_container > div#video_outstream > div.txt_ads | #admbackground | #banner_top | #rich-media-banner-ads | #supper_masthead | .box-kd-300 | .section_ads_300x250 | .banner
+direct_hide_selectors = #tbl-explore-more-container | #button-adblock | .box-tinquangcao | .tinquangcao | .block-ads | [class*="quang-cao"] | [class*="quangcao"] | .banner-ads | .ads-300 | .ads-728 | .ads-970 | .sidebar-ads | div[id^="zone_"] | div[id^="admzone_"] | .article-footer-ads | .article-top-ads | .article-middle-ads | .float-ads | .popup-ads | [class*="float-ad"] | [id*="float_ad"] | .box-video-ads | div#sis_outstream_container > div#video_outstream > div.txt_ads | #admbackground | #banner_top | #rich-media-banner-ads | #supper_masthead | .box-kd-300 | .section_ads_300x250 | .banner
 
 # ── Tuổi Trẻ ────────────────────────────────────────────────────────────────
 [tuoitre]
