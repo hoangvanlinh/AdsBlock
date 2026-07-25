@@ -2204,6 +2204,295 @@
     });
   }
 
+  // ── removeAttr (ra) ────────────────────────────────────────────
+  // Removes one or more attributes from elements matching a selector.
+  // rawToken: '|'-separated attribute names. rawSelector: optional CSS
+  // selector (defaults to '[attr]' per token). behavior: space-separated
+  // tokens — 'asap' (skip the idle-callback delay) and 'stay' (keep
+  // removing on future DOM mutations instead of running once).
+  function removeAttr(rawToken, rawSelector, behavior) {
+    if (!rawToken) return;
+    var tokens = rawToken.split(/\s*\|\s*/).filter(Boolean);
+    if (!tokens.length) return;
+    var selector = tokens.map(function (a) { return (rawSelector || '') + '[' + a + ']'; }).join(',');
+    var stay = /\bstay\b/.test(behavior || '');
+    function rmattr() {
+      try {
+        var nodes = document.querySelectorAll(selector);
+        for (var i = 0; i < nodes.length; i++) {
+          for (var j = 0; j < tokens.length; j++) {
+            if (nodes[i].hasAttribute(tokens[j])) nodes[i].removeAttribute(tokens[j]);
+          }
+        }
+      } catch (e) {}
+    }
+    function start() {
+      rmattr();
+      if (!stay) return;
+      try {
+        var obs = new MutationObserver(function () { rmattr(); });
+        obs.observe(document, { attributes: true, attributeFilter: tokens, childList: true, subtree: true });
+      } catch (e) {}
+    }
+    _onHtmlEl(start);
+  }
+
+  // ── removeNodeText (rmnt) / replaceNodeText (rpnt, TRUSTED) ──────
+  // Shared engine: watches for nodes whose tag name matches `nodeName`
+  // (existing + future, via MutationObserver) and rewrites their text
+  // content. rmnt always replaces with '' (removal); rpnt (trusted) takes
+  // an explicit replacement and an optional 4th arg 'includes=X excludes=Y
+  // stay=1' extra-token string (subset of uBO's rpnt tokens — sedCount/
+  // quitAfter are not supported here).
+  function _replaceNodeTextFn(nodeName, pattern, replacement, extra) {
+    if (!nodeName) return;
+    var reNode = _toRegex(nodeName);
+    var rePattern = pattern ? _toRegex(pattern) : null;
+    var reIncludes = null, reExcludes = null, stay = false;
+    if (extra) {
+      var mi = /includes=(\S+)/.exec(extra); if (mi) reIncludes = _toRegex(mi[1]);
+      var me = /excludes=(\S+)/.exec(extra); if (me) reExcludes = _toRegex(me[1]);
+      stay = /\bstay\b/.test(extra);
+    }
+    function handle(node) {
+      if (!node || !reNode.test(node.nodeName)) return;
+      var before = node.textContent;
+      if (!before) return;
+      if (reIncludes && !reIncludes.test(before)) return;
+      if (reExcludes && reExcludes.test(before)) return;
+      if (rePattern && !rePattern.test(before)) return;
+      var after = rePattern ? before.replace(rePattern, replacement || '') : (replacement || '');
+      if (after === before) return;
+      node.textContent = after;
+    }
+    function scan(root) {
+      if (!root) return;
+      if (root.nodeType === 1 || root.nodeType === 3) handle(root);
+      if (root.querySelectorAll) {
+        try { root.querySelectorAll('*').forEach(handle); } catch (e) {}
+      }
+    }
+    function start() {
+      scan(document.documentElement);
+      try {
+        var obs = new MutationObserver(function (muts) {
+          for (var i = 0; i < muts.length; i++) {
+            for (var j = 0; j < muts[i].addedNodes.length; j++) scan(muts[i].addedNodes[j]);
+          }
+        });
+        obs.observe(document.documentElement || document, { childList: true, subtree: true, characterData: true });
+        if (!stay) setTimeout(function () { try { obs.disconnect(); } catch (e) {} }, 10000);
+      } catch (e) {}
+    }
+    _onHtmlEl(start);
+  }
+  function removeNodeText(nodeName, includes) {
+    _replaceNodeTextFn(nodeName, includes || '', '', includes ? 'includes=' + includes : '');
+  }
+  function replaceNodeText(nodeName, pattern, replacement, extra) {
+    _replaceNodeTextFn(nodeName, pattern, replacement, extra);
+  }
+
+  // ── refreshDefuser ────────────────────────────────────────────────
+  // Defuses <meta http-equiv="refresh"> redirects. delay: if given (any
+  // non-empty value), stop navigation immediately; otherwise honor the
+  // page's own delay (content="N;url=...") before calling window.stop().
+  function refreshDefuser(delay) {
+    function defuse() {
+      var meta = document.querySelector('meta[http-equiv="refresh" i][content]');
+      if (!meta) return;
+      var content = meta.getAttribute('content') || '';
+      var ms = delay ? 0 : Math.max(parseFloat(content) || 0, 0) * 500;
+      if (ms === 0) window.stop();
+      else setTimeout(function () { window.stop(); }, ms);
+    }
+    window.addEventListener('load', defuse, { capture: true, once: true });
+  }
+
+  // ── setCookie / removeCookie ───────────────────────────────────────
+  function _getCookie(name) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : undefined;
+  }
+  function setCookie(name, value) {
+    if (!name) return;
+    try {
+      document.cookie = name + '=' + value + '; path=/';
+    } catch (e) {}
+  }
+  function removeCookie(needle) {
+    if (!needle) return;
+    var reName = _toRegex(needle);
+    function remove() {
+      var host = location.hostname;
+      document.cookie.split(';').forEach(function (part) {
+        var pos = part.indexOf('=');
+        if (pos === -1) return;
+        var name = part.slice(0, pos).trim();
+        if (!reName.test(name)) return;
+        var expire = '; Max-Age=-1000; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = name + '=' + expire;
+        document.cookie = name + '=' + '; domain=' + host + expire;
+        document.cookie = name + '=' + '; domain=.' + host + expire;
+        document.cookie = name + '=' + '; path=/' + expire;
+        document.cookie = name + '=' + '; domain=' + host + '; path=/' + expire;
+        document.cookie = name + '=' + '; domain=.' + host + '; path=/' + expire;
+      });
+    }
+    remove();
+    window.addEventListener('beforeunload', remove);
+  }
+
+  // ── setLocalStorageItem ─────────────────────────────────────────────
+  // Restricted to a small set of "safe" values (same spirit as uBO's own
+  // scriptlet) so this can't be abused to inject arbitrary attacker-chosen
+  // data — only benign flags/empty containers, or $remove$ to delete keys
+  // matching `key` as a pattern.
+  function setLocalStorageItem(key, value) {
+    if (!key) return;
+    var safeValues = ['', 'undefined', 'null', '{}', '[]', '""', 'true', 'false'];
+    try {
+      if (value === '$remove$') {
+        var re = _toRegex(key);
+        for (var i = localStorage.length - 1; i >= 0; i--) {
+          var k = localStorage.key(i);
+          if (k && re.test(k)) localStorage.removeItem(k);
+        }
+        return;
+      }
+      var normalized = String(value || '').toLowerCase();
+      if (safeValues.indexOf(normalized) === -1 && !/^-?\d+$/.test(normalized)) return;
+      localStorage.setItem(key, value === 'emptyArr' ? '[]' : value === 'emptyObj' ? '{}' : value);
+    } catch (e) {}
+  }
+
+  // ── hrefSanitizer ────────────────────────────────────────────────
+  // Rewrites <a> href attributes to the "real" destination found elsewhere
+  // in the element, defeating click-tracking redirect wrappers. `source`
+  // supports the two simple uBO modes: 'text' (use the link's own text as
+  // the URL) or '[attrName]' (use that attribute's value) — the fuller
+  // urlskip transform-step language is not ported.
+  function hrefSanitizer(selector, source) {
+    if (!selector) return;
+    source = source || 'text';
+    function extract(elem) {
+      var m = /^\[(.+)\]$/.exec(source);
+      if (m) return elem.getAttribute(m[1].trim()) || '';
+      if (source === 'text') return (elem.textContent || '').trim();
+      return '';
+    }
+    function validate(text) {
+      if (!text) return '';
+      try { return new URL(text, document.baseURI).href; } catch (e) { return ''; }
+    }
+    function sanitize() {
+      var elems;
+      try { elems = document.querySelectorAll(selector); } catch (e) { return; }
+      for (var i = 0; i < elems.length; i++) {
+        var elem = elems[i];
+        if (elem.localName !== 'a' || !elem.hasAttribute('href')) continue;
+        var after = validate(extract(elem));
+        if (!after || after === elem.getAttribute('href')) continue;
+        elem.setAttribute('href', after);
+      }
+    }
+    function start() {
+      sanitize();
+      try {
+        var obs = new MutationObserver(function () { sanitize(); });
+        obs.observe(document.documentElement || document, { childList: true, subtree: true });
+      } catch (e) {}
+    }
+    _onHtmlEl(start);
+  }
+
+  // ── trustedReplaceFetchResponse ─────────────────────────────────────
+  // fetch() counterpart to trustedReplaceXhrResponse — a fully independent
+  // proxy layer (own rule list + own install guard) so it composes with
+  // _installFetchResponseProxy (json_prune_fetch) without touching that
+  // already-working code path.
+  var _fetchReplaceRules = [];
+  var _fetchReplaceProxyInstalled = false;
+  function _installFetchReplaceProxy() {
+    if (_fetchReplaceProxyInstalled) return;
+    _fetchReplaceProxyInstalled = true;
+    var applyHandler = function (target, thisArg, args) {
+      var fetchPromise = Reflect.apply(target, thisArg, args);
+      return fetchPromise.then(function (responseBefore) {
+        if (!_scriptletsEnabled || _fetchReplaceRules.length === 0) return responseBefore;
+        var props;
+        var applicable = [];
+        for (var i = 0; i < _fetchReplaceRules.length; i++) {
+          var rule = _fetchReplaceRules[i];
+          if (rule.propNeedles.size !== 0) {
+            if (props === undefined) props = collateFetchArgumentsFn.apply(null, args);
+            if (matchObjectPropertiesFn(rule.propNeedles, props) === undefined) continue;
+          }
+          applicable.push(rule);
+        }
+        if (!applicable.length) return responseBefore;
+        var response = responseBefore.clone();
+        return response.text().then(function (textBefore) {
+          var textAfter = textBefore, changed = false;
+          for (var j = 0; j < applicable.length; j++) {
+            var after = textAfter.replace(applicable[j].re, applicable[j].replacement);
+            if (after !== textAfter) { textAfter = after; changed = true; }
+          }
+          if (!changed) return responseBefore;
+          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+          return new Response(textAfter, { status: responseBefore.status, statusText: responseBefore.statusText, headers: responseBefore.headers });
+        }).catch(function () { return responseBefore; });
+      }).catch(function () { return fetchPromise; });
+    };
+    self.fetch = new Proxy(self.fetch, { apply: applyHandler });
+  }
+  function trustedReplaceFetchResponse(pattern, replacement, propsToMatch) {
+    if (!pattern) return;
+    var re = pattern === '*' ? /[\s\S]*/ : _toRegex(pattern);
+    _fetchReplaceRules.push({
+      re: re,
+      replacement: replacement || '',
+      propNeedles: parsePropertiesToMatchFn(propsToMatch || '', 'url'),
+    });
+    _installFetchReplaceProxy();
+  }
+
+  // ── trustedReplaceArgument ───────────────────────────────────────────
+  // Replaces one argument of a proxied method/function call. argposRaw:
+  // zero-based index (negative = from the end). argraw: literal value, or
+  // 'repl:/pattern/replacement/' to regex-replace within the existing
+  // stringified argument instead of substituting it outright. The
+  // upstream 'condition' extra-token (gate the replacement on another
+  // arg's content) is not ported — this always replaces unconditionally.
+  function trustedReplaceArgument(propChain, argposRaw, argraw) {
+    if (!propChain) return;
+    var argpos = parseInt(argposRaw, 10);
+    if (isNaN(argpos)) return;
+    proxyApplyFn(propChain, function (context) {
+      var args = context.callArgs.slice();
+      var pos = argpos < 0 ? args.length + argpos : argpos;
+      if (pos >= 0 && pos < args.length) {
+        var m = /^repl:\/((?:\\.|[^\/])*)\/((?:\\.|[^\/])*)\/$/.exec(argraw || '');
+        if (m) {
+          try { args[pos] = String(args[pos]).replace(new RegExp(m[1], 'g'), m[2]); } catch (e) {}
+        } else {
+          args[pos] = argraw;
+        }
+      }
+      context.callArgs = args;
+      return context.reflect();
+    });
+  }
+
+  // ── trustedPreventFetch ──────────────────────────────────────────────
+  // Same as preventFetch, but with trusted=true so an unrecognized
+  // `directive` token is used verbatim as the literal response body
+  // instead of being rejected (generateContentFn already implements this
+  // distinction — see its final `if (trusted) return directive;`).
+  function trustedPreventFetch(propsToMatch, directive) {
+    preventFetchFn(true, propsToMatch || '', directive || '', '');
+  }
+
   // ── Scriptlet rule engine ────────────────────────────────────────
   // Applies rules declared in site-rules.txt via content.js bridge.
   // fetch/XHR/JSON.parse wrappers are installed once at document_start
@@ -2267,6 +2556,7 @@
     _xhrPruneRules.length = 0;
     _xhrJsonlRules.length = 0;
     _xhrReplaceRules.length = 0;
+    _fetchReplaceRules.length = 0;
     _jsonEditRules.length = 0;
     _jsonPruneRules.length = 0;
     _noWinOpenRules.length = 0;
@@ -2414,6 +2704,74 @@
     if (_flagOn(rules.no_webrtc)) _wrapOnce('no_webrtc', '1', noWebrtc);
     if (_flagOn(rules.prevent_bab)) _wrapOnce('prevent_bab', '1', preventBab);
     if (_flagOn(rules.disable_newtab_links)) _wrapOnce('disable_newtab_links', '1', disableNewtabLinks);
+
+    // remove_attr = token[, selector[, behavior]]
+    _eachRule(rules.remove_attr, function (v) {
+      _wrapOnce('remove_attr', v, function () {
+        var a = _argsOf(v);
+        removeAttr(a[0] || '', a[1] || '', a[2] || '');
+      });
+    });
+    // remove_node_text = nodeName[, includes]
+    _eachRule(rules.remove_node_text, function (v) {
+      _wrapOnce('remove_node_text', v, function () {
+        var a = _argsOf(v);
+        removeNodeText(a[0] || '', a[1] || '');
+      });
+    });
+    // replace_node_text = nodeName, pattern, replacement[, extra] (TRUSTED)
+    _eachRule(rules.replace_node_text, function (v) {
+      _wrapOnce('replace_node_text', v, function () {
+        var a = _argsOf(v);
+        replaceNodeText(a[0] || '', a[1] || '', a[2] || '', a[3] || '');
+      });
+    });
+    // refresh_defuser = [delay]
+    _eachRule(rules.refresh_defuser, function (v) {
+      _wrapOnce('refresh_defuser', v, function () { refreshDefuser(v); });
+    });
+    // set_cookie = name, value — direct action, no persistent install
+    _eachRule(rules.set_cookie, function (v) {
+      var a = _argsOf(v);
+      setCookie(a[0] || '', a[1] || '');
+    });
+    // remove_cookie = namePattern
+    _eachRule(rules.remove_cookie, function (v) {
+      _wrapOnce('remove_cookie', v, function () { removeCookie(v); });
+    });
+    // set_local_storage_item = key, value — direct action
+    _eachRule(rules.set_local_storage_item, function (v) {
+      var a = _argsOf(v);
+      setLocalStorageItem(a[0] || '', a[1] || '');
+    });
+    // href_sanitizer = selector[, source]
+    _eachRule(rules.href_sanitizer, function (v) {
+      _wrapOnce('href_sanitizer', v, function () {
+        var a = _argsOf(v);
+        hrefSanitizer(a[0] || '', a[1] || '');
+      });
+    });
+    // trusted_replace_fetch_response = pattern, replacement[, propsToMatch] (TRUSTED)
+    // Registry-based like trusted_replace_xhr_response — _fetchReplaceRules
+    // was already reset above, so this rebuilds it fresh every dispatch.
+    _eachRule(rules.trusted_replace_fetch_response, function (v) {
+      var a = v.split(/,\s/).map(function (s) { return s.trim(); });
+      trustedReplaceFetchResponse(a[0] || '', a[1] || '', a.slice(2).join(', '));
+    });
+    // trusted_replace_argument = propChain, argpos, argraw (TRUSTED)
+    _eachRule(rules.trusted_replace_argument, function (v) {
+      _wrapOnce('trusted_replace_argument', v, function () {
+        var a = _argsOf(v);
+        trustedReplaceArgument(a[0] || '', a[1] || '', a.slice(2).join(', '));
+      });
+    });
+    // trusted_prevent_fetch = propsToMatch[, directive] (TRUSTED)
+    _eachRule(rules.trusted_prevent_fetch, function (v) {
+      _wrapOnce('trusted_prevent_fetch', v, function () {
+        var a = _argsOf(v);
+        trustedPreventFetch(a[0] || '', a[1] || '');
+      });
+    });
   }
 
   // ── Install response-filtering wrappers at document_start ────────

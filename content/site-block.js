@@ -432,7 +432,11 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   'json_prune','prevent_fetch','prevent_settimeout','prevent_setinterval','prevent_raf','prevent_aeld',
   'adjust_settimeout','adjust_setinterval','abort_current_script','abort_on_property_read',
   'abort_on_property_write','abort_on_stack_trace','no_eval_if','no_webrtc','prevent_bab','disable_newtab_links',
-  'trusted_replace_xhr_response'];
+  'trusted_replace_xhr_response',
+  // Wired 2026-07: ported from uBO's real resources/*.js source (u-src/js/resources/).
+  'remove_attr','remove_node_text','replace_node_text','refresh_defuser','set_cookie','remove_cookie',
+  'set_local_storage_item','href_sanitizer','trusted_replace_fetch_response','trusted_replace_argument',
+  'trusted_prevent_fetch'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;

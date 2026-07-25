@@ -4,3 +4,5 @@ src-obfuscated*
 u-src*
 scripts/
 ios-xcode/
+assets/
+blocklists/
