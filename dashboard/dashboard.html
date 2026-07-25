@@ -44,6 +44,12 @@
       </svg>
       Custom Rules
     </a>
+    <a class="nav-item" data-page="rulesource" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/>
+      </svg>
+      Rule Source
+    </a>
     <a class="nav-item" data-page="allowlist" href="#">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/>
@@ -379,11 +385,22 @@
             <p class="setting-desc">Clear rules, stats, and settings</p>
           </div>
           <button class="btn-danger" id="resetBtn">Reset</button>
-        </div>  
         </div>
+        </div>
+    </div>
+  </section>
 
+  <!-- ━━━ PAGE: RULE SOURCE ━━━ -->
+  <section class="page" id="page-rulesource">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Rule Source</h1>
+        <p class="page-sub">Where AdBlock fetches its site rules from</p>
+      </div>
+    </div>
+
+    <div class="settings-grid">
       <div class="card settings-card">
-        <h3 class="settings-section">Rule Source</h3>
         <div class="setting-row setting-col">
           <div>
             <p class="setting-name">Remote rule URLs</p>

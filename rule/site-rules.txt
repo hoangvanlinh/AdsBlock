@@ -114,6 +114,17 @@ rumble.com = rumble
 #   no_webrtc               = 1          (neuter RTCPeerConnection)
 #   prevent_bab             = 1          (defuse BlockAdBlock)
 #   disable_newtab_links    = 1          (kill target=_blank link popups)
+#   remove_attr             = token[, selector[, behavior]] (behavior: 'stay' keeps watching)
+#   remove_node_text        = nodeName[, includes]        (blank out matching node text)
+#   replace_node_text       = nodeName, pattern, replacement[, extra] (TRUSTED; extra: "includes=X excludes=Y stay")
+#   refresh_defuser         = [delay]    (defuse <meta refresh>; any delay value = stop immediately)
+#   set_cookie              = name, value
+#   remove_cookie           = namePattern
+#   set_local_storage_item  = key, value (value restricted to safe tokens, or $remove$ to delete matching keys)
+#   href_sanitizer          = selector[, source]          (source: 'text' or '[attrName]')
+#   trusted_replace_fetch_response = pattern, replacement[, propsToMatch] (TRUSTED; same escaping as trusted_replace_xhr_response)
+#   trusted_replace_argument = propChain, argpos, argraw  (TRUSTED; argraw may be 'repl:/pattern/replacement/')
+#   trusted_prevent_fetch   = propsToMatch[, directive]   (TRUSTED; unrecognized directive used as literal response body)
 
 [global]
 # Block window.open() calls to ad/tracker domains (popup ads & redirect tabs).
