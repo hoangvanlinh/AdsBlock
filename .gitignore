@@ -1,3 +1,4 @@
+build/
 *.zip
 dist*
 src-obfuscated*

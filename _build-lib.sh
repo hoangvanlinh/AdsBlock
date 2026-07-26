@@ -3,6 +3,10 @@
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# All build output (dist*/, zips, obfuscated src exports) lives under here
+# instead of cluttering the project root.
+BUILD_ROOT="$PROJECT_DIR/build"
+
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -55,7 +59,6 @@ copy_static_files() {
     mkdir -p "$DEST/icons" "$DEST/content" "$DEST/rule" "$DEST/dashboard" "$DEST/popup" "$DEST/blocked"
 
     cp "$PROJECT_DIR/icons/"*.png "$DEST/icons/"
-    cp "$PROJECT_DIR/content/content.css"         "$DEST/content/"
     cp "$PROJECT_DIR/content/site-rules-loader.js" "$DEST/content/"
     cp "$PROJECT_DIR/content/site-block.js"        "$DEST/content/"
     # scriptlets run in MAIN world — never obfuscated
@@ -66,6 +69,16 @@ copy_static_files() {
     cp "$PROJECT_DIR/popup/popup.css"              "$DEST/popup/"
     cp "$PROJECT_DIR/popup/popup.html"             "$DEST/popup/"
     cp "$PROJECT_DIR/blocked/blocked.html"         "$DEST/blocked/"
+
+    # web_accessible_resources/ (redirect-resource placeholders: noop.js,
+    # 1x1.gif, popads-dummy.js, ...) — copied as-is, then every file in it
+    # (except README.txt) gets merged into the manifest's own
+    # web_accessible_resources[] list so that array never needs hand-editing
+    # when a file is added/removed from the folder.
+    if [[ -d "$PROJECT_DIR/web_accessible_resources" ]]; then
+        cp -r "$PROJECT_DIR/web_accessible_resources" "$DEST/"
+        node "$PROJECT_DIR/_js/inject-web-accessible-resources.js" "$DEST/manifest.json"
+    fi
 }
 
 # Obfuscate (or copy) all JS_FILES into DEST.

@@ -121,27 +121,27 @@ function stopPageClassWatch(){
   if(_bodyClassObserver){_bodyClassObserver.disconnect();_bodyClassObserver=null;}
 }
 
-// _injectDirectStyle — direct_hide_selectors go into ONE stylesheet scoped under
-// html.adblock-on (same pattern as content.css). The style engine then hides
-// current AND future matching nodes for free — no per-mutation JS matching,
-// and removing the adblock-on class instantly disables everything.
-var DIRECT_STYLE_ID='__adblock_direct__';
+// _injectDirectStyle — direct_hide_selectors are sent to background as the
+// 'direct' CSS slot (background applies via chrome.scripting.insertCSS —
+// see background.js's setFrameCss). The style engine then hides current AND
+// future matching nodes for free — no per-mutation JS matching, and an empty
+// slot send instantly disables everything (content.js's CSS_CLEAR_ALL, on
+// pause/disable, clears this slot the same way it clears 'base'/'custom').
+function _sendCssSlot(slot,css){
+  if(!extValid())return;
+  try{chrome.runtime.sendMessage({type:'CSS_SET',slot:slot,css:css||''}).catch(function(){});}catch(e){}
+}
 function _injectDirectStyle(){
-  var old=document.getElementById(DIRECT_STYLE_ID);
-  if(old)old.remove();
-  if(!_cachedDirect.length)return;
+  if(!_cachedDirect.length){_sendCssSlot('direct','');return;}
   // Validate each selector — one invalid selector drops the whole CSS rule.
   var valid=[];
   for(var i=0;i<_cachedDirect.length;i++){
     // Scope under `body ` (descendant) so a broad selector can never match
     // body/html itself and blank the whole page.
-    try{document.querySelector(_cachedDirect[i]);valid.push('html.adblock-on body '+_cachedDirect[i]);}catch(e){}
+    try{document.querySelector(_cachedDirect[i]);valid.push('body '+_cachedDirect[i]);}catch(e){}
   }
-  if(!valid.length)return;
-  var s=document.createElement('style');
-  s.id=DIRECT_STYLE_ID;
-  s.textContent=valid.join(',\n')+'{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;pointer-events:none!important}';
-  (document.head||document.documentElement).appendChild(s);
+  if(!valid.length){_sendCssSlot('direct','');return;}
+  _sendCssSlot('direct',valid.join(',\n')+'{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;pointer-events:none!important}');
 }
 
 function matchesAny(value,patterns){
@@ -261,7 +261,7 @@ function collapseParentIfEmpty(el){
   var hasVisible=false;
   for(var i=0;i<parent.children.length;i++){
     var c=parent.children[i];
-    if(c.style.display!=='none'&&!c.dataset.adblockHidden){hasVisible=true;break;}
+    if(c.style.display!=='none'&&!c.dataset.qkv1H){hasVisible=true;break;}
   }
   if(!hasVisible){
     parent.style.setProperty('display','none','important');
@@ -270,7 +270,7 @@ function collapseParentIfEmpty(el){
     parent.style.setProperty('margin','0','important');
     parent.style.setProperty('padding','0','important');
     parent.style.setProperty('overflow','hidden','important');
-    parent.dataset.adblockHidden='1';
+    parent.dataset.qkv1H='1';
   }
 }
 
@@ -285,13 +285,13 @@ function removeEl(el){
 }
 
 function hide(el){
-  if(!el||el.dataset.adblockHidden)return false;
+  if(!el||el.dataset.qkv1H)return false;
   // Never hide the page itself — a broad rule (e.g. *:has(>[ad-attr]))
   // can match body/html when an ad script appends straight into <body>.
   if(el===document.body||el===document.documentElement)return false;
   el.style.setProperty('display','none','important');
   el.style.setProperty('visibility','hidden','important');
-  el.dataset.adblockHidden='1';
+  el.dataset.qkv1H='1';
   collapseParentIfEmpty(el);
   return true;
 }
@@ -407,7 +407,7 @@ function observeShadowRoot(shadow){
 
 function attachShadowListeners(){
   // Listen for shadow-hook.js events (MAIN world patches attachShadow)
-  document.addEventListener('__adblock_shadow_attached__',function(e){
+  document.addEventListener('__qkv1_sh__',function(e){
     var host=e&&e.detail&&e.detail.host;
     if(!host)return;
     Promise.resolve().then(function(){
@@ -422,7 +422,7 @@ function attachShadowListeners(){
   }catch(e){}
 }
 
-// Scriptlet rules bridge — receiving '__adblock_scriptlet_rules__' re-enables
+// Scriptlet rules bridge — receiving '__qkv1_rules__' re-enables
 // scriptlets in the MAIN world, so rules must only be dispatched while
 // _enabled. _scriptletRulesActive tracks the MAIN-world state so sync() can
 // re-dispatch after an unpause without re-wrapping APIs on every sync.
@@ -433,7 +433,7 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   'adjust_settimeout','adjust_setinterval','abort_current_script','abort_on_property_read',
   'abort_on_property_write','abort_on_stack_trace','no_eval_if','no_webrtc','prevent_bab','disable_newtab_links',
   'trusted_replace_xhr_response',
-  // Wired 2026-07: ported from uBO's real resources/*.js source (u-src/js/resources/).
+  // Wired 2026-07: newly ported scriptlets.
   'remove_attr','remove_node_text','replace_node_text','refresh_defuser','set_cookie','remove_cookie',
   'set_local_storage_item','href_sanitizer','trusted_replace_fetch_response','trusted_replace_argument',
   'trusted_prevent_fetch'];
@@ -447,7 +447,7 @@ function _dispatchScriptletRules(cfg){
     }
   }
   if(hasAny){
-    try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
+    try{window.dispatchEvent(new CustomEvent('__qkv1_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
   }
 }
 
@@ -457,13 +457,17 @@ function sync(cb){
     var paused=(res.pausedDomains||[]).indexOf(location.hostname)!==-1;
     _enabled=(res.enabled!==false)&&res.cosmeticFiltering!==false&&!paused;
     if(_enabled){
+      // Re-send in case a previous pause/disable cleared it in background
+      // (CSS_CLEAR_ALL wipes ALL slots, not just content.js's own) — a no-op
+      // send (background diffs and skips) when it was never cleared.
+      _injectDirectStyle();
       schedule(document);startObserver();attachShadowListeners();watchPageClasses();
       if(_config&&!_scriptletRulesActive)_dispatchScriptletRules(_config);
     }
     else{
       stopObserver();
       stopPageClassWatch();
-      try{window.dispatchEvent(new CustomEvent('__adblock_scriptlet_disable__'));}catch(_e){}
+      try{window.dispatchEvent(new CustomEvent('__qkv1_dis__'));}catch(_e){}
       _scriptletRulesActive=false;
     }
     if(cb)cb({ok:true});
@@ -498,17 +502,17 @@ function _mergeConfigs(base,overlay){
 }
 
 function boot(){
-  if(!(window.__adblockRuleLoader&&window.__adblockRuleLoader.loadSite))return;
+  if(!(window.__qkv1Loader&&window.__qkv1Loader.loadSite))return;
   // One loader call returns {siteKey, global, site} — the loader (or background)
   // resolves [host_patterns] for this frame's hostname.
-  window.__adblockRuleLoader.loadSite(function(res){
+  window.__qkv1Loader.loadSite(function(res){
     siteKey=(res&&res.siteKey)||'';
     var base=(res&&res.global)||{};
     _config=_mergeConfigs(base,(res&&res.site)||{});
     _rebuildSelectorCache();
-    // Inject the direct-hide stylesheet immediately (before DOMContentLoaded)
-    // so late-rendered ads never paint. Scoped under html.adblock-on, so the
-    // pause/disable path (class removal in content.js) turns it off for free.
+    // Send the direct-hide CSS immediately (before DOMContentLoaded) so
+    // late-rendered ads never paint. content.js's CSS_CLEAR_ALL (on
+    // pause/disable) clears this slot in background for free.
     _injectDirectStyle();
     // New/changed config must always be re-dispatched — reset the flag so the
     // sync below sends it (but only if the site turns out to be enabled).
@@ -532,7 +536,7 @@ function _onSpaNav(){
 document.addEventListener('yt-navigate-finish',_onSpaNav);
 document.addEventListener('yt-page-data-updated',_onSpaNav);
 
-window.addEventListener('__adblock_blocked__',function(e){
+window.addEventListener('__qkv1_blk__',function(e){
   if(!extValid()||!_enabled)return;
   var url=location.href;
   chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
@@ -546,7 +550,7 @@ chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
   if(msg.type==='GET_HIDDEN_COUNT')sendResponse({count:_hidden});
   if(msg.type==='RULES_CHANGED'){
     // Rule sources were updated — reset the cached parsed rules and re-apply.
-    if(window.__adblockRuleLoader&&window.__adblockRuleLoader.reset)window.__adblockRuleLoader.reset();
+    if(window.__qkv1Loader&&window.__qkv1Loader.reset)window.__qkv1Loader.reset();
     _config=null;
     siteKey='';
     stopObserver();

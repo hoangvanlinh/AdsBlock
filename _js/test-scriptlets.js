@@ -1,5 +1,5 @@
 // Smoke test: load the real content/scriptlets.js in a vm sandbox and verify
-// __adblock_blocked__ dispatch behavior for window.open blocking and
+// __qkv1_blk__ dispatch behavior for window.open blocking and
 // json_prune_xhr (only real prunes count).
 'use strict';
 const fs = require('fs');
@@ -104,7 +104,7 @@ sandbox.globalThis = sandbox;
 sandbox.addEventListener = (t, fn) => { (listeners[t] = listeners[t] || []).push(fn); };
 sandbox.removeEventListener = () => {};
 sandbox.dispatchEvent = (ev) => {
-  if (ev.type === '__adblock_blocked__') blockedEvents.push(ev.detail);
+  if (ev.type === '__qkv1_blk__') blockedEvents.push(ev.detail);
   (listeners[ev.type] || []).forEach(fn => fn(ev));
   return true;
 };
@@ -126,7 +126,7 @@ function check(name, cond, detail = '') {
 }
 
 function sendRules(rules) {
-  sandbox.dispatchEvent(new CustomEventStub('__adblock_scriptlet_rules__', { detail: rules }));
+  sandbox.dispatchEvent(new CustomEventStub('__qkv1_rules__', { detail: rules }));
 }
 
 (async () => {
@@ -201,7 +201,7 @@ function sendRules(rules) {
     String(blockedEvents.length));
 
   console.log('\n== 3. disable event stops blocking & counting ==');
-  sandbox.dispatchEvent(new CustomEventStub('__adblock_scriptlet_disable__', {}));
+  sandbox.dispatchEvent(new CustomEventStub('__qkv1_dis__', {}));
   blockedEvents = [];
   const r4 = sandbox.open('https://adsite.com/popup2');
   check('window.open passes through when disabled', r4 && typeof r4.close === 'function');

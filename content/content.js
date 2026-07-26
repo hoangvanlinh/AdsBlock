@@ -1,43 +1,277 @@
 // content/content.js — AdBlock Cosmetic Filter Engine
 // Runs at document_start on every page
 // Responsibilities:
-
-// ── FAST PATH: synchronous CSS inject (frame 0, before any async) ──────
-// Inject adblock-on + critical inline style immediately, before storage
-// callback fires (~10-50ms). If domain is paused, the class is removed
-// in the async check below. "Inject first, remove if needed" is faster
-// than "wait then inject" for the 99% case where adblock is active.
-(function earlyInject() {
-  document.documentElement.classList.add('adblock-on');
-  if (document.getElementById('__adblock_base__')) return;
-  const s = document.createElement('style');
-  s.id = '__adblock_base__';
-  s.textContent =
-    'html.adblock-on ins.adsbygoogle,' +
-    'html.adblock-on .adsbygoogle,' +
-    'html.adblock-on [id^="div-gpt-ad"],' +
-    'html.adblock-on [id^="google_ads_iframe"],' +
-    'html.adblock-on iframe[src*="doubleclick.net"],' +
-    'html.adblock-on iframe[src*="googlesyndication"],' +
-    'html.adblock-on iframe[src*="googleadservices"],' +
-    'html.adblock-on [data-google-query-id],' +
-    'html.adblock-on [id^="adnzone_"],' +
-    'html.adblock-on [data-admssprqid],' +
-    'html.adblock-on [id^="taboola-"],' +
-    'html.adblock-on .OUTBRAIN' +
-    '{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important}';
-  document.documentElement.appendChild(s);
-})();
-
 //   1. Hide ad elements via CSS selectors (cosmetic filtering)
 //   2. Remove ad iframes / scripts on DOM ready
 //   3. Observe dynamic DOM mutations (SPA / infinite scroll)
 //   4. Listen for messages from background to toggle per-domain
 
+// ── Guard: detect invalidated extension context ───────────────────
+function extValid() {
+  try {
+    // chrome.runtime.id is static; use getManifest() to actually probe the context
+    return !!(chrome.runtime && chrome.runtime.getManifest());
+  } catch { return false; }
+}
+
+// _sendCss — forwards CSS text to background, which applies it via
+// chrome.scripting.insertCSS (the browser's privileged "user stylesheet"
+// layer). This never creates a page-visible <style> DOM node and never
+// needs a toggle class on <html> — an empty css string tells background to
+// remove whatever was previously applied for that slot. `fresh` must only
+// ever be set on the very first CSS_SET of a page load (see earlyInject
+// below): it tells background to discard any bookkeeping left over from
+// the PREVIOUS document in this tab/frame, since insertCSS'd content does
+// not itself survive navigation but our own tracking Map would.
+function _sendCss(slot, css, fresh) {
+  if (!extValid()) return;
+  try {
+    chrome.runtime.sendMessage({ type: 'CSS_SET', slot, css: css || '', fresh: !!fresh }).catch(() => {});
+  } catch { /* extension context invalidated */ }
+}
+
+function _clearAllCss() {
+  if (!extValid()) return;
+  try { chrome.runtime.sendMessage({ type: 'CSS_CLEAR_ALL' }).catch(() => {}); } catch { /* invalidated */ }
+}
+
+// ── Base cosmetic CSS (default known-ad-provider selectors) ────────
+// IMPORTANT: No broad wildcard selectors like [class*="ad-"]. Those cause
+// false positives on sites like YouTube where legitimate elements contain
+// "ad" in class/id names. Every selector here targets a KNOWN ad provider
+// element. The last block ([data-qkv1-h="1"]) collapses layout space for
+// elements JS already hid via site-block.js's hide()/collapseParentIfEmpty
+// — belt-and-suspenders alongside the inline styles those set directly.
+const BASE_CSS = `
+ins.adsbygoogle,
+.adsbygoogle,
+[id^="div-gpt-ad"],
+[id^="google_ads_iframe"],
+[id^="dfp-ad-"],
+iframe[src*="googlesyndication.com"],
+iframe[src*="doubleclick.net"],
+iframe[src*="googleadservices.com"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+ytd-rich-item-renderer:has(ytd-in-feed-ad-layout-renderer),
+ytd-rich-item-renderer:has(ytd-ad-slot-renderer),
+ytd-rich-item-renderer:has(ytd-promoted-sparkles-web-renderer),
+ytd-rich-item-renderer:has(ytd-promoted-video-renderer),
+ytd-rich-item-renderer:has(ytd-display-ad-renderer),
+ytd-rich-item-renderer:has(ytd-compact-promoted-video-renderer),
+ytd-rich-item-renderer[is-ad],
+ytd-video-renderer[is-ad],
+ytd-reel-item-renderer[is-ad],
+#player-ads,
+#masthead-ad,
+ytd-banner-promo-renderer,
+ytd-statement-banner-renderer,
+ytd-rich-section-renderer:has(ytd-statement-banner-renderer),
+ytd-rich-section-renderer:has(ytd-banner-promo-renderer),
+ytd-rich-section-renderer:has(ytd-in-feed-ad-layout-renderer),
+ytd-rich-section-renderer:has(ytd-ad-slot-renderer),
+ytd-rich-grid-row:has(ytd-in-feed-ad-layout-renderer),
+ytd-rich-grid-row:has(ytd-ad-slot-renderer) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.OUTBRAIN,
+[data-widget-id^="outbrain"],
+div.ob-widget,
+div.ob-smartfeed-wrapper,
+.trc_related_container,
+[id^="taboola-"],
+.taboola-container {
+  display: none !important;
+}
+
+iframe[src*="amazon-adsystem.com"] {
+  display: none !important;
+}
+
+[id^="crt-"][id$="-wrapper"],
+.criteo-ad {
+  display: none !important;
+}
+
+iframe[src*="adnxs.com"],
+iframe[src*="media.net"],
+iframe[src*="pubmatic.com"],
+iframe[src*="openx.net"],
+iframe[src*="rubiconproject.com"],
+iframe[src*="advertising.com"] {
+  display: none !important;
+}
+
+.ad-banner:not(:has(video, iframe, embed, object)),
+.ad-wrapper:not(:has(video, iframe, embed, object)),
+.ad-container:not(:has(video, iframe, embed, object)),
+.ad-slot:not(:has(video, iframe, embed, object)),
+.ad-unit:not(:has(video, iframe, embed, object)),
+.ad-frame:not(:has(video, iframe, embed, object)),
+.ad-leaderboard,
+.ad-sidebar,
+.ad-rectangle,
+.ad-skyscraper,
+[id="ad-banner"]:not(:has(video, iframe, embed, object)),
+[id="ad-wrapper"]:not(:has(video, iframe, embed, object)),
+[id="ad-container"]:not(:has(video, iframe, embed, object)),
+[id="ad-slot"]:not(:has(video, iframe, embed, object)),
+[id="ad-unit"]:not(:has(video, iframe, embed, object)) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+[aria-label="Advertisement"],
+[aria-label="Sponsored"],
+[data-ad="true"],
+li[data-promoted="true"],
+.sponsored-post,
+.promoted-content {
+  display: none !important;
+}
+
+.ad-modal,
+.ad-popup,
+.interstitial-ad {
+  display: none !important;
+}
+
+.ad_frame_protection,
+.ad_frame_protection_wrapper,
+.ad_frame_protection_container,
+.ad_frame_protection_overlay,
+.ad_frame_protection_inner,
+.ad_frame_protection_outer,
+.ad_frame_protection_top,
+.ad_frame_protection_bottom,
+.ad_frame_protection_left,
+.ad_frame_protection_right,
+.ad_wrapper_protection,
+.eclick_ad_holder {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+article:has(.ad_frame_protection),
+article:has(.ad_wrapper_protection),
+article:has(.eclick_ad_holder) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+div[data-visualcompletion="ignore-late-mutation"]:has(a[attributionsrc]),
+[role="article"]:has([data-ad-rendering-role]),
+div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+iframe[src*="xandr.com"],
+iframe[src*="adsrvr.org"],
+iframe[src*="smartadserver.com"],
+iframe[src*="adform.net"],
+iframe[src*="33across.com"],
+iframe[src*="sharethrough.com"],
+iframe[src*="mgid.com"],
+iframe[src*="teads.tv"],
+iframe[src*="undertone.com"],
+iframe[src*="yieldmo.com"],
+iframe[src*="improvedigital.com"],
+iframe[src*="smartclip.net"] {
+  display: none !important;
+}
+
+[id^="yandex_rtb_"],
+[id^="sas_"],
+[id^="mgid-"],
+[id^="rc-widget-"],
+.rc-widget,
+[id^="seedtag-"],
+[data-str-native-key],
+[id^="teads-"],
+[id^="prebid-"],
+[data-prebid] {
+  display: none !important;
+}
+
+[id^="adnzone_"],
+[id^="ssppagebid_"],
+[data-admssprqid],
+[data-ssp^="sspbid_"],
+*:has(> [data-admssprqid]),
+*:has(> [id^="adnzone_"]),
+[id^="placement-"][revenue],
+iframe[src*="admicro.vn"],
+iframe[src*="adx.admicro"],
+[id^="ads_top_"],
+[id^="ads_bottom_"],
+[id^="dfp_"],
+[id^="vm-placement-"],
+iframe[src*="vccorp.vn"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+iframe[src*="adplay.vn"],
+iframe[src*="adtima.vn"],
+iframe[src*="mfast.vn"],
+[id^="adskeeper-"],
+iframe[src*="adskeeper.com"] {
+  display: none !important;
+}
+
+iframe[src*="shareasale.com"],
+iframe[src*="awin1.com"],
+iframe[src*="jdoqocy.com"],
+iframe[src*="tradedoubler.com"],
+iframe[src*="admitad.com"],
+iframe[src*="impact.com"],
+iframe[src*="skimlinks.com"],
+iframe[src*="viglink.com"],
+iframe[src*="partnerize.com"],
+iframe[src*="howl.me"] {
+  display: none !important;
+}
+
+.skimlinks-widget,
+[data-skimlinks-widget],
+.viglink-widget,
+[id^="admitad-widget-"],
+.howl-widget,
+[data-howl],
+.awin-banner,
+[data-awin] {
+  display: none !important;
+}
+
+[data-qkv1-h="1"] {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+`;
+
+// ── FAST PATH: fire the base CSS off immediately (frame 0, before any
+// async storage read). "Send first, clear if needed" is faster than "wait
+// then send" for the 99% case where adblock is active. `fresh: true`
+// resets background's per-tab/frame bookkeeping for a brand-new document.
+let _baseActive = true;
+_sendCss('base', BASE_CSS, true);
+
 // Cosmetic hiding (direct_hide_selectors) is owned entirely by site-block.js,
-// which injects them as a stylesheet scoped under html.adblock-on.
-// This file only manages the adblock-on class, user custom CSS rules,
-// and resource stats classification.
+// which sends its own 'direct' CSS slot the same way.
+// This file only manages base/custom CSS slots and resource stats classification.
 
 // ── Resource classification for stats ────────────────────────────
 // Seeded from site-rules.txt [global] ad_network_patterns / tracker_network_patterns.
@@ -62,11 +296,11 @@ function applyGlobalConfig(cfg) {
 }
 
 const _globalConfigReady = new Promise((resolve) => {
-  if (!(window.__adblockRuleLoader && window.__adblockRuleLoader.load)) {
+  if (!(window.__qkv1Loader && window.__qkv1Loader.load)) {
     resolve();
     return;
   }
-  window.__adblockRuleLoader.load('global', {}, (cfg) => {
+  window.__qkv1Loader.load('global', {}, (cfg) => {
     applyGlobalConfig(cfg);
     resolve();
   });
@@ -134,19 +368,11 @@ function flushStats() {
   }).catch(() => {});
 }
 
-// ── Guard: detect invalidated extension context ───────────────────
-function extValid() {
-  try {
-    // chrome.runtime.id is static; use getManifest() to actually probe the context
-    return !!(chrome.runtime && chrome.runtime.getManifest());
-  } catch { return false; }
-}
-
 // ── State ─────────────────────────────────────────────────────────
 let enabled = true;
 
-// Check storage — only to REMOVE adblock-on if disabled/paused.
-// The class was already injected synchronously by earlyInject above.
+// Check storage — only to CLEAR the base CSS if disabled/paused.
+// The base CSS was already sent synchronously above.
 if (extValid()) {
   try {
     chrome.storage.local.get(['enabled', 'pausedDomains', 'cosmeticFiltering'], (result) => {
@@ -156,11 +382,11 @@ if (extValid()) {
         const host = location.hostname;
         if (!e || pausedDomains.includes(host) || !cosmeticFiltering) {
           enabled = false;
-          document.documentElement.classList.remove('adblock-on');
-          document.getElementById('__adblock_base__')?.remove();
+          _baseActive = false;
+          _clearAllCss();
           return;
         }
-        // Already active — just ensure custom user rules are injected
+        // Already active — just ensure custom user rules are sent
         injectCustomCssRules();
       } catch { /* extension context invalidated */ }
     });
@@ -188,10 +414,8 @@ function init() {
           return;
         }
         enabled = true;
-        // Ensure CSS is active (may already be from the early check above)
-        if (!document.documentElement.classList.contains('adblock-on')) {
-          injectBaseCss();
-        }
+        // Ensure base CSS is active (may already be from the early send above)
+        if (!_baseActive) injectBaseCss();
         _globalConfigReady.finally(() => {
           removeAdScripts();   // seed initial stats from existing elements
           observeMutations();
@@ -202,14 +426,14 @@ function init() {
 }
 
 function disableCosmeticCss() {
-  // Remove html.adblock-on — instantly disables all content.css rules
-  document.documentElement.classList.remove('adblock-on');
-  // Remove the inline style injected by injectBaseCss
-  document.getElementById('__adblock_base__')?.remove();
+  _baseActive = false;
+  // Clears base + custom + site-block.js's 'direct' slot in one shot —
+  // mirrors what removing the old toggle class used to do for free.
+  _clearAllCss();
   // Stop observing DOM mutations
   disconnectObserver();
   // Unhide any elements already hidden by JS (site-block.js / collapseParentIfEmpty)
-  document.querySelectorAll('[data-adblock-hidden]').forEach(el => {
+  document.querySelectorAll('[data-qkv1-h]').forEach(el => {
     el.style.removeProperty('display');
     el.style.removeProperty('visibility');
     el.style.removeProperty('height');
@@ -217,26 +441,22 @@ function disableCosmeticCss() {
     el.style.removeProperty('margin');
     el.style.removeProperty('padding');
     el.style.removeProperty('overflow');
-    delete el.dataset.adblockHidden;
+    delete el.dataset.qkv1H;
   });
 }
 
 function enableCosmeticCss() {
-  document.documentElement.classList.add('adblock-on');
   injectBaseCss();
 }
 
-// ── Inject base cosmetic CSS (blocks paint) ─────────────────────
+// ── (Re-)send base cosmetic CSS ─────────────────────────────────
 function injectBaseCss() {
-  // earlyInject() already ran synchronously — just ensure class is present
-  document.documentElement.classList.add('adblock-on');
+  _baseActive = true;
+  _sendCss('base', BASE_CSS);
   injectCustomCssRules();
 }
 
 function injectCustomCssRules() {
-  // Remove old custom style if any
-  document.getElementById('__adblock_custom__')?.remove();
-
   if (!extValid()) return;
   try {
     chrome.storage.local.get('rules', (result) => {
@@ -246,24 +466,21 @@ function injectCustomCssRules() {
         const cssRules = rules.filter(r => r.active && r.action === 'hide' && r.type === 'css' && r.pattern);
         const kwRules  = rules.filter(r => r.active && r.action === 'hide' && r.type === 'keyword' && r.pattern);
 
-        if (!cssRules.length && !kwRules.length) return;
+        if (!cssRules.length && !kwRules.length) { _sendCss('custom', ''); return; }
 
         const selectors = [];
-        for (const r of cssRules) selectors.push(`html.adblock-on ${r.pattern}`);
+        for (const r of cssRules) selectors.push(r.pattern);
         for (const r of kwRules) {
           // Keyword hide → match elements containing the keyword in class/id
-          selectors.push(`html.adblock-on [class*="${r.pattern}"]`);
-          selectors.push(`html.adblock-on [id*="${r.pattern}"]`);
+          selectors.push(`[class*="${r.pattern}"]`);
+          selectors.push(`[id*="${r.pattern}"]`);
         }
 
-        const style = document.createElement('style');
-        style.id = '__adblock_custom__';
-        style.textContent = selectors.join(',\n') + ` {
+        _sendCss('custom', selectors.join(',\n') + ` {
         display: none !important;
         visibility: hidden !important;
         pointer-events: none !important;
-      }`;
-        (document.head || document.documentElement).appendChild(style);
+      }`);
       } catch { /* extension context invalidated */ }
     });
   } catch { /* extension context invalidated */ }
@@ -387,7 +604,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 
   if (msg.type === 'RULES_CHANGED') {
-    // Re-inject custom CSS rules when user modifies rules
+    // Re-send custom CSS rules when user modifies rules
     _globalConfigReady.finally(() => {
       injectCustomCssRules();
       sendResponse({ ok: true });
@@ -399,9 +616,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     // Relay into the MAIN world — __abrules lives in this page's own
     // localStorage, which content.js (isolated world) can't touch directly.
     // Dispatched on window (not document) to match how site-block.js
-    // dispatches '__adblock_scriptlet_rules__', which scriptlets.js listens
+    // dispatches '__qkv1_rules__', which scriptlets.js listens
     // for the same way.
-    window.dispatchEvent(new CustomEvent('__adblock_clear_scriptlet_cache__'));
+    window.dispatchEvent(new CustomEvent('__qkv1_clr__'));
     sendResponse({ ok: true });
   }
 });
@@ -410,6 +627,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 // ── YouTube video ads ────────────────────────────────────────────
 // Handled by content/scriptlets.js (MAIN world): json_prune_fetch/xhr rules in
 // rule/site-rules.txt strip adPlacements/adSlots from player responses before
-// the page reads them, and report blocks via the __adblock_blocked__ event
+// the page reads them, and report blocks via the __qkv1_blk__ event
 // (forwarded to stats by site-block.js). YouTube cosmetic selectors live in
 // rule/site-rules.txt and are applied by content/site-block.js.
