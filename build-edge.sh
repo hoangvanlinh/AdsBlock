@@ -9,9 +9,9 @@ OBFUSCATE="${1:-true}"
 EXPORT_OBFUSCATED_SRC="${2:-false}"
 DEBUG="${3:-false}"
 
-BUILD_DIR="$PROJECT_DIR/dist-edge"
-ZIP_PATH="$PROJECT_DIR/adblock-extension-edge.zip"
-OBFUSCATED_SRC_DIR="$PROJECT_DIR/src-obfuscated-edge"
+BUILD_DIR="$BUILD_ROOT/dist-edge"
+ZIP_PATH="$BUILD_ROOT/adblock-extension-edge.zip"
+OBFUSCATED_SRC_DIR="$BUILD_ROOT/src-obfuscated-edge"
 
 echo -e "${YELLOW}[Edge][1/4] Cleaning...${NC}"
 rm -rf "$BUILD_DIR" && mkdir -p "$BUILD_DIR"

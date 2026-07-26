@@ -78,6 +78,11 @@ const chromeStub = {
     sendMessage: async () => {},
     onActivated: noopEvent,
     onUpdated: noopEvent,
+    onRemoved: noopEvent,
+  },
+  scripting: {
+    insertCSS: async () => {},
+    removeCSS: async () => {},
   },
   action: {
     setIcon() {},

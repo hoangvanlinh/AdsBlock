@@ -209,32 +209,124 @@ async function revalidateRemoteRules() {
 // "facebook.com/tr") stays as an individual urlFilter rule.
 const DOMAIN_PATTERN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
 
+// Sites that fingerprint adblockers by bait-loading a known ad URL and
+// checking onload (succeeded) vs onerror (blocked) — see VNExpress's own
+// detector, jn() — see a real network error from a hard `block` action just
+// as clearly as they'd see the ad itself missing. Redirecting instead to an
+// inert placeholder from web_accessible_resources/ (same folder + manifest
+// wiring as inject-web-accessible-resources.js) makes the request "succeed"
+// harmlessly, defeating that class of detector. Only resourceTypes with a
+// safe, well-understood placeholder are mapped; anything else still falls
+// back to a hard block.
+const REDIRECT_RESOURCE_BY_TYPE = {
+  script: 'noop.js',
+  image: '1x1.gif',
+  sub_frame: 'noop.html',
+  xmlhttprequest: 'noop.json', // '{}' — safe for JSON.parse() callers
+};
+
+// Trackers get the same treatment as ads (see REDIRECT_RESOURCE_BY_TYPE) —
+// analytics beacons (analytics.google.com/g/collect, etc.) fail exactly the
+// same visible way as ad bait requests do. 'ping' (navigator.sendBeacon /
+// <a ping>) reads no response at all, so it gets the 0-byte file rather than
+// a typed placeholder.
+const TRACKER_REDIRECT_RESOURCE_BY_TYPE = {
+  script: 'noop.js',
+  image: '1x1.gif',
+  xmlhttprequest: 'noop.json',
+  ping: 'empty',
+};
+
+// A handful of tracker/ad domains ship a purpose-built, API-compatible stub
+// in web_accessible_resources/ (e.g. a fake ga()/gtag() shim) rather than
+// being served the fully-generic noop.js. That matters because page code
+// often calls a global the real script would have defined (ga(...),
+// __gaTracker(...), googletag.cmd.push(...)) — a truly empty script leaves
+// that global undefined and throws, whereas the matching stub defines a
+// harmless no-op version of it. Only ever applies to the 'script'
+// resourceType; other resourceTypes for these same domains still use the
+// generic per-type placeholder.
+const SPECIFIC_SCRIPT_REDIRECTS = {
+  'google-analytics.com': 'google-analytics_analytics.js',
+  'googlesyndication.com': 'googlesyndication_adsbygoogle.js',
+  'googletagmanager.com': 'googletagmanager_gtm.js',
+  'googletagservices.com': 'googletagservices_gpt.js',
+  'amazon-adsystem.com': 'amazon_apstag.js',
+  'outbrain.com': 'outbrain-widget.js',
+  'imasdk.googleapis.com': 'google-ima.js',
+  'scorecardresearch.com': 'scorecardresearch_beacon.js',
+  'chartbeat.com': 'chartbeat.js',
+};
+
+function _redirectAction(file) {
+  return { type: 'redirect', redirect: { extensionPath: `/web_accessible_resources/${file}` } };
+}
+
 // One invalid domain in requestDomains rejects the whole updateDynamicRules
 // call, so every grouped domain must be validated first.
-function buildPatternRules(patterns, startId, resourceTypes, priority) {
+// redirectByType (optional): { resourceType: 'placeholder-file-in-web_accessible_resources/' }
+// — resourceTypes with an entry get action:redirect to that file; the rest
+// still get action:block. specificScriptRedirects (optional): domain ->
+// file, checked only for the 'script' resourceType, taking priority over
+// redirectByType.script for that domain. Rule IDs (not action type) drive
+// stat attribution (see AD_RULE_IDS/TRACKER_RULE_IDS below), so switching
+// block->redirect here doesn't affect the "ads blocked" counter.
+function buildPatternRules(patterns, startId, resourceTypes, priority, redirectByType, specificScriptRedirects) {
   const domains = [];
   const urlFilters = [];
   for (const p of patterns) {
     if (DOMAIN_PATTERN_RE.test(p)) domains.push(p.toLowerCase());
     else urlFilters.push(p);
   }
+
   const rules = [];
   let id = startId;
-  if (domains.length) {
-    rules.push({
-      id: id++,
-      priority,
-      action: { type: 'block' },
-      condition: { requestDomains: domains, resourceTypes },
-    });
+
+  // 'script' gets split out first when per-domain overrides are in play:
+  // domains with a specific stub each get their own single-domain rule;
+  // everything else (domains without an override, plus all urlFilters)
+  // still gets batched under the generic per-type placeholder exactly like
+  // every other resourceType below.
+  let remainingTypes = resourceTypes;
+  if (specificScriptRedirects && resourceTypes.includes('script')) {
+    remainingTypes = resourceTypes.filter(t => t !== 'script');
+    const overridden = domains.filter(d => specificScriptRedirects[d]);
+    const generic = domains.filter(d => !specificScriptRedirects[d]);
+    for (const d of overridden) {
+      rules.push({
+        id: id++, priority,
+        action: _redirectAction(specificScriptRedirects[d]),
+        condition: { requestDomains: [d], resourceTypes: ['script'] },
+      });
+    }
+    const scriptFile = redirectByType && redirectByType.script;
+    const scriptAction = scriptFile ? _redirectAction(scriptFile) : { type: 'block' };
+    if (generic.length) {
+      rules.push({ id: id++, priority, action: scriptAction, condition: { requestDomains: generic, resourceTypes: ['script'] } });
+    }
+    for (const f of urlFilters) {
+      rules.push({ id: id++, priority, action: scriptAction, condition: { urlFilter: f, resourceTypes: ['script'] } });
+    }
   }
-  for (const f of urlFilters) {
-    rules.push({
-      id: id++,
-      priority,
-      action: { type: 'block' },
-      condition: { urlFilter: f, resourceTypes },
-    });
+
+  // Remaining resourceTypes: group by the action they'll get, so types
+  // sharing a placeholder (or sharing "just block") collapse into one rule.
+  const groups = new Map(); // actionKey -> { action, types }
+  for (const t of remainingTypes) {
+    const file = redirectByType && redirectByType[t];
+    const actionKey = file || '__block__';
+    if (!groups.has(actionKey)) {
+      groups.set(actionKey, { action: file ? _redirectAction(file) : { type: 'block' }, types: [] });
+    }
+    groups.get(actionKey).types.push(t);
+  }
+  for (const { action, types } of groups.values()) {
+    if (domains.length) {
+      rules.push({ id: id++, priority, action, condition: { requestDomains: domains, resourceTypes: types } });
+    }
+    for (const f of urlFilters) {
+      rules.push({ id: id++, priority, action, condition: { urlFilter: f, resourceTypes: types } });
+    }
   }
   return rules;
 }
@@ -242,8 +334,11 @@ function buildPatternRules(patterns, startId, resourceTypes, priority) {
 function buildDefaultRulesFromConfig(config) {
   const adTypes = ['script', 'image', 'xmlhttprequest', 'sub_frame'];
   const trackerTypes = ['script', 'image', 'xmlhttprequest', 'ping'];
-  const adRules = buildPatternRules(config.adNetworkPatterns, 1, adTypes, 1);
-  const trackerRules = buildPatternRules(config.trackerNetworkPatterns, adRules.length + 1, trackerTypes, 1);
+  // Both ads and trackers get the fake-success redirect — defeats
+  // bait-request adblock/tracker-block detectors (image, script, and xhr/
+  // beacon failures are all equally visible to page code checking for them).
+  const adRules = buildPatternRules(config.adNetworkPatterns, 1, adTypes, 1, REDIRECT_RESOURCE_BY_TYPE, SPECIFIC_SCRIPT_REDIRECTS);
+  const trackerRules = buildPatternRules(config.trackerNetworkPatterns, adRules.length + 1, trackerTypes, 1, TRACKER_REDIRECT_RESOURCE_BY_TYPE, SPECIFIC_SCRIPT_REDIRECTS);
   return { adRules, trackerRules };
 }
 
@@ -877,10 +972,97 @@ async function applyPrivacySettings() {
   await applyReferrerAnonymization(referrerAnonymization);
 }
 
+// ── Per-frame cosmetic CSS injection ────────────────────────────────
+// Content scripts used to create their own `document.createElement('style')`
+// nodes scoped under a toggle class on <html> — both the class and the
+// style ids were page-visible fingerprint markers. Instead, apply cosmetic
+// CSS via chrome.scripting.insertCSS, a privileged call that lands in the
+// browser's "user stylesheet" cascade: no <style> DOM node, not enumerable
+// via document.styleSheets, and no class needed to gate it on/off —
+// turning it off is just removeCSS.
+//
+// "slot" lets 3 independent CSS sources (base defaults, per-site
+// direct_hide_selectors, user custom rules) update/clear without touching
+// each other. Keyed per tab+frame since all_frames content scripts each
+// have their own frameId.
+const _frameCss = new Map(); // `${tabId}:${frameId}:${slot}` -> last-applied css text
+
+function _frameCssKey(tabId, frameId, slot) {
+  return `${tabId}:${frameId}:${slot}`;
+}
+
+async function setFrameCss(tabId, frameId, slot, css) {
+  if (tabId === undefined || frameId === undefined) return;
+  const key = _frameCssKey(tabId, frameId, slot);
+  const prev = _frameCss.get(key);
+  if (prev === css) return; // no change — already applied (or already absent)
+  if (prev) {
+    try { await chrome.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css: prev }); }
+    catch (e) { /* frame navigated away mid-flight — fine, nothing to clean up */ }
+  }
+  if (css) {
+    try {
+      await chrome.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css });
+      _frameCss.set(key, css);
+    } catch (e) { _frameCss.delete(key); }
+  } else {
+    _frameCss.delete(key);
+  }
+}
+
+// A brand-new document (fresh navigation) can't know whether stale state is
+// left over from the PREVIOUS document in this tab/frame — insertCSS'd
+// content doesn't survive navigation, but our bookkeeping Map would, so the
+// very first CSS_SET per page load (content.js's earlyInject, slot 'base')
+// passes fresh:true to wipe any old entries for this tab/frame first.
+function clearFrameCss(tabId, frameId) {
+  const prefix = `${tabId}:${frameId}:`;
+  for (const key of _frameCss.keys()) {
+    if (key.startsWith(prefix)) _frameCss.delete(key);
+  }
+}
+
+async function clearAllFrameCss(tabId, frameId) {
+  const prefix = `${tabId}:${frameId}:`;
+  for (const [key, css] of Array.from(_frameCss.entries())) {
+    if (!key.startsWith(prefix)) continue;
+    try { await chrome.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css }); } catch (e) {}
+    _frameCss.delete(key);
+  }
+}
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  const prefix = `${tabId}:`;
+  for (const key of _frameCss.keys()) {
+    if (key.startsWith(prefix)) _frameCss.delete(key);
+  }
+});
+
 // ── Message handler ───────────────────────────────────────────────
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
     switch (msg.type) {
+
+      case 'CSS_SET': {
+        const tabId = sender.tab && sender.tab.id;
+        const frameId = sender.frameId;
+        if (tabId !== undefined && frameId !== undefined) {
+          if (msg.fresh) clearFrameCss(tabId, frameId);
+          await setFrameCss(tabId, frameId, msg.slot, msg.css || '');
+        }
+        sendResponse({ ok: true });
+        break;
+      }
+
+      case 'CSS_CLEAR_ALL': {
+        const tabId = sender.tab && sender.tab.id;
+        const frameId = sender.frameId;
+        if (tabId !== undefined && frameId !== undefined) {
+          await clearAllFrameCss(tabId, frameId);
+        }
+        sendResponse({ ok: true });
+        break;
+      }
 
       case 'TOGGLE': {
         await chrome.storage.local.set({ enabled: msg.enabled });

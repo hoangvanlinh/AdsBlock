@@ -6,10 +6,10 @@
 //            stripDynamicTargets, rateLimitHistory, blockAdNavigations
 // Injected at document_start into MAIN world by content.js.
 
-(function _adblock_scriptlets() {
+(function _qkv1sym() {
   'use strict';
 
-  var _G = Symbol.for('_adblock_scriptlets');
+  var _G = Symbol.for('_qkv1sym');
   if (window[_G]) return;
   window[_G] = 1;
 
@@ -830,7 +830,7 @@
             if (typeof r !== 'object' || r === null) continue;
             objAfter = r;
             pruned = true;
-            try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+            try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
           }
           if (!pruned) return responseBefore;
           const responseAfter = Response.json(objAfter, {
@@ -924,7 +924,7 @@
             if (typeof objAfter !== 'object' || objAfter === null) continue;
             objBefore = objAfter;
             pruned = true;
-            try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+            try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
           }
           if (pruned) {
             result = typeof result === 'string' ? safe.JSON_stringify(objBefore) : objBefore;
@@ -939,7 +939,7 @@
           const after = result.replace(rule.re, rule.replacement);
           if (after === result) continue;
           result = after;
-          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+          try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
         }
       }
       // Line-wise JSONL editing (string responses only)
@@ -1078,7 +1078,7 @@
       if (rule.re.test(haystack) !== rule.match) continue;
       // Matched — every strategy below blocks the popup, so report it
       // for stats here, once, regardless of which branch handles it.
-      try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: _blockedUrl } })); } catch (_e) {}
+      try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: _blockedUrl } })); } catch (_e) {}
       if (rule.delay === '') return null;
       if (rule.decoy === 'blank') {
         callArgs[0] = 'about:blank';
@@ -1375,7 +1375,7 @@
       if (_matchAll || rePattern.test(fnStr)) {
         if (!_reported) {
           _reported = true;
-          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+          try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
         }
         return;
       } // block
@@ -2096,13 +2096,42 @@
       // re-render for the rest of the tab's life for zero benefit, so
       // disconnect as soon as the initial parse is done.
       if (document.readyState !== 'loading') return;
+      const processAdded = function (node) {
+        if (node.nodeType !== 1) return;
+        // BigPipe often inserts a whole HTML chunk in one shot (e.g. via
+        // innerHTML on a container), so the data-sjs tag can arrive as a
+        // DESCENDANT of the addedNodes entry rather than the entry itself —
+        // processNode() alone (tagName check) would silently miss it.
+        processNode(node);
+        if (node.querySelectorAll) {
+          const nested = node.querySelectorAll('script[type="application/json"][data-sjs]');
+          for (let i = 0; i < nested.length; i++) processNode(nested[i]);
+        }
+      };
+      // Re-check an already-tracked <script data-sjs> whose text is
+      // reassigned/appended AFTER insertion (a `<script>` node is often
+      // added near-empty first, then filled in — reassigning .textContent
+      // replaces its Text child, which is a childList mutation whose
+      // addedNodes is a bare Text node (nodeType 3) that processAdded()
+      // above ignores; and a direct .appendData()-style edit is a
+      // characterData mutation whose target IS the Text node, one level
+      // below the <script>). Walking up from mut.target catches both.
+      const isSjsScript = function (el) {
+        return !!(el && el.nodeType === 1 && el.tagName === 'SCRIPT' &&
+          el.hasAttribute && el.hasAttribute('data-sjs'));
+      };
       const mo = new MutationObserver(function (mutList) {
         if (_jsonEditRules.length === 0 && _jsonPruneRules.length === 0) return;
+        const retarget = new Set();
         for (const mut of mutList) {
-          for (const node of mut.addedNodes) processNode(node);
+          for (const node of mut.addedNodes) processAdded(node);
+          let el = mut.target;
+          if (el && el.nodeType === 3) el = el.parentNode; // characterData: target is the Text node
+          if (isSjsScript(el)) retarget.add(el);
         }
+        for (const el of retarget) processNode(el);
       });
-      mo.observe(document, { childList: true, subtree: true });
+      mo.observe(document, { childList: true, subtree: true, characterData: true });
       document.addEventListener('DOMContentLoaded', function () {
         mo.disconnect();
       }, { once: true });
@@ -2242,8 +2271,8 @@
   // (existing + future, via MutationObserver) and rewrites their text
   // content. rmnt always replaces with '' (removal); rpnt (trusted) takes
   // an explicit replacement and an optional 4th arg 'includes=X excludes=Y
-  // stay=1' extra-token string (subset of uBO's rpnt tokens — sedCount/
-  // quitAfter are not supported here).
+  // stay=1' extra-token string (sedCount/quitAfter tokens are not supported
+  // here).
   function _replaceNodeTextFn(nodeName, pattern, replacement, extra) {
     if (!nodeName) return;
     var reNode = _toRegex(nodeName);
@@ -2344,10 +2373,9 @@
   }
 
   // ── setLocalStorageItem ─────────────────────────────────────────────
-  // Restricted to a small set of "safe" values (same spirit as uBO's own
-  // scriptlet) so this can't be abused to inject arbitrary attacker-chosen
-  // data — only benign flags/empty containers, or $remove$ to delete keys
-  // matching `key` as a pattern.
+  // Restricted to a small set of "safe" values so this can't be abused to
+  // inject arbitrary attacker-chosen data — only benign flags/empty
+  // containers, or $remove$ to delete keys matching `key` as a pattern.
   function setLocalStorageItem(key, value) {
     if (!key) return;
     var safeValues = ['', 'undefined', 'null', '{}', '[]', '""', 'true', 'false'];
@@ -2369,9 +2397,9 @@
   // ── hrefSanitizer ────────────────────────────────────────────────
   // Rewrites <a> href attributes to the "real" destination found elsewhere
   // in the element, defeating click-tracking redirect wrappers. `source`
-  // supports the two simple uBO modes: 'text' (use the link's own text as
-  // the URL) or '[attrName]' (use that attribute's value) — the fuller
-  // urlskip transform-step language is not ported.
+  // supports two simple modes: 'text' (use the link's own text as the URL)
+  // or '[attrName]' (use that attribute's value) — no fuller transform-step
+  // language is supported.
   function hrefSanitizer(selector, source) {
     if (!selector) return;
     source = source || 'text';
@@ -2439,7 +2467,7 @@
             if (after !== textAfter) { textAfter = after; changed = true; }
           }
           if (!changed) return responseBefore;
-          try { window.dispatchEvent(new CustomEvent('__adblock_blocked__', { detail: { url: "" } })); } catch (_e) {}
+          try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
           return new Response(textAfter, { status: responseBefore.status, statusText: responseBefore.statusText, headers: responseBefore.headers });
         }).catch(function () { return responseBefore; });
       }).catch(function () { return fetchPromise; });
@@ -2823,9 +2851,9 @@
     } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
   })();
 
-  // Bridge: content.js dispatches '__adblock_scriptlet_rules__' after async rule load.
+  // Bridge: content.js dispatches '__qkv1_rules__' after async rule load.
   // Content script and MAIN world share DOM events — standard cross-world pattern.
-  window.addEventListener('__adblock_scriptlet_rules__', function(ev) {
+  window.addEventListener('__qkv1_rules__', function(ev) {
     _scriptletsEnabled = true;
     try { _applyScriptletRules(ev.detail); } catch (e) {}
   });
@@ -2834,12 +2862,12 @@
   // (extension storage) — it has no reach into this page's own localStorage,
   // where __abrules actually lives. content.js relays this event after the
   // dashboard broadcasts CLEAR_SCRIPTLET_CACHE to every open tab.
-  window.addEventListener('__adblock_clear_scriptlet_cache__', function() {
+  window.addEventListener('__qkv1_clr__', function() {
     try { localStorage.removeItem(_RULES_CACHE_KEY); } catch (e) {}
   });
 
   // When protection is toggled OFF or domain paused, disable all scriptlet logic.
-  window.addEventListener('__adblock_scriptlet_disable__', function() {
+  window.addEventListener('__qkv1_dis__', function() {
     _scriptletsEnabled = false;
     _noWinOpenRules.length = 0;
   });

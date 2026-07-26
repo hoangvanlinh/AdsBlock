@@ -4,7 +4,7 @@
 // (a few KB). Full-text fetching/parsing here is kept only as a fallback for
 // when background messaging is unavailable.
 (function(){
-if(window.__adblockRuleLoader)return;
+if(window.__qkv1Loader)return;
 
 var _site=null,_loading=null;
 // Shared constants from config.js — listed before this file in the
@@ -225,7 +225,7 @@ function loadSiteConfig(callback){
   _loading.then(callback);
 }
 
-window.__adblockRuleLoader={
+window.__qkv1Loader={
   // loadSite — preferred API: full resolved config for this frame's hostname.
   loadSite:function(callback){loadSiteConfig(callback);},
   // load — backward-compatible section accessor ('global' or this host's siteKey).
