@@ -171,14 +171,21 @@ function _sendCssSlot(slot,css){
   if(!extValid())return;
   try{chrome.runtime.sendMessage({type:'CSS_SET',slot:slot,css:css||''}).catch(function(){});}catch(e){}
 }
+// Bare `body`/`html`-anchored selectors (e.g. `body:has(x) > y`) must skip
+// the auto-prefix below — 'body '+'body:has(...)' is always false.
+var _ALREADY_ROOT_SCOPED_RE=/^(body|html)(?![\w-])/i;
 function _injectDirectStyle(){
   if(!_cachedDirect.length){_sendCssSlot('direct','');return;}
   // Validate each selector — one invalid selector drops the whole CSS rule.
   var valid=[];
   for(var i=0;i<_cachedDirect.length;i++){
-    // Scope under `body ` (descendant) so a broad selector can never match
-    // body/html itself and blank the whole page.
-    try{document.querySelector(_cachedDirect[i]);valid.push('body '+_cachedDirect[i]);}catch(e){}
+    var sel=_cachedDirect[i];
+    try{
+      document.querySelector(sel);
+      // Scope under `body ` so a broad selector can never match body/html
+      // itself and blank the whole page — skipped when already root-scoped.
+      valid.push(_ALREADY_ROOT_SCOPED_RE.test(sel)?sel:'body '+sel);
+    }catch(e){}
   }
   if(!valid.length){_sendCssSlot('direct','');return;}
   _sendCssSlot('direct',valid.join(',\n')+'{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;pointer-events:none!important}');
