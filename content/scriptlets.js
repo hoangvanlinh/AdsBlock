@@ -6,12 +6,28 @@
 //            stripDynamicTargets, rateLimitHistory, blockAdNavigations
 // Injected at document_start into MAIN world by content.js.
 
-(function _qkv1sym() {
+// Injected imperatively by background.js via chrome.scripting.executeScript
+// (world: 'MAIN', func: this function, args: [perSessionToken]) — NOT a
+// static content_scripts entry. The token is generated at runtime in the
+// service worker and handed to this function as an argument, so it never
+// appears as a literal anywhere in shipped source: MAIN-world code has no
+// chrome.* API to fetch a value after the fact, so this injection-argument
+// path is the only way to give it something the page's own scripts can't
+// also independently derive (page JS runs in this exact same realm, so
+// anything computable here without external input is equally computable by
+// the page). See docs/CHROME_DEBUGGING caveats + plan history for why this
+// replaced a static Symbol.for('_qkv1sym') key that any page script could
+// retrieve from the JS engine's shared global symbol registry.
+function _runQkv1Scriptlets(_qkv1Token) {
   'use strict';
 
-  var _G = Symbol.for('_qkv1sym');
+  var _G = Symbol.for(_qkv1Token);
   if (window[_G]) return;
   window[_G] = 1;
+  var _EVT_RULES = '__' + _qkv1Token + '_rules__';
+  var _EVT_BLK   = '__' + _qkv1Token + '_blk__';
+  var _EVT_DIS   = '__' + _qkv1Token + '_dis__';
+  var _EVT_CLR   = '__' + _qkv1Token + '_clr__';
 
   // ── Helpers ──────────────────────────────────────────────────────
   var _strSplit = String.prototype.split;
@@ -103,6 +119,48 @@
     }
 
     walk(window, parts);
+  }
+
+  // ── jsonPruneOnSet ───────────────────────────────────────────────
+  // Same defineProperty-walk trick as setConstant, but for globals a page
+  // ASSIGNS directly (var x = {...}) rather than obtaining via JSON.parse —
+  // json_prune/json_edit only see JSON.parse traffic, so a page building the
+  // object itself in JS needs this instead. The leaf setter prunes the
+  // incoming value with objectPruneFn before storing it.
+  function jsonPruneOnSet(chain, prunePaths, needlePaths) {
+    if (!chain || typeof prunePaths !== 'string' || !prunePaths) return;
+    var parts = chain.split('.');
+    var leaf  = parts.pop();
+
+    function lock(obj, key) {
+      var held = obj[key];
+      Object.defineProperty(obj, key, {
+        get: function () { return held; },
+        set: function (v) {
+          if (!_scriptletsEnabled) { held = v; return; }
+          var r = objectPruneFn(v, prunePaths, needlePaths || '');
+          held = (typeof r === 'object' && r !== null) ? r : v;
+        },
+        configurable: false, enumerable: true
+      });
+    }
+
+    function walk(obj, keys) {
+      if (!obj || (typeof obj !== 'object' && typeof obj !== 'function')) return;
+      if (!keys.length) { lock(obj, leaf); return; }
+      var k = keys[0], rest = keys.slice(1), v = obj[k];
+      if (v != null) { walk(v, rest); return; }
+      var held;
+      try {
+        Object.defineProperty(obj, k, {
+          get: function () { return held; },
+          set: function (a) { held = a; if (a instanceof Object) walk(a, rest.slice()); },
+          configurable: true
+        });
+      } catch (e) {}
+    }
+
+    try { walk(window, parts); } catch (e) { /* already defined — skip */ }
   }
 
   // ── abortCurrentScript ───────────────────────────────────────────
@@ -803,36 +861,96 @@
   // config round-trip are still pruned.
   var _fetchPruneRules = [];
   var _fetchProxyInstalled = false;
+
+  // ── trusted-edit-request / trusted-edit-response shared registries ──
+  // Whole-body JSONPath assign-or-delete applied to outgoing (request) or
+  // incoming (response) JSON bodies. ONE rule wires into BOTH transports
+  // (fetch + XHR) — unlike json_prune_fetch/json_prune_xhr, which are
+  // separate keys per transport, these register once here and are consulted
+  // by every installer below.
+  var _editRequestRules = [];  // { jsonp, propNeedles } — trusted_edit_request
+  var _editResponseRules = []; // { jsonp, propNeedles } — trusted_edit_response
+
+  // Applies whole-body JSONPath edit rules to an outgoing request body
+  // string. Returns the original string unchanged if nothing matched/changed.
+  function _applyEditRequestFn(bodyStr, matchDetails) {
+    if (_editRequestRules.length === 0 || typeof bodyStr !== 'string') return bodyStr;
+    const safe = safeSelf();
+    let objBefore;
+    try { objBefore = safe.JSON_parse(bodyStr); } catch (e) { return bodyStr; }
+    if (typeof objBefore !== 'object' || objBefore === null) return bodyStr;
+    let objAfter = objBefore, changed = false;
+    for (const rule of _editRequestRules) {
+      if (rule.propNeedles.size !== 0 &&
+          matchObjectPropertiesFn(rule.propNeedles, matchDetails || {}) === undefined) continue;
+      const r = rule.jsonp.apply(objAfter);
+      if (r === undefined) continue;
+      objAfter = r;
+      changed = true;
+    }
+    if (!changed) return bodyStr;
+    try { return safe.JSON_stringify(objAfter); } catch (e) { return bodyStr; }
+  }
+
   function _installFetchResponseProxy() {
     if (_fetchProxyInstalled) return;
     _fetchProxyInstalled = true;
     const safe = safeSelf();
     const applyHandler = function (target, thisArg, args) {
+      if (_editRequestRules.length !== 0) {
+        try {
+          const input = args[0], init = args[1];
+          let url, method = 'GET';
+          if (typeof input === 'string') url = input;
+          else if (input && typeof input === 'object') { url = input.url; if (input.method) method = input.method; }
+          if (init && init.method) method = init.method;
+          const body = init && init.body;
+          if (typeof body === 'string') {
+            const after = _applyEditRequestFn(body, { url: url || '', method });
+            if (after !== body) args = [args[0], Object.assign({}, init, { body: after })];
+          }
+        } catch (e) {}
+      }
       const fetchPromise = Reflect.apply(target, thisArg, args);
       return fetchPromise.then(responseBefore => {
-        if (!_scriptletsEnabled || _fetchPruneRules.length === 0) return responseBefore;
+        if (!_scriptletsEnabled ||
+            (_fetchPruneRules.length === 0 && _editResponseRules.length === 0)) return responseBefore;
         let props;
-        const applicable = [];
+        const applicablePrune = [], applicableEdit = [];
         for (const rule of _fetchPruneRules) {
           if (rule.propNeedles.size !== 0) {
             if (props === undefined) props = collateFetchArgumentsFn(...args);
             if (matchObjectPropertiesFn(rule.propNeedles, props) === undefined) continue;
           }
-          applicable.push(rule);
+          applicablePrune.push(rule);
         }
-        if (applicable.length === 0) return responseBefore;
+        for (const rule of _editResponseRules) {
+          if (rule.propNeedles.size !== 0) {
+            if (props === undefined) props = collateFetchArgumentsFn(...args);
+            if (matchObjectPropertiesFn(rule.propNeedles, props) === undefined) continue;
+          }
+          applicableEdit.push(rule);
+        }
+        if (applicablePrune.length === 0 && applicableEdit.length === 0) return responseBefore;
         const response = responseBefore.clone();
         return response.json().then(objBefore => {
           if (typeof objBefore !== 'object' || objBefore === null) return responseBefore;
-          let objAfter = objBefore, pruned = false;
-          for (const rule of applicable) {
+          let objAfter = objBefore, changed = false;
+          for (const rule of applicablePrune) {
             const r = objectPruneFn(objAfter, rule.prunePaths, rule.needlePaths);
             if (typeof r !== 'object' || r === null) continue;
             objAfter = r;
-            pruned = true;
-            try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
+            changed = true;
+            try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
           }
-          if (!pruned) return responseBefore;
+          for (const rule of applicableEdit) {
+            const r = rule.jsonp.apply(objAfter);
+            if (r === undefined) continue;
+            objAfter = r;
+            changed = true;
+            try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
+          }
+          if (!changed) return responseBefore;
           const responseAfter = Response.json(objAfter, {
             status: responseBefore.status,
             statusText: responseBefore.statusText,
@@ -894,7 +1012,7 @@
     const computeResponse = function (xhr, innerResponse) {
       if (!_scriptletsEnabled) return innerResponse;
       if (_xhrPruneRules.length === 0 && _xhrJsonlRules.length === 0 &&
-          _xhrReplaceRules.length === 0) return innerResponse;
+          _xhrReplaceRules.length === 0 && _editResponseRules.length === 0) return innerResponse;
       const xhrDetails = xhrInstances.get(xhr);
       if (xhrDetails === undefined) return innerResponse;
       const responseLength = typeof innerResponse === 'string'
@@ -924,10 +1042,36 @@
             if (typeof objAfter !== 'object' || objAfter === null) continue;
             objBefore = objAfter;
             pruned = true;
-            try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
+            try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
           }
           if (pruned) {
             result = typeof result === 'string' ? safe.JSON_stringify(objBefore) : objBefore;
+          }
+        }
+      }
+      // Whole-body JSONPath edit (assign or delete) — trusted_edit_response.
+      // Runs on the already-pruned object/string from the pass above.
+      if (_editResponseRules.length !== 0) {
+        const editRules = applicableRules(_editResponseRules, xhrDetails);
+        if (editRules.length !== 0) {
+          let objBefore;
+          if (typeof result === 'object' && result !== null) {
+            objBefore = result;
+          } else if (typeof result === 'string') {
+            try { objBefore = safe.JSON_parse(result); } catch (e) {}
+          }
+          if (typeof objBefore === 'object' && objBefore !== null) {
+            let objAfter = objBefore, edited = false;
+            for (const rule of editRules) {
+              const r = rule.jsonp.apply(objAfter);
+              if (r === undefined) continue;
+              objAfter = r;
+              edited = true;
+              try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
+            }
+            if (edited) {
+              result = typeof result === 'string' ? safe.JSON_stringify(objAfter) : objAfter;
+            }
           }
         }
       }
@@ -939,7 +1083,7 @@
           const after = result.replace(rule.re, rule.replacement);
           if (after === result) continue;
           result = after;
-          try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
+          try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
         }
       }
       // Line-wise JSONL editing (string responses only)
@@ -991,6 +1135,11 @@
         return nativeOpen.apply(this, arguments);
       };
       const sendImpl = function () {
+        if (_editRequestRules.length !== 0 && typeof arguments[0] === 'string') {
+          const details = xhrInstances.get(this) || {};
+          const after = _applyEditRequestFn(arguments[0], details);
+          if (after !== arguments[0]) arguments[0] = after;
+        }
         const r = nativeSend.apply(this, arguments);
         reassert();
         return r;
@@ -1024,6 +1173,14 @@
       open(method, url, ...args) {
         xhrInstances.set(this, { method, url });
         return super.open(method, url, ...args);
+      }
+      send(body) {
+        if (_editRequestRules.length !== 0 && typeof body === 'string') {
+          const details = xhrInstances.get(this) || {};
+          const after = _applyEditRequestFn(body, details);
+          if (after !== body) body = after;
+        }
+        return super.send(body);
       }
       get response() { return computeResponse(this, super.response); }
       get responseText() {
@@ -1061,6 +1218,25 @@
     _installXhrResponseProxy();
   }
 
+  // ── trusted-edit-request / trusted-edit-response ─────────────────
+  // TRUSTED: unlike json_edit/jsonl_edit_xhr, value-assigning JSONPath
+  // queries (path=value) are allowed here, not just deletions — see
+  // _editRequestRules/_editResponseRules and _applyEditRequestFn above.
+  function trustedEditRequest(jsonq, propsToMatch) {
+    const jsonp = JSONPath.create(jsonq || '');
+    if (!jsonp.valid) return;
+    _editRequestRules.push({ jsonp, propNeedles: parsePropertiesToMatchFn(propsToMatch || '', 'url') });
+    _installFetchResponseProxy();
+    _installXhrResponseProxy();
+  }
+  function trustedEditResponse(jsonq, propsToMatch) {
+    const jsonp = JSONPath.create(jsonq || '');
+    if (!jsonp.valid) return;
+    _editResponseRules.push({ jsonp, propNeedles: parsePropertiesToMatchFn(propsToMatch || '', 'url') });
+    _installFetchResponseProxy();
+    _installXhrResponseProxy();
+  }
+
   // ── noWindowOpenIf ──────────────────────────────────────────────
   // Proxy installed ONCE at document_start so it intercepts window.open
   // before any page script can capture the original reference.
@@ -1078,7 +1254,7 @@
       if (rule.re.test(haystack) !== rule.match) continue;
       // Matched — every strategy below blocks the popup, so report it
       // for stats here, once, regardless of which branch handles it.
-      try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: _blockedUrl } })); } catch (_e) {}
+      try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: _blockedUrl } })); } catch (_e) {}
       if (rule.delay === '') return null;
       if (rule.decoy === 'blank') {
         callArgs[0] = 'about:blank';
@@ -1375,7 +1551,7 @@
       if (_matchAll || rePattern.test(fnStr)) {
         if (!_reported) {
           _reported = true;
-          try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
+          try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
         }
         return;
       } // block
@@ -2322,6 +2498,52 @@
     _replaceNodeTextFn(nodeName, pattern, replacement, extra);
   }
 
+  // ── trustedReplaceScriptText (TRUSTED) ────────────────────────────
+  // replace_node_text is MutationObserver-based: it fires AFTER a node is
+  // already in the DOM, which is too late for a synchronous inline <script>
+  // — it runs the instant the parser/JS inserts it, before any observer
+  // callback can get to it. This hooks the 4 common programmatic insertion
+  // points directly (via proxyApplyFn, same primitive trustedPreventDomBypass
+  // uses) and rewrites a matching node's source BEFORE the native call runs,
+  // so the page's own script text never executes unmodified. Only catches
+  // JS-inserted nodes (appendChild/insertBefore/insertAdjacentElement/
+  // append) — nodes written directly into parsed HTML are unaffected.
+  function trustedReplaceScriptText(nodeName, pattern, replacement, extra) {
+    if (!nodeName) return;
+    var reNode = _toRegex(nodeName);
+    var rePattern = pattern ? _toRegex(pattern) : null;
+    var reIncludes = null, reExcludes = null;
+    if (extra) {
+      var mi = /includes=(\S+)/.exec(extra); if (mi) reIncludes = _toRegex(mi[1]);
+      var me = /excludes=(\S+)/.exec(extra); if (me) reExcludes = _toRegex(me[1]);
+    }
+    function tryRewrite(node) {
+      if (!node || node.nodeType !== 1 || !reNode.test(node.nodeName)) return;
+      var before = node.textContent;
+      if (!before) return;
+      if (reIncludes && !reIncludes.test(before)) return;
+      if (reExcludes && reExcludes.test(before)) return;
+      if (rePattern && !rePattern.test(before)) return;
+      var after = rePattern ? before.replace(rePattern, replacement || '') : (replacement || '');
+      if (after === before) return;
+      try { node.textContent = after; } catch (e) {}
+    }
+    function hookInsertMethod(methodPath) {
+      proxyApplyFn(methodPath, function (context) {
+        try {
+          var args = context.callArgs;
+          for (var i = 0; i < args.length; i++) {
+            if (args[i] instanceof Node) tryRewrite(args[i]);
+          }
+        } catch (e) {}
+        return context.reflect();
+      });
+    }
+    ['Node.prototype.appendChild', 'Node.prototype.insertBefore',
+     'Element.prototype.insertAdjacentElement', 'Element.prototype.append']
+      .forEach(hookInsertMethod);
+  }
+
   // ── refreshDefuser ────────────────────────────────────────────────
   // Defuses <meta http-equiv="refresh"> redirects. delay: if given (any
   // non-empty value), stop navigation immediately; otherwise honor the
@@ -2467,7 +2689,7 @@
             if (after !== textAfter) { textAfter = after; changed = true; }
           }
           if (!changed) return responseBefore;
-          try { window.dispatchEvent(new CustomEvent('__qkv1_blk__', { detail: { url: "" } })); } catch (_e) {}
+          try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
           return new Response(textAfter, { status: responseBefore.status, statusText: responseBefore.statusText, headers: responseBefore.headers });
         }).catch(function () { return responseBefore; });
       }).catch(function () { return fetchPromise; });
@@ -2588,6 +2810,8 @@
     _jsonEditRules.length = 0;
     _jsonPruneRules.length = 0;
     _noWinOpenRules.length = 0;
+    _editRequestRules.length = 0;
+    _editResponseRules.length = 0;
     var pruneF  = rules.json_prune_fetch          || [];
     var pruneX  = rules.json_prune_xhr            || [];
     var setC    = rules.set_constant              || [];
@@ -2639,6 +2863,33 @@
       var dbParts = prevDomBypass[s].trim().split(/\s+/);
       trustedPreventDomBypass(dbParts[0] || '', dbParts[1] || '');
     }
+
+    // ── json_prune_on_set — reapplied every dispatch (idempotent via
+    // configurable:false + try/catch), same idiom as set_constant above.
+    _eachRule(rules.json_prune_on_set, function (v) {
+      var a = _argsOf(v);
+      try { jsonPruneOnSet(a[0] || '', a[1] || '', a[2] || ''); } catch (e) {}
+    });
+
+    // ── trusted_edit_request / trusted_edit_response — registry-based,
+    // reset+repopulated every dispatch (see resets at the top of this fn).
+    _eachRule(rules.trusted_edit_request, function (v) {
+      var a = _argsOf(v);
+      trustedEditRequest(a[0] || '', a[1] || '');
+    });
+    _eachRule(rules.trusted_edit_response, function (v) {
+      var a = _argsOf(v);
+      trustedEditResponse(a[0] || '', a[1] || '');
+    });
+
+    // ── trusted_replace_script_text — wrap-once (proxyApplyFn installs a
+    // permanent hook per call; re-dispatching the same rule must not stack).
+    _eachRule(rules.trusted_replace_script_text, function (v) {
+      _wrapOnce('trusted_replace_script_text', v, function () {
+        var a = _argsOf(v);
+        trustedReplaceScriptText(a[0] || '', a[1] || '', a[2] || '', a[3] || '');
+      });
+    });
 
     // ── json_prune — registry-based (replace semantics, like json_edit) ──
     // Value: "prunePaths[, needlePaths]" — each a space-separated path list.
@@ -2818,7 +3069,7 @@
   // response-filter rules arrive anyway (very first visit, rules update),
   // the registration functions install the wrappers lazily mid-session.
   var _RULES_CACHE_KEY = '__abrules';
-  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if'];
+  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response'];
 
   function _saveScriptletRulesCache(rules) {
     var has = false;
@@ -2851,9 +3102,10 @@
     } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
   })();
 
-  // Bridge: content.js dispatches '__qkv1_rules__' after async rule load.
+  // Bridge: content.js dispatches the token-derived "rules" event after
+  // async rule load (same token content.js fetched via GET_QKV1_TOKEN).
   // Content script and MAIN world share DOM events — standard cross-world pattern.
-  window.addEventListener('__qkv1_rules__', function(ev) {
+  window.addEventListener(_EVT_RULES, function(ev) {
     _scriptletsEnabled = true;
     try { _applyScriptletRules(ev.detail); } catch (e) {}
   });
@@ -2862,12 +3114,12 @@
   // (extension storage) — it has no reach into this page's own localStorage,
   // where __abrules actually lives. content.js relays this event after the
   // dashboard broadcasts CLEAR_SCRIPTLET_CACHE to every open tab.
-  window.addEventListener('__qkv1_clr__', function() {
+  window.addEventListener(_EVT_CLR, function() {
     try { localStorage.removeItem(_RULES_CACHE_KEY); } catch (e) {}
   });
 
   // When protection is toggled OFF or domain paused, disable all scriptlet logic.
-  window.addEventListener('__qkv1_dis__', function() {
+  window.addEventListener(_EVT_DIS, function() {
     _scriptletsEnabled = false;
     _noWinOpenRules.length = 0;
   });
@@ -2903,4 +3155,9 @@
     }
     return Reflect.apply(remove, this, [type, listener, options]);
   };
-}());
+}
+// Classic-script contexts (Chrome's importScripts) already put a top-level
+// function declaration on the global object; the explicit assignment below
+// is what makes it reachable in an ES-module background context (Firefox),
+// where top-level declarations are module-scoped, not global.
+self._runQkv1Scriptlets = _runQkv1Scriptlets;

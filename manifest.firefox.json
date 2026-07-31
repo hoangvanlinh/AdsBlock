@@ -15,7 +15,7 @@
       "strict_min_version": "142.0"
     }
   },
-  "permissions": ["storage", "declarativeNetRequest", "alarms", "scripting"],
+  "permissions": ["storage", "declarativeNetRequest", "alarms", "scripting", "webNavigation"],
     "host_permissions": [
     "http://*/*",
     "https://*/*"
@@ -34,20 +34,10 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "scripts": ["config.js", "background.js"],
+    "scripts": ["config.js", "content/scriptlets.js", "background.js"],
     "type": "module"
   },
   "content_scripts": [
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "js": ["content/scriptlets.js"],
-      "run_at": "document_start",
-      "world": "MAIN",
-      "all_frames": true
-    },
     {
       "matches": [
         "http://*/*",

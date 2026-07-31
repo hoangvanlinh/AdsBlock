@@ -26,6 +26,24 @@ function extValid(){
   catch(e){return false;}
 }
 
+// Shared MAIN-world bridge token — see content.js's qkv1Token() for the
+// full explanation. Independent copy/cache (this file doesn't assume
+// content.js's identifiers are in scope), same GET_QKV1_TOKEN message.
+var _qkv1TokenPromise=null;
+function qkv1Token(){
+  if(_qkv1TokenPromise)return _qkv1TokenPromise;
+  _qkv1TokenPromise=new Promise(function(resolve){
+    if(!extValid()){resolve(null);return;}
+    try{
+      chrome.runtime.sendMessage({type:'GET_QKV1_TOKEN'}).then(
+        function(res){resolve((res&&res.token)||null);},
+        function(){resolve(null);}
+      );
+    }catch(e){resolve(null);}
+  });
+  return _qkv1TokenPromise;
+}
+
 function normalizeText(value){
   return (value||'').replace(/\s+/g,' ').trim().toLowerCase();
 }
@@ -405,15 +423,22 @@ function observeShadowRoot(shadow){
   }catch(e){}
 }
 
+var _shadowListenerAttached=false;
 function attachShadowListeners(){
   // Listen for shadow-hook.js events (MAIN world patches attachShadow)
-  document.addEventListener('__qkv1_sh__',function(e){
-    var host=e&&e.detail&&e.detail.host;
-    if(!host)return;
-    Promise.resolve().then(function(){
-      if(host.shadowRoot)observeShadowRoot(host.shadowRoot);
+  if(!_shadowListenerAttached){
+    _shadowListenerAttached=true;
+    qkv1Token().then(function(token){
+      if(!token)return;
+      document.addEventListener('__'+token+'_sh__',function(e){
+        var host=e&&e.detail&&e.detail.host;
+        if(!host)return;
+        Promise.resolve().then(function(){
+          if(host.shadowRoot)observeShadowRoot(host.shadowRoot);
+        });
+      });
     });
-  });
+  }
   // Walk shadow roots already in page at boot time
   try{
     document.querySelectorAll('*').forEach(function(el){
@@ -422,10 +447,11 @@ function attachShadowListeners(){
   }catch(e){}
 }
 
-// Scriptlet rules bridge — receiving '__qkv1_rules__' re-enables
-// scriptlets in the MAIN world, so rules must only be dispatched while
-// _enabled. _scriptletRulesActive tracks the MAIN-world state so sync() can
-// re-dispatch after an unpause without re-wrapping APIs on every sync.
+// Scriptlet rules bridge — receiving the token-suffixed "rules" event
+// re-enables scriptlets in the MAIN world, so rules must only be dispatched
+// while _enabled. _scriptletRulesActive tracks the MAIN-world state so
+// sync() can re-dispatch after an unpause without re-wrapping APIs on every
+// sync.
 var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_window_open_if','prevent_xhr','json_edit','jsonl_edit_xhr','prevent_dom_bypass',
   // Wired 2026-07: previously defined in scriptlets.js but unreachable from rules,
   // plus newly ported scriptlets (see _applyScriptletRules for value formats).
@@ -436,7 +462,10 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   // Wired 2026-07: newly ported scriptlets.
   'remove_attr','remove_node_text','replace_node_text','refresh_defuser','set_cookie','remove_cookie',
   'set_local_storage_item','href_sanitizer','trusted_replace_fetch_response','trusted_replace_argument',
-  'trusted_prevent_fetch'];
+  'trusted_prevent_fetch',
+  // Wired 2026-07-31: request/response JSONPath editing + prune-on-assignment +
+  // pre-insertion script rewriting (see _applyScriptletRules for value formats).
+  'trusted_edit_request','trusted_edit_response','json_prune_on_set','trusted_replace_script_text'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;
@@ -447,7 +476,10 @@ function _dispatchScriptletRules(cfg){
     }
   }
   if(hasAny){
-    try{window.dispatchEvent(new CustomEvent('__qkv1_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
+    qkv1Token().then(function(token){
+      if(!token)return;
+      try{window.dispatchEvent(new CustomEvent('__'+token+'_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
+    });
   }
 }
 
@@ -467,7 +499,10 @@ function sync(cb){
     else{
       stopObserver();
       stopPageClassWatch();
-      try{window.dispatchEvent(new CustomEvent('__qkv1_dis__'));}catch(_e){}
+      qkv1Token().then(function(token){
+        if(!token)return;
+        try{window.dispatchEvent(new CustomEvent('__'+token+'_dis__'));}catch(_e){}
+      });
       _scriptletRulesActive=false;
     }
     if(cb)cb({ok:true});
@@ -536,10 +571,13 @@ function _onSpaNav(){
 document.addEventListener('yt-navigate-finish',_onSpaNav);
 document.addEventListener('yt-page-data-updated',_onSpaNav);
 
-window.addEventListener('__qkv1_blk__',function(e){
-  if(!extValid()||!_enabled)return;
-  var url=location.href;
-  chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
+qkv1Token().then(function(token){
+  if(!token)return;
+  window.addEventListener('__'+token+'_blk__',function(e){
+    if(!extValid()||!_enabled)return;
+    var url=location.href;
+    chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
+  });
 });
 
 chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){

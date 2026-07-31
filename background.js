@@ -8,6 +8,17 @@
 if (typeof importScripts === 'function' && !self.ADBLOCK_CONFIG) {
   importScripts('config.js');
 }
+// content/scriptlets.js — same cross-browser loading split as config.js
+// above. Chrome: importScripts pulls it into this global scope (a plain
+// top-level `function _runQkv1Scriptlets(){}` declaration then IS
+// self._runQkv1Scriptlets already). Firefox: it's listed before this file
+// in background.scripts (see manifest.firefox.json), and since that's an ES
+// module context, scriptlets.js explicitly does `self._runQkv1Scriptlets =
+// ...` itself at its own top level — that assignment is what makes it
+// reachable here, not the module-scoped declaration.
+if (typeof importScripts === 'function' && !self._runQkv1Scriptlets) {
+  importScripts('content/scriptlets.js');
+}
 const {
   RULES_REMOTE_URL,
   RULES_LOCAL_PATH,
@@ -1038,6 +1049,47 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   }
 });
 
+// ── Per-session MAIN-world injection token ──────────────────────────
+// Random, generated at runtime, never a literal in shipped source — the
+// whole point (see content/scriptlets.js's header comment). Persisted in
+// chrome.storage.session: in-memory only, not synced, cleared on browser
+// close, but survives this service worker itself being suspended/woken
+// mid-session so every tab/frame keeps using the SAME token.
+let _qkv1TokenPromise = null;
+async function getOrCreateToken() {
+  if (_qkv1TokenPromise) return _qkv1TokenPromise;
+  _qkv1TokenPromise = (async () => {
+    const { qkv1Token } = await chrome.storage.session.get('qkv1Token');
+    if (qkv1Token) return qkv1Token;
+    const fresh = crypto.randomUUID().replace(/-/g, '');
+    await chrome.storage.session.set({ qkv1Token: fresh });
+    return fresh;
+  })();
+  return _qkv1TokenPromise;
+}
+
+// ── MAIN-world scriptlets injection ─────────────────────────────────
+// Replaces the old static content_scripts entry (world:'MAIN') so the
+// token above can be handed to scriptlets.js as a genuine runtime argument
+// instead of a hardcoded string. injectImmediately + onCommitted is
+// best-effort early injection, NOT a guaranteed document_start match —
+// accepted trade-off, see plan history. Errors are swallowed: a frame that
+// navigates away between onCommitted firing and executeScript running is
+// expected and harmless (nothing left to inject into).
+chrome.webNavigation.onCommitted.addListener(async ({ tabId, frameId, url }) => {
+  if (!/^https?:/i.test(url || '')) return;
+  try {
+    const token = await getOrCreateToken();
+    await chrome.scripting.executeScript({
+      target: { tabId, frameIds: [frameId] },
+      world: 'MAIN',
+      injectImmediately: true,
+      func: self._runQkv1Scriptlets,
+      args: [token],
+    });
+  } catch (e) { /* frame gone, or extension context racing a reload — fine */ }
+});
+
 // ── Message handler ───────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
@@ -1061,6 +1113,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           await clearAllFrameCss(tabId, frameId);
         }
         sendResponse({ ok: true });
+        break;
+      }
+
+      case 'GET_QKV1_TOKEN': {
+        sendResponse({ token: await getOrCreateToken() });
         break;
       }
 
