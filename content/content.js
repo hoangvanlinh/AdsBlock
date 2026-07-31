@@ -14,6 +14,28 @@ function extValid() {
   } catch { return false; }
 }
 
+// ── Shared MAIN-world bridge token ──────────────────────────────────
+// The '__qkv1_*' CustomEvent names that cross into the MAIN world
+// (scriptlets.js) are now suffixed with a random per-session token instead
+// of a hardcoded literal — see content/scriptlets.js's header comment.
+// Fetched once from background.js and cached; background.js hands the same
+// value to scriptlets.js directly as an injection argument, so both sides
+// agree without either containing the value as source.
+let _qkv1TokenPromise = null;
+function qkv1Token() {
+  if (_qkv1TokenPromise) return _qkv1TokenPromise;
+  _qkv1TokenPromise = new Promise((resolve) => {
+    if (!extValid()) { resolve(null); return; }
+    try {
+      chrome.runtime.sendMessage({ type: 'GET_QKV1_TOKEN' }).then(
+        (res) => resolve((res && res.token) || null),
+        () => resolve(null)
+      );
+    } catch { resolve(null); }
+  });
+  return _qkv1TokenPromise;
+}
+
 // _sendCss — forwards CSS text to background, which applies it via
 // chrome.scripting.insertCSS (the browser's privileged "user stylesheet"
 // layer). This never creates a page-visible <style> DOM node and never
@@ -43,213 +65,6 @@ function _clearAllCss() {
 // elements JS already hid via site-block.js's hide()/collapseParentIfEmpty
 // — belt-and-suspenders alongside the inline styles those set directly.
 const BASE_CSS = `
-ins.adsbygoogle,
-.adsbygoogle,
-[id^="div-gpt-ad"],
-[id^="google_ads_iframe"],
-[id^="dfp-ad-"],
-iframe[src*="googlesyndication.com"],
-iframe[src*="doubleclick.net"],
-iframe[src*="googleadservices.com"] {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  height: 0 !important;
-  overflow: hidden !important;
-}
-
-ytd-rich-item-renderer:has(ytd-in-feed-ad-layout-renderer),
-ytd-rich-item-renderer:has(ytd-ad-slot-renderer),
-ytd-rich-item-renderer:has(ytd-promoted-sparkles-web-renderer),
-ytd-rich-item-renderer:has(ytd-promoted-video-renderer),
-ytd-rich-item-renderer:has(ytd-display-ad-renderer),
-ytd-rich-item-renderer:has(ytd-compact-promoted-video-renderer),
-ytd-rich-item-renderer[is-ad],
-ytd-video-renderer[is-ad],
-ytd-reel-item-renderer[is-ad],
-#player-ads,
-#masthead-ad,
-ytd-banner-promo-renderer,
-ytd-statement-banner-renderer,
-ytd-rich-section-renderer:has(ytd-statement-banner-renderer),
-ytd-rich-section-renderer:has(ytd-banner-promo-renderer),
-ytd-rich-section-renderer:has(ytd-in-feed-ad-layout-renderer),
-ytd-rich-section-renderer:has(ytd-ad-slot-renderer),
-ytd-rich-grid-row:has(ytd-in-feed-ad-layout-renderer),
-ytd-rich-grid-row:has(ytd-ad-slot-renderer) {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-.OUTBRAIN,
-[data-widget-id^="outbrain"],
-div.ob-widget,
-div.ob-smartfeed-wrapper,
-.trc_related_container,
-[id^="taboola-"],
-.taboola-container {
-  display: none !important;
-}
-
-iframe[src*="amazon-adsystem.com"] {
-  display: none !important;
-}
-
-[id^="crt-"][id$="-wrapper"],
-.criteo-ad {
-  display: none !important;
-}
-
-iframe[src*="adnxs.com"],
-iframe[src*="media.net"],
-iframe[src*="pubmatic.com"],
-iframe[src*="openx.net"],
-iframe[src*="rubiconproject.com"],
-iframe[src*="advertising.com"] {
-  display: none !important;
-}
-
-.ad-banner:not(:has(video, iframe, embed, object)),
-.ad-wrapper:not(:has(video, iframe, embed, object)),
-.ad-container:not(:has(video, iframe, embed, object)),
-.ad-slot:not(:has(video, iframe, embed, object)),
-.ad-unit:not(:has(video, iframe, embed, object)),
-.ad-frame:not(:has(video, iframe, embed, object)),
-.ad-leaderboard,
-.ad-sidebar,
-.ad-rectangle,
-.ad-skyscraper,
-[id="ad-banner"]:not(:has(video, iframe, embed, object)),
-[id="ad-wrapper"]:not(:has(video, iframe, embed, object)),
-[id="ad-container"]:not(:has(video, iframe, embed, object)),
-[id="ad-slot"]:not(:has(video, iframe, embed, object)),
-[id="ad-unit"]:not(:has(video, iframe, embed, object)) {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-[aria-label="Advertisement"],
-[aria-label="Sponsored"],
-[data-ad="true"],
-li[data-promoted="true"],
-.sponsored-post,
-.promoted-content {
-  display: none !important;
-}
-
-.ad-modal,
-.ad-popup,
-.interstitial-ad {
-  display: none !important;
-}
-
-.ad_frame_protection,
-.ad_frame_protection_wrapper,
-.ad_frame_protection_container,
-.ad_frame_protection_overlay,
-.ad_frame_protection_inner,
-.ad_frame_protection_outer,
-.ad_frame_protection_top,
-.ad_frame_protection_bottom,
-.ad_frame_protection_left,
-.ad_frame_protection_right,
-.ad_wrapper_protection,
-.eclick_ad_holder {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-article:has(.ad_frame_protection),
-article:has(.ad_wrapper_protection),
-article:has(.eclick_ad_holder) {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-div[data-visualcompletion="ignore-late-mutation"]:has(a[attributionsrc]),
-[role="article"]:has([data-ad-rendering-role]),
-div[data-pagelet*="FeedUnit"]:has([data-ad-rendering-role]) {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-iframe[src*="xandr.com"],
-iframe[src*="adsrvr.org"],
-iframe[src*="smartadserver.com"],
-iframe[src*="adform.net"],
-iframe[src*="33across.com"],
-iframe[src*="sharethrough.com"],
-iframe[src*="mgid.com"],
-iframe[src*="teads.tv"],
-iframe[src*="undertone.com"],
-iframe[src*="yieldmo.com"],
-iframe[src*="improvedigital.com"],
-iframe[src*="smartclip.net"] {
-  display: none !important;
-}
-
-[id^="yandex_rtb_"],
-[id^="sas_"],
-[id^="mgid-"],
-[id^="rc-widget-"],
-.rc-widget,
-[id^="seedtag-"],
-[data-str-native-key],
-[id^="teads-"],
-[id^="prebid-"],
-[data-prebid] {
-  display: none !important;
-}
-
-[id^="adnzone_"],
-[id^="ssppagebid_"],
-[data-admssprqid],
-[data-ssp^="sspbid_"],
-*:has(> [data-admssprqid]),
-*:has(> [id^="adnzone_"]),
-[id^="placement-"][revenue],
-iframe[src*="admicro.vn"],
-iframe[src*="adx.admicro"],
-[id^="ads_top_"],
-[id^="ads_bottom_"],
-[id^="dfp_"],
-[id^="vm-placement-"],
-iframe[src*="vccorp.vn"] {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-iframe[src*="adplay.vn"],
-iframe[src*="adtima.vn"],
-iframe[src*="mfast.vn"],
-[id^="adskeeper-"],
-iframe[src*="adskeeper.com"] {
-  display: none !important;
-}
-
-iframe[src*="shareasale.com"],
-iframe[src*="awin1.com"],
-iframe[src*="jdoqocy.com"],
-iframe[src*="tradedoubler.com"],
-iframe[src*="admitad.com"],
-iframe[src*="impact.com"],
-iframe[src*="skimlinks.com"],
-iframe[src*="viglink.com"],
-iframe[src*="partnerize.com"],
-iframe[src*="howl.me"] {
-  display: none !important;
-}
-
-.skimlinks-widget,
-[data-skimlinks-widget],
-.viglink-widget,
-[id^="admitad-widget-"],
-.howl-widget,
-[data-howl],
-.awin-banner,
-[data-awin] {
-  display: none !important;
-}
 
 [data-qkv1-h="1"] {
   display: none !important;
@@ -616,10 +431,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     // Relay into the MAIN world — __abrules lives in this page's own
     // localStorage, which content.js (isolated world) can't touch directly.
     // Dispatched on window (not document) to match how site-block.js
-    // dispatches '__qkv1_rules__', which scriptlets.js listens
-    // for the same way.
-    window.dispatchEvent(new CustomEvent('__qkv1_clr__'));
-    sendResponse({ ok: true });
+    // dispatches its "rules" event, which scriptlets.js listens for the
+    // same way (both suffixed with the shared per-session token).
+    qkv1Token().then((token) => {
+      if (token) window.dispatchEvent(new CustomEvent(`__${token}_clr__`));
+      sendResponse({ ok: true });
+    });
+    return true;
   }
 });
 
@@ -627,6 +445,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 // ── YouTube video ads ────────────────────────────────────────────
 // Handled by content/scriptlets.js (MAIN world): json_prune_fetch/xhr rules in
 // rule/site-rules.txt strip adPlacements/adSlots from player responses before
-// the page reads them, and report blocks via the __qkv1_blk__ event
+// the page reads them, and report blocks via the token-suffixed "blk" event
 // (forwarded to stats by site-block.js). YouTube cosmetic selectors live in
 // rule/site-rules.txt and are applied by content/site-block.js.

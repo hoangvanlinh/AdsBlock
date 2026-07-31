@@ -95,7 +95,13 @@ rumble.com = rumble
 #   trusted_replace_xhr_response = pattern, replacement[, propsToMatch]
 #                             (regex text replace on XHR bodies; write a
 #                              literal '|' as '\|', empty replacement as ", ,")
+#   trusted_edit_request    = jsonpathQuery[, propsToMatch] (TRUSTED; whole-body JSONPath
+#                              assign-or-delete on outgoing XHR+fetch JSON bodies;
+#                              one rule wires into BOTH transports)
+#   trusted_edit_response   = jsonpathQuery[, propsToMatch] (TRUSTED; same, on incoming
+#                              XHR+fetch JSON response bodies)
 #   set_constant            = chain value                (space-separated)
+#   json_prune_on_set       = chain, prunePaths[, needlePaths] (prune-on-assignment, like set_constant's walk but for objects a page builds itself rather than JSON.parses)
 #   no_window_open_if       = pattern [delay [decoy]]    (space-separated)
 #   prevent_xhr             = propsToMatch
 #   prevent_fetch           = propsToMatch[, responseBody[, responseType]]
@@ -117,6 +123,10 @@ rumble.com = rumble
 #   remove_attr             = token[, selector[, behavior]] (behavior: 'stay' keeps watching)
 #   remove_node_text        = nodeName[, includes]        (blank out matching node text)
 #   replace_node_text       = nodeName, pattern, replacement[, extra] (TRUSTED; extra: "includes=X excludes=Y stay")
+#   trusted_replace_script_text = nodeName, pattern, replacement[, extra] (TRUSTED; extra: "includes=X excludes=Y";
+#                              rewrites a matching node's text BEFORE it's inserted via
+#                              appendChild/insertBefore/insertAdjacentElement/append —
+#                              catches JS-created <script> nodes replace_node_text is too late for)
 #   refresh_defuser         = [delay]    (defuse <meta refresh>; any delay value = stop immediately)
 #   set_cookie              = name, value
 #   remove_cookie           = namePattern

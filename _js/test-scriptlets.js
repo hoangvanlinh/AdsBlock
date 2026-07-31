@@ -1,11 +1,17 @@
 // Smoke test: load the real content/scriptlets.js in a vm sandbox and verify
-// __qkv1_blk__ dispatch behavior for window.open blocking and
-// json_prune_xhr (only real prunes count).
+// blk-event dispatch behavior for window.open blocking and json_prune_xhr
+// (only real prunes count). scriptlets.js now exports a named
+// _runQkv1Scriptlets(token) function (injected imperatively by background.js
+// with a runtime-random token — see its header comment) instead of
+// auto-invoking with a hardcoded 'qkv1' marker; this harness calls it with a
+// fixed TEST_TOKEN so event names are deterministic to assert against.
 'use strict';
 const fs = require('fs');
 const vm = require('vm');
 
 const src = fs.readFileSync(require('path').join(__dirname, '..', 'content/scriptlets.js'), 'utf8');
+
+const TEST_TOKEN = 'testtoken';
 
 // ── minimal window/DOM stubs ──────────────────────────────────────
 const listeners = {};
@@ -28,7 +34,7 @@ const documentStub = {
 
 class FakeXHR {
   open(method, url) { this._url = url; }
-  send() {}
+  send(body) { this._sentBody = body; }
   get response() { return this._fakeResponse; }
   get responseText() { return typeof this._fakeResponse === 'string' ? this._fakeResponse : ''; }
 }
@@ -37,7 +43,13 @@ class NodeStub {}
 Object.defineProperty(NodeStub.prototype, 'textContent', {
   get() { return this._text || ''; }, set(v) { this._text = v; }, configurable: true,
 });
+// Insertion methods trusted_replace_script_text hooks via proxyApplyFn —
+// plain no-op-ish stubs, just enough surface for the proxy to wrap.
+NodeStub.prototype.appendChild = function (node) { (this._children = this._children || []).push(node); return node; };
+NodeStub.prototype.insertBefore = function (node) { (this._children = this._children || []).push(node); return node; };
 class ElementStub extends NodeStub {}
+ElementStub.prototype.insertAdjacentElement = function (position, el) { (this._children = this._children || []).push(el); return el; };
+ElementStub.prototype.append = function (...nodes) { (this._children = this._children || []).push(...nodes); };
 class HTMLElementStub extends ElementStub {}
 class EventTargetStub {}
 class MutationObserverStub { observe() {} disconnect() {} }
@@ -83,8 +95,10 @@ class FakeResponse {
   static json(obj) { return new FakeResponse(obj); }
 }
 let fetchPayload = {};
+let lastFetchArgs = null; // [url, init] as actually seen by the transport — proves a
+                           // trusted_edit_request rewrite happened before Reflect.apply.
 sandbox.Response = FakeResponse;
-sandbox.fetch = async () => new FakeResponse(fetchPayload);
+sandbox.fetch = async (url, init) => { lastFetchArgs = [url, init]; return new FakeResponse(fetchPayload); };
 
 // localStorage stub — the boot gate reads the '__abrules' cache saved on a
 // previous visit. Preset = "returning visit to a site whose rules use
@@ -104,7 +118,7 @@ sandbox.globalThis = sandbox;
 sandbox.addEventListener = (t, fn) => { (listeners[t] = listeners[t] || []).push(fn); };
 sandbox.removeEventListener = () => {};
 sandbox.dispatchEvent = (ev) => {
-  if (ev.type === '__qkv1_blk__') blockedEvents.push(ev.detail);
+  if (ev.type === `__${TEST_TOKEN}_blk__`) blockedEvents.push(ev.detail);
   (listeners[ev.type] || []).forEach(fn => fn(ev));
   return true;
 };
@@ -118,6 +132,7 @@ const xhrWrapped = () =>
 
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox, { filename: 'scriptlets.js' });
+sandbox._runQkv1Scriptlets(TEST_TOKEN);
 
 let pass = 0, fail = 0;
 function check(name, cond, detail = '') {
@@ -126,7 +141,7 @@ function check(name, cond, detail = '') {
 }
 
 function sendRules(rules) {
-  sandbox.dispatchEvent(new CustomEventStub('__qkv1_rules__', { detail: rules }));
+  sandbox.dispatchEvent(new CustomEventStub(`__${TEST_TOKEN}_rules__`, { detail: rules }));
 }
 
 (async () => {
@@ -201,7 +216,7 @@ function sendRules(rules) {
     String(blockedEvents.length));
 
   console.log('\n== 3. disable event stops blocking & counting ==');
-  sandbox.dispatchEvent(new CustomEventStub('__qkv1_dis__', {}));
+  sandbox.dispatchEvent(new CustomEventStub(`__${TEST_TOKEN}_dis__`, {}));
   blockedEvents = [];
   const r4 = sandbox.open('https://adsite.com/popup2');
   check('window.open passes through when disabled', r4 && typeof r4.close === 'function');
@@ -308,6 +323,77 @@ function sendRules(rules) {
   check('user-clicked origin allowed through href',
     sandbox.location._href === 'https://partner.example/out', sandbox.location._href);
   sandbox.location._href = 'https://test.example.com/';
+
+  console.log('\n== 8. new primitives (2026-07-31): json_prune_on_set, trusted_edit_request/response, trusted_replace_script_text ==');
+
+  // -- json_prune_on_set: prune fields the page ASSIGNS directly (not JSON.parsed) --
+  sendRules({ json_prune_on_set: ['someAdConfig, ads meta'] });
+  sandbox.someAdConfig = { ads: [1, 2], meta: { tracking: true }, keep: 'yes' };
+  check('json_prune_on_set: ads pruned', sandbox.someAdConfig.ads === undefined,
+    JSON.stringify(sandbox.someAdConfig));
+  check('json_prune_on_set: meta pruned', sandbox.someAdConfig.meta === undefined,
+    JSON.stringify(sandbox.someAdConfig));
+  check('json_prune_on_set: unrelated field kept', sandbox.someAdConfig.keep === 'yes');
+
+  // -- trusted_edit_request (delete) + trusted_edit_response (assign, TRUSTED-only) --
+  // JSONPath assign/delete only operates on paths that already exist in the
+  // object (it walks/selects, it doesn't fabricate new keys) — so the
+  // response fixtures below pre-declare the field the rule assigns into.
+  sendRules({ trusted_edit_request: ['$.trackingId'], trusted_edit_response: ['$.blocked=true'] });
+  const XHR8 = sandbox.XMLHttpRequest;
+  const xhrEdit = new XHR8();
+  xhrEdit.open('POST', 'https://api.example.com/log');
+  xhrEdit._fakeResponse = JSON.stringify({ ok: true, blocked: false });
+  xhrEdit.send(JSON.stringify({ trackingId: 'abc123', payload: { x: 1 } }));
+  check('trusted_edit_request (XHR): field deleted from sent body',
+    JSON.parse(xhrEdit._sentBody).trackingId === undefined, String(xhrEdit._sentBody));
+  check('trusted_edit_request (XHR): other fields kept',
+    JSON.parse(xhrEdit._sentBody).payload.x === 1, String(xhrEdit._sentBody));
+  check('trusted_edit_response (XHR): value assigned into response (TRUSTED allows assign)',
+    JSON.parse(xhrEdit.response).blocked === true, String(xhrEdit.response));
+
+  // Same rule pair, via fetch — proves one rule wires into BOTH transports.
+  fetchPayload = { ok: true, blocked: false };
+  lastFetchArgs = null;
+  const editFetchResp = await sandbox.fetch('https://api.example.com/log', {
+    method: 'POST', body: JSON.stringify({ trackingId: 'zzz', payload: { y: 2 } }),
+  });
+  check('trusted_edit_request (fetch): field deleted from body actually sent',
+    JSON.parse(lastFetchArgs[1].body).trackingId === undefined, JSON.stringify(lastFetchArgs));
+  check('trusted_edit_request (fetch): other fields kept',
+    JSON.parse(lastFetchArgs[1].body).payload.y === 2, JSON.stringify(lastFetchArgs));
+  const editFetchObj = await editFetchResp.json();
+  check('trusted_edit_response (fetch): value assigned into response',
+    editFetchObj.blocked === true, JSON.stringify(editFetchObj));
+
+  // -- trusted_replace_script_text: rewrite BEFORE insertion --
+  // Bare (non-/regex/) values are treated as literal text and escaped
+  // internally by _toRegex — do NOT pre-escape regex metachars here.
+  sendRules({ trusted_replace_script_text: ['SCRIPT, evilAdInit(), /* neutralized */'] });
+  const scriptNode = new ElementStub();
+  scriptNode.nodeType = 1;
+  scriptNode.nodeName = 'SCRIPT';
+  scriptNode.textContent = 'evilAdInit()';
+  const parentEl = new ElementStub();
+  parentEl.appendChild(scriptNode);
+  check('trusted_replace_script_text: matching script text rewritten before insertion',
+    scriptNode.textContent === '/* neutralized */', scriptNode.textContent);
+
+  const otherScript = new ElementStub();
+  otherScript.nodeType = 1;
+  otherScript.nodeName = 'SCRIPT';
+  otherScript.textContent = 'harmlessInit()';
+  parentEl.appendChild(otherScript);
+  check('trusted_replace_script_text: non-matching script left untouched',
+    otherScript.textContent === 'harmlessInit()', otherScript.textContent);
+
+  const divNode = new ElementStub();
+  divNode.nodeType = 1;
+  divNode.nodeName = 'DIV';
+  divNode.textContent = 'evilAdInit()';
+  parentEl.appendChild(divNode);
+  check('trusted_replace_script_text: non-matching nodeName left untouched',
+    divNode.textContent === 'evilAdInit()', divNode.textContent);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
