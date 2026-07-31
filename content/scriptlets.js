@@ -80,6 +80,16 @@
     return isNaN(n) ? raw : n;
   }
 
+  // Two or more set_constant rules sharing a parent chain segment (e.g.
+  // "ytInitialPlayerResponse.playerAds" and "ytInitialPlayerResponse.adSlots")
+  // each used to call walk() on the SAME not-yet-existing parent key, and
+  // each call's Object.defineProperty(obj, k, ...) fully REPLACED the
+  // previous call's pending trap — only the last-registered rule ever
+  // actually locked its leaf when the real assignment landed. This registry
+  // lets a later walk() on an already-pending key ATTACH to the existing
+  // trap instead of clobbering it, so every rule sharing a prefix fires.
+  var _constantPending = new WeakMap(); // obj -> Map<key, Array<(assignedVal) => void>>
+
   function setConstant(chain, raw) {
     if (!chain || !_scriptletsEnabled) return;
     var value = _parseVal(raw);
@@ -102,11 +112,20 @@
       if (!keys.length) { lock(obj, leaf); return; }
       var k = keys[0], rest = keys.slice(1), v = obj[k];
       if (v != null) { walk(v, rest); return; }
+      var objPending = _constantPending.get(obj);
+      var continuation = function (a) { walk(a, rest); };
+      if (objPending && objPending.has(k)) { objPending.get(k).push(continuation); return; }
+      if (!objPending) { objPending = new Map(); _constantPending.set(obj, objPending); }
+      var pending = [continuation];
+      objPending.set(k, pending);
       var held;
       try {
         Object.defineProperty(obj, k, {
           get: function () { return held; },
-          set: function (a) { held = a; if (a instanceof Object) walk(a, rest.slice()); },
+          set: function (a) {
+            held = a;
+            if (a instanceof Object) { for (var i = 0; i < pending.length; i++) pending[i](a); }
+          },
           configurable: true
         });
       } catch (e) {}
