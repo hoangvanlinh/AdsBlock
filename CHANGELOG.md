@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.25
+
+- Fixed a YouTube ad-tracking gap: in-player ads (playerAds) weren't being pruned from network responses, only adPlacements/adSlots were.
+- Fixed set_constant so multiple rules sharing the same parent object (e.g. several ytInitialPlayerResponse.* fields) all lock correctly — previously only the last-registered rule actually took effect, letting the others leak real ad data through.
+- Cleaned up a redundant YouTube dialog-hiding selector no longer needed after the fix above.
+- Reduced the extension's own footprint against anti-adblock detection scripts — internal signal names and injection tokens are now randomized per browser session instead of fixed, hardcoded values.
+- Fixed a "please allow ads" nag dialog on tinhte.vn, including a page-scroll-lock bug the dialog left behind after being hidden.
+- Blocked additional YouTube tracking requests and stripped tracking query parameters from YouTube links.
+- Added internal scriptlet capabilities for more precise ad-script neutralization on complex pages.
+- Fixed debug/unobfuscated development builds producing minified-looking output instead of properly readable code.
+- Reduced CPU usage on pages using shadow DOM by caching ad-candidate lookups instead of rescanning the page on every check.
+
 ## 1.0.22
 
 - Fixed a timing issue where Facebook's server-rendered sponsored post (the first ad shown on page load or refresh) could still slip through in some cases.
