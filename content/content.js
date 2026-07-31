@@ -14,28 +14,6 @@ function extValid() {
   } catch { return false; }
 }
 
-// ── Shared MAIN-world bridge token ──────────────────────────────────
-// The '__qkv1_*' CustomEvent names that cross into the MAIN world
-// (scriptlets.js) are now suffixed with a random per-session token instead
-// of a hardcoded literal — see content/scriptlets.js's header comment.
-// Fetched once from background.js and cached; background.js hands the same
-// value to scriptlets.js directly as an injection argument, so both sides
-// agree without either containing the value as source.
-let _qkv1TokenPromise = null;
-function qkv1Token() {
-  if (_qkv1TokenPromise) return _qkv1TokenPromise;
-  _qkv1TokenPromise = new Promise((resolve) => {
-    if (!extValid()) { resolve(null); return; }
-    try {
-      chrome.runtime.sendMessage({ type: 'GET_QKV1_TOKEN' }).then(
-        (res) => resolve((res && res.token) || null),
-        () => resolve(null)
-      );
-    } catch { resolve(null); }
-  });
-  return _qkv1TokenPromise;
-}
-
 // _sendCss — forwards CSS text to background, which applies it via
 // chrome.scripting.insertCSS (the browser's privileged "user stylesheet"
 // layer). This never creates a page-visible <style> DOM node and never
@@ -427,18 +405,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  if (msg.type === 'CLEAR_SCRIPTLET_CACHE') {
-    // Relay into the MAIN world — __abrules lives in this page's own
-    // localStorage, which content.js (isolated world) can't touch directly.
-    // Dispatched on window (not document) to match how site-block.js
-    // dispatches its "rules" event, which scriptlets.js listens for the
-    // same way (both suffixed with the shared per-session token).
-    qkv1Token().then((token) => {
-      if (token) window.dispatchEvent(new CustomEvent(`__${token}_clr__`));
-      sendResponse({ ok: true });
-    });
-    return true;
-  }
 });
 
 

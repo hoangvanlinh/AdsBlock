@@ -100,12 +100,12 @@ let lastFetchArgs = null; // [url, init] as actually seen by the transport — p
 sandbox.Response = FakeResponse;
 sandbox.fetch = async (url, init) => { lastFetchArgs = [url, init]; return new FakeResponse(fetchPayload); };
 
-// localStorage stub — the boot gate reads the '__abrules' cache saved on a
-// previous visit. Preset = "returning visit to a site whose rules use
-// response filters": wrappers install AND these rules apply at boot.
-const localStorageStore = new Map([
-  ['__abrules', JSON.stringify({ json_prune_xhr: ['adPlacements adSlots'] })],
-]);
+// localStorage stub — no longer used for the boot-cache gate (that moved to
+// background.js's chrome.storage.session, delivered as an injection
+// argument instead — see content/scriptlets.js's header comment), but still
+// needed for the unrelated set_local_storage_item/remove_cookie-style
+// scriptlets that legitimately touch the page's own localStorage.
+const localStorageStore = new Map();
 sandbox.localStorage = {
   getItem: k => (localStorageStore.has(k) ? localStorageStore.get(k) : null),
   setItem: (k, v) => { localStorageStore.set(k, String(v)); },
@@ -132,7 +132,9 @@ const xhrWrapped = () =>
 
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox, { filename: 'scriptlets.js' });
-sandbox._runQkv1Scriptlets(TEST_TOKEN);
+// Second arg simulates background.js handing over a previously-cached rule
+// set for this "hostname" (returning-visit scenario) — see section 0 below.
+sandbox._runQkv1Scriptlets(TEST_TOKEN, { json_prune_xhr: ['adPlacements adSlots'] });
 
 let pass = 0, fail = 0;
 function check(name, cond, detail = '') {
@@ -145,10 +147,10 @@ function sendRules(rules) {
 }
 
 (async () => {
-  console.log('== 0. cached rules apply synchronously at boot (before any dispatch) ==');
+  console.log('== 0. cached rules (2nd injection arg) apply synchronously at boot (before any dispatch) ==');
   blockedEvents = [];
   const BootXHR = sandbox.XMLHttpRequest;
-  check('wrappers installed at boot from cache', xhrWrapped());
+  check('wrappers installed at boot from injected cachedRules arg', xhrWrapped());
   const xhrBoot = new BootXHR();
   xhrBoot.open('GET', 'https://www.youtube.com/youtubei/v1/player');
   xhrBoot._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }], videoDetails: { title: 'boot' } });
@@ -259,25 +261,14 @@ function sendRules(rules) {
     String(blockedEvents.length));
   check('XMLHttpRequest not re-subclassed on re-dispatch', sandbox.XMLHttpRequest === XHR2);
 
-  console.log('\n== 6. rules cache follows dispatched rules ==');
-  // Rules WITH response-filter keys → full rule set cached for the next load
-  sendRules({ json_prune_xhr: ['adPlacements adSlots'], no_window_open_if: ['/y\\.com/'] });
-  const cached = JSON.parse(localStorageStore.get('__abrules') || 'null');
-  check('full rule set cached when rules contain response-filter keys',
-    !!cached && Array.isArray(cached.json_prune_xhr) && Array.isArray(cached.no_window_open_if),
-    JSON.stringify(cached));
-  // Rules WITHOUT response-filter keys → cache cleared (site no longer needs
-  // boot wrappers, e.g. after a rules update removed them). no_window_open_if
-  // now counts as a boot-cached key, so use a cosmetic-only rule set here.
-  sendRules({ direct_hide_selectors: ['.ad'] });
-  check('cache cleared when rules have no response-filter keys',
-    !localStorageStore.has('__abrules'));
-  sendRules({ json_prune_fetch: ['adPlacements'] });
-  const recached = JSON.parse(localStorageStore.get('__abrules') || 'null');
-  check('cache re-saved on next dispatch with response-filter keys',
-    !!recached && Array.isArray(recached.json_prune_fetch));
+  // (Old "== 6. rules cache follows dispatched rules ==" section removed —
+  // that responsibility moved out of content/scriptlets.js entirely, into
+  // site-block.js (CACHE_QKV1_RULES message) + background.js
+  // (chrome.storage.session, see setCachedRulesForHost), neither of which
+  // this file covers. Section 0 above still verifies the MAIN-world side:
+  // that a cachedRules injection argument applies synchronously at boot.)
 
-  console.log('\n== 7. blockAdNavigations — back-button hijack vectors ==');
+  console.log('\n== 6. blockAdNavigations — back-button hijack vectors ==');
   // Protocol-relative cross-origin URL via the patched location.href setter.
   sandbox.location.href = '//ads.evil.example/land';
   check('protocol-relative cross-origin href blocked',
@@ -324,7 +315,7 @@ function sendRules(rules) {
     sandbox.location._href === 'https://partner.example/out', sandbox.location._href);
   sandbox.location._href = 'https://test.example.com/';
 
-  console.log('\n== 8. new primitives (2026-07-31): json_prune_on_set, trusted_edit_request/response, trusted_replace_script_text ==');
+  console.log('\n== 7. new primitives (2026-07-31): json_prune_on_set, trusted_edit_request/response, trusted_replace_script_text ==');
 
   // -- json_prune_on_set: prune fields the page ASSIGNS directly (not JSON.parsed) --
   sendRules({ json_prune_on_set: ['someAdConfig, ads meta'] });

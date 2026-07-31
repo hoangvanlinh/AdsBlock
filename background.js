@@ -1068,6 +1068,42 @@ async function getOrCreateToken() {
   return _qkv1TokenPromise;
 }
 
+// ── Per-hostname MAIN-world rules cache (replaces page-visible localStorage) ──
+// content/scriptlets.js used to boot-cache the last-applied rules in each
+// site's OWN localStorage ('__abrules') so document_start could apply them
+// synchronously before the async rules round-trip completes — but that's
+// page-readable, directly exposing the site's cached scriptlet config to
+// any page script. Moved here instead: site-block.js forwards whatever it
+// dispatches to MAIN world via CACHE_QKV1_RULES each time, keyed by
+// hostname; injection below hands the cached entry straight to
+// _runQkv1Scriptlets as a second argument, so scriptlets.js never needs to
+// read anything back out of page-visible storage itself.
+const QKV1_RULES_CACHE_KEY = 'qkv1RulesCache';
+const QKV1_RULES_CACHE_MAX_HOSTS = 50; // bounded — avoid unbounded growth over a long session
+
+async function getCachedRulesForHost(hostname) {
+  if (!hostname) return null;
+  const { [QKV1_RULES_CACHE_KEY]: cache } = await chrome.storage.session.get(QKV1_RULES_CACHE_KEY);
+  return (cache && cache[hostname]) || null;
+}
+
+async function setCachedRulesForHost(hostname, rules) {
+  if (!hostname) return;
+  const { [QKV1_RULES_CACHE_KEY]: existing } = await chrome.storage.session.get(QKV1_RULES_CACHE_KEY);
+  const cache = existing || {};
+  delete cache[hostname]; // re-insert below to move it to the end (LRU-ish order)
+  cache[hostname] = rules;
+  const hosts = Object.keys(cache);
+  while (hosts.length > QKV1_RULES_CACHE_MAX_HOSTS) {
+    delete cache[hosts.shift()];
+  }
+  await chrome.storage.session.set({ [QKV1_RULES_CACHE_KEY]: cache });
+}
+
+async function clearQkv1RulesCache() {
+  await chrome.storage.session.remove(QKV1_RULES_CACHE_KEY);
+}
+
 // ── MAIN-world scriptlets injection ─────────────────────────────────
 // Replaces the old static content_scripts entry (world:'MAIN') so the
 // token above can be handed to scriptlets.js as a genuine runtime argument
@@ -1078,16 +1114,29 @@ async function getOrCreateToken() {
 // expected and harmless (nothing left to inject into).
 chrome.webNavigation.onCommitted.addListener(async ({ tabId, frameId, url }) => {
   if (!/^https?:/i.test(url || '')) return;
+  if (typeof self._runQkv1Scriptlets !== 'function') {
+    console.error('[AdBlock] _runQkv1Scriptlets missing — content/scriptlets.js failed to load into the service worker; MAIN-world blocking is OFF for this tab.');
+    return;
+  }
   try {
     const token = await getOrCreateToken();
+    let hostname = '';
+    try { hostname = new URL(url).hostname; } catch (e) {}
+    const cachedRules = await getCachedRulesForHost(hostname);
     await chrome.scripting.executeScript({
       target: { tabId, frameIds: [frameId] },
       world: 'MAIN',
       injectImmediately: true,
       func: self._runQkv1Scriptlets,
-      args: [token],
+      args: [token, cachedRules],
     });
-  } catch (e) { /* frame gone, or extension context racing a reload — fine */ }
+  } catch (e) {
+    // A frame that navigates away between onCommitted firing and
+    // executeScript running is expected and harmless — but log everything
+    // else, since this path silently disables ALL network-level blocking
+    // for the tab if something's actually wrong.
+    console.error('[AdBlock] MAIN-world scriptlets injection failed:', tabId, frameId, url, e);
+  }
 });
 
 // ── Message handler ───────────────────────────────────────────────
@@ -1118,6 +1167,29 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'GET_QKV1_TOKEN': {
         sendResponse({ token: await getOrCreateToken() });
+        break;
+      }
+
+      case 'CACHE_QKV1_RULES': {
+        // Sent by site-block.js each time it dispatches scriptlet rules into
+        // MAIN world — see setCachedRulesForHost's doc comment above.
+        // sender.url (not sender.tab.url) — this content script runs
+        // all_frames:true, and an iframe's own hostname can differ from its
+        // tab's top-level URL.
+        let hostname = '';
+        try { hostname = new URL(sender.url || '').hostname; } catch (e) {}
+        await setCachedRulesForHost(hostname, msg.rules || null);
+        sendResponse({ ok: true });
+        break;
+      }
+
+      case 'CLEAR_QKV1_RULES_CACHE': {
+        // Dashboard's "Reset all data" button — the per-hostname cache lives
+        // in chrome.storage.session (this service worker), not any page's
+        // own storage, so a single call here clears it for every site/tab
+        // at once. No more per-tab broadcast needed (see dashboard.js).
+        await clearQkv1RulesCache();
+        sendResponse({ ok: true });
         break;
       }
 
@@ -1373,6 +1445,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'RESET': {
         await chrome.storage.local.clear();
+        await clearQkv1RulesCache();
         await chrome.declarativeNetRequest.updateDynamicRules({
           removeRuleIds: (await chrome.declarativeNetRequest.getDynamicRules()).map(r => r.id),
           addRules: [],

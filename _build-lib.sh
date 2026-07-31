@@ -46,6 +46,15 @@ ensure_obfuscator() {
     fi
 }
 
+# Ensure terser is available (used by strip_debug_artifacts, NOT the
+# obfuscation pipeline above — see that function's comment for why).
+ensure_terser() {
+    if [[ "$DEBUG" != "true" ]] && ! command -v terser &> /dev/null; then
+        echo -e "${YELLOW}Installing terser globally...${NC}"
+        npm install -g terser
+    fi
+}
+
 # Copy all static (non-JS) files into a destination directory.
 # Usage: copy_static_files <DEST_DIR> <MANIFEST_SRC>
 copy_static_files() {
@@ -105,6 +114,46 @@ patch_debug() {
     local DEST="$1"
     sed -i '' 's/DEBUG_LOCAL: false/DEBUG_LOCAL: true/' \
         "$DEST/config.js" 2>/dev/null || true
+}
+
+# Strip every comment and console.* call from every shipped .js file — run
+# for production (debug=false) builds only, over the FULLY-POPULATED DEST
+# dir (after copy_static_files + process_js_files), so it uniformly covers
+# obfuscated files, un-obfuscated files, and content/scriptlets.js /
+# content/site-rules-loader.js (which are never run through the obfuscator
+# at all — see JS_FILES above).
+#
+# Deliberately NOT javascript-obfuscator: Chrome Web Store's Developer
+# Program Policies restrict genuinely obfuscated (deliberately unreadable)
+# code — control-flow flattening, string-array encoding, etc. Plain comment
+# and console-output stripping isn't "obfuscation" in that sense (nothing
+# about the code's logic or naming changes), so terser is used instead,
+# with compression's default optimization passes turned OFF except
+# drop_console — this is NOT a general minifier pass, just comment/log
+# removal with no other transformation of the code.
+# Usage: strip_debug_artifacts <DEST_DIR>
+strip_debug_artifacts() {
+    local DEST="$1"
+    ensure_terser
+    local js tmp
+    while IFS= read -r -d '' js; do
+        echo "  Stripping comments/console from ${js#$DEST/}..."
+        tmp="$js.stripped"
+        # --format beautify=true,comments=false — NOT bare --beautify/-b,
+        # which this terser version silently ignores as a boolean flag (only
+        # takes effect via --format's sub-options). Without it, terser's
+        # default compact single-line output reads as "obfuscated" even
+        # though nothing but comments/console calls were removed.
+        if terser "$js" \
+            --compress "defaults=false,drop_console=true" \
+            --format "beautify=true,comments=false" \
+            -o "$tmp" 2>/dev/null; then
+            mv "$tmp" "$js"
+        else
+            echo -e "${YELLOW}  Warning: terser failed on $js — left as-is.${NC}"
+            rm -f "$tmp"
+        fi
+    done < <(find "$DEST" -name '*.js' -print0)
 }
 
 # Create a ZIP archive from a directory.

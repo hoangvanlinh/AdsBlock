@@ -33,6 +33,9 @@ process_js_files "$BUILD_DIR"
 if [[ "$DEBUG" == "true" ]]; then
   echo -e "${YELLOW}[Edge][3.5/4] Patching DEBUG_LOCAL=true...${NC}"
   patch_debug "$BUILD_DIR"
+else
+  echo -e "${YELLOW}[Edge][3.5/4] Stripping comments/console from shipped JS...${NC}"
+  strip_debug_artifacts "$BUILD_DIR"
 fi
 
 echo -e "${YELLOW}[Edge][4/4] Creating ZIP...${NC}"
