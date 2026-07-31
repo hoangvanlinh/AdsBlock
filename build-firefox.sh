@@ -29,6 +29,9 @@ echo -e "${YELLOW}[Firefox][3/4] Processing JS files...${NC}"
 process_js_files "$BUILD_DIR"
 [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]] && process_js_files "$OBFUSCATED_SRC_DIR"
 
+substitute_qkv1_token "$BUILD_DIR"
+[[ "$EXPORT_OBFUSCATED_SRC" == "true" ]] && substitute_qkv1_token "$OBFUSCATED_SRC_DIR"
+
 if [[ "$DEBUG" == "true" ]]; then
   echo -e "${YELLOW}[Firefox][3.5/4] Patching DEBUG_LOCAL=true...${NC}"
   patch_debug "$BUILD_DIR"
