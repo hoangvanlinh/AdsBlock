@@ -327,6 +327,28 @@ function sendRules(rules) {
 
   console.log('\n== 8. new primitives (2026-07-31): json_prune_on_set, trusted_edit_request/response, trusted_replace_script_text ==');
 
+  // -- set_constant: multiple rules sharing a parent chain must ALL lock --
+  // Found via live YouTube testing: 3 rules for ytInitialPlayerResponse.{
+  // playerAds,adPlacements,adSlots} each called walk() on the same
+  // not-yet-existing "ytInitialPlayerResponse" key; each Object.defineProperty
+  // call replaced the previous one's pending trap, so only the LAST rule
+  // (adSlots) ever actually locked when the page's real assignment landed —
+  // playerAds/adPlacements silently leaked through with real ad data.
+  sendRules({ set_constant: [
+    'testChainA.leaf1 undefined',
+    'testChainA.leaf2 undefined',
+    'testChainA.leaf3 undefined',
+  ] });
+  sandbox.testChainA = { leaf1: 'real1', leaf2: 'real2', leaf3: 'real3', keep: 'yes' };
+  check('set_constant: first-registered leaf on a shared parent chain locks',
+    sandbox.testChainA.leaf1 === undefined, JSON.stringify(sandbox.testChainA));
+  check('set_constant: middle-registered leaf on a shared parent chain locks',
+    sandbox.testChainA.leaf2 === undefined, JSON.stringify(sandbox.testChainA));
+  check('set_constant: last-registered leaf on a shared parent chain locks',
+    sandbox.testChainA.leaf3 === undefined, JSON.stringify(sandbox.testChainA));
+  check('set_constant: unrelated field on the shared parent kept',
+    sandbox.testChainA.keep === 'yes', JSON.stringify(sandbox.testChainA));
+
   // -- json_prune_on_set: prune fields the page ASSIGNS directly (not JSON.parsed) --
   sendRules({ json_prune_on_set: ['someAdConfig, ads meta'] });
   sandbox.someAdConfig = { ads: [1, 2], meta: { tracking: true }, keep: 'yes' };
@@ -385,6 +407,25 @@ function sendRules(rules) {
     xhrLact._sentBody);
   check('trusted_edit_request: =repl() is idempotent when #reloadxhr already present',
     lactBody.referer === 'https://www.youtube.com/watch#reloadxhr', xhrLact._sentBody);
+
+  // -- json_prune_fetch: playerAds must be pruned from the LIVE /player fetch
+  // response, not just via set_constant on the initial ytInitialPlayerResponse
+  // global (found via live YouTube testing: set_constant only locks the SSR
+  // var, the video player re-fetches its own copy via fetch()/XHR, which
+  // json_prune_fetch/json_prune_xhr must ALSO strip playerAds from). --
+  sendRules({ json_prune_fetch: ['adPlacements adSlots playerAds playerResponse.adPlacements playerResponse.adSlots playerResponse.playerAds'] });
+  fetchPayload = {
+    playabilityStatus: { status: 'OK' },
+    playerAds: [{ playerLegacyDesktopWatchAdsRenderer: { showCompanion: true, showInstream: true } }],
+    adPlacements: [{ foo: 1 }],
+    videoDetails: { title: 'real video' },
+  };
+  const playerAdsResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
+  const playerAdsObj = await playerAdsResp.json();
+  check('json_prune_fetch: playerAds pruned from live /player fetch response',
+    playerAdsObj.playerAds === undefined, JSON.stringify(playerAdsObj));
+  check('json_prune_fetch: adPlacements also pruned', playerAdsObj.adPlacements === undefined);
+  check('json_prune_fetch: unrelated fields kept', playerAdsObj.videoDetails.title === 'real video');
 
   // -- trusted_edit_request (delete) + trusted_edit_response (assign, TRUSTED-only) --
   // JSONPath assign/delete only operates on paths that already exist in the
