@@ -215,18 +215,27 @@ function contextText(root,cfg){
   return '';
 }
 
+// Live registry of shadow hosts, populated from observeShadowRoot() — every
+// discovery path (attachShadow hook, boot walk, nested walk) calls that
+// function, so it's the one place that needs to register hosts. Almost no
+// site config actually needs shadow-DOM signal checks (grep
+// rule/site-rules.txt: only Reddit does), so isAdCandidate's per-candidate
+// shadowHasAdSignal call used to pay for a full `root.querySelectorAll('*')`
+// subtree walk on every site just to find zero shadow hosts. Filtering this
+// small known-hosts set by containment instead turns that into an O(1)
+// empty-Set return on pages with no shadow DOM at all, and O(knownHosts)
+// elsewhere.
+var _knownShadowHosts=new Set();
 function collectShadowHosts(root){
-  var out=[],seen=new Set(),nodes=[],i;
-  if(!root)return out;
-  if(root.nodeType===1)nodes.push(root);
-  if(root.querySelectorAll){
-    try{root.querySelectorAll('*').forEach(function(el){nodes.push(el);});}catch(e){}
-  }
-  for(i=0;i<nodes.length;i++){
-    if(!nodes[i]||!nodes[i].shadowRoot||seen.has(nodes[i]))continue;
-    seen.add(nodes[i]);
-    out.push(nodes[i]);
-  }
+  var out=[];
+  if(!root||!_knownShadowHosts.size)return out;
+  // Detached hosts (removed by SPA navigation) are pruned lazily here rather
+  // than tracked via a disconnect callback — cheap, and self-corrects on
+  // every subsequent call.
+  _knownShadowHosts.forEach(function(host){
+    if(!host.isConnected){_knownShadowHosts.delete(host);return;}
+    if(host===root||(root.contains&&root.contains(host)))out.push(host);
+  });
   return out;
 }
 
@@ -404,7 +413,12 @@ function stopObserver(){
 var _shadowObservers=new WeakMap();
 
 function observeShadowRoot(shadow){
-  if(!shadow||_shadowObservers.has(shadow))return;
+  if(!shadow)return;
+  // Every discovery path (attachShadow hook, boot walk, nested walk below)
+  // routes through here — a single choke point to register the host in
+  // _knownShadowHosts, so collectShadowHosts never has to re-walk the DOM.
+  if(shadow.host)_knownShadowHosts.add(shadow.host);
+  if(_shadowObservers.has(shadow))return;
   // The injected stylesheet does not pierce shadow roots, so direct_hide_selectors
   // still need JS matching here — using the pre-joined cached string (previously
   // this recomputed flattenSelectors on every mutation batch).
