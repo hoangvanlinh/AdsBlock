@@ -1081,16 +1081,26 @@ async function getOrCreateToken() {
 const QKV1_RULES_CACHE_KEY = 'qkv1RulesCache';
 const QKV1_RULES_CACHE_MAX_HOSTS = 50; // bounded — avoid unbounded growth over a long session
 
+// In-memory mirror avoids an async storage.session round-trip on the
+// injection hot path (every navigation) — only hits storage on first read
+// after a service-worker wake, or when persisting a change.
+let _qkv1RulesMemCache = null;
+async function _loadQkv1RulesMemCache() {
+  if (_qkv1RulesMemCache) return _qkv1RulesMemCache;
+  const { [QKV1_RULES_CACHE_KEY]: cache } = await chrome.storage.session.get(QKV1_RULES_CACHE_KEY);
+  _qkv1RulesMemCache = cache || {};
+  return _qkv1RulesMemCache;
+}
+
 async function getCachedRulesForHost(hostname) {
   if (!hostname) return null;
-  const { [QKV1_RULES_CACHE_KEY]: cache } = await chrome.storage.session.get(QKV1_RULES_CACHE_KEY);
-  return (cache && cache[hostname]) || null;
+  const cache = await _loadQkv1RulesMemCache();
+  return cache[hostname] || null;
 }
 
 async function setCachedRulesForHost(hostname, rules) {
   if (!hostname) return;
-  const { [QKV1_RULES_CACHE_KEY]: existing } = await chrome.storage.session.get(QKV1_RULES_CACHE_KEY);
-  const cache = existing || {};
+  const cache = await _loadQkv1RulesMemCache();
   delete cache[hostname]; // re-insert below to move it to the end (LRU-ish order)
   cache[hostname] = rules;
   const hosts = Object.keys(cache);
@@ -1101,42 +1111,51 @@ async function setCachedRulesForHost(hostname, rules) {
 }
 
 async function clearQkv1RulesCache() {
+  _qkv1RulesMemCache = {};
   await chrome.storage.session.remove(QKV1_RULES_CACHE_KEY);
 }
 
 // ── MAIN-world scriptlets injection ─────────────────────────────────
-// Replaces the old static content_scripts entry (world:'MAIN') so the
-// token above can be handed to scriptlets.js as a genuine runtime argument
-// instead of a hardcoded string. injectImmediately + onCommitted is
-// best-effort early injection, NOT a guaranteed document_start match —
-// accepted trade-off, see plan history. Errors are swallowed: a frame that
-// navigates away between onCommitted firing and executeScript running is
-// expected and harmless (nothing left to inject into).
-chrome.webNavigation.onCommitted.addListener(async ({ tabId, frameId, url }) => {
+// executeScript is blocked outright ("Error: Blocked") on frames that are
+// still prerendering (Chrome disallows extension script injection into
+// prerendering content entirely — a platform restriction, not a timing
+// race we can win with a different event). onCommitted can hit this for
+// YouTube's click-to-watch preloading; onDOMContentLoaded/onCompleted retry
+// after activation as fallbacks. _runQkv1Scriptlets's own guard makes
+// repeat successes a harmless no-op.
+async function _injectQkv1Scriptlets(tabId, frameId, url) {
   if (!/^https?:/i.test(url || '')) return;
   if (typeof self._runQkv1Scriptlets !== 'function') {
     console.error('[AdBlock] _runQkv1Scriptlets missing — content/scriptlets.js failed to load into the service worker; MAIN-world blocking is OFF for this tab.');
     return;
   }
-  try {
-    const token = await getOrCreateToken();
-    let hostname = '';
-    try { hostname = new URL(url).hostname; } catch (e) {}
-    const cachedRules = await getCachedRulesForHost(hostname);
-    await chrome.scripting.executeScript({
-      target: { tabId, frameIds: [frameId] },
-      world: 'MAIN',
-      injectImmediately: true,
-      func: self._runQkv1Scriptlets,
-      args: [token, cachedRules],
-    });
-  } catch (e) {
-    // A frame that navigates away between onCommitted firing and
-    // executeScript running is expected and harmless — but log everything
-    // else, since this path silently disables ALL network-level blocking
-    // for the tab if something's actually wrong.
-    console.error('[AdBlock] MAIN-world scriptlets injection failed:', tabId, frameId, url, e);
-  }
+  const token = await getOrCreateToken();
+  let hostname = '';
+  try { hostname = new URL(url).hostname; } catch (e) {}
+  const cachedRules = await getCachedRulesForHost(hostname);
+  await chrome.scripting.executeScript({
+    target: { tabId, frameIds: [frameId] },
+    world: 'MAIN',
+    injectImmediately: true,
+    func: self._runQkv1Scriptlets,
+    args: [token, cachedRules],
+  });
+}
+chrome.webNavigation.onCommitted.addListener(({ tabId, frameId, url }) => {
+  _injectQkv1Scriptlets(tabId, frameId, url).catch(() => {});
+});
+chrome.webNavigation.onDOMContentLoaded.addListener(({ tabId, frameId, url }) => {
+  _injectQkv1Scriptlets(tabId, frameId, url).catch(() => {});
+});
+const _QKV1_BENIGN_INJECT_ERROR_RE = /frame with id|no tab with id|was removed/i;
+chrome.webNavigation.onCompleted.addListener(({ tabId, frameId, url }) => {
+  _injectQkv1Scriptlets(tabId, frameId, url).catch(e => {
+    // Frame gone by the time all 3 attempts ran (e.g. a short-lived tracker
+    // iframe torn down by our own network blocking) — nothing to inject
+    // into, not a real failure.
+    if (_QKV1_BENIGN_INJECT_ERROR_RE.test(e?.message || '')) return;
+    console.error('[AdBlock] MAIN-world scriptlets injection failed on all attempts:', tabId, frameId, url, e);
+  });
 });
 
 // ── Message handler ───────────────────────────────────────────────
