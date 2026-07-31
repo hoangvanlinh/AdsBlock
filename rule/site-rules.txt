@@ -42,6 +42,7 @@ laodong.vn = laodong
 vtc.vn = vtc
 genk.vn = genk
 baomoi.com = baomoi
+tinhte.vn = tinhte
 twitch.tv = twitch
 medium.com = medium
 cnn.com = cnn
@@ -323,6 +324,22 @@ innertext_selectors = article | .story | .news-item | .bm-item
 innertext_labels = Quảng cáo | Tài trợ
 context_selectors = span | a | .label | .category
 hide_closest = article | .story | .news-item | .bm-item
+
+[tinhte]
+# Anti-adblock nag: hiding the overlay alone left the page scroll-locked,
+# and inconsistently so (worked on some loads, not others) — react-modal
+# locks scroll TWO independent ways: toggling ReactModal__Body--open on
+# <body> (site's own CSS maps that to overflow:hidden — strip_page_classes
+# handles this) AND setting body.style.overflow='hidden' DIRECTLY as an
+# inline style in the same operation, which a class-only strip never
+# touched. Whichever one actually blocked scrolling depended on which
+# element the browser treated as the page's "scrolling element" for that
+# load — hence "works sometimes". strip_inline_styles clears the inline
+# property too (removeProperty, so the site's own stylesheet resumes
+# deciding it).
+direct_hide_selectors = .ReactModal__Overlay:has(.allow-ads-button)
+strip_page_classes = ReactModal__Body--open
+strip_inline_styles = overflow
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ── US / Global ──────────────────────────────────────────────────────────────

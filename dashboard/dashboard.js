@@ -747,16 +747,11 @@ statsToggle?.addEventListener('change', (e) => {
 document.getElementById('resetBtn')?.addEventListener('click', () => {
   if (!confirm('Reset all AdBlock data? This cannot be undone.')) return;
   chrome.storage.local.clear(async () => {
-    // chrome.storage.local.clear() only touches extension storage — it can't
-    // reach __abrules, which content/scriptlets.js caches in each site's OWN
-    // localStorage. Broadcast to every open tab so each can drop its copy;
-    // tabs not currently open self-correct next visit once fresh rules land.
-    try {
-      const tabs = await chrome.tabs.query({});
-      for (const tab of tabs) {
-        chrome.tabs.sendMessage(tab.id, { type: 'CLEAR_SCRIPTLET_CACHE' }).catch(() => {});
-      }
-    } catch (e) { /* best-effort */ }
+    // The per-hostname scriptlet rules cache lives in background.js's
+    // chrome.storage.session now (see content/scriptlets.js's header
+    // comment), not in each site's own page-visible localStorage — one
+    // message clears it for every site at once, no per-tab broadcast needed.
+    try { await chrome.runtime.sendMessage({ type: 'CLEAR_QKV1_RULES_CACHE' }); } catch (e) { /* best-effort */ }
     alert('All data cleared. Reloading…');
     location.reload();
   });

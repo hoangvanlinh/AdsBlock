@@ -17,8 +17,15 @@ var DIRECT_HIDE_KEYS=['direct_hide_selectors'];
 // Hiding the element itself doesn't help when the backdrop is painted purely
 // from the root class (::before/background-on-root), so we strip the class instead.
 var STRIP_PAGE_CLASS_KEYS=['strip_page_classes'];
+// strip_inline_styles — CSS property names some pages set DIRECTLY on
+// <html>/<body>.style (not via a class) to lock scroll while a modal/overlay
+// is "open" (e.g. react-modal's body.style.overflow='hidden', set alongside
+// but independently of its own bodyOpenClassName toggle). A class-only
+// strip like the one above does nothing for this — the inline style wins
+// the cascade regardless of what class is or isn't present.
+var STRIP_INLINE_STYLE_KEYS=['strip_inline_styles'];
 // Selector caches — rebuilt once when _config changes, reused on every scan/mutation
-var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[], _cachedStripClasses=[];
+var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[], _cachedStripClasses=[], _cachedStripInlineStyles=[];
 var _cachedDirectStr='', _cachedCandidateStr='', _cachedHostStr='';
 
 function extValid(){
@@ -97,11 +104,12 @@ function collectFast(root,selectorStr){
 // _rebuildSelectorCache — compute and cache flattened+joined selector strings from _config.
 // Called once after _config is assigned so scan() and the observer don't recompute per call.
 function _rebuildSelectorCache(){
-  if(!_config){_cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedStripClasses=[];_cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';return;}
+  if(!_config){_cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedStripClasses=[];_cachedStripInlineStyles=[];_cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';return;}
   _cachedDirect=flattenSelectors(_config,DIRECT_HIDE_KEYS);
   _cachedCandidates=flattenSelectors(_config,CANDIDATE_KEYS);
   _cachedHosts=flattenSelectors(_config,HOST_KEYS);
   _cachedStripClasses=flattenSelectors(_config,STRIP_PAGE_CLASS_KEYS);
+  _cachedStripInlineStyles=flattenSelectors(_config,STRIP_INLINE_STYLE_KEYS);
   _cachedDirectStr=_cachedDirect.join(',');
   _cachedCandidateStr=_cachedCandidates.join(',');
   _cachedHostStr=_cachedHosts.join(',');
@@ -116,21 +124,35 @@ function _stripClassesFrom(el){
   }
 }
 
-// Two dedicated class-only observers (one per root element) rather than a
-// subtree observer — we only ever care about these two nodes' own class
-// attribute, so watching the whole tree for 'class' changes would be wasteful.
+// _stripInlineStylesFrom — clear any cached inline style property directly
+// set on a single root element (<html> or <body>) the instant it's present.
+// removeProperty (not setting to '' / 'auto') so the page's OWN stylesheet
+// rules resume deciding the value, same "get out of the way" behavior as
+// _stripClassesFrom.
+function _stripInlineStylesFrom(el){
+  if(!el||!_cachedStripInlineStyles.length)return;
+  for(var i=0;i<_cachedStripInlineStyles.length;i++){
+    if(el.style.getPropertyValue(_cachedStripInlineStyles[i]))el.style.removeProperty(_cachedStripInlineStyles[i]);
+  }
+}
+
+// Two dedicated observers (one per root element) rather than a subtree
+// observer — we only ever care about these two nodes' own class/style
+// attributes, so watching the whole tree would be wasteful.
 var _htmlClassObserver=null,_bodyClassObserver=null;
 function watchPageClasses(){
-  if(!_cachedStripClasses.length)return;
+  if(!_cachedStripClasses.length&&!_cachedStripInlineStyles.length)return;
   if(!_htmlClassObserver&&document.documentElement){
     _stripClassesFrom(document.documentElement);
-    _htmlClassObserver=new MutationObserver(function(){_stripClassesFrom(document.documentElement);});
-    _htmlClassObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+    _stripInlineStylesFrom(document.documentElement);
+    _htmlClassObserver=new MutationObserver(function(){_stripClassesFrom(document.documentElement);_stripInlineStylesFrom(document.documentElement);});
+    _htmlClassObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class','style']});
   }
   if(!_bodyClassObserver&&document.body){
     _stripClassesFrom(document.body);
-    _bodyClassObserver=new MutationObserver(function(){_stripClassesFrom(document.body);});
-    _bodyClassObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
+    _stripInlineStylesFrom(document.body);
+    _bodyClassObserver=new MutationObserver(function(){_stripClassesFrom(document.body);_stripInlineStylesFrom(document.body);});
+    _bodyClassObserver.observe(document.body,{attributes:true,attributeFilter:['class','style']});
   }
 }
 
@@ -466,6 +488,11 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   // Wired 2026-07-31: request/response JSONPath editing + prune-on-assignment +
   // pre-insertion script rewriting (see _applyScriptletRules for value formats).
   'trusted_edit_request','trusted_edit_response','json_prune_on_set','trusted_replace_script_text'];
+// Mirrors scriptlets.js's _RESPONSE_FILTER_RULE_KEYS — only rules containing
+// one of these are worth caching for the next visit's document_start boot
+// (background.js's per-hostname cache, see CACHE_QKV1_RULES below); a
+// cosmetic-only config gains nothing from it.
+var RESPONSE_FILTER_RULE_KEYS=['json_prune_fetch','json_prune_xhr','jsonl_edit_xhr','json_edit','json_prune','trusted_replace_xhr_response','no_window_open_if','trusted_edit_request','trusted_edit_response'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;
@@ -480,6 +507,18 @@ function _dispatchScriptletRules(cfg){
       if(!token)return;
       try{window.dispatchEvent(new CustomEvent('__'+token+'_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
     });
+    // Cache in background.js (per-hostname, chrome.storage.session) for this
+    // site's NEXT document_start — replaces the old page-visible
+    // localStorage['__abrules'] boot-cache. Only bother if there's something
+    // that actually needs document_start (network-interception) treatment.
+    if(extValid()){
+      for(var r=0;r<RESPONSE_FILTER_RULE_KEYS.length;r++){
+        if(rules[RESPONSE_FILTER_RULE_KEYS[r]]){
+          try{chrome.runtime.sendMessage({type:'CACHE_QKV1_RULES',rules:rules}).catch(function(){});}catch(e){}
+          break;
+        }
+      }
+    }
   }
 }
 

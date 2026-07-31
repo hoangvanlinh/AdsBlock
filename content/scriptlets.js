@@ -7,18 +7,21 @@
 // Injected at document_start into MAIN world by content.js.
 
 // Injected imperatively by background.js via chrome.scripting.executeScript
-// (world: 'MAIN', func: this function, args: [perSessionToken]) — NOT a
-// static content_scripts entry. The token is generated at runtime in the
-// service worker and handed to this function as an argument, so it never
-// appears as a literal anywhere in shipped source: MAIN-world code has no
-// chrome.* API to fetch a value after the fact, so this injection-argument
-// path is the only way to give it something the page's own scripts can't
-// also independently derive (page JS runs in this exact same realm, so
-// anything computable here without external input is equally computable by
-// the page). See docs/CHROME_DEBUGGING caveats + plan history for why this
-// replaced a static Symbol.for('_qkv1sym') key that any page script could
-// retrieve from the JS engine's shared global symbol registry.
-function _runQkv1Scriptlets(_qkv1Token) {
+// (world: 'MAIN', func: this function, args: [perSessionToken, cachedRulesOrNull])
+// — NOT a static content_scripts entry. The token is generated at runtime in
+// the service worker and handed to this function as an argument, so it
+// never appears as a literal anywhere in shipped source: MAIN-world code
+// has no chrome.* API to fetch a value after the fact, so this
+// injection-argument path is the only way to give it something the page's
+// own scripts can't also independently derive (page JS runs in this exact
+// same realm, so anything computable here without external input is
+// equally computable by the page). See docs/CHROME_DEBUGGING caveats + plan
+// history for why this replaced a static Symbol.for('_qkv1sym') key that
+// any page script could retrieve from the JS engine's shared global symbol
+// registry. cachedRulesOrNull is the same idea applied to the OLD
+// localStorage['__abrules'] boot-cache (page-readable) — now a
+// background.js-held, per-hostname cache delivered the same way.
+function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
   'use strict';
 
   var _G = Symbol.for(_qkv1Token);
@@ -27,7 +30,6 @@ function _runQkv1Scriptlets(_qkv1Token) {
   var _EVT_RULES = '__' + _qkv1Token + '_rules__';
   var _EVT_BLK   = '__' + _qkv1Token + '_blk__';
   var _EVT_DIS   = '__' + _qkv1Token + '_dis__';
-  var _EVT_CLR   = '__' + _qkv1Token + '_clr__';
 
   // ── Helpers ──────────────────────────────────────────────────────
   var _strSplit = String.prototype.split;
@@ -2799,9 +2801,10 @@ function _runQkv1Scriptlets(_qkv1Token) {
 
   function _applyScriptletRules(rules) {
     if (!rules) return;
-    // Cache the full rule set for the NEXT page load so the install gate
-    // below can apply it synchronously at document_start.
-    _saveScriptletRulesCache(rules);
+    // Caching the rule set for the NEXT page load's document_start boot is
+    // now background.js's job (site-block.js forwards it via
+    // CACHE_QKV1_RULES) — see the _qkv1CachedRules handling near the bottom
+    // of this function's outer scope.
     _fetchPruneRules.length = 0;
     _xhrPruneRules.length = 0;
     _xhrJsonlRules.length = 0;
@@ -3056,51 +3059,26 @@ function _runQkv1Scriptlets(_qkv1Token) {
   // ── Install response-filtering wrappers at document_start ────────
   // The wrappers AND their rules must exist BEFORE any page script runs to
   // close the boot race, but the site's config only arrives async. Bridge:
-  // every rules dispatch caches the full scriptlet rule set in localStorage
-  // (only on sites whose rules contain response-filter keys — json_prune_* /
-  // json_edit / jsonl_edit_xhr). On the next load the cache is read
-  // synchronously here, the wrappers install and the rules apply
-  // immediately — set_constant/json_edit run before the page's inline
-  // scripts, and the registries are live for its very first requests. The
-  // async dispatch then re-applies fresh rules (replace semantics), so a
-  // stale cache self-corrects on every load.
-  // Sites without the cache keep fetch/XHR/JSON.parse completely untouched:
-  // no extension frame in stack traces, no per-request overhead. If
-  // response-filter rules arrive anyway (very first visit, rules update),
-  // the registration functions install the wrappers lazily mid-session.
-  var _RULES_CACHE_KEY = '__abrules';
-  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response'];
-
-  function _saveScriptletRulesCache(rules) {
-    var has = false;
-    for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
-      var v = rules[_RESPONSE_FILTER_RULE_KEYS[i]];
-      if (v && v.length) { has = true; break; }
-    }
-    // Only sites with response-filter rules ever get the key written;
-    // removeItem on all others is a no-op that leaves no trace.
-    try {
-      if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(rules));
-      else localStorage.removeItem(_RULES_CACHE_KEY);
-    } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
-  }
-
-  (function () {
-    var cached = null;
-    try { cached = localStorage.getItem(_RULES_CACHE_KEY); } catch (e) {}
-    if (!cached) return;
+  // background.js caches the last-dispatched rules PER HOSTNAME (see
+  // site-block.js's CACHE_QKV1_RULES / background.js's
+  // getCachedRulesForHost) and hands them to this function directly as
+  // _qkv1CachedRules — a genuine injection argument, not something read back
+  // out of page-visible storage. This used to be a page-readable
+  // localStorage['__abrules'] key (any page script could read the site's
+  // exact cached rule config); moving it into background.js's
+  // chrome.storage.session closes that leak entirely rather than just
+  // renaming it. The async rules-dispatch event below still re-applies
+  // fresh rules on top (replace semantics), so a stale cached arg
+  // self-corrects on every load, same as before.
+  // Sites with no cached entry keep fetch/XHR/JSON.parse completely
+  // untouched: no extension frame in stack traces, no per-request overhead.
+  if (_qkv1CachedRules && typeof _qkv1CachedRules === 'object') {
     try { _installFetchResponseProxy(); } catch (e) {}
     try { _installXhrResponseProxy(); } catch (e) {}
     try { _installJsonEditProxy(); } catch (e) {}
     try { _installSjsGuard(); } catch (e) {}
-    try {
-      var rules = JSON.parse(cached);
-      // The cache lives in page-writable storage, so treat it as untrusted
-      // input: anything non-object is ignored. A page corrupting it can only
-      // affect its own MAIN world — same privilege it already has.
-      if (rules && typeof rules === 'object') _applyScriptletRules(rules);
-    } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
-  })();
+    try { _applyScriptletRules(_qkv1CachedRules); } catch (e) {}
+  }
 
   // Bridge: content.js dispatches the token-derived "rules" event after
   // async rule load (same token content.js fetched via GET_QKV1_TOKEN).
@@ -3108,14 +3086,6 @@ function _runQkv1Scriptlets(_qkv1Token) {
   window.addEventListener(_EVT_RULES, function(ev) {
     _scriptletsEnabled = true;
     try { _applyScriptletRules(ev.detail); } catch (e) {}
-  });
-
-  // Bridge: "Reset all data" in the dashboard only clears chrome.storage.local
-  // (extension storage) — it has no reach into this page's own localStorage,
-  // where __abrules actually lives. content.js relays this event after the
-  // dashboard broadcasts CLEAR_SCRIPTLET_CACHE to every open tab.
-  window.addEventListener(_EVT_CLR, function() {
-    try { localStorage.removeItem(_RULES_CACHE_KEY); } catch (e) {}
   });
 
   // When protection is toggled OFF or domain paused, disable all scriptlet logic.
