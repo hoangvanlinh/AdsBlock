@@ -107,6 +107,23 @@ process_js_files() {
     done
 }
 
+# Substitute the __QKV1_BUILD_TOKEN__ placeholder (content/scriptlets.js,
+# content/content.js, content/site-block.js) with one random token per
+# build — checked-in source only ever has the placeholder, never the value
+# any shipped build actually uses. Runs unconditionally (every build, debug
+# or not) since the placeholder isn't a functional value on its own — must
+# run AFTER copy_static_files/process_js_files, which is what actually
+# populates DEST from source.
+# Usage: substitute_qkv1_token <DEST_DIR>
+substitute_qkv1_token() {
+    local DEST="$1"
+    local token
+    token=$(openssl rand -hex 12 2>/dev/null || node -e "console.log(require('crypto').randomBytes(12).toString('hex'))")
+    while IFS= read -r -d '' js; do
+        sed -i '' "s/__QKV1_BUILD_TOKEN__/${token}/g" "$js" 2>/dev/null || true
+    done < <(find "$DEST" -name '*.js' -print0)
+}
+
 # Patch DEBUG_LOCAL flag in config.js inside DEST — config.js is the single
 # source read by both the content rule loader and the background DNR builder.
 # Usage: patch_debug <DEST_DIR>

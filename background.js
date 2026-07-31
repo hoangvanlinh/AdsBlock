@@ -8,17 +8,6 @@
 if (typeof importScripts === 'function' && !self.ADBLOCK_CONFIG) {
   importScripts('config.js');
 }
-// content/scriptlets.js — same cross-browser loading split as config.js
-// above. Chrome: importScripts pulls it into this global scope (a plain
-// top-level `function _runQkv1Scriptlets(){}` declaration then IS
-// self._runQkv1Scriptlets already). Firefox: it's listed before this file
-// in background.scripts (see manifest.firefox.json), and since that's an ES
-// module context, scriptlets.js explicitly does `self._runQkv1Scriptlets =
-// ...` itself at its own top level — that assignment is what makes it
-// reachable here, not the module-scoped declaration.
-if (typeof importScripts === 'function' && !self._runQkv1Scriptlets) {
-  importScripts('content/scriptlets.js');
-}
 const {
   RULES_REMOTE_URL,
   RULES_LOCAL_PATH,
@@ -41,7 +30,41 @@ let DEFAULT_RULES = [];
 let MALWARE_RULES = [];
 let TRACKER_RULE_IDS = new Set();
 let MALWARE_RULE_IDS = new Set();
+let QUERY_STRIP_RULES = [];
 let _ruleConfigPromise = null;
+
+const QUERY_STRIP_RESOURCE_TYPES = ['main_frame', 'sub_frame', 'stylesheet', 'script', 'image', 'font', 'object', 'xmlhttprequest', 'ping', 'csp_report', 'media', 'websocket', 'other'];
+
+// strip_query_params entries: "host[/pathSubstr] param1,param2[ doc]"
+// — same-origin query-param removal (tracking IDs like YouTube's ?si=/?is=),
+// doesn't need host permissions since the redirect target stays same-origin.
+function buildQueryStripRules(entries, startId) {
+  const rules = [];
+  let id = startId;
+  for (const entry of entries) {
+    const parts = String(entry || '').trim().split(/\s+/);
+    if (parts.length < 2) continue;
+    const hostPath = parts[0];
+    const params = parts[1].split(',').map(s => s.trim()).filter(Boolean);
+    if (!params.length) continue;
+    const slashIdx = hostPath.indexOf('/');
+    const condition = {
+      resourceTypes: parts[2] === 'doc' ? ['main_frame'] : QUERY_STRIP_RESOURCE_TYPES,
+    };
+    if (slashIdx === -1) {
+      condition.requestDomains = [hostPath.toLowerCase()];
+    } else {
+      condition.urlFilter = '||' + hostPath;
+    }
+    rules.push({
+      id: id++,
+      priority: 1,
+      action: { type: 'redirect', redirect: { transform: { queryTransform: { removeParams: params } } } },
+      condition,
+    });
+  }
+  return rules;
+}
 
 function parseRuleText(text) {
   const out = {};
@@ -501,6 +524,7 @@ async function ensureRuleDefinitionsLoaded() {
       const { adRules, trackerRules } = buildDefaultRulesFromConfig(config);
       DEFAULT_RULES = [...adRules, ...trackerRules];
       MALWARE_RULES = buildMalwareRulesFromConfig(config, DEFAULT_RULES.length +1);
+      QUERY_STRIP_RULES = buildQueryStripRules(global.strip_query_params || [], QUERY_STRIP_RULE_ID_START);
       TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
       MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
@@ -514,6 +538,7 @@ async function ensureRuleDefinitionsLoaded() {
 }
 
 const FOCUS_RULE_ID_START   = 2000;
+const QUERY_STRIP_RULE_ID_START = 3000;
 const REMOTE_MALWARE_RULE_ID_START = 100000; // for fetched blocklists
 const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
 const PAUSE_ALLOW_RULE_ID_START = 300000;    // for pause/allowlist allow-all rules
@@ -678,6 +703,7 @@ async function buildActiveRulesFromStorage() {
   const remoteActive = blockMalware ? buildRemoteMalwareRules(remoteDomains) : [];
   const customBlockRules = await buildCustomBlockRules();
   const focusRules = await buildFocusRules(focusMode);
+  const queryStripActive = blockTrackers ? QUERY_STRIP_RULES : [];
 
   // Build allowAllRequests rules for paused + allowlisted domains.
   // These have higher priority and override ALL blocking rules for
@@ -698,7 +724,7 @@ async function buildActiveRulesFromStorage() {
     enabled: true,
     allRules: [
       ...activeRules, ...malwareActive, ...remoteActive,
-      ...customBlockRules, ...focusRules, ...pauseAllowRules,
+      ...customBlockRules, ...focusRules, ...pauseAllowRules, ...queryStripActive,
     ],
   };
 }
@@ -736,7 +762,21 @@ async function buildCustomBlockRules() {
   const blockRules = rules.filter(r => r.active && r.action === 'block');
   return blockRules.map((r, i) => {
     const ruleId = CUSTOM_RULE_ID_START + i;
-    const condition = { resourceTypes: ['script', 'image', 'xmlhttprequest', 'sub_frame', 'stylesheet', 'font', 'media', 'main_frame'] };
+    const condition = { resourceTypes: [  
+    'main_frame',
+    'sub_frame',
+    'stylesheet',
+    'script',
+    'image',
+    'font',
+    'object',
+    'xmlhttprequest',
+    'ping',
+    'csp_report',
+    'media',
+    'websocket',
+    'other',
+  ] };
 
     if (r.type === 'domain') {
       condition.requestDomains = [r.pattern];
@@ -1049,115 +1089,6 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   }
 });
 
-// ── Per-session MAIN-world injection token ──────────────────────────
-// Random, generated at runtime, never a literal in shipped source — the
-// whole point (see content/scriptlets.js's header comment). Persisted in
-// chrome.storage.session: in-memory only, not synced, cleared on browser
-// close, but survives this service worker itself being suspended/woken
-// mid-session so every tab/frame keeps using the SAME token.
-let _qkv1TokenPromise = null;
-async function getOrCreateToken() {
-  if (_qkv1TokenPromise) return _qkv1TokenPromise;
-  _qkv1TokenPromise = (async () => {
-    const { qkv1Token } = await chrome.storage.session.get('qkv1Token');
-    if (qkv1Token) return qkv1Token;
-    const fresh = crypto.randomUUID().replace(/-/g, '');
-    await chrome.storage.session.set({ qkv1Token: fresh });
-    return fresh;
-  })();
-  return _qkv1TokenPromise;
-}
-
-// ── Per-hostname MAIN-world rules cache (replaces page-visible localStorage) ──
-// content/scriptlets.js used to boot-cache the last-applied rules in each
-// site's OWN localStorage ('__abrules') so document_start could apply them
-// synchronously before the async rules round-trip completes — but that's
-// page-readable, directly exposing the site's cached scriptlet config to
-// any page script. Moved here instead: site-block.js forwards whatever it
-// dispatches to MAIN world via CACHE_QKV1_RULES each time, keyed by
-// hostname; injection below hands the cached entry straight to
-// _runQkv1Scriptlets as a second argument, so scriptlets.js never needs to
-// read anything back out of page-visible storage itself.
-const QKV1_RULES_CACHE_KEY = 'qkv1RulesCache';
-const QKV1_RULES_CACHE_MAX_HOSTS = 50; // bounded — avoid unbounded growth over a long session
-
-// In-memory mirror avoids an async storage.session round-trip on the
-// injection hot path (every navigation) — only hits storage on first read
-// after a service-worker wake, or when persisting a change.
-let _qkv1RulesMemCache = null;
-async function _loadQkv1RulesMemCache() {
-  if (_qkv1RulesMemCache) return _qkv1RulesMemCache;
-  const { [QKV1_RULES_CACHE_KEY]: cache } = await chrome.storage.session.get(QKV1_RULES_CACHE_KEY);
-  _qkv1RulesMemCache = cache || {};
-  return _qkv1RulesMemCache;
-}
-
-async function getCachedRulesForHost(hostname) {
-  if (!hostname) return null;
-  const cache = await _loadQkv1RulesMemCache();
-  return cache[hostname] || null;
-}
-
-async function setCachedRulesForHost(hostname, rules) {
-  if (!hostname) return;
-  const cache = await _loadQkv1RulesMemCache();
-  delete cache[hostname]; // re-insert below to move it to the end (LRU-ish order)
-  cache[hostname] = rules;
-  const hosts = Object.keys(cache);
-  while (hosts.length > QKV1_RULES_CACHE_MAX_HOSTS) {
-    delete cache[hosts.shift()];
-  }
-  await chrome.storage.session.set({ [QKV1_RULES_CACHE_KEY]: cache });
-}
-
-async function clearQkv1RulesCache() {
-  _qkv1RulesMemCache = {};
-  await chrome.storage.session.remove(QKV1_RULES_CACHE_KEY);
-}
-
-// ── MAIN-world scriptlets injection ─────────────────────────────────
-// executeScript is blocked outright ("Error: Blocked") on frames that are
-// still prerendering (Chrome disallows extension script injection into
-// prerendering content entirely — a platform restriction, not a timing
-// race we can win with a different event). onCommitted can hit this for
-// YouTube's click-to-watch preloading; onDOMContentLoaded/onCompleted retry
-// after activation as fallbacks. _runQkv1Scriptlets's own guard makes
-// repeat successes a harmless no-op.
-async function _injectQkv1Scriptlets(tabId, frameId, url) {
-  if (!/^https?:/i.test(url || '')) return;
-  if (typeof self._runQkv1Scriptlets !== 'function') {
-    console.error('[AdBlock] _runQkv1Scriptlets missing — content/scriptlets.js failed to load into the service worker; MAIN-world blocking is OFF for this tab.');
-    return;
-  }
-  const token = await getOrCreateToken();
-  let hostname = '';
-  try { hostname = new URL(url).hostname; } catch (e) {}
-  const cachedRules = await getCachedRulesForHost(hostname);
-  await chrome.scripting.executeScript({
-    target: { tabId, frameIds: [frameId] },
-    world: 'MAIN',
-    injectImmediately: true,
-    func: self._runQkv1Scriptlets,
-    args: [token, cachedRules],
-  });
-}
-chrome.webNavigation.onCommitted.addListener(({ tabId, frameId, url }) => {
-  _injectQkv1Scriptlets(tabId, frameId, url).catch(() => {});
-});
-chrome.webNavigation.onDOMContentLoaded.addListener(({ tabId, frameId, url }) => {
-  _injectQkv1Scriptlets(tabId, frameId, url).catch(() => {});
-});
-const _QKV1_BENIGN_INJECT_ERROR_RE = /frame with id|no tab with id|was removed/i;
-chrome.webNavigation.onCompleted.addListener(({ tabId, frameId, url }) => {
-  _injectQkv1Scriptlets(tabId, frameId, url).catch(e => {
-    // Frame gone by the time all 3 attempts ran (e.g. a short-lived tracker
-    // iframe torn down by our own network blocking) — nothing to inject
-    // into, not a real failure.
-    if (_QKV1_BENIGN_INJECT_ERROR_RE.test(e?.message || '')) return;
-    console.error('[AdBlock] MAIN-world scriptlets injection failed on all attempts:', tabId, frameId, url, e);
-  });
-});
-
 // ── Message handler ───────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
@@ -1180,34 +1111,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (tabId !== undefined && frameId !== undefined) {
           await clearAllFrameCss(tabId, frameId);
         }
-        sendResponse({ ok: true });
-        break;
-      }
-
-      case 'GET_QKV1_TOKEN': {
-        sendResponse({ token: await getOrCreateToken() });
-        break;
-      }
-
-      case 'CACHE_QKV1_RULES': {
-        // Sent by site-block.js each time it dispatches scriptlet rules into
-        // MAIN world — see setCachedRulesForHost's doc comment above.
-        // sender.url (not sender.tab.url) — this content script runs
-        // all_frames:true, and an iframe's own hostname can differ from its
-        // tab's top-level URL.
-        let hostname = '';
-        try { hostname = new URL(sender.url || '').hostname; } catch (e) {}
-        await setCachedRulesForHost(hostname, msg.rules || null);
-        sendResponse({ ok: true });
-        break;
-      }
-
-      case 'CLEAR_QKV1_RULES_CACHE': {
-        // Dashboard's "Reset all data" button — the per-hostname cache lives
-        // in chrome.storage.session (this service worker), not any page's
-        // own storage, so a single call here clears it for every site/tab
-        // at once. No more per-tab broadcast needed (see dashboard.js).
-        await clearQkv1RulesCache();
         sendResponse({ ok: true });
         break;
       }
@@ -1464,7 +1367,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'RESET': {
         await chrome.storage.local.clear();
-        await clearQkv1RulesCache();
         await chrome.declarativeNetRequest.updateDynamicRules({
           removeRuleIds: (await chrome.declarativeNetRequest.getDynamicRules()).map(r => r.id),
           addRules: [],

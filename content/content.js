@@ -14,6 +14,10 @@ function extValid() {
   } catch { return false; }
 }
 
+// Substituted with a random string at build time (_build-lib.sh) — must
+// match content/scriptlets.js's own copy of the same placeholder exactly.
+const _QKV1_TOKEN = '__QKV1_BUILD_TOKEN__';
+
 // _sendCss — forwards CSS text to background, which applies it via
 // chrome.scripting.insertCSS (the browser's privileged "user stylesheet"
 // layer). This never creates a page-visible <style> DOM node and never
@@ -403,6 +407,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       sendResponse({ ok: true });
     });
     return true;
+  }
+
+  if (msg.type === 'CLEAR_SCRIPTLET_CACHE') {
+    // Relay into the MAIN world — the rules cache lives in this page's own
+    // localStorage, which content.js (isolated world) can't touch directly.
+    window.dispatchEvent(new CustomEvent(`__${_QKV1_TOKEN}_clr__`));
+    sendResponse({ ok: true });
   }
 
 });

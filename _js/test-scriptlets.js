@@ -1,17 +1,17 @@
 // Smoke test: load the real content/scriptlets.js in a vm sandbox and verify
 // blk-event dispatch behavior for window.open blocking and json_prune_xhr
-// (only real prunes count). scriptlets.js now exports a named
-// _runQkv1Scriptlets(token) function (injected imperatively by background.js
-// with a runtime-random token — see its header comment) instead of
-// auto-invoking with a hardcoded 'qkv1' marker; this harness calls it with a
-// fixed TEST_TOKEN so event names are deterministic to assert against.
+// (only real prunes count). scriptlets.js auto-invokes at document_start
+// (static content_scripts) with the literal '__QKV1_BUILD_TOKEN__'
+// placeholder — a real build substitutes a random value (_build-lib.sh),
+// but this harness runs the checked-in source as-is, so event names are
+// built from that same literal placeholder.
 'use strict';
 const fs = require('fs');
 const vm = require('vm');
 
 const src = fs.readFileSync(require('path').join(__dirname, '..', 'content/scriptlets.js'), 'utf8');
 
-const TEST_TOKEN = 'testtoken';
+const TEST_TOKEN = '__QKV1_BUILD_TOKEN__';
 
 // ── minimal window/DOM stubs ──────────────────────────────────────
 const listeners = {};
@@ -100,12 +100,14 @@ let lastFetchArgs = null; // [url, init] as actually seen by the transport — p
 sandbox.Response = FakeResponse;
 sandbox.fetch = async (url, init) => { lastFetchArgs = [url, init]; return new FakeResponse(fetchPayload); };
 
-// localStorage stub — no longer used for the boot-cache gate (that moved to
-// background.js's chrome.storage.session, delivered as an injection
-// argument instead — see content/scriptlets.js's header comment), but still
-// needed for the unrelated set_local_storage_item/remove_cookie-style
-// scriptlets that legitimately touch the page's own localStorage.
-const localStorageStore = new Map();
+// localStorage stub — the boot gate reads the rules cache saved on a
+// previous visit (key derived from TEST_TOKEN, same as the real
+// _RULES_CACHE_KEY). Preset = "returning visit to a site whose rules use
+// response filters": wrappers install AND these rules apply at boot.
+const _TEST_RULES_CACHE_KEY = `__${TEST_TOKEN}_rules_cache__`;
+const localStorageStore = new Map([
+  [_TEST_RULES_CACHE_KEY, JSON.stringify({ json_prune_xhr: ['adPlacements adSlots'] })],
+]);
 sandbox.localStorage = {
   getItem: k => (localStorageStore.has(k) ? localStorageStore.get(k) : null),
   setItem: (k, v) => { localStorageStore.set(k, String(v)); },
@@ -132,9 +134,6 @@ const xhrWrapped = () =>
 
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox, { filename: 'scriptlets.js' });
-// Second arg simulates background.js handing over a previously-cached rule
-// set for this "hostname" (returning-visit scenario) — see section 0 below.
-sandbox._runQkv1Scriptlets(TEST_TOKEN, { json_prune_xhr: ['adPlacements adSlots'] });
 
 let pass = 0, fail = 0;
 function check(name, cond, detail = '') {
@@ -147,10 +146,10 @@ function sendRules(rules) {
 }
 
 (async () => {
-  console.log('== 0. cached rules (2nd injection arg) apply synchronously at boot (before any dispatch) ==');
+  console.log('== 0. cached rules apply synchronously at boot (before any dispatch) ==');
   blockedEvents = [];
   const BootXHR = sandbox.XMLHttpRequest;
-  check('wrappers installed at boot from injected cachedRules arg', xhrWrapped());
+  check('wrappers installed at boot from cache', xhrWrapped());
   const xhrBoot = new BootXHR();
   xhrBoot.open('GET', 'https://www.youtube.com/youtubei/v1/player');
   xhrBoot._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }], videoDetails: { title: 'boot' } });
@@ -261,14 +260,25 @@ function sendRules(rules) {
     String(blockedEvents.length));
   check('XMLHttpRequest not re-subclassed on re-dispatch', sandbox.XMLHttpRequest === XHR2);
 
-  // (Old "== 6. rules cache follows dispatched rules ==" section removed —
-  // that responsibility moved out of content/scriptlets.js entirely, into
-  // site-block.js (CACHE_QKV1_RULES message) + background.js
-  // (chrome.storage.session, see setCachedRulesForHost), neither of which
-  // this file covers. Section 0 above still verifies the MAIN-world side:
-  // that a cachedRules injection argument applies synchronously at boot.)
+  console.log('\n== 6. rules cache follows dispatched rules ==');
+  // Rules WITH response-filter keys → full rule set cached for the next load
+  sendRules({ json_prune_xhr: ['adPlacements adSlots'], no_window_open_if: ['/y\\.com/'] });
+  const cached = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
+  check('full rule set cached when rules contain response-filter keys',
+    !!cached && Array.isArray(cached.json_prune_xhr) && Array.isArray(cached.no_window_open_if),
+    JSON.stringify(cached));
+  // Rules WITHOUT response-filter keys → cache cleared (site no longer needs
+  // boot wrappers, e.g. after a rules update removed them). no_window_open_if
+  // now counts as a boot-cached key, so use a cosmetic-only rule set here.
+  sendRules({ direct_hide_selectors: ['.ad'] });
+  check('cache cleared when rules have no response-filter keys',
+    !localStorageStore.has(_TEST_RULES_CACHE_KEY));
+  sendRules({ json_prune_fetch: ['adPlacements'] });
+  const recached = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
+  check('cache re-saved on next dispatch with response-filter keys',
+    !!recached && Array.isArray(recached.json_prune_fetch));
 
-  console.log('\n== 6. blockAdNavigations — back-button hijack vectors ==');
+  console.log('\n== 7. blockAdNavigations — back-button hijack vectors ==');
   // Protocol-relative cross-origin URL via the patched location.href setter.
   sandbox.location.href = '//ads.evil.example/land';
   check('protocol-relative cross-origin href blocked',
@@ -315,7 +325,7 @@ function sendRules(rules) {
     sandbox.location._href === 'https://partner.example/out', sandbox.location._href);
   sandbox.location._href = 'https://test.example.com/';
 
-  console.log('\n== 7. new primitives (2026-07-31): json_prune_on_set, trusted_edit_request/response, trusted_replace_script_text ==');
+  console.log('\n== 8. new primitives (2026-07-31): json_prune_on_set, trusted_edit_request/response, trusted_replace_script_text ==');
 
   // -- json_prune_on_set: prune fields the page ASSIGNS directly (not JSON.parsed) --
   sendRules({ json_prune_on_set: ['someAdConfig, ads meta'] });
@@ -325,6 +335,56 @@ function sendRules(rules) {
   check('json_prune_on_set: meta pruned', sandbox.someAdConfig.meta === undefined,
     JSON.stringify(sandbox.someAdConfig));
   check('json_prune_on_set: unrelated field kept', sandbox.someAdConfig.keep === 'yes');
+
+  // Real shape used by the [youtube] adunit/instream/eafg request rules —
+  // *= "contains" filter on a marker embedded in userAgent, then descend to
+  // a sibling client object filtered by clientName, merge-assign into it.
+  sendRules({ trusted_edit_request: ['[?..userAgent*="adunit"]..client[?.clientName=="WEB"]+={"clientScreen":"ADUNIT"}, url:youtubei/v1/player'] });
+  const XHR8b = sandbox.XMLHttpRequest;
+  const xhrMarker = new XHR8b();
+  xhrMarker.open('POST', 'https://www.youtube.com/youtubei/v1/player');
+  xhrMarker.send(JSON.stringify({ context: { client: { clientName: 'WEB', userAgent: 'Mozilla/5.0 test; adunit' } } }));
+  const markerBody = JSON.parse(xhrMarker._sentBody);
+  check('trusted_edit_request: *= contains-filter + nested descendant assign applies',
+    markerBody.context?.client?.clientScreen === 'ADUNIT' && markerBody.context?.client?.clientName === 'WEB',
+    xhrMarker._sentBody);
+
+  // -- channel/lactmilli marker rules + ${now} substitution + =/regex/ filter with =repl() --
+  sendRules({ trusted_edit_request: [
+    '[?..userAgent*="channel"]..client[?.clientName=="WEB"]+={"clientScreen":"CHANNEL"}, /player?',
+    '[?..userAgent*="lactmilli"]+={"params":"8AUB"}, /player?',
+    '[?..userAgent*="lactmilli"]..playbackContext.contentPlaybackContext.lactMilliseconds="${now}", /player?',
+    '[?..userAgent=/adunit|channel|lactmilli|instream|eafg/]..referer=repl({"regex":"(?:#reloadxhr)?$","replacement":"#reloadxhr"}), /player?',
+  ] });
+  const XHR8c = sandbox.XMLHttpRequest;
+  const xhrChannel = new XHR8c();
+  xhrChannel.open('POST', 'https://www.youtube.com/youtubei/v1/player?x=1');
+  xhrChannel.send(JSON.stringify({
+    context: { client: { clientName: 'WEB', userAgent: 'Mozilla/5.0 test; channel' } },
+    referer: 'https://www.youtube.com/watch',
+  }));
+  const channelBody = JSON.parse(xhrChannel._sentBody);
+  check('trusted_edit_request: channel marker sets clientScreen=CHANNEL',
+    channelBody.context?.client?.clientScreen === 'CHANNEL', xhrChannel._sentBody);
+  check('trusted_edit_request: =/regex/ filter + =repl() appends #reloadxhr to referer',
+    channelBody.referer === 'https://www.youtube.com/watch#reloadxhr', xhrChannel._sentBody);
+
+  const xhrLact = new XHR8c();
+  xhrLact.open('POST', 'https://www.youtube.com/youtubei/v1/player?x=1');
+  const beforeNow = Date.now();
+  xhrLact.send(JSON.stringify({
+    context: { client: { clientName: 'WEB', userAgent: 'Mozilla/5.0 test; lactmilli' } },
+    playbackContext: { contentPlaybackContext: { lactMilliseconds: 0 } },
+    referer: 'https://www.youtube.com/watch#reloadxhr',
+  }));
+  const lactBody = JSON.parse(xhrLact._sentBody);
+  check('trusted_edit_request: lactmilli marker merge-assigns params=8AUB at root',
+    lactBody.params === '8AUB', xhrLact._sentBody);
+  check('trusted_edit_request: ${now} substitutes a fresh timestamp into an existing path',
+    Number(lactBody.playbackContext?.contentPlaybackContext?.lactMilliseconds) >= beforeNow,
+    xhrLact._sentBody);
+  check('trusted_edit_request: =repl() is idempotent when #reloadxhr already present',
+    lactBody.referer === 'https://www.youtube.com/watch#reloadxhr', xhrLact._sentBody);
 
   // -- trusted_edit_request (delete) + trusted_edit_response (assign, TRUSTED-only) --
   // JSONPath assign/delete only operates on paths that already exist in the
@@ -357,6 +417,27 @@ function sendRules(rules) {
   check('trusted_edit_response (fetch): value assigned into response',
     editFetchObj.blocked === true, JSON.stringify(editFetchObj));
 
+  // Query itself full of commas (assigning a JSON object/array literal),
+  // plus an explicit propsToMatch — only _splitLast's LAST comma may split.
+  sendRules({ trusted_edit_response: ['$.opts={"a":1,"b":[2,3],"c":true}, url:api.example.com'] });
+  fetchPayload = { opts: { a: 0 } };
+  const complexResp = await sandbox.fetch('https://api.example.com/complex');
+  const complexObj = await complexResp.json();
+  check('trusted_edit_response: comma-laden JSONPath value applied intact',
+    complexObj.opts && complexObj.opts.a === 1 && JSON.stringify(complexObj.opts.b) === '[2,3]' && complexObj.opts.c === true,
+    JSON.stringify(complexObj));
+
+  // Real shape used by the [youtube] granularVariableSpeedConfig rule —
+  // descendant filter + merge-assign of a multi-field object.
+  sendRules({ trusted_edit_response: ['[?..minimumPlaybackRate==100]..playerConfig.granularVariableSpeedConfig+={"minimumPlaybackRate":25,"maximumPlaybackRate":200}, url:youtubei/v1/player'] });
+  fetchPayload = { playerConfig: { granularVariableSpeedConfig: { minimumPlaybackRate: 100 } } };
+  const speedResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
+  const speedObj = await speedResp.json();
+  check('trusted_edit_response: youtube granularVariableSpeedConfig query applies',
+    speedObj.playerConfig?.granularVariableSpeedConfig?.minimumPlaybackRate === 25
+      && speedObj.playerConfig?.granularVariableSpeedConfig?.maximumPlaybackRate === 200,
+    JSON.stringify(speedObj));
+
   // -- trusted_replace_script_text: rewrite BEFORE insertion --
   // Bare (non-/regex/) values are treated as literal text and escaped
   // internally by _toRegex — do NOT pre-escape regex metachars here.
@@ -385,6 +466,18 @@ function sendRules(rules) {
   parentEl.appendChild(divNode);
   check('trusted_replace_script_text: non-matching nodeName left untouched',
     divNode.textContent === 'evilAdInit()', divNode.textContent);
+
+  // Replacement itself is arbitrary code full of commas — only the first 2
+  // top-level commas (nodeName, pattern) may be split on, or this shreds.
+  const complexReplacement = 'const o=["a","b","c"],x={p:1,q:2};fn(1,2,3);';
+  sendRules({ trusted_replace_script_text: [`SCRIPT, marker(), ${complexReplacement}`] });
+  const complexScript = new ElementStub();
+  complexScript.nodeType = 1;
+  complexScript.nodeName = 'SCRIPT';
+  complexScript.textContent = 'marker()';
+  parentEl.appendChild(complexScript);
+  check('trusted_replace_script_text: replacement with internal commas stays intact',
+    complexScript.textContent === complexReplacement, complexScript.textContent);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

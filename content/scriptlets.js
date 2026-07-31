@@ -4,32 +4,24 @@
 //            jsonPruneFetchResponse, jsonPruneXhrResponse,
 //            noWindowOpenIf, preventAddEventListener, disableNewtabLinks,
 //            stripDynamicTargets, rateLimitHistory, blockAdNavigations
-// Injected at document_start into MAIN world by content.js.
 
-// Injected imperatively by background.js via chrome.scripting.executeScript
-// (world: 'MAIN', func: this function, args: [perSessionToken, cachedRulesOrNull])
-// — NOT a static content_scripts entry. The token is generated at runtime in
-// the service worker and handed to this function as an argument, so it
-// never appears as a literal anywhere in shipped source: MAIN-world code
-// has no chrome.* API to fetch a value after the fact, so this
-// injection-argument path is the only way to give it something the page's
-// own scripts can't also independently derive (page JS runs in this exact
-// same realm, so anything computable here without external input is
-// equally computable by the page). See docs/CHROME_DEBUGGING caveats + plan
-// history for why this replaced a static Symbol.for('_qkv1sym') key that
-// any page script could retrieve from the JS engine's shared global symbol
-// registry. cachedRulesOrNull is the same idea applied to the OLD
-// localStorage['__abrules'] boot-cache (page-readable) — now a
-// background.js-held, per-hostname cache delivered the same way.
-function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
+// Static document_start/MAIN-world injection (manifest.json) — needed for
+// the document_start timing guarantee (prerendering frames block
+// chrome.scripting.executeScript outright; declarative content_scripts
+// don't have that restriction). '__QKV1_BUILD_TOKEN__' below is substituted
+// with a random string at build time (_build-lib.sh) — checked-in source
+// only ever has the placeholder, not the value any shipped build uses.
+(function () {
   'use strict';
 
+  var _qkv1Token = '__QKV1_BUILD_TOKEN__';
   var _G = Symbol.for(_qkv1Token);
   if (window[_G]) return;
   window[_G] = 1;
   var _EVT_RULES = '__' + _qkv1Token + '_rules__';
   var _EVT_BLK   = '__' + _qkv1Token + '_blk__';
   var _EVT_DIS   = '__' + _qkv1Token + '_dis__';
+  var _EVT_CLR   = '__' + _qkv1Token + '_clr__';
 
   // ── Helpers ──────────────────────────────────────────────────────
   var _strSplit = String.prototype.split;
@@ -2462,7 +2454,9 @@ function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
       stay = /\bstay\b/.test(extra);
     }
     function handle(node) {
-      if (!node || !reNode.test(node.nodeName)) return;
+      // node.nodeName is always UPPERCASE for standard HTML elements, but
+      // rule authors commonly write tag names lowercase — try both.
+      if (!node || (!reNode.test(node.nodeName) && !reNode.test(node.nodeName.toLowerCase()))) return;
       var before = node.textContent;
       if (!before) return;
       if (reIncludes && !reIncludes.test(before)) return;
@@ -2520,13 +2514,22 @@ function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
       var me = /excludes=(\S+)/.exec(extra); if (me) reExcludes = _toRegex(me[1]);
     }
     function tryRewrite(node) {
-      if (!node || node.nodeType !== 1 || !reNode.test(node.nodeName)) return;
+      // node.nodeName is always UPPERCASE for standard HTML elements, but
+      // rule authors commonly write tag names lowercase — try both.
+      if (!node || node.nodeType !== 1) return;
+      if (!reNode.test(node.nodeName) && !reNode.test(node.nodeName.toLowerCase())) return;
       var before = node.textContent;
       if (!before) return;
       if (reIncludes && !reIncludes.test(before)) return;
       if (reExcludes && reExcludes.test(before)) return;
+      // pattern is an IDENTIFYING test ("is this the target script"), not a
+      // substring to cut out — replacement is a complete standalone script,
+      // so the WHOLE node text is swapped, not just the matched substring.
+      // A partial substring .replace() would leave the rest of the
+      // original script appended after our (already-complete) replacement,
+      // producing invalid JS that throws instead of running either one.
       if (rePattern && !rePattern.test(before)) return;
-      var after = rePattern ? before.replace(rePattern, replacement || '') : (replacement || '');
+      var after = replacement || '';
       if (after === before) return;
       try { node.textContent = after; } catch (e) {}
     }
@@ -2792,6 +2795,41 @@ function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
     return out;
   }
 
+  // Like _argsOf, but stops after the first 2 top-level commas and returns
+  // the remainder as one raw, untouched slice — for values whose LAST
+  // argument is itself arbitrary code/JSON full of commas (e.g.
+  // trusted_replace_script_text's replacement), where _argsOf's "split on
+  // every comma" would shred it.
+  function _splitFirst2(value) {
+    var idx1 = -1, idx2 = -1, inRe = false, i, ch;
+    for (i = 0; i < value.length; i++) {
+      ch = value.charAt(i);
+      if (ch === '/') { inRe = !inRe; continue; }
+      if (ch === ',' && !inRe) {
+        if (idx1 === -1) idx1 = i;
+        else { idx2 = i; break; }
+      }
+    }
+    if (idx1 === -1) return [value.trim(), '', ''];
+    if (idx2 === -1) return [value.slice(0, idx1).trim(), value.slice(idx1 + 1).trim(), ''];
+    return [value.slice(0, idx1).trim(), value.slice(idx1 + 1, idx2).trim(), value.slice(idx2 + 1).trim()];
+  }
+
+  // Like _argsOf, but splits on only the LAST top-level comma — for 2-arg
+  // values whose FIRST argument is complex (e.g. a JSONPath query with a
+  // JSON object/array literal as its assigned value, full of commas) and
+  // whose second argument (propsToMatch) is always simple/comma-free.
+  function _splitLast(value) {
+    var lastIdx = -1, inRe = false, i, ch;
+    for (i = 0; i < value.length; i++) {
+      ch = value.charAt(i);
+      if (ch === '/') { inRe = !inRe; continue; }
+      if (ch === ',' && !inRe) lastIdx = i;
+    }
+    if (lastIdx === -1) return [value.trim(), ''];
+    return [value.slice(0, lastIdx).trim(), value.slice(lastIdx + 1).trim()];
+  }
+
   // Flag-style keys: any first value other than 0/false/off enables.
   function _flagOn(list) {
     if (!list || !list.length) return false;
@@ -2801,10 +2839,9 @@ function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
 
   function _applyScriptletRules(rules) {
     if (!rules) return;
-    // Caching the rule set for the NEXT page load's document_start boot is
-    // now background.js's job (site-block.js forwards it via
-    // CACHE_QKV1_RULES) — see the _qkv1CachedRules handling near the bottom
-    // of this function's outer scope.
+    // Cache the full rule set for the NEXT page load so the install gate
+    // below can apply it synchronously at document_start.
+    _saveScriptletRulesCache(rules);
     _fetchPruneRules.length = 0;
     _xhrPruneRules.length = 0;
     _xhrJsonlRules.length = 0;
@@ -2876,21 +2913,27 @@ function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
 
     // ── trusted_edit_request / trusted_edit_response — registry-based,
     // reset+repopulated every dispatch (see resets at the top of this fn).
+    // _splitLast (not _argsOf): the JSONPath query is arg 1 and can itself
+    // contain commas (assigning a JSON object/array literal); propsToMatch
+    // is always the last, comma-free argument.
     _eachRule(rules.trusted_edit_request, function (v) {
-      var a = _argsOf(v);
+      var a = _splitLast(v);
       trustedEditRequest(a[0] || '', a[1] || '');
     });
     _eachRule(rules.trusted_edit_response, function (v) {
-      var a = _argsOf(v);
+      var a = _splitLast(v);
       trustedEditResponse(a[0] || '', a[1] || '');
     });
 
     // ── trusted_replace_script_text — wrap-once (proxyApplyFn installs a
     // permanent hook per call; re-dispatching the same rule must not stack).
+    // Value: "nodeName, pattern, replacement" — only the first 2 commas are
+    // split on (_splitFirst2), since replacement is arbitrary code that can
+    // itself contain any number of commas.
     _eachRule(rules.trusted_replace_script_text, function (v) {
       _wrapOnce('trusted_replace_script_text', v, function () {
-        var a = _argsOf(v);
-        trustedReplaceScriptText(a[0] || '', a[1] || '', a[2] || '', a[3] || '');
+        var a = _splitFirst2(v);
+        trustedReplaceScriptText(a[0] || '', a[1] || '', a[2] || '', '');
       });
     });
 
@@ -3059,33 +3102,65 @@ function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
   // ── Install response-filtering wrappers at document_start ────────
   // The wrappers AND their rules must exist BEFORE any page script runs to
   // close the boot race, but the site's config only arrives async. Bridge:
-  // background.js caches the last-dispatched rules PER HOSTNAME (see
-  // site-block.js's CACHE_QKV1_RULES / background.js's
-  // getCachedRulesForHost) and hands them to this function directly as
-  // _qkv1CachedRules — a genuine injection argument, not something read back
-  // out of page-visible storage. This used to be a page-readable
-  // localStorage['__abrules'] key (any page script could read the site's
-  // exact cached rule config); moving it into background.js's
-  // chrome.storage.session closes that leak entirely rather than just
-  // renaming it. The async rules-dispatch event below still re-applies
-  // fresh rules on top (replace semantics), so a stale cached arg
-  // self-corrects on every load, same as before.
-  // Sites with no cached entry keep fetch/XHR/JSON.parse completely
-  // untouched: no extension frame in stack traces, no per-request overhead.
-  if (_qkv1CachedRules && typeof _qkv1CachedRules === 'object') {
+  // every rules dispatch caches the full scriptlet rule set in localStorage
+  // (only on sites whose rules contain response-filter keys — json_prune_* /
+  // json_edit / jsonl_edit_xhr). On the next load the cache is read
+  // synchronously here, the wrappers install and the rules apply
+  // immediately — set_constant/json_edit run before the page's inline
+  // scripts, and the registries are live for its very first requests. The
+  // async dispatch then re-applies fresh rules (replace semantics), so a
+  // stale cache self-corrects on every load.
+  // Sites without the cache keep fetch/XHR/JSON.parse completely untouched:
+  // no extension frame in stack traces, no per-request overhead. If
+  // response-filter rules arrive anyway (very first visit, rules update),
+  // the registration functions install the wrappers lazily mid-session.
+  var _RULES_CACHE_KEY = '__' + _qkv1Token + '_rules_cache__';
+  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response'];
+
+  function _saveScriptletRulesCache(rules) {
+    var has = false;
+    for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
+      var v = rules[_RESPONSE_FILTER_RULE_KEYS[i]];
+      if (v && v.length) { has = true; break; }
+    }
+    // Only sites with response-filter rules ever get the key written;
+    // removeItem on all others is a no-op that leaves no trace.
+    try {
+      if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(rules));
+      else localStorage.removeItem(_RULES_CACHE_KEY);
+    } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
+  }
+
+  (function () {
+    var cached = null;
+    try { cached = localStorage.getItem(_RULES_CACHE_KEY); } catch (e) {}
+    if (!cached) return;
     try { _installFetchResponseProxy(); } catch (e) {}
     try { _installXhrResponseProxy(); } catch (e) {}
     try { _installJsonEditProxy(); } catch (e) {}
     try { _installSjsGuard(); } catch (e) {}
-    try { _applyScriptletRules(_qkv1CachedRules); } catch (e) {}
-  }
+    try {
+      var rules = JSON.parse(cached);
+      // The cache lives in page-writable storage, so treat it as untrusted
+      // input: anything non-object is ignored. A page corrupting it can only
+      // affect its own MAIN world — same privilege it already has.
+      if (rules && typeof rules === 'object') _applyScriptletRules(rules);
+    } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
+  })();
 
-  // Bridge: content.js dispatches the token-derived "rules" event after
-  // async rule load (same token content.js fetched via GET_QKV1_TOKEN).
+  // Bridge: content.js dispatches '<token>_rules__' after async rule load.
   // Content script and MAIN world share DOM events — standard cross-world pattern.
   window.addEventListener(_EVT_RULES, function(ev) {
     _scriptletsEnabled = true;
     try { _applyScriptletRules(ev.detail); } catch (e) {}
+  });
+
+  // Bridge: "Reset all data" in the dashboard only clears chrome.storage.local
+  // (extension storage) — it has no reach into this page's own localStorage,
+  // where the rules cache actually lives. content.js relays this event after
+  // the dashboard broadcasts CLEAR_SCRIPTLET_CACHE to every open tab.
+  window.addEventListener(_EVT_CLR, function() {
+    try { localStorage.removeItem(_RULES_CACHE_KEY); } catch (e) {}
   });
 
   // When protection is toggled OFF or domain paused, disable all scriptlet logic.
@@ -3125,9 +3200,4 @@ function _runQkv1Scriptlets(_qkv1Token, _qkv1CachedRules) {
     }
     return Reflect.apply(remove, this, [type, listener, options]);
   };
-}
-// Classic-script contexts (Chrome's importScripts) already put a top-level
-// function declaration on the global object; the explicit assignment below
-// is what makes it reachable in an ES-module background context (Firefox),
-// where top-level declarations are module-scoped, not global.
-self._runQkv1Scriptlets = _runQkv1Scriptlets;
+}());

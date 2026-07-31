@@ -33,23 +33,9 @@ function extValid(){
   catch(e){return false;}
 }
 
-// Shared MAIN-world bridge token — see content.js's qkv1Token() for the
-// full explanation. Independent copy/cache (this file doesn't assume
-// content.js's identifiers are in scope), same GET_QKV1_TOKEN message.
-var _qkv1TokenPromise=null;
-function qkv1Token(){
-  if(_qkv1TokenPromise)return _qkv1TokenPromise;
-  _qkv1TokenPromise=new Promise(function(resolve){
-    if(!extValid()){resolve(null);return;}
-    try{
-      chrome.runtime.sendMessage({type:'GET_QKV1_TOKEN'}).then(
-        function(res){resolve((res&&res.token)||null);},
-        function(){resolve(null);}
-      );
-    }catch(e){resolve(null);}
-  });
-  return _qkv1TokenPromise;
-}
+// Substituted with a random string at build time (_build-lib.sh) — must
+// match content.js/content/scriptlets.js's own copy of the placeholder.
+var _QKV1_TOKEN='__QKV1_BUILD_TOKEN__';
 
 function normalizeText(value){
   return (value||'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -457,14 +443,11 @@ function attachShadowListeners(){
   // Listen for shadow-hook.js events (MAIN world patches attachShadow)
   if(!_shadowListenerAttached){
     _shadowListenerAttached=true;
-    qkv1Token().then(function(token){
-      if(!token)return;
-      document.addEventListener('__'+token+'_sh__',function(e){
-        var host=e&&e.detail&&e.detail.host;
-        if(!host)return;
-        Promise.resolve().then(function(){
-          if(host.shadowRoot)observeShadowRoot(host.shadowRoot);
-        });
+    document.addEventListener('__'+_QKV1_TOKEN+'_sh__',function(e){
+      var host=e&&e.detail&&e.detail.host;
+      if(!host)return;
+      Promise.resolve().then(function(){
+        if(host.shadowRoot)observeShadowRoot(host.shadowRoot);
       });
     });
   }
@@ -495,11 +478,6 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   // Wired 2026-07-31: request/response JSONPath editing + prune-on-assignment +
   // pre-insertion script rewriting (see _applyScriptletRules for value formats).
   'trusted_edit_request','trusted_edit_response','json_prune_on_set','trusted_replace_script_text'];
-// Mirrors scriptlets.js's _RESPONSE_FILTER_RULE_KEYS — only rules containing
-// one of these are worth caching for the next visit's document_start boot
-// (background.js's per-hostname cache, see CACHE_QKV1_RULES below); a
-// cosmetic-only config gains nothing from it.
-var RESPONSE_FILTER_RULE_KEYS=['json_prune_fetch','json_prune_xhr','jsonl_edit_xhr','json_edit','json_prune','trusted_replace_xhr_response','no_window_open_if','trusted_edit_request','trusted_edit_response'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;
@@ -510,22 +488,7 @@ function _dispatchScriptletRules(cfg){
     }
   }
   if(hasAny){
-    qkv1Token().then(function(token){
-      if(!token)return;
-      try{window.dispatchEvent(new CustomEvent('__'+token+'_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
-    });
-    // Cache in background.js (per-hostname, chrome.storage.session) for this
-    // site's NEXT document_start — replaces the old page-visible
-    // localStorage['__abrules'] boot-cache. Only bother if there's something
-    // that actually needs document_start (network-interception) treatment.
-    if(extValid()){
-      for(var r=0;r<RESPONSE_FILTER_RULE_KEYS.length;r++){
-        if(rules[RESPONSE_FILTER_RULE_KEYS[r]]){
-          try{chrome.runtime.sendMessage({type:'CACHE_QKV1_RULES',rules:rules}).catch(function(){});}catch(e){}
-          break;
-        }
-      }
-    }
+    try{window.dispatchEvent(new CustomEvent('__'+_QKV1_TOKEN+'_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
   }
 }
 
@@ -545,10 +508,7 @@ function sync(cb){
     else{
       stopObserver();
       stopPageClassWatch();
-      qkv1Token().then(function(token){
-        if(!token)return;
-        try{window.dispatchEvent(new CustomEvent('__'+token+'_dis__'));}catch(_e){}
-      });
+      try{window.dispatchEvent(new CustomEvent('__'+_QKV1_TOKEN+'_dis__'));}catch(_e){}
       _scriptletRulesActive=false;
     }
     if(cb)cb({ok:true});
@@ -617,13 +577,10 @@ function _onSpaNav(){
 document.addEventListener('yt-navigate-finish',_onSpaNav);
 document.addEventListener('yt-page-data-updated',_onSpaNav);
 
-qkv1Token().then(function(token){
-  if(!token)return;
-  window.addEventListener('__'+token+'_blk__',function(e){
-    if(!extValid()||!_enabled)return;
-    var url=location.href;
-    chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
-  });
+window.addEventListener('__'+_QKV1_TOKEN+'_blk__',function(e){
+  if(!extValid()||!_enabled)return;
+  var url=location.href;
+  chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
 });
 
 chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
