@@ -488,6 +488,23 @@ function sendRules(rules) {
   check('json_prune_fetch: sibling onResponseReceivedEndpoints entry kept',
     getWatchObj2[1].watchNextResponse.onResponseReceivedEndpoints[0].appendContinuationItemsAction.keep === 1);
 
+  // -- json_prune_fetch: same adsControlFlowOpportunityReceivedCommand key also
+  // leaks from /youtubei/v1/browse (home/related-feed pagination) — different
+  // shape from get_watch: body.onResponseReceivedActions[N], no watchNextResponse
+  // wrapper and no array-wrapped body (found via live logging). --
+  sendRules({ json_prune_fetch: ['onResponseReceivedActions.[].adsControlFlowOpportunityReceivedCommand'] });
+  fetchPayload = { onResponseReceivedActions: [
+    { appendContinuationItemsAction: { keep: 1 } },
+    { adsControlFlowOpportunityReceivedCommand: { adSlotAndLayoutMetadata: [{ hack: 1 }] } },
+  ] };
+  const browseResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/browse');
+  const browseObj = await browseResp.json();
+  check('json_prune_fetch: adsControlFlowOpportunityReceivedCommand pruned from browse response actions',
+    browseObj.onResponseReceivedActions[1].adsControlFlowOpportunityReceivedCommand === undefined,
+    JSON.stringify(browseObj));
+  check('json_prune_fetch: sibling onResponseReceivedActions entry kept',
+    browseObj.onResponseReceivedActions[0].appendContinuationItemsAction.keep === 1);
+
   // -- trusted_edit_request (delete) + trusted_edit_response (assign, TRUSTED-only) --
   // JSONPath assign/delete only operates on paths that already exist in the
   // object (it walks/selects, it doesn't fabricate new keys) — so the
