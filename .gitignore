@@ -3,6 +3,7 @@ build/
 dist*
 src-obfuscated*
 u-src*
+uAssets/
 scripts/
 ios-xcode/
 assets/
