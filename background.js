@@ -290,6 +290,7 @@ const SPECIFIC_SCRIPT_REDIRECTS = {
   'imasdk.googleapis.com': 'google-ima.js',
   'scorecardresearch.com': 'scorecardresearch_beacon.js',
   'chartbeat.com': 'chartbeat.js',
+  'doubleclick.net': 'doubleclick_instream_ad_status.js',
 };
 
 function _redirectAction(file) {
