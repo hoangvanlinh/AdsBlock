@@ -468,6 +468,26 @@ function sendRules(rules) {
   check('json_prune_fetch: sibling engagement panel content kept',
     getWatchObj[1].watchNextResponse.engagementPanels[0].engagementPanelSectionListRenderer.content.structuredDescriptionContentRenderer.foo === 1);
 
+  // -- json_prune_fetch: adsControlFlowOpportunityReceivedCommand must be pruned
+  // from /get_watch (found via live YouTube ad-signal logging: newer ad-slot
+  // delivery arrives via watchNextResponse.onResponseReceivedEndpoints[N],
+  // not the engagementPanels path above — same "[]" double-wildcard shape). --
+  sendRules({ json_prune_fetch: ['[].watchNextResponse.onResponseReceivedEndpoints.[].adsControlFlowOpportunityReceivedCommand'] });
+  fetchPayload = [
+    { playerResponse: { videoDetails: { title: 'real video' } } },
+    { watchNextResponse: { onResponseReceivedEndpoints: [
+        { appendContinuationItemsAction: { keep: 1 } },
+        { adsControlFlowOpportunityReceivedCommand: { adSlotAndLayoutMetadata: [{ hack: 1 }] } },
+      ] } },
+  ];
+  const getWatchResp2 = await sandbox.fetch('https://www.youtube.com/youtubei/v1/get_watch');
+  const getWatchObj2 = await getWatchResp2.json();
+  check('json_prune_fetch: adsControlFlowOpportunityReceivedCommand pruned from get_watch response endpoints',
+    getWatchObj2[1].watchNextResponse.onResponseReceivedEndpoints[1].adsControlFlowOpportunityReceivedCommand === undefined,
+    JSON.stringify(getWatchObj2));
+  check('json_prune_fetch: sibling onResponseReceivedEndpoints entry kept',
+    getWatchObj2[1].watchNextResponse.onResponseReceivedEndpoints[0].appendContinuationItemsAction.keep === 1);
+
   // -- trusted_edit_request (delete) + trusted_edit_response (assign, TRUSTED-only) --
   // JSONPath assign/delete only operates on paths that already exist in the
   // object (it walks/selects, it doesn't fabricate new keys) — so the
