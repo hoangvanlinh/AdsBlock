@@ -2,10 +2,11 @@ build/
 *.zip
 dist*
 src-obfuscated*
-u-src*
+u-src/
 uAssets/
 scripts/
 ios-xcode/
 assets/
 blocklists/
 docs/
+log/

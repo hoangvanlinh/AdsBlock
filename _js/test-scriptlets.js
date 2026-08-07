@@ -427,6 +427,47 @@ function sendRules(rules) {
   check('json_prune_fetch: adPlacements also pruned', playerAdsObj.adPlacements === undefined);
   check('json_prune_fetch: unrelated fields kept', playerAdsObj.videoDetails.title === 'real video');
 
+  // -- json_prune_fetch: sendSsdaiMissingAdBreakReasons (found via live
+  // YouTube testing at body.playerConfig.daiConfig.sendSsdaiMissingAdBreakReasons
+  // on /player). Not ad content itself — an SSAI telemetry flag that tells
+  // the player to report back to Google when an expected ad break didn't
+  // fill, i.e. a "did the user block this ad?" signal. Pruned on an opt-in
+  // trial basis alongside the real ad-payload fields above. --
+  sendRules({ json_prune_fetch: ['playerAds playerConfig.daiConfig.sendSsdaiMissingAdBreakReasons'] });
+  fetchPayload = {
+    playerAds: [{ foo: 1 }],
+    playerConfig: { daiConfig: { sendSsdaiMissingAdBreakReasons: true }, otherConfig: { keep: 1 } },
+    videoDetails: { title: 'real video' },
+  };
+  const ssdaiResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
+  const ssdaiObj = await ssdaiResp.json();
+  check('json_prune_fetch: sendSsdaiMissingAdBreakReasons pruned',
+    ssdaiObj.playerConfig.daiConfig.sendSsdaiMissingAdBreakReasons === undefined, JSON.stringify(ssdaiObj));
+  check('json_prune_fetch: sibling playerConfig fields kept',
+    ssdaiObj.playerConfig.otherConfig.keep === 1);
+
+  // -- json_prune_fetch: adsEngagementPanelContentRenderer must be pruned
+  // from the LIVE /get_watch fetch response (found via live YouTube testing:
+  // get_watch returns an ARRAY of RPC results — [0] holds playerResponse,
+  // [1] holds watchNextResponse — and the "Sponsored" tab lives inside one
+  // of watchNextResponse.engagementPanels[N].engagementPanelSectionListRenderer.content,
+  // at an unpredictable array index, hence the "[]" wildcard on both arrays). --
+  sendRules({ json_prune_fetch: ['[].watchNextResponse.engagementPanels.[].engagementPanelSectionListRenderer.content.adsEngagementPanelContentRenderer'] });
+  fetchPayload = [
+    { playerResponse: { videoDetails: { title: 'real video' } } },
+    { watchNextResponse: { engagementPanels: [
+        { engagementPanelSectionListRenderer: { content: { structuredDescriptionContentRenderer: { foo: 1 } } } },
+        { engagementPanelSectionListRenderer: { content: { adsEngagementPanelContentRenderer: { hack: 1 } } } },
+      ] } },
+  ];
+  const getWatchResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/get_watch');
+  const getWatchObj = await getWatchResp.json();
+  check('json_prune_fetch: adsEngagementPanelContentRenderer pruned from get_watch engagement panel',
+    getWatchObj[1].watchNextResponse.engagementPanels[1].engagementPanelSectionListRenderer.content.adsEngagementPanelContentRenderer === undefined,
+    JSON.stringify(getWatchObj));
+  check('json_prune_fetch: sibling engagement panel content kept',
+    getWatchObj[1].watchNextResponse.engagementPanels[0].engagementPanelSectionListRenderer.content.structuredDescriptionContentRenderer.foo === 1);
+
   // -- trusted_edit_request (delete) + trusted_edit_response (assign, TRUSTED-only) --
   // JSONPath assign/delete only operates on paths that already exist in the
   // object (it walks/selects, it doesn't fabricate new keys) — so the
