@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AdBlock — Ads, Trackers",
-  "version": "1.0.27",
+  "version": "1.0.28",
   "description": "Block ads, trackers, and known malicious domains with simple site controls and focus tools.",
   "browser_specific_settings": {
     "gecko": {
@@ -17,8 +17,7 @@
   },
   "permissions": ["storage", "declarativeNetRequest", "alarms", "scripting"],
     "host_permissions": [
-    "http://*/*",
-    "https://*/*"
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup/popup.html",
@@ -40,8 +39,7 @@
   "content_scripts": [
     {
       "matches": [
-        "http://*/*",
-        "https://*/*"
+        "<all_urls>"
       ],
       "js": ["content/scriptlets.js"],
       "run_at": "document_start",
@@ -50,8 +48,7 @@
     },
     {
       "matches": [
-        "http://*/*",
-        "https://*/*"
+       "<all_urls>"
       ],
       "js": ["config.js", "content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
       "run_at": "document_start",
@@ -60,8 +57,14 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["rule/site-rules.txt", "blocked/blocked.html"],
-      "matches": ["http://*/*", "https://*/*"]
+       "resources": ["rule/site-rules.txt"],
+      "matches": ["<all_urls>"],
+      "use_dynamic_url": true
+    },
+    {
+      "resources": ["blocked/blocked.html"],
+      "matches": ["<all_urls>"],
+      "use_dynamic_url": true
     }
   ],
   "options_ui": {

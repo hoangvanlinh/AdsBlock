@@ -26,7 +26,12 @@ const documentStub = {
   readyState: 'loading',
   addEventListener(type, fn) { if (type === 'click') docClickHandlers.push(fn); },
   createElement(tag) {
-    return { tagName: tag.toUpperCase(), style: { cssText: '' }, remove() {}, contentWindow: { closed: false } };
+    const el = {
+      tagName: tag.toUpperCase(), style: { cssText: '' }, remove() {}, contentWindow: { closed: false },
+      _attrs: {}, setAttribute(name, value) { this._attrs[name] = value; },
+    };
+    documentStub.lastCreatedElement = el;
+    return el;
   },
   body: { appendChild() {} },
   documentElement: {},
@@ -186,6 +191,16 @@ function sendRules(rules) {
   check('iframe decoy: returns decoy popup object', r3 !== null && r3 !== undefined);
   check('iframe decoy: NOW counted (was uncounted before fix)', blockedEvents.length === 1,
     String(blockedEvents.length));
+  check('iframe decoy: sandboxed with no allow-scripts (blocks script exec in the loaded popup target)',
+    documentStub.lastCreatedElement && documentStub.lastCreatedElement._attrs.sandbox === '',
+    JSON.stringify(documentStub.lastCreatedElement && documentStub.lastCreatedElement._attrs));
+
+  // object decoy form — <object> has no sandbox attribute, must be unaffected
+  sendRules({ no_window_open_if: ['/decoyobj\\.com/ 2 obj'] });
+  sandbox.open('https://decoyobj.com/x');
+  check('object decoy: setAttribute never called (no sandbox attr on <object>)',
+    Object.keys(documentStub.lastCreatedElement._attrs).length === 0,
+    JSON.stringify(documentStub.lastCreatedElement._attrs));
 
   console.log('\n== 2. json_prune_xhr counts ONLY real prunes ==');
   sendRules({ json_prune_xhr: ['adPlacements adSlots'] });

@@ -256,7 +256,8 @@ const REDIRECT_RESOURCE_BY_TYPE = {
   script: 'noop.js',
   image: '1x1.gif',
   sub_frame: 'noop.html',
-  xmlhttprequest: 'noop.json', // '{}' — safe for JSON.parse() callers
+  xmlhttprequest: 'noop.txt', // '{}' — safe for JSON.parse() callers
+  other: 'empty', // uncategorized/misc requests — no format guarantee, 0-byte is safest
 };
 
 // Trackers get the same treatment as ads (see REDIRECT_RESOURCE_BY_TYPE) —
@@ -267,8 +268,9 @@ const REDIRECT_RESOURCE_BY_TYPE = {
 const TRACKER_REDIRECT_RESOURCE_BY_TYPE = {
   script: 'noop.js',
   image: '1x1.gif',
-  xmlhttprequest: 'noop.json',
+  xmlhttprequest: 'noop.txt',
   ping: 'empty',
+  other: 'empty', // uncategorized/misc beacon traffic — no format guarantee, 0-byte is safest
 };
 
 // A handful of tracker/ad domains ship a purpose-built, API-compatible stub
@@ -293,8 +295,14 @@ const SPECIFIC_SCRIPT_REDIRECTS = {
   'doubleclick.net': 'doubleclick_instream_ad_status.js',
 };
 
+// redirect.url takes a full URL (unlike redirect.extensionPath, which only
+// accepts a bare relative path and rejects chrome.runtime.getURL()'s output —
+// see git history for that failure mode). use_dynamic_url on this resource's
+// manifest entry means getURL() resolves to a per-load-session random id
+// here, same as it would via extensionPath — just through the field that
+// actually accepts what getURL() returns.
 function _redirectAction(file) {
-  return { type: 'redirect', redirect: { extensionPath: `/web_accessible_resources/${file}` } };
+  return { type: 'redirect', redirect: { url: chrome.runtime.getURL(`/web_accessible_resources/${file}`) } };
 }
 
 // One invalid domain in requestDomains rejects the whole updateDynamicRules
@@ -367,8 +375,8 @@ function buildPatternRules(patterns, startId, resourceTypes, priority, redirectB
 }
 
 function buildDefaultRulesFromConfig(config) {
-  const adTypes = ['script', 'image', 'xmlhttprequest', 'sub_frame'];
-  const trackerTypes = ['script', 'image', 'xmlhttprequest', 'ping'];
+  const adTypes = ['script', 'image', 'xmlhttprequest', 'sub_frame', 'other'];
+  const trackerTypes = ['script', 'image', 'xmlhttprequest', 'ping', 'other'];
   // Both ads and trackers get the fake-success redirect — defeats
   // bait-request adblock/tracker-block detectors (image, script, and xhr/
   // beacon failures are all equally visible to page code checking for them).

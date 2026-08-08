@@ -1291,6 +1291,13 @@
       const tag = rule.decoy === 'obj' ? 'object' : 'iframe';
       const urlProp = rule.decoy === 'obj' ? 'data' : 'src';
       const decoyEl = document.createElement(tag);
+      // <iframe> only: empty sandbox="" blocks script execution (plus forms,
+      // popups, same-origin access...) inside whatever loads at the real
+      // target URL below, while the network request/markup load still
+      // happens — same "sandboxed, allow-scripts not set" behavior uBO
+      // relies on for its own popup decoys. <object> has no sandbox
+      // attribute, so that branch is unaffected.
+      if (tag === 'iframe') decoyEl.setAttribute('sandbox', '');
       decoyEl[urlProp] = callArgs[0] || '';
       decoyEl.style.cssText = 'height:1px;position:fixed;top:-1px;width:1px;pointer-events:none';
       document.body.appendChild(decoyEl);
@@ -3151,6 +3158,21 @@
   // response-filter rules arrive anyway (very first visit, rules update),
   // the registration functions install the wrappers lazily mid-session.
   var _RULES_CACHE_KEY = '__' + _qkv1Token + '_rules_cache__';
+  // _qkv1Token is a fresh random value baked in by every single build (see
+  // substitute_qkv1_token in _build-lib.sh) — each rebuild/update therefore
+  // mints a brand new cache key, and nothing before this ever cleaned up the
+  // PREVIOUS token's entry, so every prior build/version's cache accumulates
+  // forever in this origin's localStorage. One-time sweep at boot: any key
+  // matching our fixed __..._rules_cache__ wrapper that isn't this build's
+  // own key is necessarily a stale one from a past token — safe to drop.
+  try {
+    for (var _si = localStorage.length - 1; _si >= 0; _si--) {
+      var _sk = localStorage.key(_si);
+      if (_sk && _sk !== _RULES_CACHE_KEY && _sk.slice(0, 2) === '__' && _sk.slice(-14) === '_rules_cache__') {
+        localStorage.removeItem(_sk);
+      }
+    }
+  } catch (e) {}
   var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response'];
 
   function _saveScriptletRulesCache(rules) {
