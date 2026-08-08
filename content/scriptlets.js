@@ -367,6 +367,64 @@
     return safe;
   }
 
+  // Lazily builds the shared toString-spoofing WeakMap so ANY proxy
+  // registered in proxyApplyFn.proxies — not just ones installed through
+  // proxyApplyFn itself — reports the wrapped native's real toString output.
+  // Must be idempotent and callable before proxyApplyFn ever runs, since
+  // fetch proxies can install earlier (document_start) than the first
+  // XHR-based proxyApplyFn call.
+  function _ensureProxyApplyFnState() {
+    if (proxyApplyFn.CtorContext !== undefined) return;
+    proxyApplyFn.ctorContexts = [];
+    proxyApplyFn.CtorContext = class {
+      constructor(...args) { this.init(...args); }
+      init(callFn, callArgs) { this.callFn = callFn; this.callArgs = callArgs; return this; }
+      reflect() {
+        const r = Reflect.construct(this.callFn, this.callArgs);
+        this.callFn = this.callArgs = this.private = undefined;
+        proxyApplyFn.ctorContexts.push(this);
+        return r;
+      }
+      static factory(...args) {
+        return proxyApplyFn.ctorContexts.length !== 0
+          ? proxyApplyFn.ctorContexts.pop().init(...args)
+          : new proxyApplyFn.CtorContext(...args);
+      }
+    };
+    proxyApplyFn.applyContexts = [];
+    proxyApplyFn.ApplyContext = class {
+      constructor(...args) { this.init(...args); }
+      init(callFn, thisArg, callArgs) { this.callFn = callFn; this.thisArg = thisArg; this.callArgs = callArgs; return this; }
+      reflect() {
+        const r = Reflect.apply(this.callFn, this.thisArg, this.callArgs);
+        this.callFn = this.thisArg = this.callArgs = this.private = undefined;
+        proxyApplyFn.applyContexts.push(this);
+        return r;
+      }
+      static factory(...args) {
+        return proxyApplyFn.applyContexts.length !== 0
+          ? proxyApplyFn.applyContexts.pop().init(...args)
+          : new proxyApplyFn.ApplyContext(...args);
+      }
+    };
+    proxyApplyFn.isCtor = new Map();
+    proxyApplyFn.proxies = new WeakMap();
+    proxyApplyFn.nativeToString = Function.prototype.toString;
+    const proxiedToString = new Proxy(Function.prototype.toString, {
+      apply(target, thisArg) {
+        let proxied = thisArg;
+        for (;;) {
+          const f = proxyApplyFn.proxies.get(proxied);
+          if (f === undefined) break;
+          proxied = f;
+        }
+        return proxyApplyFn.nativeToString.call(proxied);
+      }
+    });
+    proxyApplyFn.proxies.set(proxiedToString, proxyApplyFn.nativeToString);
+    Function.prototype.toString = proxiedToString;
+  }
+
   function proxyApplyFn(target, handler) {
     var context = globalThis;
     var prop = target;
@@ -379,56 +437,7 @@
     }
     var fn = context[prop];
     if (typeof fn !== 'function') return;
-    if (proxyApplyFn.CtorContext === undefined) {
-      proxyApplyFn.ctorContexts = [];
-      proxyApplyFn.CtorContext = class {
-        constructor(...args) { this.init(...args); }
-        init(callFn, callArgs) { this.callFn = callFn; this.callArgs = callArgs; return this; }
-        reflect() {
-          const r = Reflect.construct(this.callFn, this.callArgs);
-          this.callFn = this.callArgs = this.private = undefined;
-          proxyApplyFn.ctorContexts.push(this);
-          return r;
-        }
-        static factory(...args) {
-          return proxyApplyFn.ctorContexts.length !== 0
-            ? proxyApplyFn.ctorContexts.pop().init(...args)
-            : new proxyApplyFn.CtorContext(...args);
-        }
-      };
-      proxyApplyFn.applyContexts = [];
-      proxyApplyFn.ApplyContext = class {
-        constructor(...args) { this.init(...args); }
-        init(callFn, thisArg, callArgs) { this.callFn = callFn; this.thisArg = thisArg; this.callArgs = callArgs; return this; }
-        reflect() {
-          const r = Reflect.apply(this.callFn, this.thisArg, this.callArgs);
-          this.callFn = this.thisArg = this.callArgs = this.private = undefined;
-          proxyApplyFn.applyContexts.push(this);
-          return r;
-        }
-        static factory(...args) {
-          return proxyApplyFn.applyContexts.length !== 0
-            ? proxyApplyFn.applyContexts.pop().init(...args)
-            : new proxyApplyFn.ApplyContext(...args);
-        }
-      };
-      proxyApplyFn.isCtor = new Map();
-      proxyApplyFn.proxies = new WeakMap();
-      proxyApplyFn.nativeToString = Function.prototype.toString;
-      const proxiedToString = new Proxy(Function.prototype.toString, {
-        apply(target, thisArg) {
-          let proxied = thisArg;
-          for (;;) {
-            const f = proxyApplyFn.proxies.get(proxied);
-            if (f === undefined) break;
-            proxied = f;
-          }
-          return proxyApplyFn.nativeToString.call(proxied);
-        }
-      });
-      proxyApplyFn.proxies.set(proxiedToString, proxyApplyFn.nativeToString);
-      Function.prototype.toString = proxiedToString;
-    }
+    _ensureProxyApplyFnState();
     if (proxyApplyFn.isCtor.has(target) === false) {
       proxyApplyFn.isCtor.set(target, fn.prototype?.constructor === fn);
     }
@@ -979,7 +988,11 @@
         }).catch(() => responseBefore);
       }).catch(() => fetchPromise);
     };
-    self.fetch = new Proxy(self.fetch, { apply: applyHandler });
+    _ensureProxyApplyFnState();
+    const nativeFetch = self.fetch;
+    const proxiedFetch = new Proxy(nativeFetch, { apply: applyHandler });
+    proxyApplyFn.proxies.set(proxiedFetch, nativeFetch);
+    self.fetch = proxiedFetch;
   }
 
   function jsonPruneFetchResponse(rawPrunePaths, rawNeedlePaths) {
@@ -2718,7 +2731,11 @@
         }).catch(function () { return responseBefore; });
       }).catch(function () { return fetchPromise; });
     };
-    self.fetch = new Proxy(self.fetch, { apply: applyHandler });
+    _ensureProxyApplyFnState();
+    var nativeFetch = self.fetch;
+    var proxiedFetch = new Proxy(nativeFetch, { apply: applyHandler });
+    proxyApplyFn.proxies.set(proxiedFetch, nativeFetch);
+    self.fetch = proxiedFetch;
   }
   function trustedReplaceFetchResponse(pattern, replacement, propsToMatch) {
     if (!pattern) return;
