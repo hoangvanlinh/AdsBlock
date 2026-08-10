@@ -121,22 +121,28 @@
 
     function lock(obj, key) {
       var current = value;
-      var odesc, prevGetter, prevSetter;
+      var odesc, prevGetter, prevSetter, origVal;
       try { odesc = Object.getOwnPropertyDescriptor(obj, key); } catch (e) {}
       if (odesc) {
-        try { obj[key] = current; } catch (e) {}
         if (typeof odesc.get === 'function') prevGetter = odesc.get;
         if (typeof odesc.set === 'function') prevSetter = odesc.set;
+        // Capture the real value BEFORE priming/redefining below — reading
+        // obj[key] from inside the getter we're about to install would
+        // just call that same getter again (infinite recursion, actually
+        // hit live: "Maximum call stack size exceeded"). origVal is a
+        // plain snapshot var instead, never re-reads the property itself.
+        try { origVal = obj[key]; } catch (e) {}
+        try { obj[key] = current; } catch (e) {}
       }
       try {
         Object.defineProperty(obj, key, {
           get: function () {
             if (prevGetter) { try { prevGetter(); } catch (e) {} }
-            return _scriptletsEnabled ? current : obj[key];
+            return _scriptletsEnabled ? current : origVal;
           },
           set: function (v) {
             if (prevSetter) { try { prevSetter(v); } catch (e) {} }
-            if (!_scriptletsEnabled) return;
+            if (!_scriptletsEnabled) { origVal = v; return; }
             if (mustAbort(v)) current = v;
           },
           configurable: false, enumerable: true
@@ -2631,6 +2637,158 @@
       .forEach(hookInsertMethod);
   }
 
+  // ── ssapUnplayableRetry (TRUSTED) ───────────────────────────────────
+  // YouTube's "ad blockers violate the Terms of Service" wall shows up as
+  // playabilityStatus.errorScreen.enforcementMessageViewModel, identified
+  // via the internal (locale-independent) command name
+  // 'openAdAllowlistInstructionCommand' — an older format
+  // (playerErrorMessageRenderer/playerInterstitialRenderer, identified by
+  // a support-article URL) is also checked as a fallback. It's decided
+  // per-request from signals in the /player request body (see
+  // trusted_edit_request's clientScreen/params/lactMilliseconds/
+  // adPlaybackContext spoofs), so retrying the SAME video under a
+  // different spoofed identity — cycling through `tokens`, encoded into
+  // ytcfg's userAgent so the request-body editor above can see which
+  // spoof is currently active — can get past it.
+  // Runs directly as a page script instead of going through
+  // trustedReplaceScriptText: it only needs `movie_player`/`ytcfg.data_`,
+  // both of which already exist on youtube.com, so there's no real
+  // YouTube script to find-and-replace here.
+  function ssapUnplayableRetry(tokens) {
+    console.log('[qkv1-ssap2] init', tokens); // TEMP debug — remove once root-caused
+    // typeof-guard (not just ?.): ytInitialData is a bare global YouTube's
+    // own inline script declares — referencing the identifier at all before
+    // that script has run throws ReferenceError regardless of ?., since
+    // optional chaining only guards against null/undefined VALUES, not an
+    // entirely unbound variable NAME. This was throwing on every single
+    // run (caught silently by the dispatcher's try/catch) — the actual
+    // reason ssapUnplayableRetry never did anything all session.
+    if (
+      (typeof ytInitialData !== 'undefined' && ytInitialData?.topbar?.desktopTopbarRenderer?.logo?.topbarLogoRenderer?.iconImage?.iconType === 'YOUTUBE_PREMIUM_LOGO') ||
+      location.href.startsWith('https://www.youtube.com/tv#/') ||
+      location.href.startsWith('https://www.youtube.com/embed/')
+    ) { console.log('[qkv1-ssap2] skip: premium/tv/embed'); return; }
+
+    // Read lazily (not right here) — rules apply as soon as they arrive,
+    // which can race ahead of YouTube's own inline script that defines
+    // ytcfg. By the time setToken is actually called (from check(), gated
+    // behind _onHtmlEl below) ytcfg is reliably present.
+    var baseUserAgent = null;
+    var setToken = function (token) {
+      if (baseUserAgent === null) baseUserAgent = ytcfg?.data_?.INNERTUBE_CONTEXT?.client?.userAgent || '';
+      ytcfg.data_.INNERTUBE_CONTEXT.client.userAgent = token
+        ? baseUserAgent.replace?.(/(Mozilla\/5\.0 \([^)]+)/, '$1; ' + token)
+        : baseUserAgent;
+    };
+    var remaining = tokens;
+    var readyToReload = false;
+    // Guards against burning through every token in one burst: the
+    // MutationObserver below fires check() many times per second, and
+    // loadVideoById() doesn't update getPlayerResponse() synchronously — the
+    // OLD (already-handled) errorScreen is still what's read on the next
+    // several calls, before the new request resolves. A plain cooldown
+    // (not a content-equality check) guards this: YouTube's feedbackToken/
+    // trackingParams turned out NOT to be unique per response — a fresh
+    // rejection can read back byte-identical to the previous one, which
+    // made an earlier content-diff version of this guard permanently stop
+    // retrying after the first attempt.
+    var RETRY_COOLDOWN_MS = 1500;
+    var lastAttemptAt = 0;
+
+    var _earlyReturnLogCount = 0;
+    function check() {
+      var player = document.getElementById('movie_player');
+      if (!player || !window.location.href.includes('/watch?')) {
+        if (_earlyReturnLogCount < 5) { _earlyReturnLogCount++; console.log('[qkv1-ssap2] early-return', { hasPlayer: !!player, href: window.location.href, inIframe: window.top !== window.self }); } // TEMP debug — capped, not sampled
+        remaining = tokens; return;
+      }
+      var response = player.getPlayerResponse?.();
+      var progress = player.getProgressState?.();
+      var stats = player.getStatsForNerds?.();
+      var stillPlaying = (progress && progress.duration > 0 && (progress.loaded < progress.duration || progress.duration - progress.current > 1)) || response?.videoDetails?.isLive;
+      var videoId = response?.videoDetails?.videoId;
+      var startSeconds = response?.playerConfig?.playbackStartConfig?.startSeconds ?? 0;
+      var isBuffering = player.getPlayerStateObject?.()?.isBuffering;
+      var errorScreen = response?.playabilityStatus?.errorScreen;
+      var errorScreenText = JSON.stringify(errorScreen) || '';
+      var oldStyleText = JSON.stringify(
+        errorScreen?.playerErrorMessageRenderer?.subreason?.runs ||
+        errorScreen?.playerInterstitialRenderer?.content?.interstitialViewModel?.description?.commandRuns
+      ) || '';
+      var isAdblockWall =
+        errorScreenText.includes('openAdAllowlistInstructionCommand') ||
+        (oldStyleText.includes('WEB_PAGE_TYPE_UNKNOWN') && oldStyleText.includes('https://support.google.com/youtube/answer/3037019'));
+      console.log('[qkv1-ssap2] check', { status: response?.playabilityStatus?.status, isAdblockWall: isAdblockWall, errorScreenLen: errorScreenText.length, remaining: remaining.slice() }); // TEMP debug — remove once root-caused
+      // isAdblockWall is checked BEFORE the stillPlaying gate on purpose —
+      // getProgressState() reports no real progress while the wall is up
+      // (nothing is loading), so gating this on stillPlaying meant the wall
+      // could never be detected in the first place. stillPlaying still
+      // gates the buffering-stall heuristic below, where it's meaningful.
+      if (isAdblockWall) {
+        if (Date.now() - lastAttemptAt < RETRY_COOLDOWN_MS) return;
+        lastAttemptAt = Date.now();
+        // Pick BEFORE slicing — remaining[0] is the token about to be
+        // tried, not one already tried and rejected.
+        var nextToken = remaining.length > 0 ? remaining[0] : '';
+        remaining = remaining.slice(1);
+        setToken(nextToken);
+        readyToReload = false;
+        player.loadVideoById(videoId, startSeconds);
+        return;
+      }
+      if (!stillPlaying) return;
+      if (stats?.debug_info?.startsWith?.('SSAP, AD')) return; // real ad slot — nothing to retry
+      if (remaining.length === 0) {
+        readyToReload = false;
+        setToken('');
+      } else if (isBuffering && stats?.buffer_health_seconds === '0.00 s' && stats?.resolution === '0x0' && readyToReload) {
+        setToken(remaining[0]);
+        readyToReload = false;
+        player.loadVideoById(videoId, startSeconds);
+      }
+    }
+
+    // _onHtmlEl (not a 'DOMContentLoaded' listener): rules apply
+    // asynchronously, well after that event has already fired on a real
+    // page load, so a listener registered here would simply never run.
+    _onHtmlEl(function () {
+      check();
+      new MutationObserver(check).observe(document, { childList: true, subtree: true });
+    });
+
+    // A stalled buffer plus a "snackbar" notification is the other tell
+    // that the currently-spoofed identity got flagged mid-playback —
+    // advance to the next token and mark ready to reload on the next
+    // check() pass (driven by the MutationObserver above).
+    window.Map.prototype.has = new Proxy(window.Map.prototype.has, {
+      apply: function (target, thisArg, args) {
+        if (args?.[0] === 'onSnackbarMessage' && !readyToReload) {
+          var player = document.getElementById('movie_player');
+          if (player) {
+            var stats = player.getStatsForNerds?.();
+            var isBuffering = player.getPlayerStateObject?.()?.isBuffering;
+            var trackingUrl = player.getPlayerResponse?.()?.playbackTracking?.videostatsPlaybackUrl?.baseUrl;
+            if (isBuffering && stats?.buffer_health_seconds === '0.00 s' && stats?.resolution === '0x0' && remaining.length > 0) {
+              if (trackingUrl?.includes?.('reloadxhr')) remaining = remaining.slice(1);
+              readyToReload = true;
+            }
+          }
+        }
+        return Reflect.apply(target, thisArg, args);
+      }
+    });
+
+    // Silences YouTube's own anomaly-detection callback so it can't react
+    // to the reload/spoof cycle above.
+    window.Promise.prototype.then = new Proxy(window.Promise.prototype.then, {
+      apply: function (target, thisArg, args) {
+        var cb = args[0];
+        if (typeof cb === 'function' && cb.toString().includes('onAbnormalityDetected')) args[0] = function () {};
+        return Reflect.apply(target, thisArg, args);
+      }
+    });
+  }
+
   // ── refreshDefuser ────────────────────────────────────────────────
   // Defuses <meta http-equiv="refresh"> redirects. delay: if given (any
   // non-empty value), stop navigation immediately; otherwise honor the
@@ -3022,6 +3180,19 @@
         trustedReplaceScriptText(a[0] || '', a[1] || '', a[2] || '', '');
       });
     });
+
+    // ── adblock_wall_retry — see ssapUnplayableRetry's header comment for
+    // why this runs directly instead of through trusted_replace_script_text.
+    // Value: pipe-separated userAgent tokens, tried in order (each one also
+    // needs a matching trusted_edit_request clause to actually change the
+    // outgoing /player request — a token with no such clause is a no-op
+    // spoof, but still gets the referer's #reloadxhr suffix for free).
+    var wallRetryTokens = rules.adblock_wall_retry || [];
+    if (wallRetryTokens.length) {
+      _wrapOnce('adblock_wall_retry', wallRetryTokens.join(','), function () {
+        try { ssapUnplayableRetry(wallRetryTokens.slice()); } catch (e) { console.error('[qkv1-ssap2] FATAL', e); } // TEMP debug — restore to catch(e){} once root-caused
+      });
+    }
 
     // ── json_prune — registry-based (replace semantics, like json_edit) ──
     // Value: "prunePaths[, needlePaths]" — each a space-separated path list.

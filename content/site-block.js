@@ -422,28 +422,41 @@ function observeShadowRoot(shadow){
   // The injected stylesheet does not pierce shadow roots, so direct_hide_selectors
   // still need JS matching here — using the pre-joined cached string (previously
   // this recomputed flattenSelectors on every mutation batch).
+  //
+  // That JS matching goes through schedule() (idle-batched), NOT run
+  // synchronously per mutation like an earlier version of this observer
+  // did — live-profiled (2026-08-10) as the actual cause of a "video
+  // takes a while to start" complaint: a call to `collectFast`+`scan()`
+  // (2-3 querySelectorAll passes each) on EVERY single shadow-DOM
+  // mutation, and YouTube's own player is built from many nested,
+  // heavily-churning shadow roots during startup — the main thread was
+  // getting blocked by querySelectorAll repeatedly at exactly that
+  // moment. scan() (called via schedule()) already does the same
+  // collectFast(root,_cachedDirectStr) as its first step, so nothing is
+  // lost — matches inside shadow DOM just get hidden a tick later
+  // instead of perfectly synchronously.
   var obs=new MutationObserver(function(muts){
     if(!_enabled||!_config)return;
     for(var i=0;i<muts.length;i++){
       for(var j=0;j<muts[i].addedNodes.length;j++){
         var node=muts[i].addedNodes[j];
         if(node.nodeType!==1)continue;
-        // Fast hide for direct_hide_selectors inside shadow root
-        if(_cachedDirectStr){
-          var found=collectFast(node,_cachedDirectStr);
-          for(var f=0;f<found.length;f++)hide(found[f]);
-        }
-        // Scan also runs full candidate check
-        scan(node);
-        // Recurse into nested shadow roots
+        schedule(node);
+        // Recurse into nested shadow roots — stays synchronous (cheap,
+        // no selector matching) so a newly-created shadow root's own
+        // mutations are never missed.
         if(node.shadowRoot)observeShadowRoot(node.shadowRoot);
       }
     }
   });
   obs.observe(shadow,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-label','slot','promoted','ad-type','placement']});
   _shadowObservers.set(shadow,obs);
-  // Scan what's already in this shadow root
-  scan(shadow);
+  // Scan what's already in this shadow root — deferred (see comment
+  // above): many shadow roots get discovered in quick succession during
+  // YouTube's initial player construction, and schedule() coalesces them
+  // into far fewer actual scan() passes than calling scan() synchronously
+  // here once per discovery would.
+  schedule(shadow);
   // Watch for nested shadow roots already present
   try{
     shadow.querySelectorAll('*').forEach(function(el){
@@ -491,7 +504,9 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   'trusted_prevent_fetch',
   // Wired 2026-07-31: request/response JSONPath editing + prune-on-assignment +
   // pre-insertion script rewriting (see _applyScriptletRules for value formats).
-  'trusted_edit_request','trusted_edit_response','json_prune_on_set','trusted_replace_script_text'];
+  'trusted_edit_request','trusted_edit_response','json_prune_on_set','trusted_replace_script_text',
+  // Wired 2026-08-10: direct-run YouTube ad-block-wall retry (see ssapUnplayableRetry).
+  'adblock_wall_retry'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;
@@ -529,8 +544,13 @@ function sync(cb){
   });}catch(e){}
 }
 
-// Merge two config objects: array fields are concatenated (deduped),
-// scalar fields from overlay override base.
+// Merge two config objects: a key the site section defines for itself
+// REPLACES the global value entirely — sites curate their own selector/
+// pattern lists deliberately, and appending the generic global list on
+// top just adds matching cost (querySelectorAll, JSONPath, etc.) for
+// patterns that realistically never occur on that site's DOM/traffic. A
+// key the site does NOT define still falls back to global as before.
+// Scalar fields from overlay override base unconditionally either way.
 function _mergeConfigs(base,overlay){
   var cfg={},key;
   for(key in base){
@@ -540,15 +560,7 @@ function _mergeConfigs(base,overlay){
   for(key in overlay){
     if(!Object.prototype.hasOwnProperty.call(overlay,key))continue;
     if(Array.isArray(overlay[key])&&overlay[key].length){
-      if(Array.isArray(cfg[key])){
-        // Concatenate, dedupe — preserves global selectors + adds site-specific ones
-        var seen=new Set(cfg[key]);
-        for(var i=0;i<overlay[key].length;i++){
-          if(!seen.has(overlay[key][i])){seen.add(overlay[key][i]);cfg[key].push(overlay[key][i]);}
-        }
-      } else {
-        cfg[key]=overlay[key].slice();
-      }
+      cfg[key]=overlay[key].slice();
     } else if(overlay[key]!==undefined&&!Array.isArray(overlay[key])){
       cfg[key]=overlay[key];
     }
