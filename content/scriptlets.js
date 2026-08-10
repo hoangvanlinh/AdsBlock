@@ -96,12 +96,49 @@
     var parts = _strSplit.call(chain, '.');
     var leaf  = parts.pop();
 
+    // Matches uBlock Origin's real set-constant.js trapProp (verified
+    // against gorhill/uBlock master, 2026-08-10): a permanent,
+    // configurable:false get/set accessor on the leaf — NOT the
+    // downgrade-to-plain-after-set variant this used to have. That variant
+    // was added on a theory that the accessor itself was a YouTube-wall
+    // tampering fingerprint; disproved same-day (uBO ships the exact
+    // pattern below and isn't detected — see
+    // youtube-adblock-wall-defineproperty-detection memory). Two
+    // uBO-derived robustness touches kept: chain to any pre-existing
+    // getter/setter instead of clobbering it, and a type-mismatch escape
+    // hatch (mustAbort) — if the page ever assigns a value of a
+    // fundamentally different type than what we're locking to, that's a
+    // sign our assumption about this field was wrong, so stop overriding
+    // rather than risk breaking the page.
+    var aborted = false;
+    function mustAbort(v) {
+      if (aborted) return true;
+      aborted = (v !== undefined && v !== null) &&
+        (value !== undefined && value !== null) &&
+        (typeof v !== typeof value);
+      return aborted;
+    }
+
     function lock(obj, key) {
-      var origVal = obj[key];
+      var current = value;
+      var odesc, prevGetter, prevSetter;
+      try { odesc = Object.getOwnPropertyDescriptor(obj, key); } catch (e) {}
+      if (odesc) {
+        try { obj[key] = current; } catch (e) {}
+        if (typeof odesc.get === 'function') prevGetter = odesc.get;
+        if (typeof odesc.set === 'function') prevSetter = odesc.set;
+      }
       try {
         Object.defineProperty(obj, key, {
-          get: function () { return _scriptletsEnabled ? value : origVal; },
-          set: function (v) { if (!_scriptletsEnabled) origVal = v; },
+          get: function () {
+            if (prevGetter) { try { prevGetter(); } catch (e) {} }
+            return _scriptletsEnabled ? current : obj[key];
+          },
+          set: function (v) {
+            if (prevSetter) { try { prevSetter(v); } catch (e) {} }
+            if (!_scriptletsEnabled) return;
+            if (mustAbort(v)) current = v;
+          },
           configurable: false, enumerable: true
         });
       } catch (e) { try { obj[key] = value; } catch (ee) {} }
@@ -145,6 +182,12 @@
     var parts = chain.split('.');
     var leaf  = parts.pop();
 
+    // Permanent configurable:false accessor, same as setConstant's lock()
+    // — see that function's comment for why (matches uBlock Origin's own
+    // set-constant.js; an earlier "downgrade to plain after first set"
+    // variant here was dropped since it only pruned the FIRST assignment,
+    // and the accessor-as-fingerprint theory it was defending against
+    // didn't hold up anyway.
     function lock(obj, key) {
       var held = obj[key];
       Object.defineProperty(obj, key, {
