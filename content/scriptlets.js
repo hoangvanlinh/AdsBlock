@@ -2655,7 +2655,6 @@
   // both of which already exist on youtube.com, so there's no real
   // YouTube script to find-and-replace here.
   function ssapUnplayableRetry(tokens) {
-    console.log('[qkv1-ssap2] init', tokens); // TEMP debug — remove once root-caused
     // typeof-guard (not just ?.): ytInitialData is a bare global YouTube's
     // own inline script declares — referencing the identifier at all before
     // that script has run throws ReferenceError regardless of ?., since
@@ -2667,14 +2666,19 @@
       (typeof ytInitialData !== 'undefined' && ytInitialData?.topbar?.desktopTopbarRenderer?.logo?.topbarLogoRenderer?.iconImage?.iconType === 'YOUTUBE_PREMIUM_LOGO') ||
       location.href.startsWith('https://www.youtube.com/tv#/') ||
       location.href.startsWith('https://www.youtube.com/embed/')
-    ) { console.log('[qkv1-ssap2] skip: premium/tv/embed'); return; }
+    ) return; // Premium/TV/embed surfaces never show this wall.
 
     // Read lazily (not right here) — rules apply as soon as they arrive,
     // which can race ahead of YouTube's own inline script that defines
     // ytcfg. By the time setToken is actually called (from check(), gated
     // behind _onHtmlEl below) ytcfg is reliably present.
     var baseUserAgent = null;
+    // Tracks whichever token setToken was last called with — lets check()
+    // tell "this request is currently spoofed" apart from "this is the
+    // real, unspoofed request" (see the safety-net check below).
+    var currentToken = '';
     var setToken = function (token) {
+      currentToken = token || '';
       if (baseUserAgent === null) baseUserAgent = ytcfg?.data_?.INNERTUBE_CONTEXT?.client?.userAgent || '';
       ytcfg.data_.INNERTUBE_CONTEXT.client.userAgent = token
         ? baseUserAgent.replace?.(/(Mozilla\/5\.0 \([^)]+)/, '$1; ' + token)
@@ -2695,13 +2699,24 @@
     var RETRY_COOLDOWN_MS = 1500;
     var lastAttemptAt = 0;
 
-    var _earlyReturnLogCount = 0;
+    // Shared by both "wall detected" and the safety-net below: give up on
+    // the current token and either move to the next one, or — once
+    // they're exhausted — settle on the real, unspoofed identity.
+    function advanceToken(player, videoId, startSeconds) {
+      if (Date.now() - lastAttemptAt < RETRY_COOLDOWN_MS) return;
+      lastAttemptAt = Date.now();
+      // Pick BEFORE slicing — remaining[0] is the token about to be
+      // tried, not one already tried and rejected.
+      var nextToken = remaining.length > 0 ? remaining[0] : '';
+      remaining = remaining.slice(1);
+      setToken(nextToken);
+      readyToReload = false;
+      player.loadVideoById(videoId, startSeconds);
+    }
+
     function check() {
       var player = document.getElementById('movie_player');
-      if (!player || !window.location.href.includes('/watch?')) {
-        if (_earlyReturnLogCount < 5) { _earlyReturnLogCount++; console.log('[qkv1-ssap2] early-return', { hasPlayer: !!player, href: window.location.href, inIframe: window.top !== window.self }); } // TEMP debug — capped, not sampled
-        remaining = tokens; return;
-      }
+      if (!player || !window.location.href.includes('/watch?')) { remaining = tokens; return; }
       var response = player.getPlayerResponse?.();
       var progress = player.getProgressState?.();
       var stats = player.getStatsForNerds?.();
@@ -2709,6 +2724,7 @@
       var videoId = response?.videoDetails?.videoId;
       var startSeconds = response?.playerConfig?.playbackStartConfig?.startSeconds ?? 0;
       var isBuffering = player.getPlayerStateObject?.()?.isBuffering;
+      var status = response?.playabilityStatus?.status;
       var errorScreen = response?.playabilityStatus?.errorScreen;
       var errorScreenText = JSON.stringify(errorScreen) || '';
       var oldStyleText = JSON.stringify(
@@ -2718,24 +2734,23 @@
       var isAdblockWall =
         errorScreenText.includes('openAdAllowlistInstructionCommand') ||
         (oldStyleText.includes('WEB_PAGE_TYPE_UNKNOWN') && oldStyleText.includes('https://support.google.com/youtube/answer/3037019'));
-      console.log('[qkv1-ssap2] check', { status: response?.playabilityStatus?.status, isAdblockWall: isAdblockWall, errorScreenLen: errorScreenText.length, remaining: remaining.slice() }); // TEMP debug — remove once root-caused
       // isAdblockWall is checked BEFORE the stillPlaying gate on purpose —
       // getProgressState() reports no real progress while the wall is up
       // (nothing is loading), so gating this on stillPlaying meant the wall
       // could never be detected in the first place. stillPlaying still
       // gates the buffering-stall heuristic below, where it's meaningful.
-      if (isAdblockWall) {
-        if (Date.now() - lastAttemptAt < RETRY_COOLDOWN_MS) return;
-        lastAttemptAt = Date.now();
-        // Pick BEFORE slicing — remaining[0] is the token about to be
-        // tried, not one already tried and rejected.
-        var nextToken = remaining.length > 0 ? remaining[0] : '';
-        remaining = remaining.slice(1);
-        setToken(nextToken);
-        readyToReload = false;
-        player.loadVideoById(videoId, startSeconds);
-        return;
-      }
+      if (isAdblockWall) { advanceToken(player, videoId, startSeconds); return; }
+      // Safety net: a spoofed identity can itself cause a real, unrelated
+      // playback failure for some videos (confirmed live: clientScreen:
+      // "CHANNEL" tripping a genuine "content isn't available" on a video
+      // that plays fine unspoofed) — not the ad-block wall, so isAdblockWall
+      // above is false, but still an error, and only while OUR spoof is
+      // active (currentToken set). Treat it the same as a rejected token —
+      // move on rather than get stuck on a failure we caused ourselves.
+      // Once currentToken is back to '' (real identity), whatever status
+      // shows is genuine and this must NOT re-trigger, or it would loop
+      // forever on a real "video unavailable".
+      if (currentToken && status && status !== 'OK') { advanceToken(player, videoId, startSeconds); return; }
       if (!stillPlaying) return;
       if (stats?.debug_info?.startsWith?.('SSAP, AD')) return; // real ad slot — nothing to retry
       if (remaining.length === 0) {
@@ -3190,7 +3205,7 @@
     var wallRetryTokens = rules.adblock_wall_retry || [];
     if (wallRetryTokens.length) {
       _wrapOnce('adblock_wall_retry', wallRetryTokens.join(','), function () {
-        try { ssapUnplayableRetry(wallRetryTokens.slice()); } catch (e) { console.error('[qkv1-ssap2] FATAL', e); } // TEMP debug — restore to catch(e){} once root-caused
+        try { ssapUnplayableRetry(wallRetryTokens.slice()); } catch (e) {}
       });
     }
 
