@@ -837,14 +837,26 @@ function sendRules(rules) {
   };
   documentStub.getElementById = (id) => (id === 'movie_player' ? movieStub : null);
 
-  sendRules({ adblock_wall_retry: ['tokenA'] });
+  // Two tokens: advanceToken slices BEFORE picking (matches uBO's real
+  // serverContract — see its own comment), so the first-ever attempt
+  // already skips straight to the 2nd token, not the 1st. A single-token
+  // pool would never get a token set at all under this ordering; gitAdblock's
+  // real production ladder always has 5, so this just needs ≥2 to exercise
+  // "a token gets set" at all.
+  sendRules({ adblock_wall_retry: ['tokenA', 'tokenB'] });
   check('adblock_wall_retry: visibilityState spoofed to "visible" once the wall triggers a retry token',
     documentStub.visibilityState === 'visible', documentStub.visibilityState);
 
-  // Wall clears and the (single-token) retry pool is exhausted — the next
-  // check() pass, driven by the MutationObserver ssapUnplayableRetry
-  // installed on itself, must fall through to setToken('') and restore.
+  // remaining is now ['tokenB'] — one wall-detected cycle short of
+  // exhausted. Past the retry cooldown, trigger it once more so the pool
+  // empties out (mirrors the real ladder, which always starts with >1
+  // token in production).
   const wallRetryObserver = MutationObserverStub.instances[MutationObserverStub.instances.length - 1];
+  await new Promise(r => setTimeout(r, 1600));
+  wallRetryObserver.cb();
+
+  // Wall clears and the retry pool is now exhausted — the next check() pass
+  // must fall through to setToken('') and restore.
   movieState.hasWall = false;
   movieState.status = 'OK';
   movieState.loaded = 100; movieState.current = 50; // duration(100) - current(50) > 1 → stillPlaying
