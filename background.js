@@ -295,12 +295,21 @@ const SPECIFIC_SCRIPT_REDIRECTS = {
   'doubleclick.net': 'doubleclick_instream_ad_status.js',
 };
 
-// redirect.url takes a full URL (unlike redirect.extensionPath, which only
-// accepts a bare relative path and rejects chrome.runtime.getURL()'s output —
-// see git history for that failure mode). use_dynamic_url on this resource's
-// manifest entry means getURL() resolves to a per-load-session random id
-// here, same as it would via extensionPath — just through the field that
-// actually accepts what getURL() returns.
+// redirect.url (a fully-resolved chrome.runtime.getURL() call, baked in at
+// rule-BUILD time), NOT redirect.extensionPath (a bare relative path Chrome
+// resolves against the extension's REAL STATIC id at request-match time —
+// confirmed live via DevTools + a purpose-built leak scanner, see
+// [[self-inflicted-fingerprint-markers]]'s 2026-08-07 entries: extensionPath
+// does NOT honor this resource's use_dynamic_url:true manifest entry at
+// all, it always resolves to the permanent id, which a page can read
+// straight off response.url on any redirected request with zero DevTools
+// needed — a strictly worse leak than what dynamic ids exist to prevent).
+// chrome.runtime.getURL() correctly returns the dynamic per-session id;
+// applyNetworkRules() (called from both onInstalled and onStartup) rebuilds
+// every dynamic rule fresh each time it runs, so a freshly-reloaded
+// extension always re-bakes a current id. DO NOT "fix" 307/SecurityError
+// noop.txt failures by switching this back to extensionPath — that trades
+// a staleness bug for a strictly worse, already-diagnosed static-id leak.
 function _redirectAction(file) {
   return { type: 'redirect', redirect: { url: chrome.runtime.getURL(`/web_accessible_resources/${file}`) } };
 }
