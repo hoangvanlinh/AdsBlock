@@ -517,7 +517,15 @@ function _dispatchScriptletRules(cfg){
     }
   }
   if(hasAny){
-    try{window.dispatchEvent(new CustomEvent('__'+_QKV1_TOKEN+'_rules__',{detail:rules}));_scriptletRulesActive=true;}catch(e){}
+    // Firefox Xray-wraps objects an isolated-world content script hands to the
+    // page: the MAIN-world scriptlets.js listener would see `rules` as opaque
+    // (every key reads undefined), so set_constant/json_prune_* never apply
+    // and e.g. YouTube pre-roll ads play unblocked. cloneInto() clones the
+    // object into the page's own compartment so it reads normally there.
+    // Chrome has no Xray vision and no cloneInto global, so this is a no-op there.
+    var detail=rules;
+    try{if(typeof cloneInto==='function')detail=cloneInto(rules,window);}catch(e){}
+    try{window.dispatchEvent(new CustomEvent('__'+_QKV1_TOKEN+'_rules__',{detail:detail}));_scriptletRulesActive=true;}catch(e){}
   }
 }
 
