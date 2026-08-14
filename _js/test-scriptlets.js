@@ -35,13 +35,22 @@ const documentStub = {
   },
   body: { appendChild() {} },
   documentElement: {},
+  getElementById() { return null; }, // overridden per-test where movie_player is needed
 };
 
 class FakeXHR {
+  constructor() { this.readyState = 4; this._fakeHeaders = {}; }
   open(method, url) { this._url = url; }
   send(body) { this._sentBody = body; }
   get response() { return this._fakeResponse; }
   get responseText() { return typeof this._fakeResponse === 'string' ? this._fakeResponse : ''; }
+  getResponseHeader(name) {
+    const key = Object.keys(this._fakeHeaders).find(k => k.toLowerCase() === String(name).toLowerCase());
+    return key ? this._fakeHeaders[key] : null;
+  }
+  getAllResponseHeaders() {
+    return Object.entries(this._fakeHeaders).map(([k, v]) => `${k}: ${v}`).join('\r\n') + (Object.keys(this._fakeHeaders).length ? '\r\n' : '');
+  }
 }
 
 class NodeStub {}
@@ -57,8 +66,22 @@ ElementStub.prototype.insertAdjacentElement = function (position, el) { (this._c
 ElementStub.prototype.append = function (...nodes) { (this._children = this._children || []).push(...nodes); };
 class HTMLElementStub extends ElementStub {}
 class EventTargetStub {}
-class MutationObserverStub { observe() {} disconnect() {} }
+// Records every instance so tests can fire a specific observer's callback
+// manually (ssapUnplayableRetry drives its whole retry loop off one).
+class MutationObserverStub {
+  constructor(cb) { this.cb = cb; MutationObserverStub.instances.push(this); }
+  observe() {}
+  disconnect() {}
+}
+MutationObserverStub.instances = [];
 class HistoryStub { pushState() {} replaceState() {} }
+// Document.prototype.visibilityState — real default 'hidden' so the
+// adblock_wall_retry spoof-to-'visible' test has something to prove.
+class DocumentClass {}
+Object.defineProperty(DocumentClass.prototype, 'visibilityState', {
+  get() { return 'hidden'; }, configurable: true, enumerable: true,
+});
+Object.setPrototypeOf(documentStub, DocumentClass.prototype);
 // Location stub with a real href accessor so blockAdNavigations can patch it.
 class LocationStub {}
 Object.defineProperty(LocationStub.prototype, 'href', {
@@ -78,6 +101,7 @@ const sandbox = {
   setTimeout, clearTimeout, setInterval, clearInterval, queueMicrotask,
   CustomEvent: CustomEventStub,
   Window: class Window {},
+  Document: DocumentClass,
   XMLHttpRequest: FakeXHR,
   Location: LocationStub,
   URL,
@@ -87,23 +111,51 @@ const sandbox = {
   navigator: { userAgent: 'test' },
   open: () => ({ close() {}, closed: false }), // window.open
 };
+// Minimal Headers stand-in — enough for the content-length-fixup code path
+// (has/get/set, constructible from a plain object or another FakeHeaders).
+class FakeHeaders {
+  constructor(init) {
+    this._map = {};
+    if (init instanceof FakeHeaders) {
+      for (const k in init._map) this._map[k] = init._map[k];
+    } else if (init && typeof init === 'object') {
+      for (const k in init) this._map[k.toLowerCase()] = String(init[k]);
+    }
+  }
+  has(name) { return Object.prototype.hasOwnProperty.call(this._map, String(name).toLowerCase()); }
+  get(name) { return this.has(name) ? this._map[String(name).toLowerCase()] : null; }
+  set(name, value) { this._map[String(name).toLowerCase()] = String(value); }
+}
+
 // Fake fetch/Response pair — enough surface for jsonPruneFetchResponse
-// (clone / json / Response.json static / status metadata).
+// (clone / json / Response.json static / status metadata, and — for the
+// content-length fixup — the `new Response(stringBody, init)` constructor
+// form alongside the pre-existing object form).
 class FakeResponse {
-  constructor(obj) {
-    this._obj = obj;
-    this.status = 200; this.statusText = 'OK'; this.headers = {};
+  constructor(objOrText, init) {
+    if (typeof objOrText === 'string') { this._obj = undefined; this._text = objOrText; }
+    else { this._obj = objOrText; this._text = undefined; }
+    this.status = (init && init.status) || 200;
+    this.statusText = (init && init.statusText) || 'OK';
+    this.headers = (init && init.headers) || new FakeHeaders();
     this.ok = true; this.redirected = false; this.type = 'basic'; this.url = '';
   }
-  clone() { return new FakeResponse(this._obj); }
-  async json() { return this._obj; }
+  clone() { return new FakeResponse(this._obj !== undefined ? this._obj : this._text, { status: this.status, statusText: this.statusText, headers: this.headers }); }
+  async json() { return this._obj !== undefined ? this._obj : JSON.parse(this._text); }
+  async text() { return this._text !== undefined ? this._text : JSON.stringify(this._obj); }
   static json(obj) { return new FakeResponse(obj); }
 }
 let fetchPayload = {};
+let fetchResponseHeaders = new FakeHeaders();
 let lastFetchArgs = null; // [url, init] as actually seen by the transport — proves a
                            // trusted_edit_request rewrite happened before Reflect.apply.
 sandbox.Response = FakeResponse;
-sandbox.fetch = async (url, init) => { lastFetchArgs = [url, init]; return new FakeResponse(fetchPayload); };
+sandbox.Headers = FakeHeaders;
+sandbox.Blob = Blob; // Node 18+ global — real byte-length semantics, no stub needed
+sandbox.fetch = async (url, init) => {
+  lastFetchArgs = [url, init];
+  return new FakeResponse(fetchPayload, { headers: fetchResponseHeaders });
+};
 
 // localStorage stub — the boot gate reads the rules cache saved on a
 // previous visit (key derived from TEST_TOKEN, same as the real
@@ -221,6 +273,23 @@ function sendRules(rules) {
   void xhrAd.response;
   check('re-read does not double count', blockedEvents.length === 1, String(blockedEvents.length));
 
+  // content-length must track the PRUNED body — set BEFORE reading .response
+  // to prove getResponseHeader forces its own computeResponse() pass rather
+  // than depending on .response having been read first (a page checking
+  // headers before the body is a realistic, earlier-timed detection order).
+  const xhrHdr = new XHR();
+  xhrHdr.open('GET', 'https://www.youtube.com/youtubei/v1/player');
+  xhrHdr._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }], videoDetails: { title: 'hdr' } });
+  xhrHdr._fakeHeaders['content-length'] = String(Buffer.byteLength(xhrHdr._fakeResponse));
+  const xhrHdrLen = Number(xhrHdr.getResponseHeader('content-length'));
+  const xhrHdrActual = Buffer.byteLength(xhrHdr.response);
+  check('json_prune_xhr: getResponseHeader content-length shrinks to match the pruned body',
+    xhrHdrLen === xhrHdrActual && xhrHdrLen < Buffer.byteLength(xhrHdr._fakeResponse),
+    `header=${xhrHdrLen} actual=${xhrHdrActual} original=${Buffer.byteLength(xhrHdr._fakeResponse)}`);
+  check('json_prune_xhr: getAllResponseHeaders content-length line also corrected',
+    xhrHdr.getAllResponseHeaders().includes(`content-length: ${xhrHdrActual}`),
+    xhrHdr.getAllResponseHeaders());
+
   // Clean response → nothing pruned → 0 events (the bug this fix addresses)
   blockedEvents = [];
   const xhrClean = new XHR();
@@ -230,6 +299,8 @@ function sendRules(rules) {
   check('clean response passes through unchanged', cleanResp === xhrClean._fakeResponse);
   check('clean response NOT counted (was +1 before fix)', blockedEvents.length === 0,
     String(blockedEvents.length));
+  check('json_prune_xhr: content-length NOT added when the original response never had one',
+    xhrClean.getResponseHeader('content-length') === null, String(xhrClean.getResponseHeader('content-length')));
 
   console.log('\n== 3. disable event stops blocking & counting ==');
   sandbox.dispatchEvent(new CustomEventStub(`__${TEST_TOKEN}_dis__`, {}));
@@ -423,6 +494,49 @@ function sendRules(rules) {
   check('trusted_edit_request: =repl() is idempotent when #reloadxhr already present',
     lactBody.referer === 'https://www.youtube.com/watch#reloadxhr', xhrLact._sentBody);
 
+  // -- adunit/instream/eafg: the 3 remaining adblock_wall_retry ladder rungs
+  // that used to be no-op spoofs (userAgent marker set, but no matching
+  // trusted_edit_request clause) — real uBO source (uAssets experimental.txt)
+  // confirms these 3 must actually mutate the /player request body the same
+  // way channel/lactmilli already did, or those rungs never had a chance of
+  // clearing the wall. Uses the FULL production rule set (site-rules.txt's
+  // real trusted_edit_request line) — not an isolated clause — so clause
+  // ordering/collisions with channel/lactmilli/referer are also covered.
+  sendRules({ trusted_edit_request: [
+    '[?..userAgent*="channel"]..client[?.clientName=="WEB"]+={"clientScreen":"CHANNEL"}, /player?',
+    '[?..userAgent*="lactmilli"]+={"params":"8AUB"}, /player?',
+    '[?..userAgent*="lactmilli"]..playbackContext.contentPlaybackContext.lactMilliseconds="${now}", /player?',
+    '[?..userAgent*="adunit"]..client[?.clientName=="WEB"]+={"clientScreen":"ADUNIT"}, /player?',
+    '[?..userAgent*="instream"]..playbackContext[?.contentPlaybackContext]+={"adPlaybackContext":{"adType":"AD_TYPE_INSTREAM"}}, /player?',
+    '[?..userAgent*="eafg"]+={"params":"eAFgAQ"}, /player?',
+    '[?..userAgent=/adunit|channel|lactmilli|instream|eafg/]..referer=repl({"regex":"(?:#reloadxhr)?$","replacement":"#reloadxhr"}), /player?',
+  ] });
+
+  const xhrAdunit = new XHR8c();
+  xhrAdunit.open('POST', 'https://www.youtube.com/youtubei/v1/player?x=1');
+  xhrAdunit.send(JSON.stringify({ context: { client: { clientName: 'WEB', userAgent: 'Mozilla/5.0 test; adunit' } } }));
+  const adunitBody = JSON.parse(xhrAdunit._sentBody);
+  check('trusted_edit_request: adunit marker sets clientScreen=ADUNIT (production rule set)',
+    adunitBody.context?.client?.clientScreen === 'ADUNIT', xhrAdunit._sentBody);
+
+  const xhrInstream = new XHR8c();
+  xhrInstream.open('POST', 'https://www.youtube.com/youtubei/v1/player?x=1');
+  xhrInstream.send(JSON.stringify({
+    context: { client: { clientName: 'WEB', userAgent: 'Mozilla/5.0 test; instream' } },
+    playbackContext: { contentPlaybackContext: {} },
+  }));
+  const instreamBody = JSON.parse(xhrInstream._sentBody);
+  check('trusted_edit_request: instream marker sets adPlaybackContext.adType=AD_TYPE_INSTREAM',
+    instreamBody.playbackContext?.adPlaybackContext?.adType === 'AD_TYPE_INSTREAM',
+    xhrInstream._sentBody);
+
+  const xhrEafg = new XHR8c();
+  xhrEafg.open('POST', 'https://www.youtube.com/youtubei/v1/player?x=1');
+  xhrEafg.send(JSON.stringify({ context: { client: { clientName: 'WEB', userAgent: 'Mozilla/5.0 test; eafg' } } }));
+  const eafgBody = JSON.parse(xhrEafg._sentBody);
+  check('trusted_edit_request: eafg marker merge-assigns params=eAFgAQ at root',
+    eafgBody.params === 'eAFgAQ', xhrEafg._sentBody);
+
   // -- json_prune_fetch: playerAds must be pruned from the LIVE /player fetch
   // response, not just via set_constant on the initial ytInitialPlayerResponse
   // global (found via live YouTube testing: set_constant only locks the SSR
@@ -441,6 +555,58 @@ function sendRules(rules) {
     playerAdsObj.playerAds === undefined, JSON.stringify(playerAdsObj));
   check('json_prune_fetch: adPlacements also pruned', playerAdsObj.adPlacements === undefined);
   check('json_prune_fetch: unrelated fields kept', playerAdsObj.videoDetails.title === 'real video');
+
+  // -- content-length must track the PRUNED body, not the original — a page
+  // comparing headers.get('content-length') against what it actually reads
+  // is a free, high-confidence tamper signal otherwise. Fresh payload object
+  // (objectPruneFn mutates in place — reusing the earlier test's fetchPayload
+  // would already be pruned from that prior call, making before/after equal). --
+  fetchPayload = {
+    playerAds: [{ playerLegacyDesktopWatchAdsRenderer: { showCompanion: true } }],
+    adPlacements: [{ foo: 1 }],
+    videoDetails: { title: 'real video' },
+  };
+  const unprunedText = JSON.stringify(fetchPayload);
+  fetchResponseHeaders = new FakeHeaders({ 'content-length': String(new Blob([unprunedText]).size) });
+  const prunedFetchResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
+  const prunedObj = await prunedFetchResp.json();
+  const declaredLen = Number(prunedFetchResp.headers.get('content-length'));
+  const actualLen = new Blob([JSON.stringify(prunedObj)]).size;
+  check('json_prune_fetch: content-length header shrinks to match the pruned body',
+    declaredLen === actualLen && declaredLen < new Blob([unprunedText]).size,
+    `declared=${declaredLen} actual=${actualLen} original=${new Blob([unprunedText]).size}`);
+  // Response NOT touched (no prune paths match) must NOT gain a content-length
+  // header it never had — adding one that wasn't there is its own tell.
+  fetchResponseHeaders = new FakeHeaders();
+  fetchPayload = { videoDetails: { title: 'clean, no ad fields' } };
+  const cleanFetchResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
+  await cleanFetchResp.json();
+  check('json_prune_fetch: content-length NOT added when the original response never had one',
+    !cleanFetchResp.headers.has('content-length'), String(cleanFetchResp.headers.get('content-length')));
+
+  // -- trusted_replace_fetch_response: a FULLY SEPARATE proxy layer from
+  // json_prune_fetch above (_installFetchReplaceProxy, not
+  // _installFetchResponseProxy) — the content-length/type/url/ok/redirected
+  // fix had to be ported there independently, same leak, different code path. --
+  sendRules({ trusted_replace_fetch_response: ['foo, ADXreplacementlonger'] });
+  fetchPayload = { marker: 'foo', title: 'clean' };
+  const replaceUnpruned = JSON.stringify(fetchPayload);
+  fetchResponseHeaders = new FakeHeaders({ 'content-length': String(new Blob([replaceUnpruned]).size) });
+  const replaceResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
+  const replaceText = await replaceResp.text();
+  check('trusted_replace_fetch_response: replacement actually applied',
+    replaceText.includes('ADXreplacementlonger') && !replaceText.includes('"foo"'), replaceText);
+  const replaceDeclaredLen = Number(replaceResp.headers.get('content-length'));
+  check('trusted_replace_fetch_response: content-length grows to match the (longer) replaced body',
+    replaceDeclaredLen === new Blob([replaceText]).size && replaceDeclaredLen > new Blob([replaceUnpruned]).size,
+    `declared=${replaceDeclaredLen} actual=${new Blob([replaceText]).size} original=${new Blob([replaceUnpruned]).size}`);
+
+  fetchResponseHeaders = new FakeHeaders();
+  fetchPayload = { marker: 'foo', title: 'no header case' };
+  const replaceNoHdrResp = await sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
+  await replaceNoHdrResp.text();
+  check('trusted_replace_fetch_response: content-length NOT added when the original response never had one',
+    !replaceNoHdrResp.headers.has('content-length'), String(replaceNoHdrResp.headers.get('content-length')));
 
   // -- json_prune_fetch: sendSsdaiMissingAdBreakReasons (found via live
   // YouTube testing at body.playerConfig.daiConfig.sendSsdaiMissingAdBreakReasons
@@ -612,6 +778,79 @@ function sendRules(rules) {
   parentEl.appendChild(complexScript);
   check('trusted_replace_script_text: replacement with internal commas stays intact',
     complexScript.textContent === complexReplacement, complexScript.textContent);
+
+  console.log('\n== 9. jspb_response_prune: protobuf/jspb player-response path (never touches fetch/XHR/JSON.parse) ==');
+  sendRules({ json_prune_fetch: ['adPlacements adSlots playerAds'], jspb_response_prune: ['1'] });
+
+  // jspbResponseCtor shape: resolve callback receives the already-decoded
+  // object directly — matched purely by the callback's OWN function name
+  // showing up in its toString() source, ad fields deleted in place.
+  function jspbResponseCtor(value) { return value; }
+  const jspbResult = await Promise.resolve({
+    responseContext: {}, adSlots: [{ ad: 1 }], playerAds: [{ ad: 2 }], videoDetails: { title: 'jspb' },
+  }).then(jspbResponseCtor);
+  check('jspb_response_prune: adSlots deleted from jspbResponseCtor result',
+    jspbResult.adSlots === undefined, JSON.stringify(jspbResult));
+  check('jspb_response_prune: playerAds deleted from jspbResponseCtor result',
+    jspbResult.playerAds === undefined, JSON.stringify(jspbResult));
+  check('jspb_response_prune: non-ad fields kept', jspbResult.videoDetails.title === 'jspb');
+
+  // '.next(' shape: resolve callback receives {value: <JSON text>, done} —
+  // the ad fields live inside the JSON TEXT, not the object itself. Matched
+  // by a literal ".next(" substring anywhere in the callback's toString()
+  // source (a comment here — real callers are TS/Babel __awaiter "fulfilled"
+  // steps whose body genuinely calls generator.next(value)).
+  function fulfilled(result) {
+    // marks this as a generator .next( continuation for the matcher
+    return result;
+  }
+  // "playerResponse" must appear literally in the JSON text — it's the
+  // hook's own gate (mirrors the reference's n.value.includes("playerResponse")),
+  // separate from the marker match on the callback's source above.
+  const nextPayload = JSON.stringify({ playerResponse: {}, adPlacements: [{ ad: 1 }], videoDetails: { title: 'next' } });
+  const nextResult = await Promise.resolve({ value: nextPayload, done: false }).then(fulfilled);
+  check('jspb_response_prune: adPlacements pruned from .next() value JSON text',
+    JSON.parse(nextResult.value).adPlacements === undefined, nextResult.value);
+  check('jspb_response_prune: non-ad fields kept in .next() value JSON text',
+    JSON.parse(nextResult.value).videoDetails.title === 'next', nextResult.value);
+
+  console.log('\n== 10. adblock_wall_retry: visibilityState spoofed while a retry token is active, restored once real ==');
+  check('document.visibilityState starts at the real (unspoofed) value',
+    documentStub.visibilityState === 'hidden', documentStub.visibilityState);
+
+  sandbox.ytcfg = { data_: { INNERTUBE_CONTEXT: { client: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' } } } };
+  locationStub._href = 'https://www.youtube.com/watch?v=abc123';
+  const movieState = { hasWall: true, status: 'ERROR', duration: 100, loaded: 0, current: 0 };
+  const movieStub = {
+    getPlayerResponse: () => ({
+      videoDetails: { videoId: 'abc123' },
+      playabilityStatus: {
+        status: movieState.status,
+        errorScreen: movieState.hasWall ? { openAdAllowlistInstructionCommand: {} } : undefined,
+      },
+      playerConfig: { playbackStartConfig: { startSeconds: 0 } },
+    }),
+    getProgressState: () => ({ duration: movieState.duration, loaded: movieState.loaded, current: movieState.current }),
+    getStatsForNerds: () => ({}),
+    getPlayerStateObject: () => ({ isBuffering: false }),
+    loadVideoById: () => {},
+  };
+  documentStub.getElementById = (id) => (id === 'movie_player' ? movieStub : null);
+
+  sendRules({ adblock_wall_retry: ['tokenA'] });
+  check('adblock_wall_retry: visibilityState spoofed to "visible" once the wall triggers a retry token',
+    documentStub.visibilityState === 'visible', documentStub.visibilityState);
+
+  // Wall clears and the (single-token) retry pool is exhausted — the next
+  // check() pass, driven by the MutationObserver ssapUnplayableRetry
+  // installed on itself, must fall through to setToken('') and restore.
+  const wallRetryObserver = MutationObserverStub.instances[MutationObserverStub.instances.length - 1];
+  movieState.hasWall = false;
+  movieState.status = 'OK';
+  movieState.loaded = 100; movieState.current = 50; // duration(100) - current(50) > 1 → stillPlaying
+  wallRetryObserver.cb();
+  check('adblock_wall_retry: visibilityState restored to real once retry tokens are exhausted and playback is healthy',
+    documentStub.visibilityState === 'hidden', documentStub.visibilityState);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

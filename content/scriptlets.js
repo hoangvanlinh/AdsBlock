@@ -474,6 +474,18 @@
     Function.prototype.toString = proxiedToString;
   }
 
+  // Registers `wrapperFn` in the same toString-spoofing map proxyApplyFn
+  // uses, so Function.prototype.toString.call(wrapperFn) reports realFn's
+  // true native source — for call sites that can't go through proxyApplyFn's
+  // path-based Proxy install (e.g. replacing an accessor's setter function,
+  // where `context[prop] = proxiedTarget` would invoke the setter instead
+  // of replacing it).
+  function _spoofToString(realFn, wrapperFn) {
+    _ensureProxyApplyFnState();
+    proxyApplyFn.proxies.set(wrapperFn, realFn);
+    return wrapperFn;
+  }
+
   function proxyApplyFn(target, handler) {
     var context = globalThis;
     var prop = target;
@@ -1022,10 +1034,20 @@
             try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
           }
           if (!changed) return responseBefore;
-          const responseAfter = Response.json(objAfter, {
+          // Body length changed (pruned shorter) — content-length must follow it,
+          // or a page comparing headers.get('content-length') against the actual
+          // body it received gets a tamper-evident mismatch for free. Only touch
+          // the header if the original response actually sent one (chunked
+          // responses often don't) — adding one that wasn't there is its own tell.
+          const textAfter = safe.JSON_stringify(objAfter);
+          const fixedHeaders = new Headers(responseBefore.headers);
+          if (fixedHeaders.has('content-length')) {
+            fixedHeaders.set('content-length', String(new Blob([textAfter]).size));
+          }
+          const responseAfter = new Response(textAfter, {
             status: responseBefore.status,
             statusText: responseBefore.statusText,
-            headers: responseBefore.headers,
+            headers: fixedHeaders,
           });
           safe.Object_defineProperties(responseAfter, {
             ok: { value: responseBefore.ok },
@@ -1176,6 +1198,51 @@
     const descText = Object.getOwnPropertyDescriptor(proto, 'responseText');
     const nativeOpen = proto.open;
     const nativeSend = proto.send;
+
+    // content-length must track whatever computeResponse() actually hands
+    // back (pruned/edited/replaced), or a page comparing
+    // getResponseHeader('content-length') against the .response/.responseText
+    // it reads gets a tamper-evident length mismatch for free — the body
+    // getters below are the only thing this proxy patches by default, so
+    // without this the header alone is a complete, un-gated leak. Runs
+    // BEFORE the install-strategy branch below (prototype-override vs
+    // subclass) so it applies to both — getResponseHeader/getAllResponseHeaders
+    // are never shadowed by either strategy, only inherited via the
+    // prototype chain either way. Only recomputes once the body is fully
+    // available (readyState 4); a check at an earlier readyState (rare —
+    // content-length is a header, technically readable from readyState 2,
+    // but the pruned body isn't computable before it exists) still sees the
+    // real, unpruned value.
+    const computedByteLength = function (value) {
+      if (typeof value !== 'string') {
+        try { value = safe.JSON_stringify(value); } catch (e) { return undefined; }
+      }
+      try { return new Blob([value]).size; } catch (e) { return value.length; }
+    };
+    proxyApplyFn('XMLHttpRequest.prototype.getResponseHeader', function (context) {
+      // Must read callArgs/thisArg BEFORE reflect() — reflect() nulls both
+      // out as part of its context-pooling cleanup (see ApplyContext.reflect).
+      const name = context.callArgs[0];
+      const xhr = context.thisArg;
+      const real = context.reflect();
+      // real === null means the original response never sent this header at
+      // all — must NOT synthesize one that wasn't there (same rule the fetch
+      // path follows: adding a header is its own tell).
+      if (!_scriptletsEnabled || real === null) return real;
+      if (typeof name !== 'string' || name.toLowerCase() !== 'content-length') return real;
+      if (xhr.readyState < 4 || !descResp) return real;
+      const len = computedByteLength(computeResponse(xhr, descResp.get.call(xhr)));
+      return len === undefined ? real : String(len);
+    });
+    proxyApplyFn('XMLHttpRequest.prototype.getAllResponseHeaders', function (context) {
+      const xhr = context.thisArg;
+      const real = context.reflect();
+      if (!_scriptletsEnabled || typeof real !== 'string') return real;
+      if (xhr.readyState < 4 || !descResp) return real;
+      const len = computedByteLength(computeResponse(xhr, descResp.get.call(xhr)));
+      if (len === undefined) return real;
+      return real.replace(/^content-length:.*$/im, 'content-length: ' + len);
+    });
 
     // Fix #1: override the getters DIRECTLY on XMLHttpRequest.prototype
     // instead of subclassing. Defeats a common anti-adblock bypass: grabbing
@@ -1505,17 +1572,20 @@
     var _PUSH_LIMIT = 20;
     var _BUCKET_MS = 1000;
     function _wrapHistoryFn(name) {
-      var orig = History.prototype[name];
-      if (typeof orig !== 'function') return;
-      History.prototype[name] = function () {
+      // Runs on every page (not gated by site-rules matching) — must go
+      // through proxyApplyFn so Function.prototype.toString.call(...) on
+      // the patched method still reports the real native source instead of
+      // this wrapper's own code, which would otherwise be a universal,
+      // unconditional "this browser has an interfering extension" signal.
+      proxyApplyFn('History.prototype.' + name, function (context) {
         var now = Date.now();
         if (now - _pushBucketTs >= _BUCKET_MS) {
           _pushBucket = 0;
           _pushBucketTs = now;
         }
         if (++_pushBucket > _PUSH_LIMIT) return;
-        return orig.apply(this, arguments);
-      };
+        return context.reflect();
+      });
     }
     _wrapHistoryFn('pushState');
     _wrapHistoryFn('replaceState');
@@ -1574,15 +1644,22 @@
       return false;
     }
 
+    // All three patches below run on every page (not gated by site-rules
+    // matching), so — same reasoning as rateLimitHistory — they must not
+    // leave a plain, readable wrapper sitting on a native prototype method:
+    // Function.prototype.toString.call(...) on it would otherwise be a
+    // universal, unconditional detection signal regardless of whether this
+    // page ever triggers any ad-navigation block.
     try {
       var _hrefDesc = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
       if (_hrefDesc && _hrefDesc.set) {
+        var _hrefSetter = _spoofToString(_hrefDesc.set, function (url) {
+          if (!_isSafeNavigation(url)) return;
+          _hrefDesc.set.call(this, url);
+        });
         Object.defineProperty(Location.prototype, 'href', {
           get: _hrefDesc.get,
-          set: function (url) {
-            if (!_isSafeNavigation(url)) return;
-            _hrefDesc.set.call(this, url);
-          },
+          set: _hrefSetter,
           configurable: true,
           enumerable: _hrefDesc.enumerable
         });
@@ -1590,12 +1667,10 @@
     } catch (e) {}
 
     function _wrapLocationFn(name) {
-      var orig = Location.prototype[name];
-      if (typeof orig !== 'function') return;
-      Location.prototype[name] = function (url) {
-        if (!_isSafeNavigation(url)) return;
-        return orig.apply(this, arguments);
-      };
+      proxyApplyFn('Location.prototype.' + name, function (context) {
+        if (!_isSafeNavigation(context.callArgs[0])) return;
+        return context.reflect();
+      });
     }
     _wrapLocationFn('assign');
     _wrapLocationFn('replace');
@@ -1603,14 +1678,13 @@
     // window.open(url, '_self'/'_top'/'_parent') navigates the current tab
     // without touching the Location accessors patched above — the remaining
     // same-tab escape hatch for popstate/back-button redirect scripts.
-    try {
-      var _origOpen = window.open;
-      window.open = function (url, target) {
-        var t = target == null ? '' : String(target).toLowerCase();
-        if ((t === '_self' || t === '_top' || t === '_parent') && !_isSafeNavigation(url)) return null;
-        return _origOpen.apply(this, arguments);
-      };
-    } catch (e) {}
+    proxyApplyFn('open', function (context) {
+      var url = context.callArgs[0];
+      var target = context.callArgs[1];
+      var t = target == null ? '' : String(target).toLowerCase();
+      if ((t === '_self' || t === '_top' || t === '_parent') && !_isSafeNavigation(url)) return null;
+      return context.reflect();
+    });
   }
 
   // ── preventSetTimeout ────────────────────────────────────────────
@@ -2409,6 +2483,61 @@
     _installSjsGuard();
   }
 
+  // ── jspbPlayerResponsePrune (TRUSTED) ────────────────────────────────
+  // YouTube's newer protobuf/jspb-decoded player-response path never
+  // touches fetch()/XHR/JSON.parse at all — the object is built straight
+  // from the binary response body inside an internal Promise chain, so
+  // json_prune_fetch/json_prune_xhr (which only see those three surfaces)
+  // are structurally blind to it. There's no URL to match against either:
+  // by the time this runs, the network request itself is long gone —
+  // the only handle left is a marker string inside the resolve callback's
+  // OWN source, which is why this has to go through Promise.prototype.then
+  // instead of a transport-level proxy.
+  // Two call shapes have been observed for this path (a competing
+  // extension's bypass code targets both):
+  //  - an async-iterator '.next(' continuation, where the resolved value
+  //    is {value: <JSON text containing "playerResponse">, ...} — value is
+  //    parsed, pruned, and re-serialized in place.
+  //  - a direct 'jspbResponseCtor' constructor callback, whose resolved
+  //    value already has responseContext — pruned in place, no JSON step.
+  // Reuses whatever paths are already configured for json_prune_fetch
+  // (_fetchPruneRules) instead of hardcoding a second ad-field list here,
+  // so site-rules.txt stays the single source of truth for what "ad
+  // field" means on a given site.
+  function installJspbPlayerResponsePrune() {
+    function pruneInPlace(obj) {
+      if (!obj || typeof obj !== 'object') return;
+      for (var i = 0; i < _fetchPruneRules.length; i++) {
+        try { objectPruneFn(obj, _fetchPruneRules[i].prunePaths, _fetchPruneRules[i].needlePaths); } catch (e) {}
+      }
+    }
+    proxyApplyFn('Promise.prototype.then', function (context) {
+      var cb = context.callArgs[0];
+      var src = '';
+      if (typeof cb === 'function') {
+        try { src = cb.toString(); } catch (e) {}
+      }
+      if (src.indexOf('jspbResponseCtor') !== -1) {
+        context.callArgs[0] = _spoofToString(cb, function (value) {
+          if (value && value.responseContext) pruneInPlace(value);
+          return cb(value);
+        });
+      } else if (src.indexOf('.next(') !== -1) {
+        context.callArgs[0] = _spoofToString(cb, function (result) {
+          try {
+            if (result && typeof result.value === 'string' && result.value.indexOf('playerResponse') !== -1) {
+              var parsed = JSON.parse(result.value);
+              pruneInPlace(parsed);
+              result.value = JSON.stringify(parsed);
+            }
+          } catch (e) {}
+          return cb(result);
+        });
+      }
+      return context.reflect();
+    });
+  }
+
   function jsonEdit(jsonq) {
     const jsonp = JSONPath.create(jsonq || '');
     // Untrusted variant — value-assigning queries are rejected.
@@ -2677,8 +2806,32 @@
     // tell "this request is currently spoofed" apart from "this is the
     // real, unspoofed request" (see the safety-net check below).
     var currentToken = '';
+    // While a spoof token is active, also report the tab as visible —
+    // YouTube's own anti-adblock escalation does the same (confirmed in a
+    // competing extension's bypass code) alongside its request-shape
+    // spoofs, suggesting document.visibilityState feeds the same
+    // wall/anomaly heuristic this whole function is trying to get past.
+    // Shadowing an own accessor property on `document` (not touching
+    // Document.prototype) is reversible per-tab and never removed, only
+    // ever redefined — same idiom "restore" uses when going back to real.
+    var _visibilityDesc = null;
+    var _spoofVisible = function () {
+      if (_visibilityDesc) return;
+      try {
+        _visibilityDesc = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState');
+        if (!_visibilityDesc) return;
+        var getter = _spoofToString(_visibilityDesc.get, function () { return 'visible'; });
+        Object.defineProperty(document, 'visibilityState', { get: getter, configurable: true });
+      } catch (e) {}
+    };
+    var _restoreVisible = function () {
+      if (!_visibilityDesc) return;
+      try { Object.defineProperty(document, 'visibilityState', _visibilityDesc); } catch (e) {}
+      _visibilityDesc = null;
+    };
     var setToken = function (token) {
       currentToken = token || '';
+      if (currentToken) _spoofVisible(); else _restoreVisible();
       if (baseUserAgent === null) baseUserAgent = ytcfg?.data_?.INNERTUBE_CONTEXT?.client?.userAgent || '';
       ytcfg.data_.INNERTUBE_CONTEXT.client.userAgent = token
         ? baseUserAgent.replace?.(/(Mozilla\/5\.0 \([^)]+)/, '$1; ' + token)
@@ -2926,6 +3079,7 @@
   function _installFetchReplaceProxy() {
     if (_fetchReplaceProxyInstalled) return;
     _fetchReplaceProxyInstalled = true;
+    var safe = safeSelf();
     var applyHandler = function (target, thisArg, args) {
       var fetchPromise = Reflect.apply(target, thisArg, args);
       return fetchPromise.then(function (responseBefore) {
@@ -2950,7 +3104,31 @@
           }
           if (!changed) return responseBefore;
           try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
-          return new Response(textAfter, { status: responseBefore.status, statusText: responseBefore.statusText, headers: responseBefore.headers });
+          // Same 2 leaks _installFetchResponseProxy (json_prune_fetch) already
+          // closed, ported here since this is a fully separate proxy layer:
+          // (1) content-length must track the replaced text's actual byte
+          // length, only touched if the original response had one at all;
+          // (2) a bare `new Response(...)` defaults ok/redirected/type/url to
+          // values that don't match a real network response (type:'default'
+          // instead of 'cors', url:'' instead of the real one) — copying them
+          // from responseBefore is what makes the swap actually pass as the
+          // original response instead of an obviously JS-constructed one.
+          var fixedHeaders = new Headers(responseBefore.headers);
+          if (fixedHeaders.has('content-length')) {
+            fixedHeaders.set('content-length', String(new Blob([textAfter]).size));
+          }
+          var responseAfter = new Response(textAfter, {
+            status: responseBefore.status,
+            statusText: responseBefore.statusText,
+            headers: fixedHeaders,
+          });
+          safe.Object_defineProperties(responseAfter, {
+            ok: { value: responseBefore.ok },
+            redirected: { value: responseBefore.redirected },
+            type: { value: responseBefore.type },
+            url: { value: responseBefore.url },
+          });
+          return responseAfter;
         }).catch(function () { return responseBefore; });
       }).catch(function () { return fetchPromise; });
     };
@@ -3209,6 +3387,15 @@
       });
     }
 
+    // ── jspb_response_prune — flag-style, wrap-once (installs a permanent
+    // Promise.prototype.then hook; see installJspbPlayerResponsePrune's
+    // header comment for what it catches that json_prune_fetch/xhr can't).
+    if (_flagOn(rules.jspb_response_prune)) {
+      _wrapOnce('jspb_response_prune', '1', function () {
+        try { installJspbPlayerResponsePrune(); } catch (e) {}
+      });
+    }
+
     // ── json_prune — registry-based (replace semantics, like json_edit) ──
     // Value: "prunePaths[, needlePaths]" — each a space-separated path list.
     _eachRule(rules.json_prune, function (v) {
@@ -3402,7 +3589,7 @@
       }
     }
   } catch (e) {}
-  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response'];
+  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'trusted_replace_fetch_response', 'jspb_response_prune', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response'];
 
   function _saveScriptletRulesCache(rules) {
     var has = false;
