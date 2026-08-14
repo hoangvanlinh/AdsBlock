@@ -1889,7 +1889,15 @@
   }
 
   // ── JSONPath ─────────────────────────────────────────────────────
-  // JSONPath query engine. Required by json-edit.
+  // JSONPath query engine. Required by json-edit. Ported from uBO's real
+  // src/js/jsonpath.js (2026-08-13) — this was previously an independent
+  // reimplementation that diverged from upstream in ways that silently
+  // changed match results for some query shapes (no thrown errors anywhere
+  // upstream of this, so a mismatch here is invisible). Kept faithful to
+  // upstream rather than re-deriving, to avoid re-introducing that class of
+  // bug. NOT ported: the `{n,m};$`/`;$` quantifier step type (#QUANTIFIER) —
+  // grepped rule/site-rules.txt, nothing uses it; add it back from upstream
+  // jsonpath.js if a rule ever needs it.
   class JSONPath {
     static create(query) {
         const jsonp = new JSONPath();
@@ -1900,6 +1908,10 @@
         return (stringifier || JSON.stringify)(obj, ...args)
             .replace(/\//g, '\\/');
     }
+    static keys = Object.keys;
+    static entries = Object.entries;
+    static hasOwn = Object.hasOwn;
+    static Regex = RegExp;
     get value() {
         return this.#compiled && this.#compiled.rval;
     }
@@ -1912,14 +1924,17 @@
     }
     compile(query) {
         this.#compiled = undefined;
+        this.v2 = query.startsWith('v2:');
+        if ( this.v2 ) { query = query.slice(3); }
         const r = this.#compile(query, 0);
         if ( r === undefined ) { return; }
         if ( r.i !== query.length ) {
             let val;
             if ( query.startsWith('=', r.i) ) {
-                if ( /^=repl\(.+\)$/.test(query.slice(r.i)) ) {
-                    r.modify = 'repl';
-                    val = query.slice(r.i+6, -1);
+                const match = this.#reRval.exec(query.slice(r.i));
+                if ( match ) {
+                    r.modify = match[1];
+                    val = match[2];
                 } else {
                     val = query.slice(r.i+1);
                 }
@@ -1930,11 +1945,12 @@
             try { r.rval = JSON.parse(val); }
             catch { return; }
         }
+        r.v2 = this.v2;
         this.#compiled = r;
     }
     evaluate(root) {
         if ( this.valid === false ) { return []; }
-        this.#root = root;
+        this.#root = { '$': root };
         const paths = this.#evaluate(this.#compiled.steps, []);
         this.#root = null;
         return paths;
@@ -1948,6 +1964,7 @@
         if ( i === 0 ) { this.#root = null; return; }
         while ( i-- ) {
             const { obj, key } = this.#resolvePath(paths[i]);
+            if ( obj === undefined ) { continue; }
             if ( rval !== undefined ) {
                 this.#modifyVal(obj, key);
             } else if ( Array.isArray(obj) && typeof key === 'number' ) {
@@ -1975,8 +1992,9 @@
     #CHILDREN = 3;
     #DESCENDANTS = 4;
     #reUnquotedIdentifier = /^[A-Za-z_][\w]*|^\*/;
-    #reExpr = /^([!=^$*]=|[<>]=?)(.+?)\]/;
+    #reExpr = /^\s*([!=^$*]=|[<>]=?)\s*(.+?)\]/;
     #reIndice = /^-?\d+/;
+    #reRval = /^=([a-z]+)\((.+)\)$/;
     #root;
     #compiled;
     #compile(query, i) {
@@ -2015,19 +2033,21 @@
                 if ( mv === this.#UNDEFINED ) {
                     const step = steps[steps.length - 1];
                     if ( step === undefined ) { return; }
-                    i = this.#compileExpr(query, step, i);
+                    const j = this.#compileExpr(query, step, i);
+                    if ( j ) { i = j; }
                     break;
                 }
-                const s = this.#consumeUnquotedIdentifier(query, i);
-                if ( s === undefined ) { return; }
-                steps.push({ mv, k: s });
-                i += s.length;
+                const r = this.#consumeUnquotedIdentifier(query, i);
+                if ( r === undefined ) { return; }
+                steps.push({ mv, k: r.s });
+                i = r.i;
                 mv = this.#UNDEFINED;
                 continue;
             }
+            if ( mv === this.#CHILDREN ) { return; }
             if ( query.startsWith('[?', i) ) {
-                const not = query.charCodeAt(i+2) === 0x21 /* ! */;
-                const j = i + 2 + (not ? 1 : 0);
+                const not = query.charCodeAt(i+2) === 0x21 /* ! */ ? 1 : 0;
+                const j = i + 2 + not;
                 const r = this.#compile(query, j);
                 if ( r === undefined ) { return; }
                 if ( query.startsWith(']', r.i) === false ) { return; }
@@ -2064,12 +2084,20 @@
                 resultset = [ [ '$' ] ];
                 break;
             case this.#CURRENT:
+                if ( step.op ) {
+                    const { obj, key } = this.#resolvePath(pathin);
+                    if ( obj === undefined ) { return []; }
+                    const outcome = this.#evaluateExpr(step, obj, key);
+                    if ( outcome !== true ) { break; }
+                }
                 resultset = [ pathin ];
                 break;
             case this.#CHILDREN:
-            case this.#DESCENDANTS:
+            case this.#DESCENDANTS: {
+                if ( resultset.length === 0 ) { break; }
                 resultset = this.#getMatches(resultset, step);
                 break;
+            }
             default:
                 break;
             }
@@ -2080,60 +2108,71 @@
         const listout = [];
         for ( const pathin of listin ) {
             const { value: owner } = this.#resolvePath(pathin);
-            if ( step.k === '*' ) {
-                this.#getMatchesFromAll(pathin, step, owner, listout);
-            } else if ( step.k !== undefined ) {
-                this.#getMatchesFromKeys(pathin, step, owner, listout);
-            } else if ( step.steps ) {
+            if ( owner === undefined ) { continue; }
+            if ( step.steps ) {
                 this.#getMatchesFromExpr(pathin, step, owner, listout);
+                continue;
+            }
+            const iter = this.#expandKey(owner, step.k);
+            if ( iter ) {
+                for ( const k of iter ) {
+                    const outcome = this.#evaluateExpr(step, owner, k);
+                    if ( outcome !== true ) { continue; }
+                    listout.push([ ...pathin, k ]);
+                }
+            }
+            if ( step.mv !== this.#DESCENDANTS ) { continue; }
+            for ( const { obj, key, path } of this.#getDescendants(owner, true) ) {
+                const iter = this.#expandKey(obj[key], step.k);
+                if ( iter === undefined ) { continue; }
+                for ( const k of iter ) {
+                    const outcome = this.#evaluateExpr(step, obj[key], k);
+                    if ( outcome !== true ) { continue; }
+                    listout.push([ ...pathin, ...path, k ]);
+                }
             }
         }
         return listout;
     }
-    #getMatchesFromAll(pathin, step, owner, out) {
-        const recursive = step.mv === this.#DESCENDANTS;
-        for ( const { path } of this.#getDescendants(owner, recursive) ) {
-            out.push([ ...pathin, ...path ]);
-        }
-    }
-    #getMatchesFromKeys(pathin, step, owner, out) {
-        const kk = Array.isArray(step.k) ? step.k : [ step.k ];
-        for ( const k of kk ) {
-            const normalized = this.#evaluateExpr(step, owner, k);
-            if ( normalized === undefined ) { continue; }
-            out.push([ ...pathin, normalized ]);
-        }
-        if ( step.mv !== this.#DESCENDANTS ) { return; }
-        for ( const { obj, key, path } of this.#getDescendants(owner, true) ) {
-            for ( const k of kk ) {
-                const normalized = this.#evaluateExpr(step, obj[key], k);
-                if ( normalized === undefined ) { continue; }
-                out.push([ ...pathin, ...path, normalized ]);
+    #expandKey(owner, k) {
+        if ( typeof owner !== 'object' || owner === null ) { return; }
+        if ( Array.isArray(k) ) {
+            const out = [];
+            for ( const a of k ) {
+                const iter = this.#expandKey(owner, a);
+                if ( iter === undefined ) { continue; }
+                out.push(...iter);
             }
+            return out;
         }
+        if ( typeof k === 'number' ) {
+            if ( Array.isArray(owner) === false ) { return; }
+            return [ k >= 0 ? k : owner.length + k ];
+        }
+        if ( k === '*' ) {
+            if ( Array.isArray(owner) ) { return owner.keys(); }
+            return JSONPath.keys(owner);
+        }
+        if ( k instanceof JSONPath.Regex ) {
+            const out = [];
+            for ( const key of JSONPath.keys(owner) ) {
+                if ( k.test(key) === false ) { continue; }
+                out.push(key);
+            }
+            return out;
+        }
+        return [ k ];
     }
     #getMatchesFromExpr(pathin, step, owner, out) {
         const recursive = step.mv === this.#DESCENDANTS;
-        if ( Array.isArray(owner) === false ) {
-            const r = this.#evaluate(step.steps, pathin);
-            if ( r.length !== 0 ) { out.push(pathin); }
-            if ( recursive !== true ) { return; }
-        }
-        for ( const { obj, key, path } of this.#getDescendants(owner, recursive) ) {
-            if ( Array.isArray(obj[key]) ) { continue; }
-            const q = [ ...pathin, ...path ];
+        const v2 = this.#compiled.v2 || recursive || Array.isArray(owner);
+        for ( const { path } of this.#getDescendants(owner, recursive) ) {
+            const q = v2 ? [ ...pathin, ...path ] : pathin;
             const r = this.#evaluate(step.steps, q);
-            if ( r.length === 0 ) { continue; }
+            if ( Boolean(r && r.length) === false ) { continue; }
             out.push(q);
+            if ( v2 === false ) { break; }
         }
-    }
-    #normalizeKey(owner, key) {
-        if ( typeof key === 'number' ) {
-            if ( Array.isArray(owner) ) {
-                return key >= 0 ? key : owner.length + key;
-            }
-        }
-        return key;
     }
     #getDescendants(v, recursive) {
         const iterator = {
@@ -2162,7 +2201,7 @@
                     if ( Array.isArray(v) ) {
                         this.stack.push({ obj: v, keys: v.keys() });
                     } else if ( typeof v === 'object' && v !== null ) {
-                        this.stack.push({ obj: v, keys: Object.keys(v).values() });
+                        this.stack.push({ obj: v, keys: JSONPath.keys(v).values() });
                     }
                 }
                 return this;
@@ -2176,24 +2215,32 @@
         if ( Array.isArray(v) ) {
             iterator.stack.push({ obj: v, keys: v.keys() });
         } else if ( typeof v === 'object' && v !== null ) {
-            iterator.stack.push({ obj: v, keys: Object.keys(v).values() });
+            iterator.stack.push({ obj: v, keys: JSONPath.keys(v).values() });
         }
         return iterator;
     }
     #consumeIdentifier(query, i) {
         const keys = [];
-        for (;;) {
+        let needIdentifier = true;
+        while ( i < query.length ) {
             const c0 = query.charCodeAt(i);
             if ( c0 === 0x5D /* ] */ ) { break; }
-            if ( c0 === 0x2C /* , */ ) {
+            if ( c0 === 0x20 /* SPACE */ ) {
                 i += 1;
                 continue;
             }
-            if ( c0 === 0x27 /* ' */ ) {
-                const r = this.#untilChar(query, 0x27 /* ' */, i+1);
+            if ( c0 === 0x2C /* , */ ) {
+                if ( needIdentifier ) { return; }
+                i += 1;
+                needIdentifier = true;
+                continue;
+            }
+            if ( c0 === 0x22 /* " */ || c0 === 0x27 /* ' */ ) {
+                const r = this.#untilChar(query, c0, i+1);
                 if ( r === undefined ) { return; }
                 keys.push(r.s);
                 i = r.i;
+                needIdentifier = false;
                 continue;
             }
             if ( c0 === 0x2D /* - */ || c0 >= 0x30 && c0 <= 0x39 ) {
@@ -2202,19 +2249,29 @@
                 const indice = parseInt(query.slice(i), 10);
                 keys.push(indice);
                 i += match[0].length;
+                needIdentifier = false;
                 continue;
             }
-            const s = this.#consumeUnquotedIdentifier(query, i);
-            if ( s === undefined ) { return; }
-            keys.push(s);
-            i += s.length;
+            if ( this.v2 ) { return; }
+            const r = this.#consumeUnquotedIdentifier(query, i);
+            if ( r === undefined ) { return; }
+            keys.push(r.s);
+            i = r.i;
         }
+        if ( needIdentifier ) { return; }
         return { s: keys.length === 1 ? keys[0] : keys, i };
     }
     #consumeUnquotedIdentifier(query, i) {
+        if ( query.charCodeAt(i) === 0x2F /* / */ ) {
+            const r = this.#untilChar(query, 0x2F, i+1);
+            if ( r === undefined ) { return; }
+            let re;
+            try { re = new JSONPath.Regex(r.s); } catch { return; }
+            return { s: re, i: r.i };
+        }
         const match = this.#reUnquotedIdentifier.exec(query.slice(i));
         if ( match === null ) { return; }
-        return match[0];
+        return { s: match[0], i: i + match[0].length };
     }
     #untilChar(query, targetCharCode, i) {
         const len = query.length;
@@ -2246,22 +2303,27 @@
             if ( r === undefined ) { return i; }
             const match = /^[i]/.exec(query.slice(r.i));
             try {
-                step.rval = new RegExp(r.s, match && match[0] || undefined);
-            } catch {
-                return i;
-            }
+                step.rval = new JSONPath.Regex(r.s, match && match[0] || undefined);
+            } catch { return; }
             step.op = 're';
             if ( match ) { r.i += match[0].length; }
             return r.i;
         }
         const match = this.#reExpr.exec(query.slice(i));
-        if ( match === null ) { return i; }
-        try {
-            step.rval = JSON.parse(match[2]);
-            step.op = match[1];
-        } catch {
+        if ( match === null ) { return; }
+        const op = match[1], rval = match[2];
+        if ( rval.charCodeAt(0) === 0x27 /* ' */ ) {
+            const r = this.#untilChar(rval, 0x27, 1);
+            if ( r === undefined ) { return; }
+            step.rval = r.s;
+            step.op = op;
+        } else {
+            try {
+                step.rval = JSON.parse(rval);
+                step.op = op;
+            } catch { return; }
         }
-        return i + match[1].length + match[2].length;
+        return i + match[0].length - 1;
     }
     #resolvePath(path) {
         if ( path.length === 0 ) { return { value: this.#root }; }
@@ -2269,34 +2331,30 @@
         let obj = this.#root;
         for ( let i = 0, n = path.length-1; i < n; i++ ) {
             obj = obj[path[i]];
+            if ( obj instanceof Object === false ) { return {}; }
         }
         return { obj, key, value: obj[key] };
     }
-    #evaluateExpr(step, owner, key) {
+    #evaluateExpr(step, owner, k) {
         if ( owner === undefined || owner === null ) { return; }
-        if ( typeof key === 'number' ) {
-            if ( Array.isArray(owner) === false ) { return; }
-        }
-        const k = this.#normalizeKey(owner, key);
-        const hasOwn = Object.prototype.hasOwnProperty.call(owner, k);
+        const hasOwn = owner[k] !== undefined || JSONPath.hasOwn(owner, k);
         if ( step.op !== undefined && hasOwn === false ) { return; }
         const target = step.not !== true;
         const v = owner[k];
-        let outcome = false;
         switch ( step.op ) {
-        case '==': outcome = (v === step.rval) === target; break;
-        case '!=': outcome = (v !== step.rval) === target; break;
-        case  '<': outcome = (v < step.rval) === target; break;
-        case '<=': outcome = (v <= step.rval) === target; break;
-        case  '>': outcome = (v > step.rval) === target; break;
-        case '>=': outcome = (v >= step.rval) === target; break;
-        case '^=': outcome = `${v}`.startsWith(step.rval) === target; break;
-        case '$=': outcome = `${v}`.endsWith(step.rval) === target; break;
-        case '*=': outcome = `${v}`.includes(step.rval) === target; break;
-        case 're': outcome = step.rval.test(`${v}`); break;
-        default: outcome = hasOwn === target; break;
+        case '==': return (v === step.rval) === target;
+        case '!=': return (v !== step.rval) === target;
+        case  '<': return (v < step.rval) === target;
+        case '<=': return (v <= step.rval) === target;
+        case  '>': return (v > step.rval) === target;
+        case '>=': return (v >= step.rval) === target;
+        case '^=': return `${v}`.startsWith(step.rval) === target;
+        case '$=': return `${v}`.endsWith(step.rval) === target;
+        case '*=': return `${v}`.includes(step.rval) === target;
+        case 're': return step.rval.test(`${v}`);
+        default: break;
         }
-        if ( outcome ) { return k; }
+        return hasOwn === target;
     }
     #modifyVal(obj, key) {
         let { modify, rval } = this.#compiled;
@@ -2312,9 +2370,21 @@
             const lval = obj[key];
             if ( lval instanceof Object === false ) { return; }
             if ( Array.isArray(lval) ) { return; }
-            for ( const [ k, v ] of Object.entries(rval) ) {
+            for ( const [ k, v ] of JSONPath.entries(rval) ) {
                 lval[k] = v;
             }
+            break;
+        }
+        case 'call': {
+            const entries = rval.slice();
+            if ( entries.length < 2 ) { break; }
+            entries.forEach((a, i, aa) => {
+                if ( a === '${obj}' ) { aa[i] = obj; }
+                else if ( a === '${key}' ) { aa[i] = key; }
+                else if ( a === '${val}' ) { aa[i] = obj[key]; }
+            });
+            const instance = entries[0] ?? self;
+            instance[entries[1]](...entries.slice(2));
             break;
         }
         case 'repl': {
@@ -2324,8 +2394,8 @@
                 this.#compiled.re = null;
                 try {
                     this.#compiled.re = rval.regex !== undefined
-                        ? new RegExp(rval.regex, rval.flags)
-                        : new RegExp(rval.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                        ? new JSONPath.Regex(rval.regex, rval.flags)
+                        : new JSONPath.Regex(rval.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
                 } catch {
                 }
             }
@@ -2721,6 +2791,16 @@
   // so the page's own script text never executes unmodified. Only catches
   // JS-inserted nodes (appendChild/insertBefore/insertAdjacentElement/
   // append) — nodes written directly into parsed HTML are unaffected.
+  // 2026-08-14: tried adding a synchronous initial-scan pass over existing
+  // nodes (mirroring uBO's real replaceNodeTextFn) to also catch nodes
+  // already in parsed HTML — REVERTED same day. It rewrote a real YouTube
+  // script (976 chars, matched the `serverContract` pattern) that turned out
+  // to be load-bearing, not the intended target — most videos broke with
+  // "This content isn't available" immediately after. Whatever the real
+  // `serverContract` target is, it's apparently either not this node or not
+  // present as parsed HTML in a form safe to whole-node-overwrite this way.
+  // Do not re-add an initial-scan pass here without first confirming, on a
+  // live page, exactly which node matches and that overwriting it is safe.
   function trustedReplaceScriptText(nodeName, pattern, replacement, extra) {
     if (!nodeName) return;
     var reNode = _toRegex(nodeName);
@@ -2855,13 +2935,20 @@
     // Shared by both "wall detected" and the safety-net below: give up on
     // the current token and either move to the next one, or — once
     // they're exhausted — settle on the real, unspoofed identity.
-    function advanceToken(player, videoId, startSeconds) {
-      if (Date.now() - lastAttemptAt < RETRY_COOLDOWN_MS) return;
+    function advanceToken(player, videoId, startSeconds, why) {
+      if (Date.now() - lastAttemptAt < RETRY_COOLDOWN_MS) { console.warn('[qkv1-debug]', Date.now(), 'advanceToken SKIP(cooldown)', why); return; }
       lastAttemptAt = Date.now();
-      // Pick BEFORE slicing — remaining[0] is the token about to be
-      // tried, not one already tried and rejected.
-      var nextToken = remaining.length > 0 ? remaining[0] : '';
+      // Slice BEFORE picking — matches uBO's real serverContract (verified
+      // live 2026-08-14: uBO's own advance step does n=n.slice(1) THEN
+      // reads n[0], so its first-ever attempt already skips straight to
+      // the 2nd token). An earlier "pick before slicing" version here tried
+      // the 1st token (adunit) every single cycle first — live-observed on
+      // this account, adunit always fails and lactmilli (2nd) is what
+      // actually clears the wall, so that ordering wasted one full
+      // request/response round-trip (and the visible error-screen flash)
+      // on every retry cycle for nothing.
       remaining = remaining.slice(1);
+      var nextToken = remaining.length > 0 ? remaining[0] : '';
       setToken(nextToken);
       readyToReload = false;
       player.loadVideoById(videoId, startSeconds);
@@ -2892,7 +2979,10 @@
       // (nothing is loading), so gating this on stillPlaying meant the wall
       // could never be detected in the first place. stillPlaying still
       // gates the buffering-stall heuristic below, where it's meaningful.
-      if (isAdblockWall) { advanceToken(player, videoId, startSeconds); return; }
+      if (window.__qkv1dbg !== status + '|' + currentToken + '|' + isAdblockWall) {
+        window.__qkv1dbg = status + '|' + currentToken + '|' + isAdblockWall;
+      }
+      if (isAdblockWall) { advanceToken(player, videoId, startSeconds, 'isAdblockWall'); return; }
       // Safety net: a spoofed identity can itself cause a real, unrelated
       // playback failure for some videos (confirmed live: clientScreen:
       // "CHANNEL" tripping a genuine "content isn't available" on a video
@@ -2903,7 +2993,7 @@
       // Once currentToken is back to '' (real identity), whatever status
       // shows is genuine and this must NOT re-trigger, or it would loop
       // forever on a real "video unavailable".
-      if (currentToken && status && status !== 'OK') { advanceToken(player, videoId, startSeconds); return; }
+      if (currentToken && status && status !== 'OK') { advanceToken(player, videoId, startSeconds, 'safetyNet'); return; }
       if (!stillPlaying) return;
       if (stats?.debug_info?.startsWith?.('SSAP, AD')) return; // real ad slot — nothing to retry
       if (remaining.length === 0) {
