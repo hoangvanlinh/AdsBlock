@@ -501,6 +501,7 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   // Wired 2026-07: newly ported scriptlets.
   'remove_attr','remove_node_text','replace_node_text','refresh_defuser','set_cookie','remove_cookie',
   'set_local_storage_item','href_sanitizer','trusted_replace_fetch_response','trusted_replace_argument',
+  'trusted_replace_outbound_text',
   'trusted_prevent_fetch',
   // Wired 2026-07-31: request/response JSONPath editing + prune-on-assignment +
   // pre-insertion script rewriting (see _applyScriptletRules for value formats).
