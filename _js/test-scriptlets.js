@@ -864,6 +864,37 @@ function sendRules(rules) {
   check('adblock_wall_retry: visibilityState restored to real once retry tokens are exhausted and playback is healthy',
     documentStub.visibilityState === 'hidden', documentStub.visibilityState);
 
+  console.log('\n== 11. trusted_replace_outbound_text: unconditional JSON.stringify substring swap (2026-08-15, ported from Adblock for YouTube) ==');
+  sendRules({ trusted_replace_outbound_text: [
+    'JSON.stringify, "clientScreen":"WATCH", "clientScreen":"ADUNIT"',
+    'JSON.stringify, isWebNativeShareAvailable":true}}, isWebNativeShareAvailable":true},"clientScreen":"ADUNIT"}',
+  ] });
+  check('trusted_replace_outbound_text: existing clientScreen:WATCH swapped to ADUNIT',
+    sandbox.JSON.stringify({ clientScreen: 'WATCH', other: 1 }) === '{"clientScreen":"ADUNIT","other":1}',
+    sandbox.JSON.stringify({ clientScreen: 'WATCH', other: 1 }));
+  // Pattern needs 2 consecutive closing braces (nested object) — matches
+  // the real request shape (isWebNativeShareAvailable sits inside "client",
+  // itself inside the request root), not a flat one.
+  check('trusted_replace_outbound_text: fallback anchor inserts clientScreen when absent',
+    sandbox.JSON.stringify({ client: { isWebNativeShareAvailable: true } }) === '{"client":{"isWebNativeShareAvailable":true},"clientScreen":"ADUNIT"}',
+    sandbox.JSON.stringify({ client: { isWebNativeShareAvailable: true } }));
+  check('trusted_replace_outbound_text: unrelated JSON.stringify output left untouched',
+    sandbox.JSON.stringify({ unrelated: 'value' }) === '{"unrelated":"value"}',
+    sandbox.JSON.stringify({ unrelated: 'value' }));
+
+  console.log('\n== 12. prevent_settimeout: pattern + delay-range matching (2026-08-15, ported from Adblock for YouTube) ==');
+  sendRules({ prevent_settimeout: ['(),a,b), 5000'] });
+  // Third combination (matching delay, non-matching pattern) is skipped —
+  // it would need a real 5000ms wait to observe the callback firing; the
+  // block condition is a plain `&&` of the two independently-tested halves
+  // below, so this permutation isn't at real risk of a distinct bug.
+  let ranMatching = false, ranNonMatchingDelay = false;
+  sandbox.setTimeout(function matched() { /* (),a,b) */ ranMatching = true; }, 5000);
+  sandbox.setTimeout(function () { /* (),a,b) */ ranNonMatchingDelay = true; }, 10);
+  await new Promise(r => setTimeout(r, 50));
+  check('prevent_settimeout: pattern+delay both matching is blocked', ranMatching === false);
+  check('prevent_settimeout: matching pattern but non-matching delay still runs', ranNonMatchingDelay === true);
+
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error('HARNESS ERROR:', e); process.exit(2); });

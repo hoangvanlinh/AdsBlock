@@ -1687,12 +1687,46 @@
     });
   }
 
+  // ── delay-range matching (prevent_settimeout / prevent_setinterval) ──
+  // uBO's real prevent-setTimeout/prevent-setInterval support a 2nd "delay"
+  // argument: exact value, "min-max", "min-" (>=min), "-max" (<=max), each
+  // optionally prefixed with "!" to negate. Empty/absent delayRaw matches
+  // any delay (pattern-only behavior, same as before this was added).
+  function _parseDelayRange(delayRaw) {
+    var s = delayRaw || '';
+    var not = s.charAt(0) === '!';
+    if (not) s = s.slice(1);
+    var min, max;
+    if (s === '') {
+      // unbound — matches anything
+    } else {
+      var pos = s.indexOf('-');
+      if (pos !== 0) min = max = parseInt(s, 10) || 0;
+      if (pos !== -1) max = parseInt(s.slice(pos + 1), 10) || Number.MAX_SAFE_INTEGER;
+    }
+    return {
+      test: function (v) {
+        if (min === undefined && max === undefined) return true;
+        var n = Math.min(Math.max(Number(v) || 0, 0), Number.MAX_SAFE_INTEGER);
+        var r;
+        if (min === max) r = (min === undefined || n === min);
+        else if (min === undefined) r = n <= max;
+        else if (max === undefined) r = n >= min;
+        else r = n >= min && n <= max;
+        return not ? !r : r;
+      }
+    };
+  }
+
   // ── preventSetTimeout ────────────────────────────────────────────
-  // Proxies window.setTimeout; blocks callbacks whose source matches `pattern`.
-  // Empty pattern → block ALL setTimeout calls (use sparingly).
-  function preventSetTimeout(pattern) {
+  // Proxies window.setTimeout; blocks callbacks whose source matches
+  // `pattern` AND whose delay matches `delayRaw` (see _parseDelayRange —
+  // omit for "any delay"). Empty pattern → matches ALL callbacks (use
+  // sparingly, especially without a delay filter too).
+  function preventSetTimeout(pattern, delayRaw) {
     var rePattern = (pattern instanceof RegExp) ? pattern : _toRegex(pattern || '');
     var _matchAll = !pattern;
+    var delayRange = _parseDelayRange(delayRaw);
     // Report the block to stats only once per rule — pages retry blocked
     // timers in a loop, and each retry is the same block, not a new one.
     var _reported = false;
@@ -1704,7 +1738,7 @@
         if (typeof fn === 'function') fnStr = fn.toString();
         else if (typeof fn === 'string') fnStr = fn;
       } catch(e) {}
-      if (_matchAll || rePattern.test(fnStr)) {
+      if ((_matchAll || rePattern.test(fnStr)) && delayRange.test(context.callArgs[1])) {
         if (!_reported) {
           _reported = true;
           try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
@@ -1717,9 +1751,10 @@
 
   // ── preventSetInterval ───────────────────────────────────────────
   // Same as preventSetTimeout but for setInterval.
-  function preventSetInterval(pattern) {
+  function preventSetInterval(pattern, delayRaw) {
     var rePattern = (pattern instanceof RegExp) ? pattern : _toRegex(pattern || '');
     var _matchAll = !pattern;
+    var delayRange = _parseDelayRange(delayRaw);
     proxyApplyFn('setInterval', function(context) {
       if (!_scriptletsEnabled) return context.reflect();
       var fn = context.callArgs[0];
@@ -1728,7 +1763,7 @@
         if (typeof fn === 'function') fnStr = fn.toString();
         else if (typeof fn === 'string') fnStr = fn;
       } catch(e) {}
-      if (_matchAll || rePattern.test(fnStr)) return; // block
+      if ((_matchAll || rePattern.test(fnStr)) && delayRange.test(context.callArgs[1])) return; // block
       return context.reflect();
     });
   }
@@ -2935,8 +2970,8 @@
     // Shared by both "wall detected" and the safety-net below: give up on
     // the current token and either move to the next one, or — once
     // they're exhausted — settle on the real, unspoofed identity.
-    function advanceToken(player, videoId, startSeconds, why) {
-      if (Date.now() - lastAttemptAt < RETRY_COOLDOWN_MS) { console.warn('[qkv1-debug]', Date.now(), 'advanceToken SKIP(cooldown)', why); return; }
+    function advanceToken(player, videoId, startSeconds) {
+      if (Date.now() - lastAttemptAt < RETRY_COOLDOWN_MS) return;
       lastAttemptAt = Date.now();
       // Slice BEFORE picking — matches uBO's real serverContract (verified
       // live 2026-08-14: uBO's own advance step does n=n.slice(1) THEN
@@ -2979,10 +3014,7 @@
       // (nothing is loading), so gating this on stillPlaying meant the wall
       // could never be detected in the first place. stillPlaying still
       // gates the buffering-stall heuristic below, where it's meaningful.
-      if (window.__qkv1dbg !== status + '|' + currentToken + '|' + isAdblockWall) {
-        window.__qkv1dbg = status + '|' + currentToken + '|' + isAdblockWall;
-      }
-      if (isAdblockWall) { advanceToken(player, videoId, startSeconds, 'isAdblockWall'); return; }
+      if (isAdblockWall) { advanceToken(player, videoId, startSeconds); return; }
       // Safety net: a spoofed identity can itself cause a real, unrelated
       // playback failure for some videos (confirmed live: clientScreen:
       // "CHANNEL" tripping a genuine "content isn't available" on a video
@@ -2993,7 +3025,7 @@
       // Once currentToken is back to '' (real identity), whatever status
       // shows is genuine and this must NOT re-trigger, or it would loop
       // forever on a real "video unavailable".
-      if (currentToken && status && status !== 'OK') { advanceToken(player, videoId, startSeconds, 'safetyNet'); return; }
+      if (currentToken && status && status !== 'OK') { advanceToken(player, videoId, startSeconds); return; }
       if (!stillPlaying) return;
       if (stats?.debug_info?.startsWith?.('SSAP, AD')) return; // real ad slot — nothing to retry
       if (remaining.length === 0) {
@@ -3012,6 +3044,16 @@
     _onHtmlEl(function () {
       check();
       new MutationObserver(check).observe(document, { childList: true, subtree: true });
+      // 2026-08-15: MutationObserver alone left check() dependent entirely
+      // on incidental DOM churn elsewhere on the page. Live-observed: once
+      // the wall's error screen finishes rendering, the page goes static
+      // (nothing left to mutate) and check() simply stops being called —
+      // the retry ladder gets permanently stuck on whatever token it last
+      // tried (confirmed stuck on "instream" for 20+s, well past
+      // RETRY_COOLDOWN_MS, with getProgressState().duration staying 0 the
+      // whole time since playback never actually started). A periodic
+      // fallback guarantees forward progress independent of page activity.
+      setInterval(check, 1000);
     });
 
     // A stalled buffer plus a "snackbar" notification is the other tell
@@ -3266,6 +3308,24 @@
     });
   }
 
+  // ── trustedReplaceOutboundText ─────────────────────────────────────
+  // Regex-replaces a substring in whatever a named function RETURNS —
+  // e.g. propChain "JSON.stringify" rewrites every JSON.stringify() call
+  // site-wide, regardless of which request (if any) the result later feeds
+  // into. Unlike trusted_edit_request (JSONPath, scoped to matching request
+  // URLs via propsToMatch), this is a blunt, unconditional text substitution
+  // with no URL scoping at all — only use for a pattern specific enough
+  // that false positives elsewhere on the page are implausible.
+  function trustedReplaceOutboundText(propChain, rawPattern, rawReplacement) {
+    if (!propChain) return;
+    var rePattern = rawPattern ? _toRegex(rawPattern) : null;
+    proxyApplyFn(propChain, function (context) {
+      var before = context.reflect();
+      if (!_scriptletsEnabled || !rePattern || typeof before !== 'string') return before;
+      return before.replace(rePattern, rawReplacement || '');
+    });
+  }
+
   // ── trustedPreventFetch ──────────────────────────────────────────────
   // Same as preventFetch, but with trusted=true so an unrecognized
   // `directive` token is used verbatim as the literal response body
@@ -3385,11 +3445,24 @@
     var noWin   = rules.no_window_open_if         || [];
     var prevX   = rules.prevent_xhr               || [];
 
+    // json_prune_fetch/xhr = prunePaths[, needlePaths, propsToMatch, urlPattern]
+    // Comma-free values (the historical/common case, every non-YouTube
+    // section) hit jsonPruneFetchResponse/jsonPruneXhrResponse with a single
+    // arg exactly as before — fully backward compatible. A comma opts into
+    // URL-scoping the prune to matching requests only (both functions
+    // already supported this via getExtraArgs()/propsToMatch, just never
+    // had a caller that passed it).
     for (var i = 0; i < pruneF.length; i++) {
-      if (pruneF[i]) jsonPruneFetchResponse(pruneF[i]);
+      if (!pruneF[i]) continue;
+      var pfArgs = _argsOf(pruneF[i]);
+      if (pfArgs.length > 1) jsonPruneFetchResponse(pfArgs[0] || '', pfArgs[1] || '', 'propsToMatch', pfArgs[2] || '');
+      else jsonPruneFetchResponse(pruneF[i]);
     }
     for (var j = 0; j < pruneX.length; j++) {
-      if (pruneX[j]) jsonPruneXhrResponse(pruneX[j]);
+      if (!pruneX[j]) continue;
+      var pxArgs = _argsOf(pruneX[j]);
+      if (pxArgs.length > 1) jsonPruneXhrResponse(pxArgs[0] || '', pxArgs[1] || '', 'propsToMatch', pxArgs[2] || '');
+      else jsonPruneXhrResponse(pruneX[j]);
     }
     for (var k = 0; k < setC.length; k++) {
       var parts = setC[k].split(/\s+/);
@@ -3511,12 +3584,23 @@
         preventFetch(a[0] || '', a[1] || '', a[2] || '');
       });
     });
-    // prevent_settimeout / prevent_setinterval = pattern (whole value)
+    // prevent_settimeout / prevent_setinterval = pattern[, delay]
+    // _splitLast (not _argsOf): pattern is an arbitrary callback-source
+    // match that can itself contain commas (e.g. "(),a,b)"), delay is
+    // always the last, comma-free argument. No comma at all → delay=''
+    // (_parseDelayRange('') matches any delay) — identical to the old
+    // pattern-only behavior, so every existing rule keeps working unchanged.
     _eachRule(rules.prevent_settimeout, function (v) {
-      _wrapOnce('prevent_settimeout', v, function () { preventSetTimeout(v); });
+      _wrapOnce('prevent_settimeout', v, function () {
+        var a = _splitLast(v);
+        preventSetTimeout(a[0] || '', a[1] || '');
+      });
     });
     _eachRule(rules.prevent_setinterval, function (v) {
-      _wrapOnce('prevent_setinterval', v, function () { preventSetInterval(v); });
+      _wrapOnce('prevent_setinterval', v, function () {
+        var a = _splitLast(v);
+        preventSetInterval(a[0] || '', a[1] || '');
+      });
     });
     // prevent_raf = pattern ('!' prefix inverts)
     _eachRule(rules.prevent_raf, function (v) {
@@ -3637,6 +3721,17 @@
       _wrapOnce('trusted_replace_argument', v, function () {
         var a = _argsOf(v);
         trustedReplaceArgument(a[0] || '', a[1] || '', a.slice(2).join(', '));
+      });
+    });
+    // trusted_replace_outbound_text = propChain, pattern, replacement (TRUSTED)
+    // _splitFirst2 (not _argsOf): replacement is arbitrary text that can
+    // itself contain commas with no following space (e.g. JSON `},"k":`),
+    // which _argsOf's plain comma-split + ', '-rejoin would corrupt by
+    // inserting a space that was never there.
+    _eachRule(rules.trusted_replace_outbound_text, function (v) {
+      _wrapOnce('trusted_replace_outbound_text', v, function () {
+        var a = _splitFirst2(v);
+        trustedReplaceOutboundText(a[0] || '', a[1] || '', a[2] || '');
       });
     });
     // trusted_prevent_fetch = propsToMatch[, directive] (TRUSTED)
