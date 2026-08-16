@@ -16,6 +16,10 @@ const storageData = {};
 let dynamicRules = [];
 const messageListeners = [];
 const noopEvent = { addListener() {} };
+const tabsData = new Map();
+const removedTabIds = new Set();
+const tabsCreatedListeners = [];
+const storageChangeListeners = [];
 
 function validateDomain(d) {
   // Chrome requires canonicalized lowercase ASCII domains in requestDomains
@@ -32,9 +36,15 @@ const chromeStub = {
         for (const k of arr) if (k in storageData) out[k] = storageData[k];
         return out;
       },
-      async set(obj) { Object.assign(storageData, obj); },
+      async set(obj) {
+        const changes = {};
+        for (const k of Object.keys(obj)) changes[k] = { oldValue: storageData[k], newValue: obj[k] };
+        Object.assign(storageData, obj);
+        for (const fn of storageChangeListeners) fn(changes, 'local');
+      },
       async clear() { for (const k of Object.keys(storageData)) delete storageData[k]; },
     },
+    onChanged: { addListener(fn) { storageChangeListeners.push(fn); } },
   },
   declarativeNetRequest: {
     async getDynamicRules() { return dynamicRules.slice(); },
@@ -74,11 +84,16 @@ const chromeStub = {
   alarms: { create() {}, clear() {}, onAlarm: noopEvent },
   tabs: {
     async query() { return []; },
-    async get() { return null; },
+    async get(tabId) {
+      if (!tabsData.has(tabId)) throw new Error('No tab with id: ' + tabId);
+      return { id: tabId, ...tabsData.get(tabId) };
+    },
+    async remove(tabId) { removedTabIds.add(tabId); },
     sendMessage: async () => {},
     onActivated: noopEvent,
     onUpdated: noopEvent,
     onRemoved: noopEvent,
+    onCreated: { addListener(fn) { tabsCreatedListeners.push(fn); } },
   },
   scripting: {
     insertCSS: async () => {},
@@ -117,6 +132,7 @@ self.__test = {
   parseRuleText, buildRemoteMalwareRules,
   get DEFAULT_RULES() { return DEFAULT_RULES; },
   get MALWARE_RULES() { return MALWARE_RULES; },
+  get AD_MAINFRAME_RULES() { return AD_MAINFRAME_RULES; },
   get TRACKER_RULE_IDS() { return TRACKER_RULE_IDS; },
   get MALWARE_RULE_IDS() { return MALWARE_RULE_IDS; },
   get statsChain() { return _statsWriteChain; },
@@ -390,6 +406,75 @@ function check(name, cond, detail = '') {
   await T.statsChain;
   const { stats: stats6 } = await chromeStub.storage.local.get('stats');
   check('nothing counted for dead.com', !stats6['dead.com']);
+
+  console.log('\n== 15. Ad-network main_frame auto-detect (popunder/click-hijack) ==');
+  console.log(`  AD_MAINFRAME_RULES: ${T.AD_MAINFRAME_RULES.length} rule(s), ` +
+    `${T.AD_MAINFRAME_RULES.reduce((n, r) => n + r.condition.requestDomains.length, 0)} domains`);
+  check('ad main_frame rules built from config', T.AD_MAINFRAME_RULES.length > 0);
+  // mgid.com is a known ad/redirect network in ad_network_patterns and NOT
+  // duplicated in malware_network_domains — isolates this new rule set.
+  const adNav = wouldBlock(dynamicRules, 'https://mgid.com/some/redirect?x=1', 'main_frame');
+  check('main_frame nav to ad network intercepted', adNav.blocked, JSON.stringify(adNav));
+  check('redirects to blocked.html with t=ad&h= params',
+    adNav.redirectTo === 'chrome-extension://test/blocked/blocked.html?t=ad&h=mgid.com',
+    adNav.redirectTo);
+  // Static (non-regexSubstitution) resource redirects aren't recognized as
+  // "blocked" by this simulator's wouldBlock() — check the rule fired at all.
+  const adSubres = wouldBlock(dynamicRules, 'https://mgid.com/script.js', 'script');
+  check('ad network subresource still handled by unrelated (pre-existing) rule',
+    adSubres.action === 'block' || adSubres.action === 'redirect', JSON.stringify(adSubres));
+
+  console.log('\n== 16. AD_POPUP_PAGE_BLOCKED message counts as ads ==');
+  const send3 = (msg) => new Promise(res => listener2(msg, {}, res));
+  await send3({ type: 'AD_POPUP_PAGE_BLOCKED', host: 'mgid.com' });
+  await T.statsChain;
+  const { stats: stats7 } = await chromeStub.storage.local.get('stats');
+  const ap = stats7 && stats7['mgid.com'];
+  check('adsBlocked counted for blocked ad-popup navigation', ap && ap.adsBlocked === 1, JSON.stringify(ap));
+  const bad2 = await send3({ type: 'AD_POPUP_PAGE_BLOCKED', host: 'not a domain!!' });
+  check('invalid host rejected', bad2 && bad2.ok === false);
+
+  console.log('\n== 17. blockAds=false also removes ad main_frame rule ==');
+  storageData.blockAds = false;
+  await T.applyNetworkRules();
+  const adNavOff = wouldBlock(dynamicRules, 'https://mgid.com/some/redirect?x=1', 'main_frame');
+  check('ad main_frame nav NOT blocked when blockAds=false', !adNavOff.blocked, JSON.stringify(adNavOff));
+  storageData.blockAds = true;
+  await T.applyNetworkRules();
+  check('re-enabled: ad main_frame nav blocked again',
+    wouldBlock(dynamicRules, 'https://mgid.com/some/redirect?x=1', 'main_frame').blocked);
+
+  console.log('\n== 18. close_popunder_tabs: opener-hostname-keyed tab auto-close (uBO-style) ==');
+  check('tabs.onCreated listener registered', tabsCreatedListeners.length > 0);
+  const onTabCreated = tabsCreatedListeners[0];
+  // [fibwatch] (real rule/site-rules.txt) has close_popunder_tabs = 1.
+  tabsData.set(9001, { url: 'https://fibwatch.art/watch/awarapan-2-2026_x.html' });
+  await onTabCreated({ id: 9101, openerTabId: 9001 });
+  await T.statsChain;
+  check('popup spawned from a flagged site gets closed', removedTabIds.has(9101));
+  const { stats: stats8 } = await chromeStub.storage.local.get('stats');
+  check('adsBlocked counted against the OPENER domain (fibwatch.art)',
+    stats8 && stats8['fibwatch.art'] && stats8['fibwatch.art'].adsBlocked === 1,
+    JSON.stringify(stats8 && stats8['fibwatch.art']));
+
+  // A site with no close_popunder_tabs flag must NOT have its popups closed.
+  tabsData.set(9002, { url: 'https://www.youtube.com/watch?v=abc' });
+  await onTabCreated({ id: 9102, openerTabId: 9002 });
+  check('popup from an unflagged site is left alone', !removedTabIds.has(9102));
+
+  // No openerTabId (e.g. typed URL / bookmark / omnibox) must be ignored.
+  await onTabCreated({ id: 9103 });
+  check('tab with no opener is ignored', !removedTabIds.has(9103));
+
+  // Paused domain override applies here too, same as network rules. Goes
+  // through storage.local.set() (not a direct storageData mutation) so the
+  // onChanged listener actually fires and updates the in-memory cache the
+  // hot path reads — this is exercising that sync path, not just the flag.
+  await chromeStub.storage.local.set({ pausedDomains: ['fibwatch.art'] });
+  tabsData.set(9003, { url: 'https://fibwatch.art/watch/another.html' });
+  await onTabCreated({ id: 9104, openerTabId: 9003 });
+  check('paused domain opener is NOT auto-closed', !removedTabIds.has(9104));
+  await chromeStub.storage.local.set({ pausedDomains: [] });
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

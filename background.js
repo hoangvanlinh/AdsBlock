@@ -28,6 +28,7 @@ const FALLBACK_RULE_CONFIG = {
 
 let DEFAULT_RULES = [];
 let MALWARE_RULES = [];
+let AD_MAINFRAME_RULES = [];
 let TRACKER_RULE_IDS = new Set();
 let MALWARE_RULE_IDS = new Set();
 let QUERY_STRIP_RULES = [];
@@ -194,6 +195,7 @@ async function reloadRules() {
   });
   DEFAULT_RULES = [];
   MALWARE_RULES = [];
+  AD_MAINFRAME_RULES = [];
   _ruleConfigPromise = null;
   _parsedRules = null;
   await applyNetworkRules();
@@ -433,6 +435,40 @@ function buildMalwareRulesFromConfig(config, startId) {
   ];
 }
 
+// ── Ad-network / popunder main_frame auto-detect ────────────────────────
+// Click-hijack ("poster" click opens a new tab) and popunder ads almost
+// always navigate the new tab straight to a known ad-network domain — the
+// same list already used to block ad subresources (adNetworkPatterns), just
+// never applied to main_frame before. Reusing it here means every site gets
+// this protection automatically, with no per-site rule needed: the moment a
+// click opens a tab pointing at one of these domains, the navigation itself
+// is redirected to the warning page instead of loading the ad site.
+function adMainFrameRedirect() {
+  return {
+    type: 'redirect',
+    redirect: { regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?t=ad&h=\\1' },
+  };
+}
+
+function buildAdMainFrameRulesFromConfig(config, startId) {
+  const domains = config.adNetworkPatterns
+    .filter(d => DOMAIN_PATTERN_RE.test(d))
+    .map(d => d.toLowerCase());
+  if (!domains.length) return [];
+  return [
+    {
+      id: startId,
+      priority: 2,
+      action: adMainFrameRedirect(),
+      condition: {
+        requestDomains: domains,
+        regexFilter: MALWARE_REDIRECT_REGEX,
+        resourceTypes: ['main_frame'],
+      },
+    },
+  ];
+}
+
 // Single source for the merged rules text (fresh cache → remote → cached/local
 // fallback). Used by rule-definition loading, GET_RULES_TEXT, and GET_SITE_CONFIG.
 async function getRulesText() {
@@ -526,7 +562,7 @@ function resolveSiteKey(patterns, host) {
 }
 
 async function ensureRuleDefinitionsLoaded() {
-  if (DEFAULT_RULES.length && MALWARE_RULES.length) return;
+  if (DEFAULT_RULES.length && MALWARE_RULES.length && AD_MAINFRAME_RULES.length) return;
   if (!_ruleConfigPromise) {
     _ruleConfigPromise = (async () => {
       const parsed = await getParsedRules();
@@ -542,6 +578,7 @@ async function ensureRuleDefinitionsLoaded() {
       const { adRules, trackerRules } = buildDefaultRulesFromConfig(config);
       DEFAULT_RULES = [...adRules, ...trackerRules];
       MALWARE_RULES = buildMalwareRulesFromConfig(config, DEFAULT_RULES.length +1);
+      AD_MAINFRAME_RULES = buildAdMainFrameRulesFromConfig(config, DEFAULT_RULES.length + MALWARE_RULES.length + 1);
       QUERY_STRIP_RULES = buildQueryStripRules(global.strip_query_params || [], QUERY_STRIP_RULE_ID_START);
       TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
       MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
@@ -709,6 +746,7 @@ async function buildActiveRulesFromStorage() {
   });
 
   const activeRules = [...filteredDefaultRules];
+  const adMainFrameActive = blockAds ? [...AD_MAINFRAME_RULES] : [];
   const malwareActive = blockMalware ? [...MALWARE_RULES] : [];
   const { remoteMalwareDomains, remoteMalwareRules = [] } = await chrome.storage.local.get(
     ['remoteMalwareDomains', 'remoteMalwareRules']
@@ -741,7 +779,7 @@ async function buildActiveRulesFromStorage() {
   return {
     enabled: true,
     allRules: [
-      ...activeRules, ...malwareActive, ...remoteActive,
+      ...activeRules, ...adMainFrameActive, ...malwareActive, ...remoteActive,
       ...customBlockRules, ...focusRules, ...pauseAllowRules, ...queryStripActive,
     ],
   };
@@ -1107,6 +1145,89 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   }
 });
 
+// ── In-memory settings cache (for the tabs.onCreated hot path below) ────
+// A visible "flash" before a popup tab closes comes from latency between
+// tab-creation and the tabs.remove() call — every extra `await` is a real
+// IPC round-trip to the storage backend, not memory access, and gives the
+// tab another paint frame to become visible/focused first. uBO's own
+// onPopupUpdated (src/js/tab.js) makes zero fresh chrome.storage.* calls in
+// its hot path — it only reads already-in-memory state (tabContextManager,
+// parsed filter lists) — confirmed by reading their source. This cache
+// mirrors that: kept in sync via onChanged instead of read fresh per call.
+const _settingsCache = { enabled: true, pausedDomains: [], allowedDomains: [], collectStats: true };
+chrome.storage.local.get(['enabled', 'pausedDomains', 'allowedDomains', 'collectStats']).then(r => {
+  Object.assign(_settingsCache, r);
+}).catch(() => {});
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return;
+  for (const key of ['enabled', 'pausedDomains', 'allowedDomains', 'collectStats']) {
+    if (changes[key]) _settingsCache[key] = changes[key].newValue;
+  }
+});
+
+// ── Popunder/click-hijack tab auto-close ─────────────────────────────
+// Mirrors uBlock Origin's opener-hostname-keyed $popunder filter (see uBO's
+// src/js/tab.js onPopupUpdated/popunderMatch): closing a spawned tab based
+// on which SITE opened it, not what domain it landed on, is the only way to
+// catch popups that land on a legitimate destination (e.g. an affiliate-
+// tracked redirect to a real travel/shopping site) — no destination
+// blocklist can flag those without false-positiving on direct visits to the
+// same site. `chrome.tabs.onCreated`'s `openerTabId` is set the same way
+// whether the tab was spawned via window.open() or a native `target="_blank"`
+// anchor click, so this catches both vectors uniformly, unlike the
+// MAIN-world `no_window_open_if`/`disableNewtabLinks` scriptlets which only
+// see whichever single vector they specifically proxy.
+// Opt-in per site (`close_popunder_tabs = 1` in that site's site-rules.txt
+// section) — same curation model uBO itself uses; there is no way to know a
+// site abuses new-tab opens without someone having observed it first, and
+// closing indiscriminately would also kill legitimate outbound new-tab links.
+// Also opt-in via a GLOBAL list (`[global] close_popunder_domains`) — the
+// close_popunder_tabs equivalent of content/site-rules-loader.js's
+// open_defuser_domains (same idea, same _hostPatternMatches-based wildcard
+// support, just living here since closing a tab needs the tabs API, which
+// only background.js has). Seeded per-site as live-verified: no_window_open_if
+// alone doesn't stop a site whose popup uses a native anchor click rather
+// than window.open() — confirmed live on primesrc.me (2026-08-16): despite
+// open_defuser_domains correctly injecting no_window_open_if there, the
+// "Embed" demo player still opened a real popup tab (sportshard.com),
+// proving the window.open-proxy vector isn't what this site uses.
+function _domainListMatches(list, host) {
+  if (!list || !list.length) return false;
+  // Reuses _hostPatternMatches (already defined above for [host_patterns])
+  // so entries here support the same "domain.*" wildcard-TLD shorthand —
+  // uBO's real data has domains with 20-45 TLD variants each (serienstream.*,
+  // txxx.*, acortalo.*) that would otherwise need enumerating every one.
+  for (const d of list) if (_hostPatternMatches(d, host)) return true;
+  return false;
+}
+chrome.tabs.onCreated.addListener(async (tab) => {
+  if (!tab.openerTabId) return;
+  if (!_settingsCache.enabled) return;
+  try {
+    // Only remaining await before the close call — Chrome doesn't hand us
+    // the opener's URL in the onCreated event itself, so there's no way to
+    // resolve which site spawned this tab without asking. getParsedRules()
+    // below is also in-memory after its first call (module-level cache).
+    const opener = await chrome.tabs.get(tab.openerTabId).catch(() => null);
+    if (!opener || !opener.url) return;
+    let openerHost;
+    try { openerHost = new URL(opener.url).hostname.toLowerCase(); } catch { return; }
+    if (_settingsCache.pausedDomains.includes(openerHost) || _settingsCache.allowedDomains.includes(openerHost)) return;
+    const parsed = await getParsedRules();
+    const siteKey = resolveSiteKey(parsed.host_patterns || {}, openerHost);
+    const siteCfg = (siteKey && parsed[siteKey]) || {};
+    const flag = siteCfg.close_popunder_tabs;
+    const flagOn = !!(flag && flag.length && !['', '0', 'false', 'off'].includes(String(flag[0]).toLowerCase()));
+    const globalMatch = _domainListMatches((parsed.global || {}).close_popunder_domains, openerHost);
+    if (!flagOn && !globalMatch) return;
+    await chrome.tabs.remove(tab.id).catch(() => {});
+    if (_settingsCache.collectStats) {
+      _enqueueStatWrite(() => _writeDomainStatDelta(openerHost, { adsBlocked: 1, totalSeen: 1 }));
+      updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
+    }
+  } catch (e) {}
+});
+
 // ── Message handler ───────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
@@ -1379,6 +1500,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (!collectMB) { sendResponse({ ok: true }); break; }
         _enqueueStatWrite(() => _writeDomainStatDelta(host, { malwareBlocked: 1, totalSeen: 1 }));
         updateDailyStats({ blocked: 1, ads: 0, trackers: 0, malware: 1 });
+        sendResponse({ ok: true });
+        break;
+      }
+
+      case 'AD_POPUP_PAGE_BLOCKED': {
+        // Sent by blocked/blocked.js after a main_frame navigation to a known
+        // ad-network domain (popunder/click-hijack) was redirected here —
+        // the only way such blocks get counted, same as MALWARE_PAGE_BLOCKED.
+        const host = String(msg.host || '').toLowerCase();
+        if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
+        const { collectStats: collectAB = true } = await chrome.storage.local.get('collectStats');
+        if (!collectAB) { sendResponse({ ok: true }); break; }
+        _enqueueStatWrite(() => _writeDomainStatDelta(host, { adsBlocked: 1, totalSeen: 1 }));
+        updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
         sendResponse({ ok: true });
         break;
       }
