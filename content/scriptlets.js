@@ -601,7 +601,13 @@
     const safe = safeSelf();
     const matched = [];
     for (const obj of objs) {
-      if (obj instanceof Object === false) continue;
+      // typeof/null, not `instanceof Object` — the latter is realm-fragile
+      // (fails for an object crossing a vm/iframe boundary even though it's
+      // a perfectly normal object there) and also wrongly rejects a
+      // null-prototype object (Object.create(null)), neither of which this
+      // check is actually trying to rule out — it only wants "is this a
+      // property bag we can read from".
+      if (typeof obj !== 'object' || obj === null) continue;
       for (const [prop, details] of propNeedles) {
         let value = obj[prop];
         if (value === undefined) continue;
@@ -1109,7 +1115,8 @@
     const computeResponse = function (xhr, innerResponse) {
       if (!_scriptletsEnabled) return innerResponse;
       if (_xhrPruneRules.length === 0 && _xhrJsonlRules.length === 0 &&
-          _xhrReplaceRules.length === 0 && _editResponseRules.length === 0) return innerResponse;
+          _xhrReplaceRules.length === 0 && _editResponseRules.length === 0 &&
+          _xhrM3uRules.length === 0) return innerResponse;
       const xhrDetails = xhrInstances.get(xhr);
       if (xhrDetails === undefined) return innerResponse;
       const responseLength = typeof innerResponse === 'string'
@@ -1188,6 +1195,16 @@
         const jsonlRules = applicableRules(_xhrJsonlRules, xhrDetails);
         for (const rule of jsonlRules) {
           result = jsonlEditFn(rule.jsonp, result);
+        }
+      }
+      // HLS (.m3u8) ad-segment pruning (string responses only) — m3u_prune.
+      if (typeof result === 'string') {
+        const m3uRules = applicableRules(_xhrM3uRules, xhrDetails);
+        for (const rule of m3uRules) {
+          const after = _pruneM3uText(result, rule.res);
+          if (after === result) continue;
+          result = after;
+          try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: "" } })); } catch (_e) {}
         }
       }
       return (xhrDetails.response = result);
@@ -1360,6 +1377,64 @@
     _installXhrResponseProxy();
   }
 
+  // ── TextEncoder/Request-constructor edit path ─────────────────────
+  // _installFetchResponseProxy's request-edit branch only ever looks at
+  // fetch's 2nd-argument `init.body` STRING — live-verified 2026-08-16 (via
+  // Claude-in-Chrome instrumentation of TextEncoder.encode/Request/fetch on
+  // a real youtube.com/youtubei/v1/player call) that this is NOT how
+  // YouTube actually sends it: the page builds the JSON body string, runs
+  // it through `new TextEncoder().encode(str)` to get a Uint8Array, bakes
+  // THAT into a `new Request(url, {body: uint8Array, ...})`, then calls
+  // `fetch(thatRequestObject)` with NO second argument at all — so
+  // `init` is undefined and the existing string-only edit path silently
+  // never fires, no matter how correct the JSONPath rule is. Matches the
+  // exact technique Adblock for YouTube's own inline scripts use (hook
+  // both TextEncoder.encode AND the Request constructor, redundantly, to
+  // cover whichever of the two a given code path actually goes through).
+  // Content-sniffed (not URL-scoped, since neither hook point has a URL to
+  // check) on the same two marker strings ABY's own working code keys off
+  // of — `contentPlaybackContext`/`adSignalsInfo` only ever appear in a
+  // /player request body, so this is precise enough without one. Reuses
+  // _editRequestRules/_applyEditRequestFn — no new site-rules.txt key,
+  // this only fixes trusted_edit_request's EXISTING interception blind spot.
+  var _textEncoderRequestEditProxyInstalled = false;
+  function _installTextEncoderRequestEditProxy() {
+    if (_textEncoderRequestEditProxyInstalled) return;
+    _textEncoderRequestEditProxyInstalled = true;
+    var sniffs = function (s) {
+      return typeof s === 'string' &&
+        (s.indexOf('"contentPlaybackContext"') !== -1 || s.indexOf('"adSignalsInfo"') !== -1);
+    };
+    var matchDetails = { url: 'youtubei/v1/player?', method: 'POST' };
+    proxyApplyFn('TextEncoder.prototype.encode', function (context) {
+      if (!_scriptletsEnabled || _editRequestRules.length === 0) return context.reflect();
+      var s = context.callArgs[0];
+      if (sniffs(s)) {
+        var after = _applyEditRequestFn(s, matchDetails);
+        if (after !== s) context.callArgs = [after];
+      }
+      return context.reflect();
+    });
+    proxyApplyFn('Request', function (context) {
+      if (!_scriptletsEnabled || _editRequestRules.length === 0) return context.reflect();
+      try {
+        var args = context.callArgs;
+        var init = args[1];
+        var body = init && init.body;
+        if (body instanceof Uint8Array) {
+          var s = new TextDecoder().decode(body);
+          if (sniffs(s)) {
+            var after = _applyEditRequestFn(s, matchDetails);
+            if (after !== s) {
+              context.callArgs = [args[0], Object.assign({}, init, { body: new TextEncoder().encode(after) })];
+            }
+          }
+        }
+      } catch (e) {}
+      return context.reflect();
+    });
+  }
+
   // ── trusted-edit-request / trusted-edit-response ─────────────────
   // TRUSTED: unlike json_edit/jsonl_edit_xhr, value-assigning JSONPath
   // queries (path=value) are allowed here, not just deletions — see
@@ -1370,6 +1445,7 @@
     _editRequestRules.push({ jsonp, propNeedles: parsePropertiesToMatchFn(propsToMatch || '', 'url') });
     _installFetchResponseProxy();
     _installXhrResponseProxy();
+    _installTextEncoderRequestEditProxy();
   }
   function trustedEditResponse(jsonq, propsToMatch) {
     const jsonp = JSONPath.create(jsonq || '');
@@ -2459,6 +2535,11 @@
       if (_jsonEditRules.length === 0 && _jsonPruneRules.length === 0) return obj;
       let objAfter = obj;
       for (const rule of _jsonPruneRules) {
+        if (rule.stackNeedle) {
+          var stackOk = false;
+          try { stackOk = _toRegex(rule.stackNeedle).test(new Error().stack || ''); } catch (e) {}
+          if (!stackOk) continue;
+        }
         const r = objectPruneFn(objAfter, rule.prunePaths, rule.needlePaths);
         if (typeof r === 'object' && r !== null) objAfter = r;
       }
@@ -2578,11 +2659,25 @@
   // ── json-prune (JSON.parse level) ────────────────────────────────
   // Prunes ad fields from EVERY JSON.parse result — catches payloads
   // embedded in inline scripts that never touch fetch/XHR.
-  function jsonPrune(rawPrunePaths, rawNeedlePaths) {
+  // stackNeedle (optional 3rd arg): regex tested against the call stack AT
+  // THE JSON.parse() CALL SITE — matches uBO's real json-prune.js signature
+  // `(rawPrunePaths, rawNeedlePaths, stackNeedle, ...varargs)`. This is the
+  // only additional scoping json-prune actually supports upstream (verified
+  // against uBO's real object-prune.js: the rest of its varargs/extraArgs
+  // plumbing only ever feeds `logstack`, a debug-log toggle with zero effect
+  // on which objects get pruned) — there's no URL to scope by here, unlike
+  // json_prune_fetch/json_prune_xhr, because JSON.parse() itself has no
+  // request context at all. Only checked at the real JSON.parse() proxy
+  // (_installJsonEditProxy) — the data-sjs guard's own re-use of this same
+  // rule registry (_installSjsGuard) doesn't originate from a JSON.parse()
+  // call, so a page-script call stack wouldn't mean anything meaningful
+  // there; it keeps applying unconditionally, same as before this existed.
+  function jsonPrune(rawPrunePaths, rawNeedlePaths, stackNeedle) {
     if (!rawPrunePaths) return;
     _jsonPruneRules.push({
       prunePaths: rawPrunePaths,
       needlePaths: rawNeedlePaths || '',
+      stackNeedle: stackNeedle || '',
     });
     _installJsonEditProxy();
     _installSjsGuard();
@@ -2885,52 +2980,52 @@
   // YouTube's "ad blockers violate the Terms of Service" wall shows up as
   // playabilityStatus.errorScreen.enforcementMessageViewModel, identified
   // via the internal (locale-independent) command name
-  // 'openAdAllowlistInstructionCommand' — an older format
-  // (playerErrorMessageRenderer/playerInterstitialRenderer, identified by
-  // a support-article URL) is also checked as a fallback. It's decided
-  // per-request from signals in the /player request body (see
-  // trusted_edit_request's clientScreen/params/lactMilliseconds/
-  // adPlaybackContext spoofs), so retrying the SAME video under a
-  // different spoofed identity — cycling through `tokens`, encoded into
-  // ytcfg's userAgent so the request-body editor above can see which
-  // spoof is currently active — can get past it.
-  // Runs directly as a page script instead of going through
-  // trustedReplaceScriptText: it only needs `movie_player`/`ytcfg.data_`,
-  // both of which already exist on youtube.com, so there's no real
-  // YouTube script to find-and-replace here.
-  function ssapUnplayableRetry(tokens) {
+  // 'openAdAllowlistInstructionCommand'. It's decided per-request from
+  // signals in the /player request body (clientScreen/params/
+  // lactMilliseconds/adPlaybackContext), so retrying the SAME video with a
+  // different request shape can get past it.
+  //
+  // Rewritten 2026-08-16, clean-room, from a live-verified-working reference
+  // (see memory: A/B tested by injecting a competitor's actual bypass logic
+  // into a real walled page — confirmed it clears the wall on an account
+  // gitAdblock's own OLD version never did). The old version relayed an
+  // escalation "token" through ytcfg's userAgent string, then relied on
+  // trusted_edit_request's JSONPath rules (matched on that userAgent
+  // substring) to actually edit the outgoing request — two independently-
+  // maintained systems that had to stay in sync, and which in practice
+  // never actually fired (root cause not conclusively identified, but
+  // irrelevant now — this replaces the whole mechanism). This version is
+  // self-contained: escalation state lives in one plain closure variable,
+  // and the SAME function both detects the wall (from the /player RESPONSE
+  // content, not by polling movie_player state) and edits the NEXT
+  // outgoing /player request directly from that state — no userAgent
+  // round-trip, no separate trusted_edit_request rule to keep in sync.
+  function ssapUnplayableRetry() {
     // typeof-guard (not just ?.): ytInitialData is a bare global YouTube's
     // own inline script declares — referencing the identifier at all before
     // that script has run throws ReferenceError regardless of ?., since
     // optional chaining only guards against null/undefined VALUES, not an
-    // entirely unbound variable NAME. This was throwing on every single
-    // run (caught silently by the dispatcher's try/catch) — the actual
-    // reason ssapUnplayableRetry never did anything all session.
+    // entirely unbound variable NAME.
     if (
       (typeof ytInitialData !== 'undefined' && ytInitialData?.topbar?.desktopTopbarRenderer?.logo?.topbarLogoRenderer?.iconImage?.iconType === 'YOUTUBE_PREMIUM_LOGO') ||
       location.href.startsWith('https://www.youtube.com/tv#/') ||
       location.href.startsWith('https://www.youtube.com/embed/')
     ) return; // Premium/TV/embed surfaces never show this wall.
 
-    // Read lazily (not right here) — rules apply as soon as they arrive,
-    // which can race ahead of YouTube's own inline script that defines
-    // ytcfg. By the time setToken is actually called (from check(), gated
-    // behind _onHtmlEl below) ytcfg is reliably present.
-    var baseUserAgent = null;
-    // Tracks whichever token setToken was last called with — lets check()
-    // tell "this request is currently spoofed" apart from "this is the
-    // real, unspoofed request" (see the safety-net check below).
-    var currentToken = '';
-    // While a spoof token is active, also report the tab as visible —
-    // YouTube's own anti-adblock escalation does the same (confirmed in a
-    // competing extension's bypass code) alongside its request-shape
+    // Escalation ladder — 'none' is both "exhausted" and "real identity".
+    var STATES = ['param_first', 'param_second', 'pyv', 'client_screen', 'ad_type', 'none'];
+    var state = STATES[0];
+    var lastVideoId = null;
+    var givenUpOn = new Set(); // videoIds where the whole ladder ran out — don't retry-loop forever
+
+    // While a spoof is active, also report the tab as visible — the
+    // reference implementation does the same alongside its request-shape
     // spoofs, suggesting document.visibilityState feeds the same
-    // wall/anomaly heuristic this whole function is trying to get past.
-    // Shadowing an own accessor property on `document` (not touching
-    // Document.prototype) is reversible per-tab and never removed, only
-    // ever redefined — same idiom "restore" uses when going back to real.
+    // wall/anomaly heuristic this is trying to get past. Shadowing an own
+    // accessor property on `document` (not Document.prototype) is
+    // reversible per-tab and never removed, only ever redefined.
     var _visibilityDesc = null;
-    var _spoofVisible = function () {
+    function spoofVisible() {
       if (_visibilityDesc) return;
       try {
         _visibilityDesc = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState');
@@ -2938,148 +3033,295 @@
         var getter = _spoofToString(_visibilityDesc.get, function () { return 'visible'; });
         Object.defineProperty(document, 'visibilityState', { get: getter, configurable: true });
       } catch (e) {}
-    };
-    var _restoreVisible = function () {
+    }
+    function restoreVisible() {
       if (!_visibilityDesc) return;
       try { Object.defineProperty(document, 'visibilityState', _visibilityDesc); } catch (e) {}
       _visibilityDesc = null;
-    };
-    var setToken = function (token) {
-      currentToken = token || '';
-      if (currentToken) _spoofVisible(); else _restoreVisible();
-      if (baseUserAgent === null) baseUserAgent = ytcfg?.data_?.INNERTUBE_CONTEXT?.client?.userAgent || '';
-      ytcfg.data_.INNERTUBE_CONTEXT.client.userAgent = token
-        ? baseUserAgent.replace?.(/(Mozilla\/5\.0 \([^)]+)/, '$1; ' + token)
-        : baseUserAgent;
-    };
-    var remaining = tokens;
-    var readyToReload = false;
-    // Guards against burning through every token in one burst: the
-    // MutationObserver below fires check() many times per second, and
-    // loadVideoById() doesn't update getPlayerResponse() synchronously — the
-    // OLD (already-handled) errorScreen is still what's read on the next
-    // several calls, before the new request resolves. A plain cooldown
-    // (not a content-equality check) guards this: YouTube's feedbackToken/
-    // trackingParams turned out NOT to be unique per response — a fresh
-    // rejection can read back byte-identical to the previous one, which
-    // made an earlier content-diff version of this guard permanently stop
-    // retrying after the first attempt.
-    var RETRY_COOLDOWN_MS = 1500;
-    var lastAttemptAt = 0;
-
-    // Shared by both "wall detected" and the safety-net below: give up on
-    // the current token and either move to the next one, or — once
-    // they're exhausted — settle on the real, unspoofed identity.
-    function advanceToken(player, videoId, startSeconds) {
-      if (Date.now() - lastAttemptAt < RETRY_COOLDOWN_MS) return;
-      lastAttemptAt = Date.now();
-      // Slice BEFORE picking — matches uBO's real serverContract (verified
-      // live 2026-08-14: uBO's own advance step does n=n.slice(1) THEN
-      // reads n[0], so its first-ever attempt already skips straight to
-      // the 2nd token). An earlier "pick before slicing" version here tried
-      // the 1st token (adunit) every single cycle first — live-observed on
-      // this account, adunit always fails and lactmilli (2nd) is what
-      // actually clears the wall, so that ordering wasted one full
-      // request/response round-trip (and the visible error-screen flash)
-      // on every retry cycle for nothing.
-      remaining = remaining.slice(1);
-      var nextToken = remaining.length > 0 ? remaining[0] : '';
-      setToken(nextToken);
-      readyToReload = false;
-      player.loadVideoById(videoId, startSeconds);
     }
 
-    function check() {
-      var player = document.getElementById('movie_player');
-      if (!player || !window.location.href.includes('/watch?')) { remaining = tokens; return; }
-      var response = player.getPlayerResponse?.();
-      var progress = player.getProgressState?.();
-      var stats = player.getStatsForNerds?.();
-      var stillPlaying = (progress && progress.duration > 0 && (progress.loaded < progress.duration || progress.duration - progress.current > 1)) || response?.videoDetails?.isLive;
-      var videoId = response?.videoDetails?.videoId;
-      var startSeconds = response?.playerConfig?.playbackStartConfig?.startSeconds ?? 0;
-      var isBuffering = player.getPlayerStateObject?.()?.isBuffering;
-      var status = response?.playabilityStatus?.status;
-      var errorScreen = response?.playabilityStatus?.errorScreen;
-      var errorScreenText = JSON.stringify(errorScreen) || '';
-      var oldStyleText = JSON.stringify(
-        errorScreen?.playerErrorMessageRenderer?.subreason?.runs ||
-        errorScreen?.playerInterstitialRenderer?.content?.interstitialViewModel?.description?.commandRuns
-      ) || '';
-      var isAdblockWall =
-        errorScreenText.includes('openAdAllowlistInstructionCommand') ||
-        (oldStyleText.includes('WEB_PAGE_TYPE_UNKNOWN') && oldStyleText.includes('https://support.google.com/youtube/answer/3037019'));
-      // isAdblockWall is checked BEFORE the stillPlaying gate on purpose —
-      // getProgressState() reports no real progress while the wall is up
-      // (nothing is loading), so gating this on stillPlaying meant the wall
-      // could never be detected in the first place. stillPlaying still
-      // gates the buffering-stall heuristic below, where it's meaningful.
-      if (isAdblockWall) { advanceToken(player, videoId, startSeconds); return; }
-      // Safety net: a spoofed identity can itself cause a real, unrelated
-      // playback failure for some videos (confirmed live: clientScreen:
-      // "CHANNEL" tripping a genuine "content isn't available" on a video
-      // that plays fine unspoofed) — not the ad-block wall, so isAdblockWall
-      // above is false, but still an error, and only while OUR spoof is
-      // active (currentToken set). Treat it the same as a rejected token —
-      // move on rather than get stuck on a failure we caused ourselves.
-      // Once currentToken is back to '' (real identity), whatever status
-      // shows is genuine and this must NOT re-trigger, or it would loop
-      // forever on a real "video unavailable".
-      if (currentToken && status && status !== 'OK') { advanceToken(player, videoId, startSeconds); return; }
-      if (!stillPlaying) return;
-      if (stats?.debug_info?.startsWith?.('SSAP, AD')) return; // real ad slot — nothing to retry
-      if (remaining.length === 0) {
-        readyToReload = false;
-        setToken('');
-      } else if (isBuffering && stats?.buffer_health_seconds === '0.00 s' && stats?.resolution === '0x0' && readyToReload) {
-        setToken(remaining[0]);
-        readyToReload = false;
-        player.loadVideoById(videoId, startSeconds);
+    // Mutates a parsed /player request body IN PLACE per the current
+    // escalation state. root = the whole request object; playbackCtx =
+    // either root.playbackContext or root.playerRequest.playbackContext
+    // (a request can carry either shape, or both).
+    function editRequest(root, playbackCtx) {
+      if (!root || !playbackCtx || !playbackCtx.contentPlaybackContext) return;
+      try {
+        var vid = root.videoId;
+        if (vid) {
+          if (lastVideoId && lastVideoId !== vid) state = STATES[0]; // fresh video — restart the ladder
+          lastVideoId = vid;
+        }
+        var client = root.context && root.context.client;
+        // A real (non-wall) error mid-ladder means the server rejected THIS
+        // spoofed identity outright — don't keep editing with it.
+        var liveStatus = document.getElementById('movie_player')?.getPlayerResponse?.()?.playabilityStatus?.status;
+        var effective = (liveStatus === 'LOGIN_REQUIRED' || liveStatus === 'CONTENT_CHECK_REQUIRED') ? 'none' : state;
+        var alreadyChannel = !!(client && client.clientScreen === 'CHANNEL');
+
+        if ((effective === 'param_first' || effective === 'param_second') && !alreadyChannel) {
+          var paramsVal = effective === 'param_first' ? 'eAFgAQ' : '8AUB';
+          root.params = paramsVal;
+          if (root.playerRequest) root.playerRequest.params = paramsVal;
+          if (root.playbackContext) root.playbackContext.params = paramsVal;
+          if (effective === 'param_second' && !root.playlistId && client) client.clientScreen = 'CHANNEL';
+          playbackCtx.contentPlaybackContext.lactMilliseconds = String(Date.now());
+          spoofVisible();
+        } else if (effective === 'pyv' && !alreadyChannel) {
+          playbackCtx.adPlaybackContext = { pyv: true };
+          playbackCtx.contentPlaybackContext.lactMilliseconds = String(Date.now());
+          spoofVisible();
+        } else if (effective === 'client_screen' && client && client.clientName === 'WEB') {
+          client.clientScreen = 'CHANNEL';
+          playbackCtx.contentPlaybackContext.lactMilliseconds = String(Date.now());
+          spoofVisible();
+        } else if (effective === 'ad_type') {
+          playbackCtx.adPlaybackContext = { adType: 'AD_TYPE_INSTREAM' };
+          playbackCtx.contentPlaybackContext.lactMilliseconds = String(Date.now());
+          spoofVisible();
+        } else if (effective === 'none') {
+          delete playbackCtx.adPlaybackContext;
+          restoreVisible();
+        }
+        if ((root.playbackContext || root.playerRequest) && root.context?.client?.configInfo) {
+          delete root.context.client.configInfo.appInstallData;
+        }
+      } catch (e) {}
+    }
+
+    var CONTENT_SNIFF_A = '"contentPlaybackContext"', CONTENT_SNIFF_B = '"adSignalsInfo"';
+    function looksLikePlayerBody(s) {
+      return typeof s === 'string' && (s.indexOf(CONTENT_SNIFF_A) !== -1 || s.indexOf(CONTENT_SNIFF_B) !== -1);
+    }
+    function editPlayerBodyString(s) {
+      var parsed;
+      try { parsed = JSON.parse(s); } catch (e) { return s; }
+      if (!parsed || !parsed.context || !parsed.context.client) return s;
+      if (parsed.playbackContext) editRequest(parsed, parsed.playbackContext);
+      if (parsed.playerRequest && parsed.playerRequest.playbackContext) editRequest(parsed, parsed.playerRequest.playbackContext);
+      try { return JSON.stringify(parsed); } catch (e) { return s; }
+    }
+
+    var ERROR_MARKERS = ['playerErrorMessageRenderer', 'UNPLAYABLE'];
+    // Reacts to every /player RESPONSE as it's parsed: advances the ladder
+    // on a rejection, otherwise applies two small unrelated UX fixes the
+    // reference implementation bundles into the same hook (unmuting
+    // autoplay, restoring the full playback-rate range once the 'ad_type'
+    // state proves the identity isn't flagged).
+    function onPlayerResponseParsed(parsed) {
+      if (location.href.indexOf('/shorts/') !== -1 || location.href.indexOf('youtube.com/tv') !== -1 || location.href.indexOf('youtube.com/embed/') !== -1) return parsed;
+      if (state === 'none') return parsed;
+      try {
+        if (!parsed || typeof parsed !== 'object' || (!parsed.responseContext && !parsed.playabilityStatus)) return parsed;
+        var text = JSON.stringify(parsed);
+        var isError = ERROR_MARKERS.some(function (m) { return text.indexOf(m) !== -1; }) && text.indexOf('CONTENT_CHECK_REQUIRED') === -1;
+        if (isError) {
+          var idx = STATES.indexOf(state);
+          state = STATES[Math.min(idx + 1, STATES.length - 1)];
+        } else {
+          if (state === 'param_first' && parsed.playerConfig?.audioConfig?.muteOnStart &&
+              (location.href.indexOf('/watch') !== -1 || (parsed.cards && !parsed.playabilityStatus?.miniplayer))) {
+            delete parsed.playerConfig.audioConfig.muteOnStart;
+            if (parsed.messages?.[0]?.youThereRenderer) delete parsed.messages[0].youThereRenderer;
+          }
+          if (state === 'ad_type' && parsed.playerConfig?.granularVariableSpeedConfig) {
+            parsed.playerConfig.granularVariableSpeedConfig.maximumPlaybackRate = 200;
+            parsed.playerConfig.granularVariableSpeedConfig.minimumPlaybackRate = 25;
+          }
+        }
+      } catch (e) {}
+      return parsed;
+    }
+
+    // ── Request-editing hooks — all 3 body-construction paths a real
+    // youtube.com /player call can take (live-verified 2026-08-16: the
+    // page builds the JSON string, runs it through TextEncoder.encode()
+    // into a Uint8Array, bakes THAT into `new Request(url, {body})`, then
+    // calls fetch(thatRequest) with no 2nd argument — so only the
+    // TextEncoder/Request hooks below ever actually see it on this
+    // account/browser, but JSON.stringify and XHR are hooked too for
+    // whichever other code path might use them instead). ─────────────────
+    proxyApplyFn('JSON.parse', function (context) {
+      var result = context.reflect();
+      if (!_scriptletsEnabled) return result;
+      return onPlayerResponseParsed(result);
+    });
+    proxyApplyFn('TextEncoder.prototype.encode', function (context) {
+      if (!_scriptletsEnabled) return context.reflect();
+      var s = context.callArgs[0];
+      if (looksLikePlayerBody(s)) {
+        var after = editPlayerBodyString(s);
+        if (after !== s) context.callArgs = [after];
       }
+      return context.reflect();
+    });
+    proxyApplyFn('JSON.stringify', function (context) {
+      if (!_scriptletsEnabled) return context.reflect();
+      try {
+        var obj = context.callArgs[0];
+        if (obj && obj.context && obj.context.client) {
+          if (obj.playbackContext && obj.playbackContext.adPlaybackContext === undefined) editRequest(obj, obj.playbackContext);
+          if (obj.playerRequest && obj.playerRequest.playbackContext && obj.playerRequest.playbackContext.adPlaybackContext === undefined) editRequest(obj, obj.playerRequest.playbackContext);
+        }
+      } catch (e) {}
+      return context.reflect();
+    });
+    proxyApplyFn('Request', function (context) {
+      if (!_scriptletsEnabled) return context.reflect();
+      try {
+        var args = context.callArgs;
+        var url = args[0];
+        var init = args[1];
+        var body = init && init.body;
+        if (typeof url === 'string' && url.indexOf('youtubei') !== -1) {
+          if (typeof body === 'string' && looksLikePlayerBody(body)) {
+            var after = editPlayerBodyString(body);
+            if (after !== body) context.callArgs = [url, Object.assign({}, init, { body: after })];
+          } else if (body instanceof Uint8Array) {
+            var decoded = new TextDecoder().decode(body);
+            if (looksLikePlayerBody(decoded)) {
+              var afterDecoded = editPlayerBodyString(decoded);
+              if (afterDecoded !== decoded) context.callArgs = [url, Object.assign({}, init, { body: new TextEncoder().encode(afterDecoded) })];
+            }
+          }
+        }
+      } catch (e) {}
+      return context.reflect();
+    });
+    proxyApplyFn('XMLHttpRequest.prototype.send', function (context) {
+      if (!_scriptletsEnabled) return context.reflect();
+      try {
+        var args = context.callArgs;
+        var raw = args[0];
+        var isArr = Array.isArray(raw);
+        var s = isArr ? raw[0] : raw;
+        if (looksLikePlayerBody(s)) {
+          var after = editPlayerBodyString(s);
+          if (after !== s) {
+            var newArgs = args.slice();
+            if (isArr) { newArgs[0] = raw.slice(); newArgs[0][0] = after; }
+            else newArgs[0] = after;
+            context.callArgs = newArgs;
+          }
+        }
+      } catch (e) {}
+      return context.reflect();
+    });
+
+    // ── Retry driver — DOM-observed, not response-observed: the request-
+    // edit hooks above react to responses as they stream past, but nothing
+    // actually RE-REQUESTS the video until this notices the wall UI itself
+    // (via movie_player's own state) and calls loadVideoById(). ───────────
+    var MOVIE_PLAYER_ID = 'movie_player';
+    var SEL_UNAVAILABLE_ATTR = 'ytd-watch-flexy[player-unavailable]';
+    var SEL_YTP_ERROR = '#' + MOVIE_PLAYER_ID + ' > .ytp-error';
+    var SEL_ERROR_SCREEN = 'yt-playability-error-supported-renderers#error-screen:has(>*)';
+    var SEL_MINIPLAYER_ERROR = 'yt-playability-error-supported-renderers.ytdMiniplayerPlayerContainerPlayabilityError:has(>*)';
+    var SEL_REAL_ALLOWLIST_LINK = 'yt-playability-error-supported-renderers#error-screen a[href^="//support.google.com/youtube/answer/2802245"]';
+
+    function getVideoIdAndStart() {
+      var player = document.getElementById(MOVIE_PLAYER_ID);
+      var params = new URLSearchParams(window.location.search);
+      var videoId = params.get('v') || player?.getVideoData?.()?.video_id;
+      var t = params.get('t');
+      return { videoId: videoId, startSeconds: t ? parseInt(t, 10) : 0 };
+    }
+
+    // Hides the "content isn't available"/wall UI while a retry is in
+    // flight — it otherwise flashes on every single attempt, not just the
+    // last one — but explicitly RE-SHOWS it for a genuine LOGIN_REQUIRED/
+    // CONTENT_CHECK_REQUIRED error, which is real and must stay visible.
+    function hideOrShowErrorUi() {
+      var player = document.getElementById(MOVIE_PLAYER_ID);
+      var errorScreen = document.querySelector(SEL_ERROR_SCREEN);
+      var miniplayerError = document.querySelector(SEL_MINIPLAYER_ERROR);
+      var unavailableEl = document.querySelector(SEL_UNAVAILABLE_ATTR);
+      var realAllowlistLink = document.querySelector(SEL_REAL_ALLOWLIST_LINK);
+      if (!player || realAllowlistLink) return;
+      var status = player.getPlayerResponse?.()?.playabilityStatus?.status;
+      if (status !== 'LOGIN_REQUIRED' && status !== 'CONTENT_CHECK_REQUIRED') {
+        if (unavailableEl || miniplayerError) {
+          try { errorScreen && errorScreen.style.setProperty('display', 'none', 'important'); } catch (e) {}
+          try { miniplayerError && miniplayerError.style.setProperty('display', 'none', 'important'); } catch (e) {}
+          try { unavailableEl && unavailableEl.removeAttribute('player-unavailable'); } catch (e) {}
+        }
+      } else {
+        try { errorScreen && errorScreen.style.setProperty('display', 'block', 'important'); } catch (e) {}
+      }
+    }
+
+    function reload() {
+      hideOrShowErrorUi();
+      var player = document.getElementById(MOVIE_PLAYER_ID);
+      if (player && typeof player.loadVideoById === 'function') {
+        try {
+          var d = getVideoIdAndStart();
+          player.loadVideoById(d.videoId, d.startSeconds);
+        } catch (e) {}
+      }
+    }
+
+    function shouldRetry() {
+      var player = document.getElementById(MOVIE_PLAYER_ID);
+      var realAllowlistLink = document.querySelector(SEL_REAL_ALLOWLIST_LINK);
+      if (!player || realAllowlistLink) return false;
+      var status = player.getPlayerResponse?.()?.playabilityStatus?.status;
+      if (status === 'LOGIN_REQUIRED' || status === 'CONTENT_CHECK_REQUIRED') return false;
+      var errorScreen = document.querySelector(SEL_ERROR_SCREEN);
+      var unavailableEl = document.querySelector(SEL_UNAVAILABLE_ATTR);
+      var ytpError = document.querySelector(SEL_YTP_ERROR);
+      var videoData = player.getVideoData?.();
+      return !!(errorScreen || unavailableEl || ytpError) && videoData?.errorCode != null;
+    }
+
+    // Debounce: only commit to advancing past the CURRENT state once the
+    // SAME candidate next-state has been observed twice in a row for the
+    // SAME video — avoids skipping a state on one transient DOM tick.
+    var confirmNext = (function () {
+      var lastVideoId = null, lastCandidate = null, count = 0;
+      return function (candidate) {
+        if (!candidate) return false;
+        var videoId = getVideoIdAndStart().videoId;
+        if (!videoId) return false;
+        if (lastVideoId === videoId && lastCandidate === candidate) count++;
+        else { lastVideoId = videoId; lastCandidate = candidate; count = 1; }
+        if (count >= 2) { count = 0; return true; }
+        return false;
+      };
+    })();
+
+    function onTick() {
+      if (document.querySelector(SEL_ERROR_SCREEN)) hideOrShowErrorUi();
+      if (!shouldRetry()) return;
+      var vid = getVideoIdAndStart().videoId;
+      if (vid) givenUpOn.forEach(function (v) { if (v !== vid) givenUpOn.delete(v); });
+      if (state === 'none') {
+        if (!vid || givenUpOn.has(vid)) { hideOrShowErrorUi(); return; }
+        givenUpOn.add(vid);
+        reload();
+        return;
+      }
+      var idx = STATES.indexOf(state);
+      var nextState = STATES[idx + 1];
+      if (!confirmNext(nextState)) { reload(); return; }
+      state = nextState;
+      reload();
     }
 
     // _onHtmlEl (not a 'DOMContentLoaded' listener): rules apply
     // asynchronously, well after that event has already fired on a real
     // page load, so a listener registered here would simply never run.
     _onHtmlEl(function () {
-      check();
-      new MutationObserver(check).observe(document, { childList: true, subtree: true });
-      // 2026-08-15: MutationObserver alone left check() dependent entirely
-      // on incidental DOM churn elsewhere on the page. Live-observed: once
-      // the wall's error screen finishes rendering, the page goes static
-      // (nothing left to mutate) and check() simply stops being called —
-      // the retry ladder gets permanently stuck on whatever token it last
-      // tried (confirmed stuck on "instream" for 20+s, well past
-      // RETRY_COOLDOWN_MS, with getProgressState().duration staying 0 the
-      // whole time since playback never actually started). A periodic
-      // fallback guarantees forward progress independent of page activity.
-      setInterval(check, 1000);
-    });
-
-    // A stalled buffer plus a "snackbar" notification is the other tell
-    // that the currently-spoofed identity got flagged mid-playback —
-    // advance to the next token and mark ready to reload on the next
-    // check() pass (driven by the MutationObserver above).
-    window.Map.prototype.has = new Proxy(window.Map.prototype.has, {
-      apply: function (target, thisArg, args) {
-        if (args?.[0] === 'onSnackbarMessage' && !readyToReload) {
-          var player = document.getElementById('movie_player');
-          if (player) {
-            var stats = player.getStatsForNerds?.();
-            var isBuffering = player.getPlayerStateObject?.()?.isBuffering;
-            var trackingUrl = player.getPlayerResponse?.()?.playbackTracking?.videostatsPlaybackUrl?.baseUrl;
-            if (isBuffering && stats?.buffer_health_seconds === '0.00 s' && stats?.resolution === '0x0' && remaining.length > 0) {
-              if (trackingUrl?.includes?.('reloadxhr')) remaining = remaining.slice(1);
-              readyToReload = true;
-            }
-          }
-        }
-        return Reflect.apply(target, thisArg, args);
-      }
+      new MutationObserver(onTick).observe(document, { childList: true, subtree: true, attributes: true });
+      // Periodic fallback: once the wall's error screen finishes
+      // rendering, the page can go DOM-static and the MutationObserver
+      // alone stops firing — this guarantees forward progress regardless.
+      setInterval(onTick, 1000);
     });
 
     // Silences YouTube's own anomaly-detection callback so it can't react
-    // to the reload/spoof cycle above.
+    // to the reload/spoof cycle above (matches a separate, independent
+    // mechanism in the same reference implementation).
     window.Promise.prototype.then = new Proxy(window.Promise.prototype.then, {
       apply: function (target, thisArg, args) {
         var cb = args[0];
@@ -3335,6 +3577,238 @@
     preventFetchFn(true, propsToMatch || '', directive || '', '');
   }
 
+  // ── trustedPruneInboundObject ─────────────────────────────────────────
+  // Like jsonPrune, but prunes an object BEFORE it's passed as the first
+  // argument INTO a named function — e.g. stripping ad fields from a
+  // telemetry object before JSON.stringify() serializes it, rather than
+  // string-replacing the already-serialized text (trusted_replace_outbound_text)
+  // after key order/formatting is locked in. Mutates the argument object in
+  // place via objectPruneFn/objectFindOwnerFn (same prune engine json_prune
+  // uses), so the native call still receives the same reference — just pruned.
+  function trustedPruneInboundObject(propChain, rawPrunePaths, rawNeedlePaths) {
+    if (!propChain || !rawPrunePaths) return;
+    proxyApplyFn(propChain, function (context) {
+      if (!_scriptletsEnabled) return context.reflect();
+      var obj = context.callArgs[0];
+      if (obj !== null && typeof obj === 'object') {
+        var pruned = objectPruneFn(obj, rawPrunePaths, rawNeedlePaths || '');
+        if (pruned !== undefined) {
+          try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: '' } })); } catch (_e) {}
+        }
+      }
+      return context.reflect();
+    });
+  }
+
+  // ── trustedSuppressNativeMethod ───────────────────────────────────────
+  // Suppresses a native call only when its arguments match a per-position
+  // signature — more surgical than prevent_fetch/prevent_xhr/prevent_settimeout
+  // (which only match on URL or callback source), useful for calls with no
+  // URL at all (e.g. navigator.sendBeacon with a pre-built payload, or an
+  // internal player method invoked with ad-specific arguments).
+  // signatureRaw reuses the existing propsToMatch mini-language
+  // (parsePropertiesToMatchFn/matchObjectPropertiesFn) against a synthetic
+  // {0: arg0, 1: arg1, ...} object — "0:/pattern/ 2:exact" matches
+  // positional args 0 and 2, ignoring the rest. behaviorRaw: 'abort'
+  // (default; throws a self-suppressing ReferenceError, same idiom as
+  // abortOnStackTrace) or 'noop' (silently swallow the call, return
+  // undefined). stackRaw optionally scopes the match to callers whose stack
+  // trace matches a pattern (same convention as abort_on_stack_trace).
+  function trustedSuppressNativeMethod(methodPath, signatureRaw, behaviorRaw, stackRaw) {
+    if (!methodPath || !signatureRaw) return;
+    var behavior = behaviorRaw === 'noop' ? 'noop' : 'abort';
+    var propNeedles = parsePropertiesToMatchFn(signatureRaw, '');
+    var tok = behavior === 'abort' ? _mkToken() : '';
+    proxyApplyFn(methodPath, function (context) {
+      if (!_scriptletsEnabled) return context.reflect();
+      if (stackRaw) {
+        var stackOk = false;
+        try { stackOk = _toRegex(stackRaw).test(new Error().stack || ''); } catch (e) {}
+        if (!stackOk) return context.reflect();
+      }
+      var args = context.callArgs;
+      var haystack = {};
+      for (var i = 0; i < args.length; i++) {
+        var v = args[i];
+        if (typeof v === 'string') { haystack[i] = v; continue; }
+        try { haystack[i] = JSON.stringify(v); } catch (e) { haystack[i] = String(v); }
+      }
+      var matched = matchObjectPropertiesFn(propNeedles, haystack);
+      if (matched === undefined || matched.length === 0) return context.reflect();
+      if (behavior === 'noop') return undefined;
+      throw new ReferenceError(tok);
+    });
+  }
+
+  // ── m3uPrune ─────────────────────────────────────────────────────────
+  // Removes ad-segment lines from HLS (.m3u8) playlist responses — the
+  // mechanism livestream server-side ad insertion (SSAI) splices ads into
+  // directly at the manifest level, bypassing everything json_prune_fetch/
+  // trusted_edit_request do to the /player response (those only ever see
+  // the VOD/pre-roll request, never the live media playlist). markerRaw is
+  // a space-separated list of patterns tested against each playlist line;
+  // a matching line is dropped, and if the very next line is a bare segment
+  // URI (doesn't start with '#'), that companion line is dropped too — the
+  // #EXTINF-tag-plus-URI pairing every HLS ad segment uses. Guarded to only
+  // ever touch text that actually starts with the #EXTM3U signature, so a
+  // URL pattern that's slightly too broad can't corrupt unrelated responses.
+  var _fetchM3uRules = [];
+  var _fetchM3uProxyInstalled = false;
+  var _xhrM3uRules = [];
+
+  function _pruneM3uText(text, markerRes) {
+    if (typeof text !== 'string' || !markerRes || markerRes.length === 0) return text;
+    if (!/^\s*#EXTM3U/.test(text)) return text;
+    var lines = text.split(/\r?\n/);
+    var out = [];
+    var dropNextUri = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (dropNextUri) {
+        dropNextUri = false;
+        if (line !== '' && line.charAt(0) !== '#') continue;
+      }
+      var drop = false;
+      for (var j = 0; j < markerRes.length; j++) {
+        if (markerRes[j].test(line)) { drop = true; break; }
+      }
+      if (drop) { dropNextUri = true; continue; }
+      out.push(line);
+    }
+    return out.join('\n');
+  }
+
+  function _installM3uFetchProxy() {
+    if (_fetchM3uProxyInstalled) return;
+    _fetchM3uProxyInstalled = true;
+    var safe = safeSelf();
+    var applyHandler = function (target, thisArg, args) {
+      var fetchPromise = Reflect.apply(target, thisArg, args);
+      return fetchPromise.then(function (responseBefore) {
+        if (!_scriptletsEnabled || _fetchM3uRules.length === 0) return responseBefore;
+        var props;
+        var applicable = [];
+        for (var i = 0; i < _fetchM3uRules.length; i++) {
+          var rule = _fetchM3uRules[i];
+          if (rule.propNeedles.size !== 0) {
+            if (props === undefined) props = collateFetchArgumentsFn.apply(null, args);
+            if (matchObjectPropertiesFn(rule.propNeedles, props) === undefined) continue;
+          }
+          applicable.push(rule);
+        }
+        if (!applicable.length) return responseBefore;
+        var response = responseBefore.clone();
+        return response.text().then(function (textBefore) {
+          var textAfter = textBefore, changed = false;
+          for (var j = 0; j < applicable.length; j++) {
+            var after = _pruneM3uText(textAfter, applicable[j].res);
+            if (after !== textAfter) { textAfter = after; changed = true; }
+          }
+          if (!changed) return responseBefore;
+          try { window.dispatchEvent(new CustomEvent(_EVT_BLK, { detail: { url: '' } })); } catch (_e) {}
+          var fixedHeaders = new Headers(responseBefore.headers);
+          if (fixedHeaders.has('content-length')) {
+            fixedHeaders.set('content-length', String(new Blob([textAfter]).size));
+          }
+          var responseAfter = new Response(textAfter, {
+            status: responseBefore.status,
+            statusText: responseBefore.statusText,
+            headers: fixedHeaders,
+          });
+          safe.Object_defineProperties(responseAfter, {
+            ok: { value: responseBefore.ok },
+            redirected: { value: responseBefore.redirected },
+            type: { value: responseBefore.type },
+            url: { value: responseBefore.url },
+          });
+          return responseAfter;
+        }).catch(function () { return responseBefore; });
+      }).catch(function () { return fetchPromise; });
+    };
+    _ensureProxyApplyFnState();
+    var nativeFetch = self.fetch;
+    var proxiedFetch = new Proxy(nativeFetch, { apply: applyHandler });
+    proxyApplyFn.proxies.set(proxiedFetch, nativeFetch);
+    self.fetch = proxiedFetch;
+  }
+
+  function m3uPrune(rawMarkers, propsToMatch) {
+    if (!rawMarkers) return;
+    var safe = safeSelf();
+    var res = safe.String_split.call(rawMarkers, /\s+/).filter(function (s) { return s !== ''; }).map(_toRegex);
+    if (!res.length) return;
+    var propNeedles = parsePropertiesToMatchFn(propsToMatch || '', 'url');
+    _fetchM3uRules.push({ res: res, propNeedles: propNeedles });
+    _installM3uFetchProxy();
+    _xhrM3uRules.push({ res: res, propNeedles: propNeedles });
+    _installXhrResponseProxy();
+  }
+
+  // ── preventElementSrcLoading ───────────────────────────────────────────
+  // Stealthier alternative to declarativeNetRequest blocking for a leftover
+  // ad <script>/<img>/<iframe>/<link> tag: DNR blocking a matching request
+  // makes the element fire a real 'error' event — a free tamper signal for
+  // any page watching for failed resource loads. This instead swaps the
+  // src/href for a tiny same-type inert data: URI (so the load actually
+  // "succeeds") and fakes a 'load' event on the element instead of letting
+  // the real network error through.
+  function preventElementSrcLoading(tagName, match) {
+    if (!tagName || !match) return;
+    var tag = String(tagName).toLowerCase();
+    var mocks = {
+      script: 'data:text/javascript,',
+      img: 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
+      iframe: 'data:text/html,',
+      link: 'data:text/plain,',
+    };
+    var ctorNames = { script: 'HTMLScriptElement', img: 'HTMLImageElement', iframe: 'HTMLIFrameElement', link: 'HTMLLinkElement' };
+    var mock = mocks[tag], ctorName = ctorNames[tag];
+    if (!mock || !ctorName || !self[ctorName]) return;
+    var re = _toRegex(match);
+    var attrName = tag === 'link' ? 'href' : 'src';
+    var matched = new WeakSet();
+
+    proxyApplyFn(ctorName + '.prototype.setAttribute', function (context) {
+      if (!_scriptletsEnabled) return context.reflect();
+      var args = context.callArgs;
+      if (String(args[0]).toLowerCase() === attrName) {
+        var v;
+        try { v = re.test(String(args[1])); } catch (e) { v = false; }
+        if (v) {
+          matched.add(context.thisArg);
+          context.callArgs = [args[0], mock];
+        }
+      }
+      return context.reflect();
+    });
+
+    try {
+      var proto = self[ctorName].prototype;
+      var desc = Object.getOwnPropertyDescriptor(proto, attrName);
+      if (desc && desc.get && desc.set && desc.configurable !== false) {
+        Object.defineProperty(proto, attrName, {
+          configurable: true,
+          enumerable: desc.enumerable,
+          get: function () { return desc.get.call(this); },
+          set: function (v) {
+            var isAd = false;
+            try { isAd = _scriptletsEnabled && re.test(String(v)); } catch (e) {}
+            if (isAd) { matched.add(this); desc.set.call(this, mock); return; }
+            desc.set.call(this, v);
+          },
+        });
+      }
+    } catch (e) {}
+
+    window.addEventListener('error', function (ev) {
+      var t = ev.target;
+      if (!t || !matched.has(t)) return;
+      try { ev.stopImmediatePropagation(); } catch (e) {}
+      try { if (typeof t.onload === 'function') t.onload(new Event('load')); } catch (e) {}
+      try { t.dispatchEvent(new Event('load')); } catch (e) {}
+    }, true);
+  }
+
   // ── Scriptlet rule engine ────────────────────────────────────────
   // Applies rules declared in site-rules.txt via content.js bridge.
   // fetch/XHR/JSON.parse wrappers are installed once at document_start
@@ -3439,6 +3913,8 @@
     _noWinOpenRules.length = 0;
     _editRequestRules.length = 0;
     _editResponseRules.length = 0;
+    _fetchM3uRules.length = 0;
+    _xhrM3uRules.length = 0;
     var pruneF  = rules.json_prune_fetch          || [];
     var pruneX  = rules.json_prune_xhr            || [];
     var setC    = rules.set_constant              || [];
@@ -3537,16 +4013,18 @@
       });
     });
 
-    // ── adblock_wall_retry — see ssapUnplayableRetry's header comment for
-    // why this runs directly instead of through trusted_replace_script_text.
-    // Value: pipe-separated userAgent tokens, tried in order (each one also
-    // needs a matching trusted_edit_request clause to actually change the
-    // outgoing /player request — a token with no such clause is a no-op
-    // spoof, but still gets the referer's #reloadxhr suffix for free).
-    var wallRetryTokens = rules.adblock_wall_retry || [];
-    if (wallRetryTokens.length) {
-      _wrapOnce('adblock_wall_retry', wallRetryTokens.join(','), function () {
-        try { ssapUnplayableRetry(wallRetryTokens.slice()); } catch (e) {}
+    // ── ssapUnplayableRetry auto-enable ──────────────────────────────────
+    // No site-rules.txt flag at all (was `adblock_wall_retry`, removed
+    // 2026-08-16) — a whole debugging session was lost to that flag simply
+    // being `#`-disabled/missing from a concurrently-hand-edited
+    // site-rules.txt without anyone noticing. This is YouTube-only,
+    // self-contained, and has its own internal Premium/TV/embed guards, so
+    // there's nothing a site-rules.txt toggle was actually protecting —
+    // just run it on youtube.com, unconditionally, every dispatch (deduped
+    // via _wrapOnce so it only actually installs once per page load).
+    if (/(^|\.)youtube\.com$/.test(location.hostname)) {
+      _wrapOnce('ssap_unplayable_retry_auto', '1', function () {
+        try { ssapUnplayableRetry(); } catch (e) {}
       });
     }
 
@@ -3560,10 +4038,13 @@
     }
 
     // ── json_prune — registry-based (replace semantics, like json_edit) ──
-    // Value: "prunePaths[, needlePaths]" — each a space-separated path list.
+    // Value: "prunePaths[, needlePaths[, stackNeedle]]" — prunePaths/needlePaths
+    // are each a space-separated path list; stackNeedle (uBO-matching — see
+    // jsonPrune's own header comment) is a regex scoping the prune to
+    // JSON.parse() calls whose call stack matches.
     _eachRule(rules.json_prune, function (v) {
       var a = _argsOf(v);
-      jsonPrune(a[0] || '', a[1] || '');
+      jsonPrune(a[0] || '', a[1] || '', a[2] || '');
     });
 
     // ── trusted_replace_xhr_response — registry-based ────────────────
@@ -3739,6 +4220,32 @@
       _wrapOnce('trusted_prevent_fetch', v, function () {
         var a = _argsOf(v);
         trustedPreventFetch(a[0] || '', a[1] || '');
+      });
+    });
+    // trusted_prune_inbound_object = propChain, prunePaths[, needlePaths] (TRUSTED)
+    _eachRule(rules.trusted_prune_inbound_object, function (v) {
+      _wrapOnce('trusted_prune_inbound_object', v, function () {
+        var a = _argsOf(v);
+        trustedPruneInboundObject(a[0] || '', a[1] || '', a[2] || '');
+      });
+    });
+    // trusted_suppress_native_method = methodPath, signature[, behavior[, stackNeedle]] (TRUSTED)
+    _eachRule(rules.trusted_suppress_native_method, function (v) {
+      _wrapOnce('trusted_suppress_native_method', v, function () {
+        var a = _argsOf(v);
+        trustedSuppressNativeMethod(a[0] || '', a[1] || '', a[2] || '', a[3] || '');
+      });
+    });
+    // m3u_prune = markerPatterns[, propsToMatch] — registry-based (like json_prune)
+    _eachRule(rules.m3u_prune, function (v) {
+      var a = _argsOf(v);
+      m3uPrune(a[0] || '', a[1] || '');
+    });
+    // prevent_element_src_loading = tagName, match
+    _eachRule(rules.prevent_element_src_loading, function (v) {
+      _wrapOnce('prevent_element_src_loading', v, function () {
+        var a = _argsOf(v);
+        preventElementSrcLoading(a[0] || '', a[1] || '');
       });
     });
   }
