@@ -506,8 +506,13 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   // Wired 2026-07-31: request/response JSONPath editing + prune-on-assignment +
   // pre-insertion script rewriting (see _applyScriptletRules for value formats).
   'trusted_edit_request','trusted_edit_response','json_prune_on_set','trusted_replace_script_text',
-  // Wired 2026-08-10: direct-run YouTube ad-block-wall retry (see ssapUnplayableRetry).
-  'adblock_wall_retry'];
+  // 'adblock_wall_retry' removed 2026-08-16 — ssapUnplayableRetry now
+  // auto-enables on youtube.com unconditionally (content/scriptlets.js),
+  // no site-rules.txt key to relay here anymore.
+  // Wired 2026-08-16: ported from ABY (AdGuard Scriptlets, clean-room) — see
+  // trustedPruneInboundObject/trustedSuppressNativeMethod/m3uPrune/
+  // preventElementSrcLoading in scriptlets.js for value formats.
+  'trusted_prune_inbound_object','trusted_suppress_native_method','m3u_prune','prevent_element_src_loading'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;

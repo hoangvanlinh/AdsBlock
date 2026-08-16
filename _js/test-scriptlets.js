@@ -36,6 +36,14 @@ const documentStub = {
   body: { appendChild() {} },
   documentElement: {},
   getElementById() { return null; }, // overridden per-test where movie_player is needed
+  // Always defined (not just "overridden per-test") — ssapUnplayableRetry's
+  // retry-driver calls this from a REAL setInterval(1000ms), which can fire
+  // during ANY later test's own setTimeout wait, not just its own section.
+  // Returning null unconditionally is a safe default: every call site
+  // already null-guards its result, so this just makes shouldRetry() always
+  // false (no DOM-driven retry in this harness — that codepath isn't
+  // covered by these tests, see the ssapUnplayableRetry test section).
+  querySelector() { return null; },
 };
 
 class FakeXHR {
@@ -64,7 +72,17 @@ NodeStub.prototype.insertBefore = function (node) { (this._children = this._chil
 class ElementStub extends NodeStub {}
 ElementStub.prototype.insertAdjacentElement = function (position, el) { (this._children = this._children || []).push(el); return el; };
 ElementStub.prototype.append = function (...nodes) { (this._children = this._children || []).push(...nodes); };
+// setAttribute/getAttribute surface for prevent_element_src_loading's
+// proxyApplyFn(TagName.prototype.setAttribute) wrap.
+ElementStub.prototype.setAttribute = function (name, value) { (this._attrs = this._attrs || {})[name] = value; };
+ElementStub.prototype.getAttribute = function (name) { return (this._attrs || {})[name]; };
 class HTMLElementStub extends ElementStub {}
+// One stub class per tag prevent_element_src_loading supports — each just
+// needs its own .prototype.setAttribute for proxyApplyFn to wrap in isolation.
+class HTMLScriptElementStub extends ElementStub {}
+class HTMLImageElementStub extends ElementStub {}
+class HTMLIFrameElementStub extends ElementStub {}
+class HTMLLinkElementStub extends ElementStub {}
 class EventTargetStub {}
 // Records every instance so tests can fire a specific observer's callback
 // manually (ssapUnplayableRetry drives its whole retry loop off one).
@@ -76,7 +94,7 @@ class MutationObserverStub {
 MutationObserverStub.instances = [];
 class HistoryStub { pushState() {} replaceState() {} }
 // Document.prototype.visibilityState — real default 'hidden' so the
-// adblock_wall_retry spoof-to-'visible' test has something to prove.
+// ssapUnplayableRetry spoof-to-'visible' test has something to prove.
 class DocumentClass {}
 Object.defineProperty(DocumentClass.prototype, 'visibilityState', {
   get() { return 'hidden'; }, configurable: true, enumerable: true,
@@ -97,7 +115,7 @@ const sandbox = {
   EventTarget: EventTargetStub, MutationObserver: MutationObserverStub,
   History: HistoryStub, history: new HistoryStub(),
   console, JSON, Math, Object, Array, String, Number, RegExp, Promise, Set, Map,
-  WeakMap, WeakSet, Proxy, Reflect, Symbol, Error, TypeError, Date, parseFloat, parseInt,
+  WeakMap, WeakSet, Proxy, Reflect, Symbol, Error, TypeError, Date, parseFloat, parseInt, Uint8Array,
   setTimeout, clearTimeout, setInterval, clearInterval, queueMicrotask,
   CustomEvent: CustomEventStub,
   Window: class Window {},
@@ -105,12 +123,26 @@ const sandbox = {
   XMLHttpRequest: FakeXHR,
   Location: LocationStub,
   URL,
-  Request: class Request { clone() { return this; } },
+  // Stores constructor args (unlike a bare clone()-only stub) — needed to
+  // observe what body the TextEncoder/Request edit-path hook (proxyApplyFn's
+  // `construct` trap) actually passed through to the real constructor.
+  Request: class Request {
+    constructor(url, init) { this.url = url; this.body = init && init.body; }
+    clone() { return this; }
+  },
   document: documentStub,
   location: locationStub,
-  navigator: { userAgent: 'test' },
+  navigator: { userAgent: 'test', sendBeacon(url, data) { sendBeaconCalls.push([url, data]); return true; } },
   open: () => ({ close() {}, closed: false }), // window.open
+  HTMLScriptElement: HTMLScriptElementStub,
+  HTMLImageElement: HTMLImageElementStub,
+  HTMLIFrameElement: HTMLIFrameElementStub,
+  HTMLLinkElement: HTMLLinkElementStub,
+  // trusted_prune_inbound_object test target — a benign function taking a
+  // single object argument, standing in for e.g. a telemetry reporter.
+  reportPayload: (obj) => obj,
 };
+const sendBeaconCalls = [];
 // Minimal Headers stand-in — enough for the content-length-fixup code path
 // (has/get/set, constructible from a plain object or another FakeHeaders).
 class FakeHeaders {
@@ -152,6 +184,8 @@ let lastFetchArgs = null; // [url, init] as actually seen by the transport — p
 sandbox.Response = FakeResponse;
 sandbox.Headers = FakeHeaders;
 sandbox.Blob = Blob; // Node 18+ global — real byte-length semantics, no stub needed
+sandbox.TextEncoder = TextEncoder; // Node global — real byte semantics for the TextEncoder/Request edit-path tests
+sandbox.TextDecoder = TextDecoder;
 sandbox.fetch = async (url, init) => {
   lastFetchArgs = [url, init];
   return new FakeResponse(fetchPayload, { headers: fetchResponseHeaders });
@@ -814,55 +848,58 @@ function sendRules(rules) {
   check('jspb_response_prune: non-ad fields kept in .next() value JSON text',
     JSON.parse(nextResult.value).videoDetails.title === 'next', nextResult.value);
 
-  console.log('\n== 10. adblock_wall_retry: visibilityState spoofed while a retry token is active, restored once real ==');
+  console.log('\n== 10. ssapUnplayableRetry: self-contained escalation ladder (2026-08-16, clean-room rewrite from a live-verified-working reference — see memory for the A/B test) ==');
   check('document.visibilityState starts at the real (unspoofed) value',
     documentStub.visibilityState === 'hidden', documentStub.visibilityState);
 
-  sandbox.ytcfg = { data_: { INNERTUBE_CONTEXT: { client: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' } } } };
   locationStub._href = 'https://www.youtube.com/watch?v=abc123';
-  const movieState = { hasWall: true, status: 'ERROR', duration: 100, loaded: 0, current: 0 };
-  const movieStub = {
-    getPlayerResponse: () => ({
-      videoDetails: { videoId: 'abc123' },
-      playabilityStatus: {
-        status: movieState.status,
-        errorScreen: movieState.hasWall ? { openAdAllowlistInstructionCommand: {} } : undefined,
-      },
-      playerConfig: { playbackStartConfig: { startSeconds: 0 } },
-    }),
-    getProgressState: () => ({ duration: movieState.duration, loaded: movieState.loaded, current: movieState.current }),
-    getStatsForNerds: () => ({}),
-    getPlayerStateObject: () => ({ isBuffering: false }),
-    loadVideoById: () => {},
-  };
-  documentStub.getElementById = (id) => (id === 'movie_player' ? movieStub : null);
+  locationStub.hostname = 'www.youtube.com'; // no site-rules.txt flag anymore — auto-enable is hostname-gated
+  const ssapMovieStub = { getPlayerResponse: () => ({ playabilityStatus: { status: 'OK' } }) };
+  documentStub.getElementById = (id) => (id === 'movie_player' ? ssapMovieStub : null);
 
-  // Two tokens: advanceToken slices BEFORE picking (matches uBO's real
-  // serverContract — see its own comment), so the first-ever attempt
-  // already skips straight to the 2nd token, not the 1st. A single-token
-  // pool would never get a token set at all under this ordering; gitAdblock's
-  // real production ladder always has 5, so this just needs ≥2 to exercise
-  // "a token gets set" at all.
-  sendRules({ adblock_wall_retry: ['tokenA', 'tokenB'] });
-  check('adblock_wall_retry: visibilityState spoofed to "visible" once the wall triggers a retry token',
+  // Any dispatch on a youtube.com hostname triggers the auto-enable now —
+  // no 'adblock_wall_retry' key to send.
+  sendRules({});
+
+  function makePlayerBody(videoId) {
+    return { videoId, context: { client: { clientName: 'WEB' } }, playbackContext: { contentPlaybackContext: {} } };
+  }
+  // Request-editing is exercised via TextEncoder.encode — the CONFIRMED
+  // real path a youtube.com /player request body takes (live-verified
+  // 2026-08-16: the page JSON.stringify()s the body, TextEncoder.encode()s
+  // it into a Uint8Array, bakes that into a Request, then calls
+  // fetch(request) with no 2nd argument at all).
+  function sendPlayerBody(videoId) {
+    const bytes = new sandbox.TextEncoder().encode(JSON.stringify(makePlayerBody(videoId)));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  const sent1 = sendPlayerBody('abc123');
+  check('ssapUnplayableRetry: fresh video starts at param_first (params=eAFgAQ)',
+    sent1.params === 'eAFgAQ', JSON.stringify(sent1));
+  check('ssapUnplayableRetry: visibilityState spoofed to "visible" while a spoof is active',
     documentStub.visibilityState === 'visible', documentStub.visibilityState);
 
-  // remaining is now ['tokenB'] — one wall-detected cycle short of
-  // exhausted. Past the retry cooldown, trigger it once more so the pool
-  // empties out (mirrors the real ladder, which always starts with >1
-  // token in production).
-  const wallRetryObserver = MutationObserverStub.instances[MutationObserverStub.instances.length - 1];
-  await new Promise(r => setTimeout(r, 1600));
-  wallRetryObserver.cb();
+  // Feed an "UNPLAYABLE" /player RESPONSE through the (already-hooked)
+  // JSON.parse — this is what advances the ladder, independent of any
+  // request being sent.
+  sandbox.JSON.parse('{"playabilityStatus":{"status":"ERROR","errorScreen":{"playerErrorMessageRenderer":{}}}}');
 
-  // Wall clears and the retry pool is now exhausted — the next check() pass
-  // must fall through to setToken('') and restore.
-  movieState.hasWall = false;
-  movieState.status = 'OK';
-  movieState.loaded = 100; movieState.current = 50; // duration(100) - current(50) > 1 → stillPlaying
-  wallRetryObserver.cb();
-  check('adblock_wall_retry: visibilityState restored to real once retry tokens are exhausted and playback is healthy',
-    documentStub.visibilityState === 'hidden', documentStub.visibilityState);
+  const sent2 = sendPlayerBody('abc123');
+  check('ssapUnplayableRetry: state advances to param_second after a rejected response',
+    sent2.params === '8AUB', JSON.stringify(sent2));
+
+  const sent3 = sendPlayerBody('xyz999');
+  check('ssapUnplayableRetry: a different videoId resets the ladder back to param_first',
+    sent3.params === 'eAFgAQ', JSON.stringify(sent3));
+
+  // NOTE: the DOM-driven retry trigger (onTick/shouldRetry/loadVideoById,
+  // matching the reference's MutationObserver + videoId-tracked debounce)
+  // isn't covered here — this harness's document.querySelector stub always
+  // returns null (see its own comment), so shouldRetry() is always false
+  // and onTick() no-ops. The request-editing and response-detection halves
+  // above (which is what changed vs. the old userAgent-relay version) are
+  // what's under test.
 
   console.log('\n== 11. trusted_replace_outbound_text: unconditional JSON.stringify substring swap (2026-08-15, ported from Adblock for YouTube) ==');
   sendRules({ trusted_replace_outbound_text: [
@@ -894,6 +931,129 @@ function sendRules(rules) {
   await new Promise(r => setTimeout(r, 50));
   check('prevent_settimeout: pattern+delay both matching is blocked', ranMatching === false);
   check('prevent_settimeout: matching pattern but non-matching delay still runs', ranNonMatchingDelay === true);
+
+  console.log('\n== 13. trusted_prune_inbound_object / trusted_suppress_native_method / m3u_prune / prevent_element_src_loading (2026-08-16, ported from ABY/AdGuard Scriptlets, clean-room) ==');
+
+  // 13a. trusted_prune_inbound_object — object is pruned BEFORE reaching
+  // the target function, in place, so the function still sees its own
+  // (now-pruned) argument.
+  sendRules({ trusted_prune_inbound_object: ['reportPayload, adPlacements adSlots'] });
+  const prunedInbound = sandbox.reportPayload({ adPlacements: [1], adSlots: [2], videoDetails: { title: 't' } });
+  check('trusted_prune_inbound_object: ad fields stripped before the call',
+    !prunedInbound.adPlacements && !prunedInbound.adSlots, JSON.stringify(prunedInbound));
+  check('trusted_prune_inbound_object: non-ad fields kept', prunedInbound.videoDetails.title === 't');
+  const cleanInbound = sandbox.reportPayload({ videoDetails: { title: 'clean' } });
+  check('trusted_prune_inbound_object: object with nothing to prune passed through unchanged',
+    cleanInbound.videoDetails.title === 'clean');
+
+  // 13b. trusted_suppress_native_method — positional-arg signature match,
+  // 'noop' behavior (silently swallow, don't reach the real implementation).
+  sendRules({ trusted_suppress_native_method: ['navigator.sendBeacon, 0:/ad_break/, noop'] });
+  sendBeaconCalls.length = 0;
+  sandbox.navigator.sendBeacon('https://example.com/ad_break?x=1', '');
+  check('trusted_suppress_native_method: matching call suppressed (never reaches real impl)',
+    sendBeaconCalls.length === 0, JSON.stringify(sendBeaconCalls));
+  sandbox.navigator.sendBeacon('https://example.com/telemetry', '');
+  check('trusted_suppress_native_method: non-matching call passes through',
+    sendBeaconCalls.length === 1 && sendBeaconCalls[0][0] === 'https://example.com/telemetry',
+    JSON.stringify(sendBeaconCalls));
+
+  // 13c. m3u_prune — drops a matching #EXTINF+URI ad-segment pair from an
+  // HLS playlist, leaves everything else (including non-matching segments)
+  // untouched, and never touches a response that isn't actually a playlist.
+  sendRules({ m3u_prune: ['ADMARKER'] });
+  const m3uBefore = ['#EXTM3U', '#EXTINF:6,', 'seg1.ts', '#EXTINF:6,ADMARKER', 'adseg.ts', '#EXTINF:6,', 'seg2.ts'].join('\n');
+  const m3uExpected = ['#EXTM3U', '#EXTINF:6,', 'seg1.ts', '#EXTINF:6,', 'seg2.ts'].join('\n');
+  fetchPayload = m3uBefore;
+  const m3uResp = await sandbox.fetch('https://x.example.com/live.m3u8');
+  const m3uAfter = await m3uResp.text();
+  check('m3u_prune: ad EXTINF+URI pair dropped, real segments kept', m3uAfter === m3uExpected, m3uAfter);
+
+  fetchPayload = 'not a playlist but mentions ADMARKER anyway';
+  const nonM3uResp = await sandbox.fetch('https://x.example.com/live.m3u8');
+  const nonM3uAfter = await nonM3uResp.text();
+  check('m3u_prune: non-#EXTM3U response left untouched (guard against false-positive URL matches)',
+    nonM3uAfter === fetchPayload, nonM3uAfter);
+
+  // 13d. prevent_element_src_loading — setAttribute interception path: a
+  // matching src is swapped for the inert same-type mock; a non-matching
+  // src passes through unchanged.
+  sendRules({ prevent_element_src_loading: ['img, doubleclick.net'] });
+  const adImg = new HTMLImageElementStub();
+  adImg.setAttribute('src', 'https://doubleclick.net/ad.gif');
+  check('prevent_element_src_loading: matching src swapped for inert mock',
+    typeof adImg._attrs.src === 'string' && adImg._attrs.src.startsWith('data:image/gif'),
+    adImg._attrs.src);
+  const realImg = new HTMLImageElementStub();
+  realImg.setAttribute('src', 'https://example.com/real.png');
+  check('prevent_element_src_loading: non-matching src passed through unchanged',
+    realImg._attrs.src === 'https://example.com/real.png', realImg._attrs.src);
+
+  console.log('\n== 14. json_prune: optional stackNeedle scoping (2026-08-16, matches uBO real json-prune.js 3rd arg) ==');
+  // Two rules pruning DIFFERENT fields, each gated to a call stack that
+  // does/doesn't match a function name present in the test's own call
+  // stack at the point JSON.parse() runs below.
+  sendRules({ json_prune: [
+    'adPlacements, , /callFromMatchingFn/',
+    'adSlots, , /callFromNoSuchFn/',
+  ] });
+  function callFromMatchingFn() {
+    return sandbox.JSON.parse(JSON.stringify({ adPlacements: [1], adSlots: [2], keep: 'yes' }));
+  }
+  const stackPruned = callFromMatchingFn();
+  check('json_prune: stackNeedle matching the real call stack still prunes',
+    stackPruned.adPlacements === undefined, JSON.stringify(stackPruned));
+  check('json_prune: stackNeedle NOT matching the call stack leaves that field alone',
+    Array.isArray(stackPruned.adSlots) && stackPruned.adSlots.length === 1, JSON.stringify(stackPruned));
+  check('json_prune: unrelated field kept regardless', stackPruned.keep === 'yes');
+
+  console.log('\n== 15. trusted_edit_request: TextEncoder.encode / Request-constructor edit path (2026-08-16, live-verified interception blind spot) ==');
+  // Live capture via Claude-in-Chrome on a real youtube.com watch page proved
+  // youtubei/v1/player requests never carry a string init.body at all: the
+  // page runs the JSON string through TextEncoder.encode() into a Uint8Array,
+  // bakes THAT into `new Request(url, {body: uint8Array})`, then calls
+  // fetch(thatRequest) with no 2nd argument — so the existing fetch/XHR
+  // init.body-string edit path never sees it, no matter how correct the
+  // JSONPath rule is. This section proves the new TextEncoder/Request hooks
+  // actually intercept and edit that exact shape.
+  sendRules({ trusted_edit_request: ['$.trackingId, url:youtubei/v1/player'] });
+  const playerBodyObj = {
+    trackingId: 'abc123',
+    context: { client: {} },
+    playbackContext: { contentPlaybackContext: {} }, // sniff marker: "contentPlaybackContext"
+  };
+  const playerBodyStr = JSON.stringify(playerBodyObj);
+
+  // 15a. TextEncoder.encode — the ACTUAL path YouTube uses.
+  const encodedBytes = new sandbox.TextEncoder().encode(playerBodyStr);
+  const decodedAfter = new TextDecoder().decode(encodedBytes);
+  const editedObj = JSON.parse(decodedAfter);
+  check('TextEncoder.encode: content-sniffed /player body gets the JSONPath edit applied',
+    editedObj.trackingId === undefined, decodedAfter);
+  check('TextEncoder.encode: other fields kept', editedObj.context && typeof editedObj.context === 'object');
+
+  // 15b. A string NOT matching the content-sniff markers must pass through
+  // completely untouched — this hook has no URL to scope by, only content.
+  const unrelatedStr = JSON.stringify({ trackingId: 'shouldSurvive', somethingElse: 1 });
+  const unrelatedBytes = new sandbox.TextEncoder().encode(unrelatedStr);
+  check('TextEncoder.encode: string without sniff markers left untouched',
+    new TextDecoder().decode(unrelatedBytes) === unrelatedStr);
+
+  // 15c. Request constructor — the redundant 2nd interception point, for
+  // whichever code path bakes a Uint8Array body in directly (matches the
+  // ACTUAL live-captured shape: youtube.com's own code does exactly this
+  // with the TextEncoder.encode() output).
+  const reqBodyBytes = new TextEncoder().encode(playerBodyStr);
+  const req = new sandbox.Request('https://www.youtube.com/youtubei/v1/player', { body: reqBodyBytes });
+  const reqBodyAfter = JSON.parse(new TextDecoder().decode(req.body));
+  check('Request constructor: sniffed Uint8Array body gets the JSONPath edit applied',
+    reqBodyAfter.trackingId === undefined, new TextDecoder().decode(req.body));
+  check('Request constructor: other fields kept', reqBodyAfter.context && typeof reqBodyAfter.context === 'object');
+
+  const unrelatedReqBytes = new TextEncoder().encode(unrelatedStr);
+  const unrelatedReq = new sandbox.Request('https://www.youtube.com/youtubei/v1/player', { body: unrelatedReqBytes });
+  check('Request constructor: body without sniff markers left untouched',
+    new TextDecoder().decode(unrelatedReq.body) === unrelatedStr);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
