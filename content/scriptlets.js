@@ -3044,7 +3044,15 @@
     // escalation state. root = the whole request object; playbackCtx =
     // either root.playbackContext or root.playerRequest.playbackContext
     // (a request can carry either shape, or both).
+    // Shorts/TV/embed exclusion lives HERE (not just in the response-side
+    // onPlayerResponseParsed) because this is the single choke point all 4
+    // request-editing hooks (TextEncoder/Request/JSON.stringify/XHR.send)
+    // funnel through — missing it here first shipped as a live regression
+    // (2026-08-16: Shorts autoplaying muted) since the reference
+    // implementation excludes shorts at EVERY hook, not just the
+    // detection one, and this rewrite had only ported the latter.
     function editRequest(root, playbackCtx) {
+      if (location.href.indexOf('/shorts/') !== -1 || location.href.indexOf('youtube.com/tv') !== -1 || location.href.indexOf('youtube.com/embed/') !== -1) return;
       if (!root || !playbackCtx || !playbackCtx.contentPlaybackContext) return;
       try {
         var vid = root.videoId;
