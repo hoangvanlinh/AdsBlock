@@ -893,6 +893,18 @@ function sendRules(rules) {
   check('ssapUnplayableRetry: a different videoId resets the ladder back to param_first',
     sent3.params === 'eAFgAQ', JSON.stringify(sent3));
 
+  // Regression test (2026-08-16): a live report of Shorts autoplaying
+  // muted traced to editRequest() having no /shorts/ exclusion — only
+  // onPlayerResponseParsed (the response-detection side) had it ported,
+  // not the request-editing side all 4 hooks funnel through. The
+  // reference implementation excludes shorts/tv/embed at EVERY hook.
+  const hrefBefore = locationStub._href;
+  locationStub._href = 'https://www.youtube.com/shorts/abc123';
+  const sentShorts = sendPlayerBody('abc123');
+  check('ssapUnplayableRetry: /shorts/ pages are never touched by request editing',
+    sentShorts.params === undefined, JSON.stringify(sentShorts));
+  locationStub._href = hrefBefore;
+
   // NOTE: the DOM-driven retry trigger (onTick/shouldRetry/loadVideoById,
   // matching the reference's MutationObserver + videoId-tracked debounce)
   // isn't covered here — this harness's document.querySelector stub always
