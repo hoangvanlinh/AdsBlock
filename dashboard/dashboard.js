@@ -508,6 +508,67 @@ document.getElementById('allowList')?.addEventListener('click', e => {
   chrome.runtime.sendMessage({ type: 'ALLOWLIST_CHANGED' });
 });
 
+/* ── Element rules page ("hide element" picker) ──── */
+function loadElementRulesList() {
+  chrome.storage.local.get('elementRules', ({ elementRules = {} }) => {
+    renderElementRulesList(elementRules);
+  });
+}
+
+function renderElementRulesList(elementRules) {
+  const list = document.getElementById('elementRulesList');
+  const empty = document.getElementById('elementRulesEmpty');
+  if (!list) return;
+  list.innerHTML = '';
+  const hosts = Object.keys(elementRules || {});
+  if (empty) empty.style.display = hosts.length ? 'none' : '';
+  hosts.forEach(host => {
+    const selectors = elementRules[host] || [];
+    const li = document.createElement('li');
+    li.className = 'allow-item';
+    li.style.flexDirection = 'column';
+    li.style.alignItems = 'stretch';
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    const label = document.createElement('span');
+    label.className = 'allow-domain';
+    label.textContent = `${host} (${selectors.length})`;
+    const removeHostBtn = document.createElement('button');
+    removeHostBtn.className = 'icon-btn-sm remove-element-host';
+    removeHostBtn.dataset.host = host;
+    removeHostBtn.textContent = '✕';
+    header.append(label, removeHostBtn);
+    li.appendChild(header);
+    selectors.forEach(sel => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0;';
+      const code = document.createElement('code');
+      code.textContent = sel;
+      code.style.cssText = 'font-size:12px;word-break:break-all;';
+      const rm = document.createElement('button');
+      rm.className = 'icon-btn-sm remove-element-selector';
+      rm.dataset.host = host;
+      rm.dataset.selector = sel;
+      rm.textContent = '✕';
+      row.append(code, rm);
+      li.appendChild(row);
+    });
+    list.appendChild(li);
+  });
+}
+
+document.getElementById('elementRulesList')?.addEventListener('click', e => {
+  const hostBtn = e.target.closest('.remove-element-host');
+  const selBtn = e.target.closest('.remove-element-selector');
+  const btn = hostBtn || selBtn;
+  if (!btn) return;
+  const payload = { type: 'REMOVE_ELEMENT_RULE', host: btn.dataset.host };
+  if (selBtn) payload.selector = btn.dataset.selector;
+  chrome.runtime.sendMessage(payload, () => { void chrome.runtime.lastError; loadElementRulesList(); });
+});
+
 /* ── Focus mode page ──────────────────────────── */
 let focusInterval = null;
 let focusRemaining = 25 * 60; // seconds
@@ -797,6 +858,7 @@ const RULES_CACHE_KEY_TIME = self.ADBLOCK_CONFIG.RULES_CACHE_TIME_KEY;
 loadOverviewStats();
 loadCustomRules();
 loadAllowList();
+loadElementRulesList();
 loadBlockingSettings();
 loadPrivacySettings();
 loadRulesSourceSettings();

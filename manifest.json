@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "AdBlock — Ads, Trackers",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "description": "Block ads, trackers, and known malicious domains with simple site controls and focus tools.",
-  "permissions": ["storage", "declarativeNetRequest", "alarms", "scripting"],
+  "permissions": ["storage", "declarativeNetRequest", "alarms", "scripting", "contextMenus"],
   "host_permissions": [
     "<all_urls>"
   ],
@@ -37,7 +37,7 @@
       "matches": [
         "<all_urls>"
       ],
-      "js": ["config.js", "content/site-rules-loader.js", "content/content.js", "content/site-block.js"],
+      "js": ["config.js", "content/site-rules-loader.js", "content/content.js", "content/site-block.js", "content/element-picker.js"],
       "run_at": "document_start",
       "all_frames": true
     }
