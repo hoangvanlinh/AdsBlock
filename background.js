@@ -866,7 +866,12 @@ async function buildFocusRules(focusMode) {
 }
 
 // ── Icon badge ────────────────────────────────────────────────────
-function updateIcon(enabled) {
+// enabled=true shows today's total blocked count (not a per-tab live
+// counter — user asked for "tổng thôi", just the running total), enabled=
+// false shows "OFF". The count itself is refreshed by _refreshBlockedBadge
+// (called after every daily-stat write) — this only needs to fetch it once
+// on enable so the badge isn't blank between here and the next block event.
+async function updateIcon(enabled) {
   chrome.action.setIcon({
     path: {
       16:  enabled ? 'icons/icon16.png'     : 'icons/icon16_off.png',
@@ -874,8 +879,13 @@ function updateIcon(enabled) {
       128: enabled ? 'icons/icon128.png'    : 'icons/icon128_off.png',
     },
   });
-  chrome.action.setBadgeText({ text: enabled ? '' : 'OFF' });
-  chrome.action.setBadgeBackgroundColor({ color: enabled ? [0, 0, 0, 0] : '#f87171' });
+  if (!enabled) {
+    chrome.action.setBadgeText({ text: 'OFF' });
+    chrome.action.setBadgeBackgroundColor({ color: '#f87171' });
+    return;
+  }
+  const { dailyStats = {} } = await chrome.storage.local.get('dailyStats');
+  _refreshBlockedBadge((dailyStats[todayKey()] || {}).blocked || 0);
 }
 
 // ── Stats tracking ────────────────────────────────────────────────
@@ -937,6 +947,19 @@ async function _writeDailyStatDelta(delta) {
   const keys = Object.keys(dailyStats).sort();
   while (keys.length > 30) { delete dailyStats[keys.shift()]; }
   await chrome.storage.local.set({ dailyStats });
+  _refreshBlockedBadge(dailyStats[key].blocked);
+}
+
+// ── Icon badge count (today's total, not per-tab — see updateIcon below) ──
+function _formatBadgeCount(n) {
+  if (!n) return '';
+  if (n < 1000) return String(n);
+  return Math.floor(n / 1000) + 'k'; // badge text is only a few px wide
+}
+function _refreshBlockedBadge(blockedToday) {
+  if (!_settingsCache.enabled) return; // updateIcon(false) owns the "OFF" badge
+  chrome.action.setBadgeText({ text: _formatBadgeCount(blockedToday) });
+  chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
 }
 
 function updateDailyStats(delta) {
@@ -1037,6 +1060,29 @@ chrome.alarms?.onAlarm.addListener(async (alarm) => {
     await chrome.storage.local.set({ focusMode: false, focusEndTime: null });
     await applyNetworkRules();
   }
+});
+
+// ── "Hide element" picker (right-click context menu) ─────────────────
+// Arms content/element-picker.js for the clicked tab/frame; the actual
+// pick/hide/persist flow happens entirely client-side after that (see
+// element-picker.js), reporting back only the final SAVE_ELEMENT_RULE.
+// contextMenus.create throws "duplicate id" if called again while a menu
+// with that id still exists — removeAll() first makes this idempotent
+// across service-worker restarts (no onInstalled-only guard needed).
+try {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: 'qkv1-pick-element',
+      title: 'Pick element to hide…',
+      contexts: ['all'],
+    });
+  });
+} catch (e) {}
+chrome.contextMenus?.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== 'qkv1-pick-element' || !tab?.id) return;
+  chrome.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_PICKER_MODE' }, { frameId: info.frameId }, () => {
+    void chrome.runtime.lastError; // no listener on this frame yet — ignore
+  });
 });
 
 // ── Privacy: Referrer anonymization ───────────────────────────────
@@ -1203,6 +1249,15 @@ function _domainListMatches(list, host) {
 chrome.tabs.onCreated.addListener(async (tab) => {
   if (!tab.openerTabId) return;
   if (!_settingsCache.enabled) return;
+  // Never close this extension's own pages (dashboard/popup/blocked.html).
+  // chrome.runtime.openOptionsPage() (open_in_tab:true) creates a real tab
+  // via chrome.tabs.create — if the user triggers it while the CURRENTLY
+  // ACTIVE tab happens to be on a close_popunder_tabs-flagged
+  // site, Chrome can attribute that active tab as this new tab's opener,
+  // and without this guard the dashboard/options tab gets misread as "this
+  // site just spawned a popup" and closed immediately.
+  const ownPrefix = chrome.runtime.getURL('');
+  if ((tab.url && tab.url.startsWith(ownPrefix)) || (tab.pendingUrl && tab.pendingUrl.startsWith(ownPrefix))) return;
   try {
     // Only remaining await before the close call — Chrome doesn't hand us
     // the opener's URL in the onCreated event itself, so there's no way to
@@ -1227,6 +1282,81 @@ chrome.tabs.onCreated.addListener(async (tab) => {
     }
   } catch (e) {}
 });
+
+// ── "Hide element" picker persistence ────────────────────────────────
+// Source of truth is the elementRules map ({host: [selector,...]}), NOT the
+// generated text — regenerating the whole delimited block from the map on
+// every write (instead of patching customRulesText in place) means a picked
+// selector can never desync from what's actually saved. The block reuses
+// [host_patterns]/direct_hide_selectors verbatim — the exact same, already
+// battle-tested pipeline this whole session's site.rules.txt work went
+// through, so no new "apply" code is needed, only "generate the text".
+const ELEMENT_RULES_MARKER = '# === Auto-generated by "Hide element" — do not hand-edit below this line ===';
+const ELEMENT_RULES_END_MARKER = '# === End "Hide element" rules ===';
+function _elementRuleSiteKey(host) {
+  return 'qkv1_' + host.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+// existingHostPatterns — the [host_patterns] map resolved from everything
+// OUTSIDE this block (base rules file + any hand-written custom rules). A
+// host already covered by a pre-existing [sitekey] section (e.g. a built-in
+// [tuoitre] for tuoitre.vn) must reuse THAT key instead of minting our own
+// qkv1_ one: parseRuleText merges duplicate [host_patterns] keys into an
+// array and resolveSiteKey always takes the first match, so a second entry
+// for the same host is silently unreachable — the picked selector would
+// hide the element instantly (element-picker.js edits the live DOM too) but
+// never re-apply after a reload, since GET_SITE_CONFIG resolves to the
+// pre-existing key, not ours.
+function _buildElementRulesBlock(elementRules, existingHostPatterns) {
+  existingHostPatterns = existingHostPatterns || {};
+  const hosts = Object.keys(elementRules).filter(h => elementRules[h] && elementRules[h].length);
+  if (!hosts.length) return '';
+  const newHostPatternLines = [];
+  const sections = hosts.map(h => {
+    const ownKey = _elementRuleSiteKey(h);
+    const existingKey = resolveSiteKey(existingHostPatterns, h);
+    const targetKey = (existingKey && existingKey !== ownKey) ? existingKey : ownKey;
+    if (targetKey === ownKey) newHostPatternLines.push(`${h} = ${ownKey}`);
+    return `[${targetKey}]\ndirect_hide_selectors = ${elementRules[h].join(' | ')}`;
+  });
+  const hostPatternsBlock = newHostPatternLines.length ? `[host_patterns]\n${newHostPatternLines.join('\n')}\n\n` : '';
+  return `${ELEMENT_RULES_MARKER}\n${hostPatternsBlock}${sections.join('\n\n')}\n${ELEMENT_RULES_END_MARKER}`;
+}
+// Cuts out only the marker..end-marker region and keeps whatever text sits
+// before AND after it — e.g. rules the user hand-typed in the dashboard's
+// Rules tab below the generated block. An older block (pre end-marker) has
+// no closing marker to find, so it falls back to dropping everything from
+// the start marker onward, same as before — a one-time loss on first save
+// after update, unavoidable since the old format never recorded where the
+// block ended; every save from then on carries the end marker and is safe.
+async function _applyElementRules(elementRules) {
+  const { customRulesText = '' } = await chrome.storage.local.get('customRulesText');
+  const startIdx = customRulesText.indexOf(ELEMENT_RULES_MARKER);
+  const endIdx = customRulesText.indexOf(ELEMENT_RULES_END_MARKER);
+  let before, after;
+  if (startIdx === -1) {
+    before = customRulesText;
+    after = '';
+  } else if (endIdx !== -1 && endIdx > startIdx) {
+    before = customRulesText.slice(0, startIdx);
+    after = customRulesText.slice(endIdx + ELEMENT_RULES_END_MARKER.length);
+  } else {
+    before = customRulesText.slice(0, startIdx);
+    after = '';
+  }
+  before = before.replace(/\s*$/, '');
+  after = after.replace(/^\s*/, '');
+  let existingHostPatterns = {};
+  try {
+    const parsed = await getParsedRules();
+    existingHostPatterns = parsed.host_patterns || {};
+  } catch {}
+  const block = _buildElementRulesBlock(elementRules, existingHostPatterns);
+  let newText = before;
+  if (block) newText += (before ? '\n\n' : '') + block;
+  if (after) newText += (newText ? '\n\n' : '') + after;
+  await chrome.storage.local.set({ customRulesText: newText, elementRules });
+  await reloadRules();
+}
 
 // ── Message handler ───────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -1282,6 +1412,39 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0], tabId: activeTab.id });
           }
         }
+        sendResponse({ ok: true });
+        break;
+      }
+
+      case 'SAVE_ELEMENT_RULE': {
+        const host = String(msg.host || '').toLowerCase();
+        const selector = String(msg.selector || '').trim();
+        if (!host || !DOMAIN_PATTERN_RE.test(host) || !selector || selector.length > 500) {
+          sendResponse({ ok: false });
+          break;
+        }
+        const safeSelector = selector.replace(/\|/g, '\\|');
+        const { elementRules = {} } = await chrome.storage.local.get('elementRules');
+        const list = elementRules[host] || [];
+        if (!list.includes(safeSelector)) list.push(safeSelector);
+        elementRules[host] = list;
+        await _applyElementRules(elementRules);
+        sendResponse({ ok: true });
+        break;
+      }
+
+      case 'REMOVE_ELEMENT_RULE': {
+        const host = String(msg.host || '').toLowerCase();
+        if (!host) { sendResponse({ ok: false }); break; }
+        const { elementRules = {} } = await chrome.storage.local.get('elementRules');
+        if (msg.selector) {
+          const list = (elementRules[host] || []).filter(s => s !== msg.selector);
+          if (list.length) elementRules[host] = list;
+          else delete elementRules[host];
+        } else {
+          delete elementRules[host]; // no selector given — drop the whole host
+        }
+        await _applyElementRules(elementRules);
         sendResponse({ ok: true });
         break;
       }

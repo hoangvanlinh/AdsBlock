@@ -246,6 +246,19 @@ document.getElementById('donateBtnPopup')?.addEventListener('click', () => {
   chrome.tabs.create({ url: PAYPAL_DONATE_URL });
 });
 
+// ── "Hide element" picker ───────────────────────
+// Arms content/element-picker.js directly on the active tab — same message
+// the right-click context menu item sends, just a second entry point for
+// discoverability without needing to right-click the exact element first.
+document.getElementById('pickElement')?.addEventListener('click', async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return;
+  chrome.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_PICKER_MODE' }, () => {
+    void chrome.runtime.lastError;
+    window.close();
+  });
+});
+
 // ── Init ───────────────────────────────────────
 loadState();
 
