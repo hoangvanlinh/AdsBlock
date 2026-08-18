@@ -62,6 +62,12 @@
       </svg>
       Element Rules
     </a>
+    <a class="nav-item" data-page="globalrules" href="#">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+      </svg>
+      Global Rules
+    </a>
     <a class="nav-item" data-page="focus" href="#">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <circle cx="12" cy="12" r="3"/>
@@ -294,6 +300,22 @@
         <!-- rendered by JS -->
       </ul>
       <p class="page-sub" id="elementRulesEmpty">No rules yet.</p>
+    </div>
+  </section>
+
+  <!-- ━━━ PAGE: GLOBAL RULES (right-click "scan page for scripts/variables" picker) ━━━ -->
+  <section class="page" id="page-globalrules">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Global rules</h1>
+        <p class="page-sub">Window globals blocked/edited/deleted manually via "Scan page for scripts/variables" — grouped by site</p>
+      </div>
+    </div>
+    <div class="card">
+      <ul class="allow-list" id="globalRulesList">
+        <!-- rendered by JS -->
+      </ul>
+      <p class="page-sub" id="globalRulesEmpty">No rules yet.</p>
     </div>
   </section>
 

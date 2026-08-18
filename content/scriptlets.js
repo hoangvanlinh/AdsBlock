@@ -22,6 +22,19 @@
   var _EVT_BLK   = '__' + _qkv1Token + '_blk__';
   var _EVT_DIS   = '__' + _qkv1Token + '_dis__';
   var _EVT_CLR   = '__' + _qkv1Token + '_clr__';
+  // "Scan page globals" picker bridge (content/global-scanner.js, isolated
+  // world) — the first on-demand request/response pair in this codebase
+  // (every other _EVT_* above is a fixed one-shot lifecycle event). Details
+  // are always plain JSON STRINGS, never live objects: the one existing
+  // isolated->MAIN precedent (_EVT_RULES) already needs cloneInto() for its
+  // object detail on Firefox, and this is the first MAIN->isolated event
+  // ever built here — Firefox Xray-vision would very likely make a nested
+  // object/array detail opaque in that direction with no cloneInto
+  // equivalent available from MAIN world. Strings are structured-clone-safe
+  // primitives, sidestepping Xray semantics entirely.
+  var _EVT_SCANREQ  = '__' + _qkv1Token + '_scanreq__';
+  var _EVT_SCANRES  = '__' + _qkv1Token + '_scanres__';
+  var _EVT_APPLYREQ = '__' + _qkv1Token + '_applyreq__';
 
   // ── Helpers ──────────────────────────────────────────────────────
   var _strSplit = String.prototype.split;
@@ -1863,6 +1876,122 @@
       Object.defineProperty(owner, prop, {
         set: function () { if (_scriptletsEnabled) throw new ReferenceError(tok); }
       });
+    } catch (e) {}
+  }
+
+  // ── _scanPageGlobals ─────────────────────────────────────────────
+  // On-demand only (content/global-scanner.js's overlay), never run at
+  // document_start / page load — this is passive introspection for a user
+  // who explicitly asked to see it, not a blocking mechanism.
+  //
+  // Isolates page-ADDED window properties from the ~700 browser-native ones
+  // by diffing against a src-less <iframe>'s own fresh window (a real,
+  // separate JS realm containing only native globals — no page script has
+  // ever run in it). Hard, unfixable JS-language gap, not a shortcut: only
+  // `var`/function-declaration globals and explicit `window.x =`/bare
+  // non-strict assignments create an OWN property on window at all — modern
+  // `let`/`const`/`class` at a <script>'s top level never do, so a large
+  // fraction of real page code is simply invisible to ANY reflection-based
+  // scanner. content/global-scanner.js surfaces this as a fixed UI note.
+  //
+  // Every read is individually try/catch-guarded and NEVER invokes a getter
+  // or a function — Object.getOwnPropertyDescriptor cannot trigger a getter
+  // (unlike window[name], which would), so accessor properties are reported
+  // by shape only, their value never touched. One poisoned property (a
+  // throwing valueOf/Symbol.toPrimitive inside JSON.stringify, a Proxy trap)
+  // can only fail ITS OWN try/catch, never abort the rest of the scan.
+  function _scanPageGlobals() {
+    var iframe = document.createElement('iframe');
+    iframe.style.cssText = 'display:none!important;';
+    var pristineNames;
+    try {
+      // Only ever runs on-demand, well after document_start (a user
+      // explicitly triggering a scan via the overlay) — document.body is
+      // always available by then, unlike the documentElement fallback
+      // some document_start-timing code elsewhere in this file needs.
+      document.body.appendChild(iframe);
+      pristineNames = new Set(Object.getOwnPropertyNames(iframe.contentWindow));
+    } catch (e) { pristineNames = new Set(); }
+    finally { try { iframe.remove(); } catch (e) {} }
+
+    var results = [];
+    var allNames;
+    try { allNames = Object.getOwnPropertyNames(window); } catch (e) { allNames = []; }
+    for (var i = 0; i < allNames.length; i++) {
+      var name = allNames[i];
+      if (pristineNames.has(name)) continue;
+      // Must itself be usable as a dotted-chain segment (Block/Edit/Delete
+      // all walk window[name] the same way setConstant/abortOnPropertyRead
+      // do) — skip anything that couldn't be typed as a bare identifier.
+      if (!/^[A-Za-z_$][\w$]*$/.test(name)) continue;
+      var desc;
+      try { desc = Object.getOwnPropertyDescriptor(window, name); } catch (e) { continue; }
+      if (!desc) continue;
+      var entry = { name: name, type: 'unknown', preview: '' };
+      try {
+        if (desc.get || desc.set) {
+          entry.type = 'accessor';
+          entry.preview = '(getter/setter — not invoked during scan)';
+        } else {
+          var v = desc.value;
+          if (typeof v === 'function') {
+            entry.type = 'function';
+            try { entry.preview = Function.prototype.toString.call(v).split('\n')[0].slice(0, 150); }
+            catch (e) { entry.preview = '[function]'; }
+          } else if (v === null) {
+            entry.type = 'null';
+            entry.preview = 'null';
+          } else if (typeof v === 'object') {
+            entry.type = Array.isArray(v) ? 'array' : 'object';
+            try {
+              var keys = Object.keys(v);
+              var json = JSON.stringify(v);
+              entry.preview = (json ? json.slice(0, 150) : '[object]') + ' (' + keys.length + ' keys)';
+            } catch (e) { entry.preview = '[object]'; }
+          } else {
+            entry.type = typeof v;
+            try { entry.preview = String(v).slice(0, 150); } catch (e) { entry.preview = '[unreadable]'; }
+          }
+        }
+      } catch (e) { entry.type = 'error'; entry.preview = '[threw on access]'; }
+      results.push(entry);
+    }
+    return results;
+  }
+
+  // ── _applyAdHocGlobalRule ────────────────────────────────────────
+  // Instant on-page effect for content/global-scanner.js's overlay, applied
+  // BEFORE the async SAVE_GLOBAL_RULE persist round-trip completes — same
+  // "act now, persist after" UX as element-picker.js's _confirmHide. All
+  // three actions reuse EXISTING scriptlets unmodified:
+  //   block  -> abortOnPropertyRead only (NOT also abortOnPropertyWrite —
+  //             both install a permanent configurable:false accessor on the
+  //             same leaf, so whichever runs first wins the property slot
+  //             and the second silently no-ops; they don't compose. Reads
+  //             always throw regardless of what's since been written, which
+  //             already makes any written value unobservable — sufficient
+  //             for "block" without the write-side throwing too).
+  //   edit   -> setConstant(chain, value) — value already validated/escaped
+  //             by SAVE_GLOBAL_RULE against _parseVal's grammar.
+  //   delete -> setConstant(chain, 'undefined') PLUS a one-off manual delete
+  //             for immediate feedback on this view only — best-effort, not
+  //             persistence-safe against a page that recreates the property
+  //             (see background.js's _buildGlobalRulesBlock comment).
+  function _applyAdHocGlobalRule(chain, action, value) {
+    try {
+      if (action === 'block') {
+        abortOnPropertyRead(chain);
+      } else if (action === 'edit') {
+        setConstant(chain, value);
+      } else if (action === 'delete') {
+        setConstant(chain, 'undefined');
+        var parts = chain.split('.'), leaf = parts.pop(), owner = window, ok = true;
+        for (var i = 0; i < parts.length; i++) {
+          owner = owner && owner[parts[i]];
+          if (owner == null) { ok = false; break; }
+        }
+        if (ok) { try { delete owner[leaf]; } catch (e) {} }
+      }
     } catch (e) {}
   }
 
@@ -4289,7 +4418,24 @@
       }
     }
   } catch (e) {}
-  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'trusted_replace_fetch_response', 'jspb_response_prune', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response'];
+  // Despite the name, this gates ANY rule key that needs to exist BEFORE the
+  // page's own inline scripts run, not just response-filtering ones — the
+  // comment above already documented "set_constant/json_edit run before the
+  // page's inline scripts" as the intent, but set_constant/abort_on_property_*
+  // were never actually IN this list, so they never got that guarantee: only
+  // the async _EVT_RULES dispatch applied them, which lands well after
+  // document_start. Confirmed as a real, live-reproduced bug (2026-08-18,
+  // "Scan page globals" picker) — locking a page-defined function (e.g.
+  // tuoitre.vn's SearchAllPage) via Delete/Block took effect instantly (the
+  // ad-hoc apply-now path calls setConstant/abortOnPropertyRead directly,
+  // synchronously, at click time) but silently had NO effect after a reload:
+  // the page's own script had already read/bound the original, unlocked
+  // reference before the async dispatch arrived. Existing curated rules
+  // (e.g. [youtube]'s ytInitialPlayerResponse.* set_constant entries) likely
+  // have the same latent gap — they just happen to target globals YouTube's
+  // own code reads slightly later in its boot sequence, making the race far
+  // less likely to bite in practice, not actually immune to it.
+  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'trusted_replace_fetch_response', 'jspb_response_prune', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response', 'set_constant', 'abort_on_property_read', 'abort_on_property_write'];
 
   function _saveScriptletRulesCache(rules) {
     var has = false;
@@ -4341,6 +4487,24 @@
   window.addEventListener(_EVT_DIS, function() {
     _scriptletsEnabled = false;
     _noWinOpenRules.length = 0;
+  });
+
+  // Bridge: content/global-scanner.js's on-demand scan/apply overlay. Both
+  // events carry a plain string detail (see _EVT_SCANREQ's declaration
+  // comment for why) — never a live object.
+  window.addEventListener(_EVT_SCANREQ, function(ev) {
+    var requestId = ev.detail;
+    var results;
+    try { results = _scanPageGlobals(); } catch (e) { results = []; }
+    var payload;
+    try { payload = JSON.stringify({ requestId: requestId, results: results }); } catch (e) { payload = JSON.stringify({ requestId: requestId, results: [] }); }
+    try { window.dispatchEvent(new CustomEvent(_EVT_SCANRES, { detail: payload })); } catch (e) {}
+  });
+  window.addEventListener(_EVT_APPLYREQ, function(ev) {
+    try {
+      var req = JSON.parse(ev.detail);
+      _applyAdHocGlobalRule(req.chain, req.action, req.value);
+    } catch (e) {}
   });
 
   const original = EventTarget.prototype.addEventListener;

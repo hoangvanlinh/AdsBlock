@@ -86,6 +86,18 @@ function renderPrivacyScore(stats, settings) {
   }
 }
 
+/* ── "Scan page globals" — hidden outside debug builds ─────────────── */
+// Matches background.js's contextMenus gate (qkv1-scan-globals only
+// created when DEBUG_LOCAL): the nav entry point stays hidden too so
+// there's no dashboard page for a feature the user can't actually reach
+// from any page. Storage/removal (REMOVE_GLOBAL_RULE) is untouched — this
+// only hides discovery, not the ability to clean up rules saved during an
+// earlier debug session.
+if (!self.ADBLOCK_CONFIG.DEBUG_LOCAL) {
+  document.querySelector('.nav-item[data-page="globalrules"]')?.remove();
+  document.getElementById('page-globalrules')?.remove();
+}
+
 /* ── Navigation ───────────────────────────────── */
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', e => {
@@ -569,6 +581,80 @@ document.getElementById('elementRulesList')?.addEventListener('click', e => {
   chrome.runtime.sendMessage(payload, () => { void chrome.runtime.lastError; loadElementRulesList(); });
 });
 
+/* ── Global rules page ("scan page for scripts/variables" picker) ──── */
+// Block installs a permanent configurable:false read-trap (see
+// background.js's _buildGlobalRulesBlock comment) — visually distinct
+// (red) from Edit/Delete since it's the highest-risk, hardest-to-undo
+// action: this remove button is the ONLY way to revert it short of the
+// page never running the affected code path again.
+const GLOBAL_RULE_ACTION_COLORS = { block: '#f87171', edit: '#60a5fa', delete: '#fbbf24' };
+
+function loadGlobalRulesList() {
+  chrome.storage.local.get('globalScopeRules', ({ globalScopeRules = {} }) => {
+    renderGlobalRulesList(globalScopeRules);
+  });
+}
+
+function renderGlobalRulesList(globalScopeRules) {
+  const list = document.getElementById('globalRulesList');
+  const empty = document.getElementById('globalRulesEmpty');
+  if (!list) return;
+  list.innerHTML = '';
+  const hosts = Object.keys(globalScopeRules || {});
+  if (empty) empty.style.display = hosts.length ? 'none' : '';
+  hosts.forEach(host => {
+    const rules = globalScopeRules[host] || [];
+    const li = document.createElement('li');
+    li.className = 'allow-item';
+    li.style.flexDirection = 'column';
+    li.style.alignItems = 'stretch';
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    const label = document.createElement('span');
+    label.className = 'allow-domain';
+    label.textContent = `${host} (${rules.length})`;
+    const removeHostBtn = document.createElement('button');
+    removeHostBtn.className = 'icon-btn-sm remove-global-host';
+    removeHostBtn.dataset.host = host;
+    removeHostBtn.textContent = '✕';
+    header.append(label, removeHostBtn);
+    li.appendChild(header);
+    rules.forEach(rule => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0;';
+      const left = document.createElement('div');
+      left.style.cssText = 'display:flex;align-items:center;gap:6px;min-width:0;';
+      const badge = document.createElement('span');
+      badge.textContent = rule.action;
+      badge.style.cssText = `font-size:10px;font-weight:600;color:#0f172a;background:${GLOBAL_RULE_ACTION_COLORS[rule.action] || '#94a3b8'};border-radius:4px;padding:1px 6px;flex-shrink:0;`;
+      const code = document.createElement('code');
+      code.textContent = rule.action === 'edit' ? `${rule.chain} = ${rule.value}` : rule.chain;
+      code.style.cssText = 'font-size:12px;word-break:break-all;';
+      left.append(badge, code);
+      const rm = document.createElement('button');
+      rm.className = 'icon-btn-sm remove-global-rule';
+      rm.dataset.host = host;
+      rm.dataset.chain = rule.chain;
+      rm.textContent = '✕';
+      row.append(left, rm);
+      li.appendChild(row);
+    });
+    list.appendChild(li);
+  });
+}
+
+document.getElementById('globalRulesList')?.addEventListener('click', e => {
+  const hostBtn = e.target.closest('.remove-global-host');
+  const ruleBtn = e.target.closest('.remove-global-rule');
+  const btn = hostBtn || ruleBtn;
+  if (!btn) return;
+  const payload = { type: 'REMOVE_GLOBAL_RULE', host: btn.dataset.host };
+  if (ruleBtn) payload.chain = btn.dataset.chain;
+  chrome.runtime.sendMessage(payload, () => { void chrome.runtime.lastError; loadGlobalRulesList(); });
+});
+
 /* ── Focus mode page ──────────────────────────── */
 let focusInterval = null;
 let focusRemaining = 25 * 60; // seconds
@@ -859,6 +945,7 @@ loadOverviewStats();
 loadCustomRules();
 loadAllowList();
 loadElementRulesList();
+loadGlobalRulesList();
 loadBlockingSettings();
 loadPrivacySettings();
 loadRulesSourceSettings();
