@@ -398,6 +398,31 @@ function sendRules(rules) {
   check('cache re-saved on next dispatch with response-filter keys',
     !!recached && Array.isArray(recached.json_prune_fetch));
 
+  // Regression test (2026-08-18, live-reproduced via the "Scan page globals"
+  // picker on tuoitre.vn — a Delete rule took effect instantly via the
+  // ad-hoc apply-now path but silently had NO effect after a reload,
+  // because set_constant/abort_on_property_read/abort_on_property_write
+  // were never in _RESPONSE_FILTER_RULE_KEYS despite that list's own
+  // comment already claiming "set_constant ... run before the page's
+  // inline scripts" as the intent — only the async _EVT_RULES dispatch
+  // ever applied them, well after document_start, giving the page's own
+  // script time to read/bind the original unlocked reference first).
+  sendRules({ set_constant: ['someGlobal 1'] });
+  const cachedSetConstant = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
+  check('set_constant alone now triggers the boot cache (closes the reload race)',
+    !!cachedSetConstant && Array.isArray(cachedSetConstant.set_constant), JSON.stringify(cachedSetConstant));
+  sendRules({ abort_on_property_read: ['someGlobal'] });
+  const cachedAbortRead = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
+  check('abort_on_property_read alone now triggers the boot cache',
+    !!cachedAbortRead && Array.isArray(cachedAbortRead.abort_on_property_read), JSON.stringify(cachedAbortRead));
+  sendRules({ abort_on_property_write: ['someGlobal'] });
+  const cachedAbortWrite = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
+  check('abort_on_property_write alone now triggers the boot cache',
+    !!cachedAbortWrite && Array.isArray(cachedAbortWrite.abort_on_property_write), JSON.stringify(cachedAbortWrite));
+  // Leave the cache holding no boot-relevant keys again so later sections
+  // (which assume a clean slate) aren't affected by this regression test.
+  sendRules({ direct_hide_selectors: ['.ad'] });
+
   console.log('\n== 7. blockAdNavigations — back-button hijack vectors ==');
   // Protocol-relative cross-origin URL via the patched location.href setter.
   sandbox.location.href = '//ads.evil.example/land';
@@ -1066,6 +1091,75 @@ function sendRules(rules) {
   const unrelatedReq = new sandbox.Request('https://www.youtube.com/youtubei/v1/player', { body: unrelatedReqBytes });
   check('Request constructor: body without sniff markers left untouched',
     new TextDecoder().decode(unrelatedReq.body) === unrelatedStr);
+
+  console.log('\n== 16. "Scan page globals" picker — MAIN-world scan/apply bridge (2026-08-18) ==');
+  sendRules({}); // ensure _scriptletsEnabled = true regardless of section 14's _dis__ dispatch above
+
+  // ── _EVT_APPLYREQ: ad-hoc block/edit/delete, same functions the persisted
+  // set_constant/abort_on_property_read rule-application path already uses —
+  // no new scriptlet logic, just a direct single-chain call. ──────────────
+  function applyAdHoc(chain, action, value) {
+    sandbox.dispatchEvent(new CustomEventStub(`__${TEST_TOKEN}_applyreq__`, {
+      detail: JSON.stringify({ chain, action, value }),
+    }));
+  }
+
+  sandbox.qkv1AdHocBlock = 'original';
+  applyAdHoc('qkv1AdHocBlock', 'block');
+  let blockThrew = false;
+  try { void sandbox.qkv1AdHocBlock; } catch (e) { blockThrew = true; }
+  check('block: reading the chain now throws (abortOnPropertyRead applied directly, no rule dispatch)', blockThrew);
+
+  applyAdHoc('qkv1AdHocEdit', 'edit', '42');
+  check('edit: chain locked to the parsed literal value (setConstant applied directly)', sandbox.qkv1AdHocEdit === 42, String(sandbox.qkv1AdHocEdit));
+
+  sandbox.qkv1AdHocDelete = 'x';
+  applyAdHoc('qkv1AdHocDelete', 'delete');
+  check('delete: chain reads back as undefined (setConstant chain undefined, delete is a redundant no-op once locked)', sandbox.qkv1AdHocDelete === undefined, String(sandbox.qkv1AdHocDelete));
+
+  // ── _EVT_SCANREQ / _EVT_SCANRES: the scan itself. ──────────────────────
+  function runScan() {
+    let captured = null;
+    const handler = (ev) => { captured = JSON.parse(ev.detail); };
+    sandbox.addEventListener(`__${TEST_TOKEN}_scanres__`, handler);
+    sandbox.dispatchEvent(new CustomEventStub(`__${TEST_TOKEN}_scanreq__`, { detail: 'test-request-1' }));
+    return captured;
+  }
+
+  sandbox.qkv1ScanFn = function probeFn(a, b) { return a + b; };
+  sandbox.qkv1ScanObj = { a: 1, b: 2 };
+  sandbox.qkv1ScanArr = [1, 2, 3];
+  sandbox.qkv1ScanNum = 123;
+  sandbox.qkv1ScanStr = 'hello';
+  let getterInvoked = false;
+  Object.defineProperty(sandbox, 'qkv1ScanAccessor', {
+    get() { getterInvoked = true; return 'leaked-if-invoked'; },
+    configurable: true, enumerable: true,
+  });
+  Object.defineProperty(sandbox, 'qkv1ScanPoison', {
+    value: { toJSON() { throw new Error('boom — poisoned toJSON'); } },
+    configurable: true, enumerable: true,
+  });
+
+  const scanResult = runScan();
+  check('scan responds with the matching requestId', scanResult && scanResult.requestId === 'test-request-1', JSON.stringify(scanResult && scanResult.requestId));
+  const byName = {};
+  (scanResult && scanResult.results || []).forEach(e => { byName[e.name] = e; });
+
+  check('scan finds the probe function, typed correctly', byName.qkv1ScanFn && byName.qkv1ScanFn.type === 'function', JSON.stringify(byName.qkv1ScanFn));
+  check('function preview is a source-text snippet, not "[object Function]" or similar', byName.qkv1ScanFn && byName.qkv1ScanFn.preview.indexOf('probeFn') !== -1, JSON.stringify(byName.qkv1ScanFn));
+  check('scan finds the probe object, typed correctly', byName.qkv1ScanObj && byName.qkv1ScanObj.type === 'object', JSON.stringify(byName.qkv1ScanObj));
+  check('object preview includes a key count', byName.qkv1ScanObj && byName.qkv1ScanObj.preview.indexOf('2 keys') !== -1, JSON.stringify(byName.qkv1ScanObj));
+  check('scan finds the probe array, typed as array (not object)', byName.qkv1ScanArr && byName.qkv1ScanArr.type === 'array', JSON.stringify(byName.qkv1ScanArr));
+  check('scan finds the probe number, typed correctly', byName.qkv1ScanNum && byName.qkv1ScanNum.type === 'number' && byName.qkv1ScanNum.preview === '123', JSON.stringify(byName.qkv1ScanNum));
+  check('scan finds the probe string, typed correctly', byName.qkv1ScanStr && byName.qkv1ScanStr.type === 'string', JSON.stringify(byName.qkv1ScanStr));
+
+  check('accessor property reported as type "accessor"', byName.qkv1ScanAccessor && byName.qkv1ScanAccessor.type === 'accessor', JSON.stringify(byName.qkv1ScanAccessor));
+  check('accessor getter is NEVER invoked during a scan (passive introspection only)', getterInvoked === false);
+
+  check('a property whose JSON.stringify throws does not crash the whole scan — still reported', !!byName.qkv1ScanPoison, JSON.stringify(byName.qkv1ScanPoison));
+  check('poisoned property falls back to a safe placeholder preview instead of propagating the throw', byName.qkv1ScanPoison && byName.qkv1ScanPoison.preview === '[object]', JSON.stringify(byName.qkv1ScanPoison));
+  check('scan continues past the poisoned property to still find later probes', !!byName.qkv1ScanStr);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
