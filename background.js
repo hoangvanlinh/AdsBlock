@@ -694,6 +694,7 @@ chrome.runtime.onInstalled.addListener(async () => {
     'enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'stats', 'rules',
     'referrerAnonymization', 'collectStats',
     'blockAds', 'blockTrackers', 'cosmeticFiltering', 'blockMalware',
+    'installDate', 'totalBlockedAllTime', 'reviewPromptState',
   ]);
   await chrome.storage.local.set({
     enabled:                existing.enabled                ?? true,
@@ -708,6 +709,12 @@ chrome.runtime.onInstalled.addListener(async () => {
     blockTrackers:          existing.blockTrackers           ?? true,
     cosmeticFiltering:      existing.cosmeticFiltering      ?? true,
     blockMalware:           existing.blockMalware           ?? true,
+    // Review-prompt gating (see popup.js maybeShowReviewPrompt): a real
+    // install timestamp + an all-time counter that (unlike dailyStats,
+    // which prunes past 30 days) never gets pruned.
+    installDate:            existing.installDate            ?? Date.now(),
+    totalBlockedAllTime:    existing.totalBlockedAllTime    ?? 0,
+    reviewPromptState:      existing.reviewPromptState      ?? 'unseen', // 'unseen' | 'dismissed' | 'reviewed'
   });
 
   await applyNetworkRules();
@@ -966,7 +973,7 @@ async function _writeDomainStatDelta(domain, delta) {
 
 async function _writeDailyStatDelta(delta) {
   const key = todayKey();
-  const { dailyStats = {} } = await chrome.storage.local.get('dailyStats');
+  const { dailyStats = {}, totalBlockedAllTime = 0 } = await chrome.storage.local.get(['dailyStats', 'totalBlockedAllTime']);
   if (!dailyStats[key]) dailyStats[key] = { blocked: 0, ads: 0, trackers: 0, malware: 0 };
   dailyStats[key].blocked  += delta.blocked  || 0;
   dailyStats[key].ads      += delta.ads      || 0;
@@ -974,7 +981,9 @@ async function _writeDailyStatDelta(delta) {
   dailyStats[key].malware  += delta.malware  || 0;
   const keys = Object.keys(dailyStats).sort();
   while (keys.length > 30) { delete dailyStats[keys.shift()]; }
-  await chrome.storage.local.set({ dailyStats });
+  // Unlike dailyStats (pruned to 30 days), this never resets — it's the
+  // review-prompt milestone counter (see popup.js maybeShowReviewPrompt).
+  await chrome.storage.local.set({ dailyStats, totalBlockedAllTime: totalBlockedAllTime + (delta.blocked || 0) });
 }
 
 // ── Icon badge count — PER TAB, uBO-style ───────────────────────────

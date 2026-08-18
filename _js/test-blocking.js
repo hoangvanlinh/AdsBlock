@@ -353,6 +353,14 @@ function check(name, cond, detail = '') {
   const today = dailyStats && Object.values(dailyStats)[0];
   check('dailyStats trackers/malware updated', today && today.trackers === 4 && today.malware === 1);
 
+  console.log('\n== 8a. totalBlockedAllTime accumulates (review-prompt milestone counter) ==');
+  const { totalBlockedAllTime: totalBefore = 0 } = await chromeStub.storage.local.get('totalBlockedAllTime');
+  await send({ type: 'RESOURCE_SEEN', domain: 'vnexpress.net',
+    delta: { seen: 5, ads: 2, trackers: 0, malware: 0 } });
+  await T.statsChain;
+  const { totalBlockedAllTime: totalAfter } = await chromeStub.storage.local.get('totalBlockedAllTime');
+  check('totalBlockedAllTime increments by the new blocked delta', totalAfter === totalBefore + 2, `${totalBefore} -> ${totalAfter}`);
+
   console.log('\n== 9. Classifier (content.js) vs DNR consistency ==');
   const classify = makeClassifier(g);
   const consistencyCases = [
