@@ -786,7 +786,31 @@ async function buildActiveRulesFromStorage() {
 }
 
 // ── Apply declarativeNetRequest rules ────────────────────────────
-async function applyNetworkRules() {
+// applyNetworkRules() has many independent call sites (onInstalled,
+// onStartup, alarms, message handlers, reloadRules()) that are NOT
+// sequenced against each other — e.g. onStartup fires applyNetworkRules(),
+// maybeUpdateMalwareLists() (which itself calls applyNetworkRules() again
+// via fetchMalwareBlocklists()), and revalidateRemoteRules() (ditto via
+// reloadRules()) all in the same tick, with no await between them. Each
+// call does getDynamicRules() → updateDynamicRules({removeRuleIds,
+// addRules}) as two separate round trips; if two calls overlap, the second
+// one's getDynamicRules() snapshot can be taken BEFORE the first one's
+// updateDynamicRules() commits, so its removeRuleIds doesn't include ids
+// the first call just added — its addRules then tries to add those same
+// (still-fixed, deterministic) ids again, and Chrome rejects with "Rule
+// with id N does not have a unique ID." This chain serializes every call
+// through a single queue so the getDynamicRules()/updateDynamicRules()
+// pair for one invocation always fully completes before the next one's
+// getDynamicRules() runs, eliminating the race regardless of caller.
+let _applyNetworkRulesChain = Promise.resolve();
+function applyNetworkRules() {
+  _applyNetworkRulesChain = _applyNetworkRulesChain
+    .catch(() => {})
+    .then(() => _applyNetworkRulesImpl());
+  return _applyNetworkRulesChain;
+}
+
+async function _applyNetworkRulesImpl() {
   const { enabled, allRules } = await buildActiveRulesFromStorage();
 
   // Remove all existing dynamic rules
@@ -866,11 +890,11 @@ async function buildFocusRules(focusMode) {
 }
 
 // ── Icon badge ────────────────────────────────────────────────────
-// enabled=true shows today's total blocked count (not a per-tab live
-// counter — user asked for "tổng thôi", just the running total), enabled=
-// false shows "OFF". The count itself is refreshed by _refreshBlockedBadge
-// (called after every daily-stat write) — this only needs to fetch it once
-// on enable so the badge isn't blank between here and the next block event.
+// enabled=true shows the ACTIVE TAB's own blocked count (uBO-style —
+// resets per navigation, see _tabBlockedCounts below), enabled=false shows
+// "OFF". "OFF" is a global (no-tabId) badge value; per-tab counts are set
+// via chrome.action.setBadgeText({..., tabId}), which Chrome overlays on
+// top of the global value for that tab only.
 async function updateIcon(enabled) {
   chrome.action.setIcon({
     path: {
@@ -884,8 +908,12 @@ async function updateIcon(enabled) {
     chrome.action.setBadgeBackgroundColor({ color: '#f87171' });
     return;
   }
-  const { dailyStats = {} } = await chrome.storage.local.get('dailyStats');
-  _refreshBlockedBadge((dailyStats[todayKey()] || {}).blocked || 0);
+  // Clear the global "OFF" value so tabs with no per-tab override go blank
+  // (not stuck showing "OFF") the moment protection is re-enabled.
+  chrome.action.setBadgeText({ text: '' });
+  chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
+  if (activeTab?.url) updateBadgeForTab(activeTab.id, activeTab.url);
 }
 
 // ── Stats tracking ────────────────────────────────────────────────
@@ -947,19 +975,36 @@ async function _writeDailyStatDelta(delta) {
   const keys = Object.keys(dailyStats).sort();
   while (keys.length > 30) { delete dailyStats[keys.shift()]; }
   await chrome.storage.local.set({ dailyStats });
-  _refreshBlockedBadge(dailyStats[key].blocked);
 }
 
-// ── Icon badge count (today's total, not per-tab — see updateIcon below) ──
+// ── Icon badge count — PER TAB, uBO-style ───────────────────────────
+// Counts reset per navigation (see the tabs.onUpdated listener below) and
+// are pure in-memory state — a service-worker restart just means every open
+// tab's badge goes blank until its next block event, same as reloading the
+// extension. Not persisted: this is a live "how much is happening on THIS
+// page" indicator, not a stat (daily/domain totals still accumulate in
+// chrome.storage via _writeDailyStatDelta/_writeDomainStatDelta above).
+const _tabBlockedCounts = new Map(); // tabId -> count
 function _formatBadgeCount(n) {
   if (!n) return '';
   if (n < 1000) return String(n);
   return Math.floor(n / 1000) + 'k'; // badge text is only a few px wide
 }
-function _refreshBlockedBadge(blockedToday) {
+// Setting badge text to '' for a specific tabId doesn't blank that tab — it
+// clears the tab-specific override, so Chrome falls back to showing the
+// global (no-tabId) value for it. Since the global value is only ever ''
+// or 'OFF' (see updateIcon), a 0-count tab correctly reads as blank.
+function _setTabBadge(tabId) {
+  if (tabId === undefined || tabId < 0) return; // -1 = no real tab (e.g. background fetch)
   if (!_settingsCache.enabled) return; // updateIcon(false) owns the "OFF" badge
-  chrome.action.setBadgeText({ text: _formatBadgeCount(blockedToday) });
-  chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
+  const count = _tabBlockedCounts.get(tabId) || 0;
+  chrome.action.setBadgeText({ text: _formatBadgeCount(count), tabId }).catch(() => {});
+  chrome.action.setBadgeBackgroundColor({ color: '#6366f1', tabId }).catch(() => {});
+}
+function _incrementTabBlocked(tabId, n) {
+  if (!n || tabId === undefined || tabId < 0) return;
+  _tabBlockedCounts.set(tabId, (_tabBlockedCounts.get(tabId) || 0) + n);
+  _setTabBadge(tabId);
 }
 
 function updateDailyStats(delta) {
@@ -1189,6 +1234,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   for (const key of _frameCss.keys()) {
     if (key.startsWith(prefix)) _frameCss.delete(key);
   }
+  _tabBlockedCounts.delete(tabId);
 });
 
 // ── In-memory settings cache (for the tabs.onCreated hot path below) ────
@@ -1280,6 +1326,9 @@ chrome.tabs.onCreated.addListener(async (tab) => {
       _enqueueStatWrite(() => _writeDomainStatDelta(openerHost, { adsBlocked: 1, totalSeen: 1 }));
       updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
     }
+    // Credited to the OPENER's tab (the page that spawned the popunder) —
+    // the popunder tab itself is already gone by this point.
+    _incrementTabBlocked(tab.openerTabId, 1);
   } catch (e) {}
 });
 
@@ -1408,8 +1457,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             chrome.action.setBadgeText({ text: '⏸', tabId: activeTab.id });
             chrome.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId: activeTab.id });
           } else {
-            chrome.action.setBadgeText({ text: '', tabId: activeTab.id });
-            chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0], tabId: activeTab.id });
+            _setTabBadge(activeTab.id); // restore this tab's own block count
           }
         }
         sendResponse({ ok: true });
@@ -1545,6 +1593,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           trackers,
           malware,
         });
+        _incrementTabBlocked(sender.tab && sender.tab.id, ads + trackers + malware);
         sendResponse({ ok: true });
         break;
       }
@@ -1560,6 +1609,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           adsBlocked: hiddenCount, cosmeticHidden: hiddenCount, totalSeen: hiddenCount,
         }));
         updateDailyStats({ blocked: hiddenCount, ads: hiddenCount, trackers: 0, malware: 0 });
+        _incrementTabBlocked(sender.tab && sender.tab.id, hiddenCount);
         sendResponse({ ok: true });
         break;
       }
@@ -1663,6 +1713,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (!collectMB) { sendResponse({ ok: true }); break; }
         _enqueueStatWrite(() => _writeDomainStatDelta(host, { malwareBlocked: 1, totalSeen: 1 }));
         updateDailyStats({ blocked: 1, ads: 0, trackers: 0, malware: 1 });
+        _incrementTabBlocked(sender.tab && sender.tab.id, 1);
         sendResponse({ ok: true });
         break;
       }
@@ -1677,6 +1728,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (!collectAB) { sendResponse({ ok: true }); break; }
         _enqueueStatWrite(() => _writeDomainStatDelta(host, { adsBlocked: 1, totalSeen: 1 }));
         updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
+        _incrementTabBlocked(sender.tab && sender.tab.id, 1);
         sendResponse({ ok: true });
         break;
       }
@@ -1700,7 +1752,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true; // keep channel open for async response
 });
 
-// ── Tab tracking (pause-per-domain badge) ─────────────────────────
+// ── Tab tracking (pause badge + per-tab block count) ────────────────
+// Pause state always wins the badge (⏸); otherwise the tab shows its own
+// _tabBlockedCounts entry via _setTabBadge.
 async function updateBadgeForTab(tabId, url) {
   if (!url) return;
   let domain = '';
@@ -1710,8 +1764,7 @@ async function updateBadgeForTab(tabId, url) {
     chrome.action.setBadgeText({ text: '⏸', tabId }).catch(() => {});
     chrome.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId }).catch(() => {});
   } else {
-    chrome.action.setBadgeText({ text: '', tabId }).catch(() => {});
-    chrome.action.setBadgeBackgroundColor({ color: [0, 0, 0, 0], tabId }).catch(() => {});
+    _setTabBadge(tabId);
   }
 }
 
@@ -1722,6 +1775,13 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  // changeInfo.url is only present when the tab actually navigated to a new
+  // URL (not on every status tick) — that's the per-tab block count's reset
+  // point, same "new page, new count" behavior as uBO's badge.
+  if (changeInfo.url) {
+    _tabBlockedCounts.delete(tabId);
+    _setTabBadge(tabId);
+  }
   if (changeInfo.status === 'complete' && tab.url) {
     updateBadgeForTab(tabId, tab.url);
   }

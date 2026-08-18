@@ -19,8 +19,12 @@ const noopEvent = { addListener() {} };
 const tabsData = new Map();
 const removedTabIds = new Set();
 const tabsCreatedListeners = [];
+const tabsUpdatedListeners = [];
 const storageChangeListeners = [];
 let lastBadgeText;
+const badgeTextByTab = new Map(); // tabId -> last text set FOR that tabId specifically
+
+function _ipcDelay() { return new Promise(r => setTimeout(r, 2)); }
 
 function validateDomain(d) {
   // Chrome requires canonicalized lowercase ASCII domains in requestDomains
@@ -48,8 +52,16 @@ const chromeStub = {
     onChanged: { addListener(fn) { storageChangeListeners.push(fn); } },
   },
   declarativeNetRequest: {
-    async getDynamicRules() { return dynamicRules.slice(); },
+    // Real chrome.declarativeNetRequest.* calls are cross-process IPC round
+    // trips with genuine (variable) latency — a same-process microtask stub
+    // with no delay at all happens to serialize concurrent calls "for free"
+    // in Node's scheduler, which would hide the applyNetworkRules() race
+    // (see test 2b below). This tiny setTimeout makes the stub behave like
+    // the real IPC boundary closely enough for that race to actually
+    // reproduce here when it's not properly serialized.
+    async getDynamicRules() { await _ipcDelay(); return dynamicRules.slice(); },
     async updateDynamicRules({ removeRuleIds = [], addRules = [] }) {
+      await _ipcDelay();
       const removeSet = new Set(removeRuleIds);
       dynamicRules = dynamicRules.filter(r => !removeSet.has(r.id));
       // Validate like Chrome would (whole call rejects on any invalid rule)
@@ -92,7 +104,7 @@ const chromeStub = {
     async remove(tabId) { removedTabIds.add(tabId); },
     sendMessage: async () => {},
     onActivated: noopEvent,
-    onUpdated: noopEvent,
+    onUpdated: { addListener(fn) { tabsUpdatedListeners.push(fn); } },
     onRemoved: noopEvent,
     onCreated: { addListener(fn) { tabsCreatedListeners.push(fn); } },
   },
@@ -102,7 +114,11 @@ const chromeStub = {
   },
   action: {
     setIcon() {},
-    setBadgeText(o) { lastBadgeText = o && o.text; return Promise.resolve(); },
+    setBadgeText(o) {
+      if (o && o.tabId !== undefined) badgeTextByTab.set(o.tabId, o.text);
+      else lastBadgeText = o && o.text;
+      return Promise.resolve();
+    },
     setBadgeBackgroundColor() { return Promise.resolve(); },
   },
 };
@@ -130,13 +146,14 @@ const ctx = vm.createContext(sandbox);
 const exportSnippet = `
 self.__test = {
   ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules,
-  parseRuleText, buildRemoteMalwareRules, updateIcon,
+  parseRuleText, buildRemoteMalwareRules, updateIcon, _incrementTabBlocked, _setTabBadge,
   get DEFAULT_RULES() { return DEFAULT_RULES; },
   get MALWARE_RULES() { return MALWARE_RULES; },
   get AD_MAINFRAME_RULES() { return AD_MAINFRAME_RULES; },
   get TRACKER_RULE_IDS() { return TRACKER_RULE_IDS; },
   get MALWARE_RULE_IDS() { return MALWARE_RULE_IDS; },
   get statsChain() { return _statsWriteChain; },
+  get tabBlockedCounts() { return _tabBlockedCounts; },
 };`;
 vm.runInContext(bgSrc + '\n' + exportSnippet, ctx, { filename: 'background.js' });
 const T = sandbox.__test;
@@ -209,6 +226,30 @@ function check(name, cond, detail = '') {
     enabled: true,
     remoteMalwareDomains: ['evil-remote-domain.com', 'phish-remote.net'],
   });
+
+  console.log('\n== 0. Concurrent applyNetworkRules() calls at fresh-install time don\'t race ==');
+  // Regression test for "Rule with id N does not have a unique ID." — real
+  // trigger: onInstalled/onStartup fires applyNetworkRules(),
+  // maybeUpdateMalwareLists() (which can itself call applyNetworkRules()
+  // via fetchMalwareBlocklists()), and revalidateRemoteRules() (ditto, via
+  // reloadRules()) without awaiting each other. Each call does
+  // getDynamicRules() then updateDynamicRules() as two separate IPC round
+  // trips; unserialized, when dynamic rules are transitioning from empty to
+  // the full set (e.g. first run), a second call's getDynamicRules()
+  // snapshot can be taken before the first call's updateDynamicRules()
+  // commits, so its removeRuleIds misses ids the first call just added and
+  // its addRules tries to add those same ids again -> the collision. (Once
+  // the rule set has stabilized, concurrent calls happen to cancel out
+  // safely, which is why this must run against the fresh/empty state, not
+  // after rules are already applied — see applyNetworkRules()'s serializing
+  // queue in background.js for the fix.)
+  let raceErr = null;
+  try {
+    await Promise.all([T.applyNetworkRules(), T.applyNetworkRules(), T.applyNetworkRules()]);
+  } catch (e) { raceErr = e; }
+  check('3 concurrent applyNetworkRules() calls from a fresh state do not throw', !raceErr, raceErr && raceErr.message);
+  const idsAfterRace = dynamicRules.map(r => r.id);
+  check('no duplicate rule ids after concurrent calls', new Set(idsAfterRace).size === idsAfterRace.length);
 
   console.log('\n== 1. Rule building from real rule/site-rules.txt ==');
   await T.ensureRuleDefinitionsLoaded();
@@ -574,26 +615,39 @@ function check(name, cond, detail = '') {
   // Clean up so later sections don't see these leftover hosts.
   await send5({ type: 'REMOVE_ELEMENT_RULE', host: elHostB });
 
-  console.log('\n== 21. Icon badge shows today\'s total blocked count ==');
-  await chromeStub.storage.local.set({ dailyStats: {} }); // clean slate
-  await send5({ type: 'AD_POPUP_PAGE_BLOCKED', host: 'badge-test.example' });
+  console.log('\n== 21. Icon badge shows the ACTIVE TAB\'s own blocked count (per-tab, uBO-style) ==');
+  await T.updateIcon(true); // re-enable — test 21c below disables at the end
+  const sendFromTab = (msg, tabId) => new Promise(res => listener2(msg, { tab: { id: tabId } }, res));
+  const TAB_A = 501, TAB_B = 502;
+  await sendFromTab({ type: 'AD_POPUP_PAGE_BLOCKED', host: 'badge-test.example' }, TAB_A);
   await T.statsChain;
-  check('badge shows the count after a block event', lastBadgeText === '1', `got ${JSON.stringify(lastBadgeText)}`);
+  check('tab A badge shows the count after a block event', badgeTextByTab.get(TAB_A) === '1', `got ${JSON.stringify(badgeTextByTab.get(TAB_A))}`);
   for (let i = 0; i < 5; i++) {
-    await send5({ type: 'AD_POPUP_PAGE_BLOCKED', host: 'badge-test.example' });
+    await sendFromTab({ type: 'AD_POPUP_PAGE_BLOCKED', host: 'badge-test.example' }, TAB_A);
   }
   await T.statsChain;
-  check('badge count accumulates', lastBadgeText === '6', `got ${JSON.stringify(lastBadgeText)}`);
-  // Large counts are abbreviated — badge text only has room for ~4 chars.
-  // todayKey() (background.js) uses LOCAL date parts, not toISOString()
-  // (UTC) — must match exactly or this looks up the wrong day and reads 0.
-  const _d = new Date();
-  const localTodayKey = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, '0')}-${String(_d.getDate()).padStart(2, '0')}`;
-  await chromeStub.storage.local.set({ dailyStats: { [localTodayKey]: { blocked: 12345, ads: 0, trackers: 0, malware: 0 } } });
-  await T.updateIcon(true);
-  check('large counts are abbreviated (e.g. "12k")', lastBadgeText === '12k', `got ${JSON.stringify(lastBadgeText)}`);
+  check('tab A badge count accumulates', badgeTextByTab.get(TAB_A) === '6', `got ${JSON.stringify(badgeTextByTab.get(TAB_A))}`);
+
+  console.log('\n== 21a. Per-tab counts are isolated from each other ==');
+  await sendFromTab({ type: 'RESOURCE_SEEN', domain: 'other-tab.example', delta: { seen: 3, ads: 3, trackers: 0, malware: 0 } }, TAB_B);
+  await T.statsChain;
+  check('tab B has its own count, unaffected by tab A', badgeTextByTab.get(TAB_B) === '3', `got ${JSON.stringify(badgeTextByTab.get(TAB_B))}`);
+  check('tab A is untouched by tab B\'s block event', badgeTextByTab.get(TAB_A) === '6', `got ${JSON.stringify(badgeTextByTab.get(TAB_A))}`);
+
+  console.log('\n== 21b. Navigating a tab resets its count (new page, new count) ==');
+  check('onUpdated listener registered', tabsUpdatedListeners.length > 0);
+  for (const fn of tabsUpdatedListeners) {
+    await fn(TAB_A, { url: 'https://fresh-page.example/' }, { url: 'https://fresh-page.example/' });
+  }
+  check('tab A\'s in-memory counter cleared on navigation', !T.tabBlockedCounts.has(TAB_A));
+  check('tab A badge goes blank on navigation', badgeTextByTab.get(TAB_A) === '', `got ${JSON.stringify(badgeTextByTab.get(TAB_A))}`);
+  check('tab B is untouched by tab A\'s navigation', badgeTextByTab.get(TAB_B) === '3');
+
+  console.log('\n== 21c. Large counts abbreviated, disabled shows OFF (not a stale count) ==');
+  T._incrementTabBlocked(TAB_A, 12345);
+  check('large counts are abbreviated (e.g. "12k")', badgeTextByTab.get(TAB_A) === '12k', `got ${JSON.stringify(badgeTextByTab.get(TAB_A))}`);
   await T.updateIcon(false);
-  check('disabled shows OFF, not a count', lastBadgeText === 'OFF', `got ${JSON.stringify(lastBadgeText)}`);
+  check('disabled shows OFF globally, not any tab\'s count', lastBadgeText === 'OFF', `got ${JSON.stringify(lastBadgeText)}`);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
