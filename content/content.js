@@ -18,6 +18,29 @@ function extValid() {
 // match content/scriptlets.js's own copy of the same placeholder exactly.
 const _QKV1_TOKEN = '__QKV1_BUILD_TOKEN__';
 
+// Marker attribute for elements already hidden by site-block.js's
+// hide()/collapseParentIfEmpty (dedup + collapse-propagation state, see that
+// file). Random PER PAGE LOAD (not a build-time constant like _QKV1_TOKEN
+// above) — a page can enumerate this attribute's NAME (it's on the DOM), so
+// unlike the event names/localStorage key (which stay inside JS and never
+// touch the DOM), a static name of any kind is eventually observable by
+// whoever's loaded THIS specific page. Regenerating it every navigation
+// means an observed value is worthless on the next page load.
+// content.js and site-block.js are separate closures but run in the SAME
+// content_scripts entry (isolated world) in the order listed in
+// manifest.json — content.js runs first and stashes the value on the
+// isolated-world `window` (confirmed NOT page-visible: isolated-world
+// content scripts get their own separate `window`, distinct from the page's
+// real one) for site-block.js to read synchronously — no chrome.storage /
+// message round-trip, so this doesn't delay the "fire CSS immediately"
+// fast path below.
+const _HIDE_ATTR = 'h' + (
+  window.crypto && window.crypto.randomUUID
+    ? window.crypto.randomUUID().replace(/-/g, '')
+    : Math.random().toString(36).slice(2) + Date.now().toString(36)
+);
+window.__qkv1HideAttr = _HIDE_ATTR;
+
 // _sendCss — forwards CSS text to background, which applies it via
 // chrome.scripting.insertCSS (the browser's privileged "user stylesheet"
 // layer). This never creates a page-visible <style> DOM node and never
@@ -43,12 +66,12 @@ function _clearAllCss() {
 // IMPORTANT: No broad wildcard selectors like [class*="ad-"]. Those cause
 // false positives on sites like YouTube where legitimate elements contain
 // "ad" in class/id names. Every selector here targets a KNOWN ad provider
-// element. The last block ([data-qkv1-h="1"]) collapses layout space for
+// element. The last block ([_HIDE_ATTR="1"]) collapses layout space for
 // elements JS already hid via site-block.js's hide()/collapseParentIfEmpty
 // — belt-and-suspenders alongside the inline styles those set directly.
 const BASE_CSS = `
 
-[data-qkv1-h="1"] {
+[${_HIDE_ATTR}="1"] {
   display: none !important;
   height: 0 !important;
   min-height: 0 !important;
@@ -230,7 +253,7 @@ function disableCosmeticCss() {
   // Stop observing DOM mutations
   disconnectObserver();
   // Unhide any elements already hidden by JS (site-block.js / collapseParentIfEmpty)
-  document.querySelectorAll('[data-qkv1-h]').forEach(el => {
+  document.querySelectorAll(`[${_HIDE_ATTR}]`).forEach(el => {
     el.style.removeProperty('display');
     el.style.removeProperty('visibility');
     el.style.removeProperty('height');
@@ -238,7 +261,7 @@ function disableCosmeticCss() {
     el.style.removeProperty('margin');
     el.style.removeProperty('padding');
     el.style.removeProperty('overflow');
-    delete el.dataset.qkv1H;
+    el.removeAttribute(_HIDE_ATTR);
   });
 }
 

@@ -36,6 +36,16 @@ function extValid(){
 // Substituted with a random string at build time (_build-lib.sh) — must
 // match content.js/content/scriptlets.js's own copy of the placeholder.
 var _QKV1_TOKEN='__QKV1_BUILD_TOKEN__';
+// Marker attribute for elements already hidden by hide()/collapseParentIfEmpty
+// (dedup + collapse-propagation state, see below). Generated fresh per page
+// load by content.js (runs earlier in this same content_scripts entry — see
+// its own comment for why) and read back here off the shared isolated-world
+// `window`, NOT computed from the build-static _QKV1_TOKEN above — a value
+// that changes every navigation is worthless to a page that only ever
+// observes one load. Falls back to the old build-token derivation only if
+// content.js somehow didn't run first (defensive — should never happen
+// given the fixed manifest.json load order).
+var _HIDE_ATTR=window.__qkv1HideAttr||('h'+_QKV1_TOKEN);
 
 function normalizeText(value){
   return (value||'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -303,7 +313,7 @@ function collapseParentIfEmpty(el){
   var hasVisible=false;
   for(var i=0;i<parent.children.length;i++){
     var c=parent.children[i];
-    if(c.style.display!=='none'&&!c.dataset.qkv1H){hasVisible=true;break;}
+    if(c.style.display!=='none'&&!c.hasAttribute(_HIDE_ATTR)){hasVisible=true;break;}
   }
   if(!hasVisible){
     parent.style.setProperty('display','none','important');
@@ -312,7 +322,7 @@ function collapseParentIfEmpty(el){
     parent.style.setProperty('margin','0','important');
     parent.style.setProperty('padding','0','important');
     parent.style.setProperty('overflow','hidden','important');
-    parent.dataset.qkv1H='1';
+    parent.setAttribute(_HIDE_ATTR,'1');
   }
 }
 
@@ -327,13 +337,13 @@ function removeEl(el){
 }
 
 function hide(el){
-  if(!el||el.dataset.qkv1H)return false;
+  if(!el||el.hasAttribute(_HIDE_ATTR))return false;
   // Never hide the page itself — a broad rule (e.g. *:has(>[ad-attr]))
   // can match body/html when an ad script appends straight into <body>.
   if(el===document.body||el===document.documentElement)return false;
   el.style.setProperty('display','none','important');
   el.style.setProperty('visibility','hidden','important');
-  el.dataset.qkv1H='1';
+  el.setAttribute(_HIDE_ATTR,'1');
   collapseParentIfEmpty(el);
   return true;
 }
