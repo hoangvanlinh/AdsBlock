@@ -246,6 +246,50 @@ document.getElementById('donateBtnPopup')?.addEventListener('click', () => {
   chrome.tabs.create({ url: PAYPAL_DONATE_URL });
 });
 
+// ── Review prompt ────────────────────────────────
+// Shown once (ever — governed by reviewPromptState in storage), triggered
+// by whichever usage signal comes first: a real block-count milestone (the
+// user has concretely benefited) OR enough elapsed days (a habitual user
+// worth asking, even on a low-traffic browsing pattern that rarely blocks
+// anything). totalBlockedAllTime is background.js's own counter (see
+// _writeDailyStatDelta) — unlike dailyStats it's never pruned, so it's safe
+// to compare against a lifetime threshold here.
+const REVIEW_BLOCKED_MILESTONE = 500;
+const REVIEW_MIN_DAYS_INSTALLED = 7;
+const REVIEW_STORE_URLS = {
+  firefox: 'https://addons.mozilla.org/addon/adblock-ads-trackers/reviews/',
+  edge:    'https://microsoftedge.microsoft.com/addons/detail/pbhhhdiineoaofllgkipegloafcpiaml',
+  chrome:  'https://chromewebstore.google.com/detail/adblock-%E2%80%94-ads-trackers/emdofgiggmkkncojffpebiaegdmdkgio/reviews',
+};
+function _detectReviewStoreUrl() {
+  const ua = navigator.userAgent;
+  if (ua.includes('Firefox/')) return REVIEW_STORE_URLS.firefox;
+  if (ua.includes('Edg/'))     return REVIEW_STORE_URLS.edge;
+  return REVIEW_STORE_URLS.chrome;
+}
+function maybeShowReviewPrompt() {
+  const banner = document.getElementById('reviewBanner');
+  if (!banner) return;
+  chrome.storage.local.get(
+    ['reviewPromptState', 'totalBlockedAllTime', 'installDate'],
+    ({ reviewPromptState = 'unseen', totalBlockedAllTime = 0, installDate }) => {
+      if (reviewPromptState !== 'unseen') return;
+      const daysInstalled = installDate ? (Date.now() - installDate) / 86400000 : 0;
+      const eligible = totalBlockedAllTime >= REVIEW_BLOCKED_MILESTONE || daysInstalled >= REVIEW_MIN_DAYS_INSTALLED;
+      if (eligible) banner.classList.remove('hidden');
+    }
+  );
+}
+document.getElementById('reviewRateBtn')?.addEventListener('click', () => {
+  chrome.storage.local.set({ reviewPromptState: 'reviewed' });
+  chrome.tabs.create({ url: _detectReviewStoreUrl() });
+  document.getElementById('reviewBanner')?.classList.add('hidden');
+});
+document.getElementById('reviewDismissBtn')?.addEventListener('click', () => {
+  chrome.storage.local.set({ reviewPromptState: 'dismissed' });
+  document.getElementById('reviewBanner')?.classList.add('hidden');
+});
+
 // ── "Hide element" picker ───────────────────────
 // Arms content/element-picker.js directly on the active tab — same message
 // the right-click context menu item sends, just a second entry point for
@@ -261,6 +305,7 @@ document.getElementById('pickElement')?.addEventListener('click', async () => {
 
 // ── Init ───────────────────────────────────────
 loadState();
+maybeShowReviewPrompt();
 
 // Show how many network blocking rules are actually loaded
 chrome.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {

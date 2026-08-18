@@ -245,6 +245,61 @@ body::before {
   letter-spacing: .5px;
 }
 
+/* ── Review prompt banner ── */
+.review-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(129,140,248,.08);
+  border: 1px solid rgba(129,140,248,.25);
+}
+.review-banner.hidden { display: none; }
+.review-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.review-text strong {
+  font-size: 12px;
+  color: var(--text-1);
+}
+.review-text span {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.review-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.review-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  white-space: nowrap;
+  transition: all .15s;
+}
+.review-btn:hover {
+  border-color: rgba(129,140,248,.4);
+  background: rgba(129,140,248,.1);
+}
+.review-btn.primary {
+  color: #fff;
+  background: linear-gradient(135deg, #818cf8, #06b6d4);
+  border-color: transparent;
+}
+.review-btn.primary:hover {
+  filter: brightness(1.08);
+}
+
 /* ── Allowlist banner ── */
 .allowlist-banner {
   display: flex;
