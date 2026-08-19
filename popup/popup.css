@@ -458,6 +458,33 @@ body::before {
   border-color: rgba(248,113,113,.2);
 }
 
+/* Only ever rendered when an update is actually available (see popup.js) —
+   no "current version" idle state, so it can just always look actionable.
+   Sits below the footer as its own full-width row (.popup is a padded flex
+   column, so this doesn't need special edge-flush styling — just another
+   item in that column with normal spacing/rounding). */
+.version-chip {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: #818cf8;
+  background: rgba(129,140,248,.1);
+  border: 1px solid rgba(129,140,248,.3);
+  border-radius: 8px;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+.version-chip:hover {
+  filter: brightness(1.15);
+}
+.version-chip.hidden {
+  display: none;
+}
+
 .donate-btn {
   display: flex;
   align-items: center;

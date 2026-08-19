@@ -431,6 +431,24 @@
           <button class="btn-danger" id="resetBtn">Reset</button>
         </div>
         </div>
+
+      <div class="card settings-card">
+        <h3 class="settings-section">About</h3>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Version</p>
+            <p class="setting-desc" id="aboutVersionDesc">…</p>
+          </div>
+          <button class="btn-ghost" id="checkUpdateBtn">Check for updates</button>
+        </div>
+        <div class="setting-row" id="aboutUpdateRow" style="display:none;">
+          <div>
+            <p class="setting-name">A newer version is available</p>
+            <p class="setting-desc" id="aboutUpdateDesc"></p>
+          </div>
+          <button class="btn-primary" id="aboutUpdateLink">View</button>
+        </div>
+      </div>
     </div>
   </section>
 

@@ -55,6 +55,18 @@
       <p class="domain-label" id="domainLabel">example.com</p>
     </section>
 
+        <!-- ── Review prompt (shown once, after a usage milestone) ── -->
+    <div class="review-banner hidden" id="reviewBanner">
+      <div class="review-text">
+        <strong>Enjoying AdBlock?</strong>
+        <span>A quick rating helps a lot.</span>
+      </div>
+      <div class="review-actions">
+        <button class="review-btn primary" id="reviewRateBtn">Rate us</button>
+        <button class="review-btn" id="reviewDismissBtn">No thanks</button>
+      </div>
+    </div>
+
     <!-- ── Stats row ── -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -107,18 +119,6 @@
           <p class="stat-value" id="timeSaved">0m</p>
           <p class="stat-key">Saved</p>
         </div>
-      </div>
-    </div>
-
-    <!-- ── Review prompt (shown once, after a usage milestone) ── -->
-    <div class="review-banner hidden" id="reviewBanner">
-      <div class="review-text">
-        <strong>Enjoying AdBlock?</strong>
-        <span>A quick rating helps a lot.</span>
-      </div>
-      <div class="review-actions">
-        <button class="review-btn primary" id="reviewRateBtn">Rate us</button>
-        <button class="review-btn" id="reviewDismissBtn">No thanks</button>
       </div>
     </div>
 
@@ -202,8 +202,12 @@
         Donate
       </button>
     </footer>
+
+    <!-- Only shown when a newer version is actually available -->
+    <button class="version-chip hidden" id="versionChip" title="AdBlock version"></button>
   </div>
 
+  <script src="../config.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
