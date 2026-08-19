@@ -50,7 +50,7 @@
       "matches": [
        "<all_urls>"
       ],
-      "js": ["config.js", "content/site-rules-loader.js", "content/content.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js"],
+      "js": ["config.js", "content/site-rules-loader.js", "content/content.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
       "run_at": "document_start",
       "all_frames": true
     }

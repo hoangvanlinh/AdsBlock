@@ -73,6 +73,7 @@ copy_static_files() {
     # scriptlets run in MAIN world — never obfuscated
     cp "$PROJECT_DIR/content/element-picker.js"        "$DEST/content/"
     cp "$PROJECT_DIR/content/global-scanner.js"        "$DEST/content/"
+    cp "$PROJECT_DIR/content/rule-editor.js"        "$DEST/content/"
     cp "$PROJECT_DIR/content/scriptlets.js"        "$DEST/content/"
     cp "$PROJECT_DIR/rule/site-rules.txt"          "$DEST/rule/"
     cp "$PROJECT_DIR/dashboard/dashboard.css"      "$DEST/dashboard/"
