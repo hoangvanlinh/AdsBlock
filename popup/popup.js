@@ -256,16 +256,23 @@ document.getElementById('donateBtnPopup')?.addEventListener('click', () => {
 // to compare against a lifetime threshold here.
 const REVIEW_BLOCKED_MILESTONE = 500;
 const REVIEW_MIN_DAYS_INSTALLED = 7;
-const REVIEW_STORE_URLS = {
-  firefox: 'https://addons.mozilla.org/addon/adblock-ads-trackers/reviews/',
-  edge:    'https://microsoftedge.microsoft.com/addons/detail/pbhhhdiineoaofllgkipegloafcpiaml',
-  chrome:  'https://chromewebstore.google.com/detail/adblock-%E2%80%94-ads-trackers/emdofgiggmkkncojffpebiaegdmdkgio/reviews',
-};
+// Shared with dashboard.js via config.js's ADBLOCK_CONFIG.STORE_URLS (single
+// source, see that file's own comment) — both the review prompt and the
+// update-available chip below point here, so there's only ever one link to
+// keep correct.
+function _detectStoreUrl() {
+  const urls = self.ADBLOCK_CONFIG.STORE_URLS;
+  const ua = navigator.userAgent;
+  if (ua.includes('Firefox/')) return urls.firefox;
+  if (ua.includes('Edg/'))     return urls.edge;
+  return urls.chrome;
+}
 function _detectReviewStoreUrl() {
   const ua = navigator.userAgent;
-  if (ua.includes('Firefox/')) return REVIEW_STORE_URLS.firefox;
-  if (ua.includes('Edg/'))     return REVIEW_STORE_URLS.edge;
-  return REVIEW_STORE_URLS.chrome;
+  const urls = self.ADBLOCK_CONFIG.STORE_URLS;
+  if (ua.includes('Firefox/')) return urls.firefox + '/reviews';
+  if (ua.includes('Edg/'))     return urls.edge;
+  return urls.chrome + '/reviews';
 }
 function maybeShowReviewPrompt() {
   const banner = document.getElementById('reviewBanner');
@@ -319,4 +326,20 @@ chrome.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {
   const n = res.count ?? 0;
   chip.textContent = `${n} network rules loaded`;
   chip.classList.toggle('zero', n === 0);
+});
+
+// ── Version / update check ──────────────────────────────────────
+// GET_UPDATE_STATUS reads cached state only (background.js checks against
+// this repo's own manifest.json on its own daily schedule) — the popup
+// never triggers a network fetch itself just from being opened.
+chrome.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, (res) => {
+  const chip = document.getElementById('versionChip');
+  if (!chip) return;
+  if (chrome.runtime.lastError || !res || !res.available || !res.latestVersion) return; // stays hidden
+  chip.textContent = `Update available — v${res.currentVersion} → v${res.latestVersion}`;
+  chip.title = 'A newer version is available — click to open the store listing';
+  chip.classList.remove('hidden');
+  chip.addEventListener('click', () => {
+    chrome.tabs.create({ url: _detectStoreUrl() });
+  });
 });

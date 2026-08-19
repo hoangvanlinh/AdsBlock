@@ -90,6 +90,7 @@ const chromeStub = {
   },
   runtime: {
     getURL: p => 'chrome-extension://test/' + p,
+    getManifest: () => ({ version: '1.0.35' }),
     onInstalled: noopEvent,
     onStartup: noopEvent,
     onMessage: { addListener(fn) { messageListeners.push(fn); } },
@@ -124,10 +125,29 @@ const chromeStub = {
 };
 
 // fetch stub: serve the real local rules file for both remote + local URLs
+// Mutable so tests can simulate "update available" / "offline" / "no
+// update" scenarios against checkForExtensionUpdate() without needing a
+// real network call.
+let stubRemoteManifestVersion = '1.0.0'; // default: below any real local version
+let stubRemoteManifestVersionFirefox = '1.0.0'; // independent — the two manifests CAN diverge
+let stubRemoteManifestUnreachable = false;
+// _isFirefoxInstall() (background.js) checks navigator.userAgent — same
+// technique popup.js/dashboard.js already use for this kind of "pick a URL
+// for the current browser" decision. Simulated here by swapping
+// sandbox.navigator.userAgent directly (see section 24a below), not via a
+// separate flag.
 async function fetchStub(url) {
   const u = String(url);
   if (u.includes('site-rules.txt')) {
     return { ok: true, status: 200, headers: { get: () => '' }, text: async () => rulesText };
+  }
+  if (u.includes('manifest.firefox.json')) {
+    if (stubRemoteManifestUnreachable) throw new Error('network error (simulated)');
+    return { ok: true, status: 200, headers: { get: () => '' }, json: async () => ({ version: stubRemoteManifestVersionFirefox }) };
+  }
+  if (u.includes('manifest.json')) {
+    if (stubRemoteManifestUnreachable) throw new Error('network error (simulated)');
+    return { ok: true, status: 200, headers: { get: () => '' }, json: async () => ({ version: stubRemoteManifestVersion }) };
   }
   return { ok: false, status: 404, headers: { get: () => '' }, text: async () => '' };
 }
@@ -137,6 +157,7 @@ const sandbox = {
   console, chrome: chromeStub, fetch: fetchStub,
   setTimeout, clearTimeout, setInterval, clearInterval,
   URL, Date, Math, JSON, Promise, RegExp, Set, Map, Number, String, Object, Array, Error,
+  navigator: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' },
   importScripts() { vm.runInContext(configSrc, ctx, { filename: 'config.js' }); },
 };
 sandbox.self = sandbox;
@@ -151,6 +172,7 @@ self.__test = {
   _buildElementRulesBlock, _applyElementRules,
   _buildGlobalRulesBlock, _applyGlobalRules,
   _buildSiteRuleTextBlock, _applySiteRuleText,
+  _isNewerVersion, checkForExtensionUpdate, maybeCheckForExtensionUpdate,
   get DEFAULT_RULES() { return DEFAULT_RULES; },
   get MALWARE_RULES() { return MALWARE_RULES; },
   get AD_MAINFRAME_RULES() { return AD_MAINFRAME_RULES; },
@@ -848,6 +870,68 @@ function check(name, cond, detail = '') {
     ecrtHandAfter.includes('b-label'), ecrtHandAfter);
   check('cleared host is actually gone', !ecrtHandAfter.includes('a-label'), ecrtHandAfter);
   await send5({ type: 'SAVE_SITE_RULE_TEXT', host: eHostB, text: '' });
+
+  console.log('\n== 24. Extension update check ==');
+  check('_isNewerVersion: patch bump detected', T._isNewerVersion('1.0.36', '1.0.35') === true);
+  check('_isNewerVersion: same version is not "newer"', T._isNewerVersion('1.0.35', '1.0.35') === false);
+  check('_isNewerVersion: older remote is not "newer"', T._isNewerVersion('1.0.34', '1.0.35') === false);
+  check('_isNewerVersion: minor/major bump detected', T._isNewerVersion('1.1.0', '1.0.35') === true);
+  check('_isNewerVersion: different segment counts handled (2.0 vs 1.9.9)', T._isNewerVersion('2.0', '1.9.9') === true);
+
+  stubRemoteManifestVersion = '1.0.0'; // below the stubbed local 1.0.35
+  const noUpdateInfo = await T.checkForExtensionUpdate();
+  check('no update reported when remote version is older/equal', noUpdateInfo.available === false, JSON.stringify(noUpdateInfo));
+  check('latestVersion still recorded even when not newer', noUpdateInfo.latestVersion === '1.0.0');
+  check('lastCheckOk true on a successful fetch', noUpdateInfo.lastCheckOk === true);
+
+  stubRemoteManifestVersion = '9.9.9';
+  const rCheckNow = await send5({ type: 'CHECK_FOR_UPDATE_NOW' });
+  check('CHECK_FOR_UPDATE_NOW reports an update when the remote version is newer', rCheckNow.ok && rCheckNow.available === true, JSON.stringify(rCheckNow));
+  check('CHECK_FOR_UPDATE_NOW returns the current AND latest version', rCheckNow.currentVersion === '1.0.35' && rCheckNow.latestVersion === '9.9.9', JSON.stringify(rCheckNow));
+
+  const rStatus = await send5({ type: 'GET_UPDATE_STATUS' });
+  check('GET_UPDATE_STATUS reflects the same cached result without a fresh fetch', rStatus.ok && rStatus.available === true && rStatus.latestVersion === '9.9.9', JSON.stringify(rStatus));
+
+  stubRemoteManifestUnreachable = true;
+  const rOffline = await send5({ type: 'CHECK_FOR_UPDATE_NOW' });
+  check('a failed fetch is reported (lastCheckOk:false), not silently treated as success', rOffline.ok && rOffline.lastCheckOk === false, JSON.stringify(rOffline));
+  check('a failed fetch keeps the last KNOWN available/latestVersion instead of resetting it', rOffline.available === true && rOffline.latestVersion === '9.9.9', JSON.stringify(rOffline));
+  stubRemoteManifestUnreachable = false;
+  stubRemoteManifestVersion = '1.0.0'; // reset for maybeCheckForExtensionUpdate's own TTL test below
+
+  await chromeStub.storage.local.set({ updateInfo: { lastChecked: Date.now() - 1, available: true, latestVersion: '9.9.9', lastCheckOk: true } });
+  await T.maybeCheckForExtensionUpdate();
+  const { updateInfo: notRecheckedYet } = await chromeStub.storage.local.get('updateInfo');
+  check('maybeCheckForExtensionUpdate skips a fresh re-check within the TTL window', notRecheckedYet.latestVersion === '9.9.9', JSON.stringify(notRecheckedYet));
+
+  await chromeStub.storage.local.set({ updateInfo: { lastChecked: Date.now() - (25 * 60 * 60 * 1000), available: true, latestVersion: '9.9.9', lastCheckOk: true } });
+  await T.maybeCheckForExtensionUpdate();
+  const { updateInfo: rechecked } = await chromeStub.storage.local.get('updateInfo');
+  check('maybeCheckForExtensionUpdate re-checks once the TTL has expired', rechecked.latestVersion === '1.0.0' && rechecked.available === false, JSON.stringify(rechecked));
+
+  console.log('\n== 24a. Update check picks the RIGHT manifest for the install (manifest.json vs manifest.firefox.json can diverge) ==');
+  // Chrome/Edge install (default stub state): only manifest.json's stubbed
+  // version should ever be consulted, even if manifest.firefox.json's is
+  // wildly different — a regression here would silently compare against
+  // the wrong browser's release cadence.
+  stubRemoteManifestVersion = '2.0.0';
+  stubRemoteManifestVersionFirefox = '1.0.0'; // deliberately stale/irrelevant for this check
+  const chromeUpdate = await T.checkForExtensionUpdate();
+  check('non-Firefox install compares against manifest.json, not manifest.firefox.json',
+    chromeUpdate.latestVersion === '2.0.0' && chromeUpdate.available === true, JSON.stringify(chromeUpdate));
+
+  sandbox.navigator.userAgent = 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0';
+  stubRemoteManifestVersion = '2.0.0';       // deliberately irrelevant for this check
+  stubRemoteManifestVersionFirefox = '1.0.20'; // still lower than the stubbed local 1.0.35
+  const firefoxUpdateNone = await T.checkForExtensionUpdate();
+  check('Firefox install compares against manifest.firefox.json, not manifest.json',
+    firefoxUpdateNone.latestVersion === '1.0.20' && firefoxUpdateNone.available === false, JSON.stringify(firefoxUpdateNone));
+
+  stubRemoteManifestVersionFirefox = '1.5.0'; // now genuinely newer than local 1.0.35
+  const firefoxUpdateYes = await T.checkForExtensionUpdate();
+  check('Firefox install correctly reports an update from ITS OWN manifest, independent of manifest.json',
+    firefoxUpdateYes.latestVersion === '1.5.0' && firefoxUpdateYes.available === true, JSON.stringify(firefoxUpdateYes));
+  sandbox.navigator.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'; // reset for any later section
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

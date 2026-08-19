@@ -910,6 +910,55 @@ document.getElementById('resetBtn')?.addEventListener('click', () => {
   });
 });
 
+/* ── About / version + update check ─────────────────────────────── */
+// Shared with popup.js via config.js's ADBLOCK_CONFIG.STORE_URLS (single
+// source — see that file's own comment for why two independently-hand-
+// maintained copies of this map used to drift out of sync with each other).
+function _detectUpdateStoreUrl() {
+  const urls = self.ADBLOCK_CONFIG.STORE_URLS;
+  const ua = navigator.userAgent;
+  if (ua.includes('Firefox/')) return urls.firefox;
+  if (ua.includes('Edg/'))     return urls.edge;
+  return urls.chrome;
+}
+function _renderUpdateStatus(res) {
+  const versionDesc = document.getElementById('aboutVersionDesc');
+  const updateRow = document.getElementById('aboutUpdateRow');
+  const updateDesc = document.getElementById('aboutUpdateDesc');
+  if (!versionDesc) return;
+  const current = res?.currentVersion || chrome.runtime.getManifest().version;
+  if (!res || chrome.runtime.lastError) {
+    versionDesc.textContent = `v${current}`;
+    return;
+  }
+  const checkedText = res.lastChecked
+    ? `Last checked ${new Date(res.lastChecked).toLocaleString()}${res.lastCheckOk === false ? ' (failed — offline?)' : ''}`
+    : 'Never checked yet';
+  versionDesc.textContent = `v${current} · ${checkedText}`;
+  if (updateRow) updateRow.style.display = res.available ? '' : 'none';
+  if (res.available && updateDesc) {
+    updateDesc.textContent = `v${res.latestVersion} is available (you have v${current})`;
+  }
+}
+function loadUpdateStatus() {
+  chrome.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, _renderUpdateStatus);
+}
+document.getElementById('checkUpdateBtn')?.addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Checking…';
+  chrome.runtime.sendMessage({ type: 'CHECK_FOR_UPDATE_NOW' }, (res) => {
+    _renderUpdateStatus(res);
+    btn.disabled = false;
+    btn.textContent = original;
+  });
+});
+document.getElementById('aboutUpdateLink')?.addEventListener('click', () => {
+  chrome.tabs.create({ url: _detectUpdateStoreUrl() });
+});
+loadUpdateStatus();
+
 document.getElementById('seedYesterdayBtn')?.addEventListener('click', () => {
   const yd = new Date(); yd.setDate(yd.getDate() - 1);
   const key = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, '0')}-${String(yd.getDate()).padStart(2, '0')}`;

@@ -15,6 +15,8 @@ const {
   RULES_CACHE_TIME_KEY,
   RULES_CACHE_TTL_MS,
   DEBUG_LOCAL,
+  EXTENSION_META_REMOTE_URL,
+  EXTENSION_META_REMOTE_URL_FIREFOX,
 } = self.ADBLOCK_CONFIG;
 
 const FALLBACK_RULE_CONFIG = {
@@ -236,6 +238,79 @@ async function revalidateRemoteRules() {
     return true;
   } catch {
     return false; // offline etc. — cache TTL remains the safety net
+  }
+}
+
+// ── Extension update check ──────────────────────────────────────────
+// Chrome/Firefox both auto-update a STORE-installed extension silently in
+// the background — this does NOT trigger or replace that, there's no
+// public API for an extension to force it (chrome.runtime.requestUpdateCheck
+// exists but only asks the browser to check on ITS OWN schedule, gives no
+// target version number to display, and is a no-op for an unpacked/dev
+// install). This is a lightweight informational check instead: fetch this
+// repo's own manifest.json (the SAME GitHub repo rule/site-rules.txt
+// already comes from — one already-trusted canonical source) and compare
+// its version against what's actually installed, so the popup/dashboard
+// can show "a newer version exists" with a link to the store listing.
+// Particularly useful for exactly the kind of manually-loaded/unpacked
+// install this repo's own DEBUG_LOCAL workflow produces, which the
+// browser's silent auto-update mechanism never covers at all.
+function _isNewerVersion(remote, local) {
+  const r = String(remote || '').split('.').map(n => parseInt(n, 10) || 0);
+  const l = String(local || '').split('.').map(n => parseInt(n, 10) || 0);
+  const len = Math.max(r.length, l.length);
+  for (let i = 0; i < len; i++) {
+    const rv = r[i] || 0, lv = l[i] || 0;
+    if (rv > lv) return true;
+    if (rv < lv) return false;
+  }
+  return false;
+}
+
+// navigator.userAgent is available in the service worker context just like
+// anywhere else — same technique popup.js/dashboard.js already use for this
+// exact kind of "pick a URL for the current browser" decision
+// (_detectStoreUrl/_detectUpdateStoreUrl), reused here instead of a
+// different detection method for the same purpose. Not manifest content
+// (browser_specific_settings isn't actually Firefox-exclusive by spec, it
+// just happens to be the one distinguishing field between this repo's two
+// CURRENT manifests — a coincidence, not a guarantee).
+function _isFirefoxInstall() {
+  return navigator.userAgent.includes('Firefox/');
+}
+
+async function checkForExtensionUpdate() {
+  const currentVersion = chrome.runtime.getManifest().version;
+  const metaUrl = _isFirefoxInstall() ? EXTENSION_META_REMOTE_URL_FIREFOX : EXTENSION_META_REMOTE_URL;
+  try {
+    const res = await fetch(metaUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error('bad status');
+    const remoteManifest = await res.json();
+    const latestVersion = String(remoteManifest.version || '');
+    const updateInfo = {
+      latestVersion: latestVersion || currentVersion,
+      available: latestVersion ? _isNewerVersion(latestVersion, currentVersion) : false,
+      lastChecked: Date.now(),
+      lastCheckOk: true,
+    };
+    await chrome.storage.local.set({ updateInfo });
+    return updateInfo;
+  } catch {
+    // Offline / repo unreachable — keep whatever was last known, just stamp
+    // the failed attempt so the UI can show "last checked: failed just now"
+    // instead of silently reusing a possibly stale success from days ago.
+    const { updateInfo: prev = {} } = await chrome.storage.local.get('updateInfo');
+    const updateInfo = { ...prev, lastChecked: Date.now(), lastCheckOk: false };
+    await chrome.storage.local.set({ updateInfo });
+    return updateInfo;
+  }
+}
+
+async function maybeCheckForExtensionUpdate() {
+  const { updateInfo = {} } = await chrome.storage.local.get('updateInfo');
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  if (Date.now() - (updateInfo.lastChecked || 0) > ONE_DAY) {
+    await checkForExtensionUpdate();
   }
 }
 
@@ -720,12 +795,14 @@ chrome.runtime.onInstalled.addListener(async () => {
   await applyNetworkRules();
   await applyPrivacySettings();
   await maybeUpdateMalwareLists();
+  await maybeCheckForExtensionUpdate();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   applyNetworkRules();
   applyPrivacySettings();
   maybeUpdateMalwareLists();
+  maybeCheckForExtensionUpdate();
   // Cheap ETag check (304 when unchanged) — picks up urgent rules fixes
   // published while the browser was closed, instead of waiting out the TTL.
   revalidateRemoteRules();
@@ -1102,12 +1179,16 @@ async function maybeUpdateMalwareLists() {
 // Schedule periodic updates via alarm
 chrome.alarms?.create('malware-list-update', { periodInMinutes: 60 * 24 });
 chrome.alarms?.create(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
+chrome.alarms?.create('extension-update-check', { periodInMinutes: 60 * 24 });
 chrome.alarms?.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'malware-list-update') {
     await fetchMalwareBlocklists();
   }
   if (alarm.name === RULES_REVALIDATE_ALARM) {
     await revalidateRemoteRules();
+  }
+  if (alarm.name === 'extension-update-check') {
+    await checkForExtensionUpdate();
   }
   if (alarm.name === 'focus-end') {
     // Auto-disable focus mode when timer expires
@@ -1123,12 +1204,25 @@ chrome.alarms?.onAlarm.addListener(async (alarm) => {
 // contextMenus.create throws "duplicate id" if called again while a menu
 // with that id still exists — removeAll() first makes this idempotent
 // across service-worker restarts (no onInstalled-only guard needed).
+// documentUrlPatterns scopes these to http/https pages only — matches
+// where the content scripts they arm (element-picker.js/global-scanner.js/
+// rule-editor.js) actually run. <all_urls> (the manifest's content_scripts
+// match) never injects into chrome://, chrome-extension:// (including this
+// extension's own popup/dashboard), about:, or the PDF viewer regardless
+// of match pattern — a hard platform restriction, not a config choice —
+// so without this scoping these 3 items would show everywhere including
+// those pages, where selecting them is a silent no-op (the message has no
+// listener on the other end). file:// deliberately excluded too: only
+// works if the user has separately opted the extension into file access,
+// an uncommon case not worth cluttering the common one for.
+const QKV1_MENU_URL_PATTERNS = ['http://*/*', 'https://*/*'];
 try {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: 'qkv1-pick-element',
       title: 'Pick element to hide…',
       contexts: ['all'],
+      documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
     });
     // "Scan page globals" and "Edit rules for this site" are still-evolving
     // power-user tools — real risk of breaking a page if misused (permanent
@@ -1145,11 +1239,13 @@ try {
         id: 'qkv1-scan-globals',
         title: 'Scan page for scripts/variables…',
         contexts: ['all'],
+        documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
       });
       chrome.contextMenus.create({
         id: 'qkv1-edit-rules',
         title: 'Edit rules for this site…',
         contexts: ['all'],
+        documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
       });
     }
   });
@@ -1961,6 +2057,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'GET_RULE_COUNT': {
         const rules = await chrome.declarativeNetRequest.getDynamicRules();
         sendResponse({ count: rules.length, rules: rules.map(r => r.id) });
+        break;
+      }
+
+      case 'GET_UPDATE_STATUS': {
+        const { updateInfo = {} } = await chrome.storage.local.get('updateInfo');
+        sendResponse({
+          ok: true,
+          currentVersion: chrome.runtime.getManifest().version,
+          latestVersion: updateInfo.latestVersion || '',
+          available: !!updateInfo.available,
+          lastChecked: updateInfo.lastChecked || 0,
+          lastCheckOk: updateInfo.lastCheckOk !== false,
+        });
+        break;
+      }
+
+      case 'CHECK_FOR_UPDATE_NOW': {
+        const updateInfo = await checkForExtensionUpdate();
+        sendResponse({
+          ok: true,
+          currentVersion: chrome.runtime.getManifest().version,
+          latestVersion: updateInfo.latestVersion || '',
+          available: !!updateInfo.available,
+          lastChecked: updateInfo.lastChecked || 0,
+          lastCheckOk: updateInfo.lastCheckOk !== false,
+        });
         break;
       }
 
