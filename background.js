@@ -1301,10 +1301,80 @@ async function applyReferrerAnonymization(enabled) {
   }
 }
 
+// ── Privacy: Global Privacy Control signal ──────────────────────────
+// Sends the Sec-GPC request header — the HTTP half of the GPC opt-out
+// signal (the JS half, navigator.globalPrivacyControl, is spoofed
+// separately in content/scriptlets.js's spoofGpcSignal).
+const GPC_RULE_ID = 400001;
+const GPC_DNT_RESOURCE_TYPES = [
+  'main_frame', 'sub_frame', 'script', 'xmlhttprequest', 'image',
+  'stylesheet', 'font', 'media', 'ping', 'other',
+];
+
+async function applyGpcHeader(enabled) {
+  const existing = await chrome.declarativeNetRequest.getDynamicRules();
+  const hasRule = existing.some(r => r.id === GPC_RULE_ID);
+
+  if (enabled && !hasRule) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      addRules: [{
+        id: GPC_RULE_ID,
+        priority: 1,
+        action: {
+          type: 'modifyHeaders',
+          requestHeaders: [{
+            header: 'Sec-GPC',
+            operation: 'set',
+            value: '1',
+          }],
+        },
+        condition: { resourceTypes: GPC_DNT_RESOURCE_TYPES },
+      }],
+    });
+  } else if (!enabled && hasRule) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [GPC_RULE_ID],
+    });
+  }
+}
+
+// ── Privacy: Do Not Track header ────────────────────────────────────
+const DNT_RULE_ID = 400002;
+
+async function applyDntHeader(enabled) {
+  const existing = await chrome.declarativeNetRequest.getDynamicRules();
+  const hasRule = existing.some(r => r.id === DNT_RULE_ID);
+
+  if (enabled && !hasRule) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      addRules: [{
+        id: DNT_RULE_ID,
+        priority: 1,
+        action: {
+          type: 'modifyHeaders',
+          requestHeaders: [{
+            header: 'DNT',
+            operation: 'set',
+            value: '1',
+          }],
+        },
+        condition: { resourceTypes: GPC_DNT_RESOURCE_TYPES },
+      }],
+    });
+  } else if (!enabled && hasRule) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [DNT_RULE_ID],
+    });
+  }
+}
+
 // Apply saved privacy settings on startup
 async function applyPrivacySettings() {
-  const { referrerAnonymization = true } = await chrome.storage.local.get(['referrerAnonymization']);
+  const { referrerAnonymization = true, gpcSignal = true, dntHeader = true } =
+    await chrome.storage.local.get(['referrerAnonymization', 'gpcSignal', 'dntHeader']);
   await applyReferrerAnonymization(referrerAnonymization);
+  await applyGpcHeader(gpcSignal);
+  await applyDntHeader(dntHeader);
 }
 
 // ── Per-frame cosmetic CSS injection ────────────────────────────────
@@ -1935,11 +2005,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'SET_PRIVACY': {
-        // msg: { setting: 'referrerAnonymization', value: bool }
-        const allowed = ['referrerAnonymization'];
+        // msg: { setting: 'referrerAnonymization' | 'gpcSignal' | 'dntHeader', value: bool }
+        const allowed = ['referrerAnonymization', 'gpcSignal', 'dntHeader'];
         if (!allowed.includes(msg.setting)) { sendResponse({ ok: false }); break; }
         await chrome.storage.local.set({ [msg.setting]: msg.value });
         if (msg.setting === 'referrerAnonymization') await applyReferrerAnonymization(msg.value);
+        if (msg.setting === 'gpcSignal') await applyGpcHeader(msg.value);
+        if (msg.setting === 'dntHeader') await applyDntHeader(msg.value);
+        // gpcSignal/referrerAnonymization also gate MAIN-world scriptlets
+        // (content/scriptlets.js) via GET_SITE_CONFIG — resync every open
+        // tab so it picks up the new flag without a page reload.
+        const tabs = await chrome.tabs.query({});
+        for (const tab of tabs) {
+          chrome.tabs.sendMessage(tab.id, { type: 'PRIVACY_TOGGLE' }).catch(() => {});
+        }
         sendResponse({ ok: true });
         break;
       }
@@ -2111,9 +2190,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           const parsed = await getParsedRules();
           const host = String(msg.host || '').toLowerCase();
           const siteKey = resolveSiteKey(parsed.host_patterns || {}, host);
+          // gpcSignal/referrerAnonymization are chrome.storage privacy
+          // toggles, not site-rules.txt keys — synthesized here as flag-style
+          // global entries so they ride the same SCRIPTLET_KEYS pipeline as
+          // every other MAIN-world scriptlet, with no [global] override path
+          // to worry about (see background.js:1305-1345 applyPrivacySettings).
+          const { gpcSignal = true, referrerAnonymization = true } =
+            await chrome.storage.local.get(['gpcSignal', 'referrerAnonymization']);
+          const global = Object.assign({}, parsed.global || {});
+          if (gpcSignal) global.gpc_signal = ['1'];
+          if (referrerAnonymization) global.hide_document_referrer = ['1'];
           sendResponse({
             siteKey,
-            global: parsed.global || {},
+            global,
             site: (siteKey && parsed[siteKey]) || {},
           });
         } catch {

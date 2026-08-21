@@ -2032,6 +2032,41 @@
     }
   }
 
+  // ── spoofGpcSignal ───────────────────────────────────────────────
+  // Global Privacy Control — the JS-readable half of the opt-out signal
+  // (the HTTP Sec-GPC header is set separately via declarativeNetRequest,
+  // background.js's applyGpcHeader). A page reads navigator.globalPrivacyControl
+  // to check the user's opt-out preference without waiting on a header.
+  function spoofGpcSignal() {
+    try {
+      if ('globalPrivacyControl' in Navigator.prototype) return;
+      Object.defineProperty(Navigator.prototype, 'globalPrivacyControl', {
+        get: function () { return true; },
+        configurable: true,
+        enumerable: true,
+      });
+    } catch (e) {}
+  }
+
+  // ── hideDocumentReferrerJs ──────────────────────────────────────────
+  // document.referrer spoofed to the page's own origin — the JS-readable
+  // counterpart to the Referer HTTP header strip (declarativeNetRequest,
+  // background.js's applyReferrerAnonymization), which only covers
+  // cross-origin subrequests and never touches what a page's own script
+  // reads back via document.referrer. Preserves the original getter's
+  // native toString so a Function.prototype.toString probe can't detect
+  // the override.
+  function hideDocumentReferrerJs() {
+    try {
+      var origDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'referrer');
+      if (!origDescriptor || typeof origDescriptor.get !== 'function' || !origDescriptor.configurable) return;
+      var origGetter = origDescriptor.get;
+      var spoofedGetter = function () { return location.origin + '/'; };
+      spoofedGetter.toString = origGetter.toString.bind(origGetter);
+      Object.defineProperty(Document.prototype, 'referrer', { get: spoofedGetter, configurable: true });
+    } catch (e) {}
+  }
+
   // ── preventBab ───────────────────────────────────────────────────
   // Defuses BlockAdBlock/FuckAdBlock detection:
   // recognizes its eval'd payload by signature and skips execution.
@@ -4331,6 +4366,11 @@
     if (_flagOn(rules.no_webrtc)) _wrapOnce('no_webrtc', '1', noWebrtc);
     if (_flagOn(rules.prevent_bab)) _wrapOnce('prevent_bab', '1', preventBab);
     if (_flagOn(rules.disable_newtab_links)) _wrapOnce('disable_newtab_links', '1', disableNewtabLinks);
+    // gpc_signal / hide_document_referrer — synthesized by background.js's
+    // GET_SITE_CONFIG from chrome.storage privacy toggles (dashboard's
+    // "Privacy" card), not written by hand in site-rules.txt.
+    if (_flagOn(rules.gpc_signal)) _wrapOnce('gpc_signal', '1', spoofGpcSignal);
+    if (_flagOn(rules.hide_document_referrer)) _wrapOnce('hide_document_referrer', '1', hideDocumentReferrerJs);
 
     // remove_attr = token[, selector[, behavior]]
     _eachRule(rules.remove_attr, function (v) {

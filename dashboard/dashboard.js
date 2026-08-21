@@ -861,16 +861,19 @@ for (const { id, key } of blockingToggles) {
 
 // Privacy toggles
 const privacyToggles = [
-  { id: 'referrerToggle',    key: 'referrerAnonymization' },
+  { id: 'referrerToggle', key: 'referrerAnonymization' },
+  { id: 'gpcToggle',      key: 'gpcSignal' },
+  { id: 'dntToggle',      key: 'dntHeader' },
 ];
 
 function loadPrivacySettings() {
   chrome.storage.local.get(
-    ['referrerAnonymization'],
+    privacyToggles.map(t => t.key),
     (data) => {
       for (const { id, key } of privacyToggles) {
         const el = document.getElementById(id);
-        if (el) el.checked = data[key] ?? (key === 'referrerAnonymization');
+        // All three default to true when unset.
+        if (el) el.checked = data[key] ?? true;
       }
     }
   );
@@ -1045,7 +1048,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes.blockAds || changes.blockTrackers || changes.cosmeticFiltering || changes.blockMalware) {
     loadBlockingSettings();
   }
-  if (changes.referrerAnonymization) {
+  if (changes.referrerAnonymization || changes.gpcSignal || changes.dntHeader) {
     loadPrivacySettings();
   }
 

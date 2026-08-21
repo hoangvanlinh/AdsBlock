@@ -105,7 +105,17 @@ class DocumentClass {}
 Object.defineProperty(DocumentClass.prototype, 'visibilityState', {
   get() { return 'hidden'; }, configurable: true, enumerable: true,
 });
+// document.referrer — real cross-origin-looking default so the
+// hideDocumentReferrerJs spoof test has something to prove changed.
+Object.defineProperty(DocumentClass.prototype, 'referrer', {
+  get() { return 'https://real-referrer.example.com/'; }, configurable: true, enumerable: true,
+});
 Object.setPrototypeOf(documentStub, DocumentClass.prototype);
+// navigator.globalPrivacyControl — spoofGpcSignal patches Navigator.prototype,
+// so sandbox.navigator needs a real prototype chain (not the bare object
+// literal below) for that defineProperty call to land somewhere readable.
+class NavigatorStub {}
+
 // Location stub with a real href accessor so blockAdNavigations can patch it.
 class LocationStub {}
 Object.defineProperty(LocationStub.prototype, 'href', {
@@ -138,7 +148,11 @@ const sandbox = {
   },
   document: documentStub,
   location: locationStub,
-  navigator: { userAgent: 'test', sendBeacon(url, data) { sendBeaconCalls.push([url, data]); return true; } },
+  Navigator: NavigatorStub,
+  navigator: Object.setPrototypeOf(
+    { userAgent: 'test', sendBeacon(url, data) { sendBeaconCalls.push([url, data]); return true; } },
+    NavigatorStub.prototype
+  ),
   open: () => ({ close() {}, closed: false }), // window.open
   HTMLScriptElement: HTMLScriptElementStub,
   HTMLImageElement: HTMLImageElementStub,
@@ -1188,6 +1202,22 @@ function sendRules(rules) {
   check('a property whose JSON.stringify throws does not crash the whole scan — still reported', !!byName.qkv1ScanPoison, JSON.stringify(byName.qkv1ScanPoison));
   check('poisoned property falls back to a safe placeholder preview instead of propagating the throw', byName.qkv1ScanPoison && byName.qkv1ScanPoison.preview === '[object]', JSON.stringify(byName.qkv1ScanPoison));
   check('scan continues past the poisoned property to still find later probes', !!byName.qkv1ScanStr);
+
+  console.log('\n== 17. gpc_signal / hide_document_referrer — privacy signal flags (2026-08-21) ==');
+
+  // 17a. Off (or unset) — no spoof installed.
+  sendRules({ gpc_signal: ['0'], hide_document_referrer: ['0'] });
+  check('gpc_signal off: navigator.globalPrivacyControl NOT spoofed',
+    sandbox.navigator.globalPrivacyControl === undefined, String(sandbox.navigator.globalPrivacyControl));
+  check('hide_document_referrer off: document.referrer still the real value',
+    sandbox.document.referrer === 'https://real-referrer.example.com/', sandbox.document.referrer);
+
+  // 17b. On — both spoofs installed.
+  sendRules({ gpc_signal: ['1'], hide_document_referrer: ['1'] });
+  check('gpc_signal on: navigator.globalPrivacyControl reads back true',
+    sandbox.navigator.globalPrivacyControl === true, String(sandbox.navigator.globalPrivacyControl));
+  check('hide_document_referrer on: document.referrer now reads back the page\'s own origin',
+    sandbox.document.referrer === 'https://test.example.com/', sandbox.document.referrer);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

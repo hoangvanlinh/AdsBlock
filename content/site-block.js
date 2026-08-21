@@ -525,7 +525,12 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   'trusted_prune_inbound_object','trusted_suppress_native_method','m3u_prune','prevent_element_src_loading',
   // Wired 2026-08-21: generic setter-hijack for anti-adblock overlay
   // counter-scripts — see trustedSuppressSetter in scriptlets.js for value format.
-  'trusted_suppress_setter'];
+  'trusted_suppress_setter',
+  // Wired 2026-08-21: privacy signal flags — background.js's GET_SITE_CONFIG
+  // synthesizes these from chrome.storage (dashboard Privacy toggles), never
+  // hand-written in site-rules.txt. See spoofGpcSignal/hideDocumentReferrerJs
+  // in scriptlets.js.
+  'gpc_signal','hide_document_referrer'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;
@@ -642,8 +647,14 @@ chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
     return true;
   }
   if(msg.type==='GET_HIDDEN_COUNT')sendResponse({count:_hidden});
-  if(msg.type==='RULES_CHANGED'){
-    // Rule sources were updated — reset the cached parsed rules and re-apply.
+  if(msg.type==='RULES_CHANGED'||msg.type==='PRIVACY_TOGGLE'){
+    // Rule sources were updated (or a dashboard privacy toggle flipped,
+    // which GET_SITE_CONFIG folds into `global` — see background.js) —
+    // reset the cached parsed rules and re-apply. loadSiteConfig() in
+    // site-rules-loader.js caches its GET_SITE_CONFIG result in module-level
+    // _site until reset() clears it, so sync() alone (used by TOGGLE/
+    // PAUSE_DOMAIN/COSMETIC_TOGGLE above) would keep re-dispatching the
+    // stale cached config instead of picking up the new flag value.
     if(window.__qkv1Loader&&window.__qkv1Loader.reset)window.__qkv1Loader.reset();
     _config=null;
     siteKey='';
