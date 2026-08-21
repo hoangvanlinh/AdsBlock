@@ -522,7 +522,10 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   // Wired 2026-08-16: ported from ABY (AdGuard Scriptlets, clean-room) — see
   // trustedPruneInboundObject/trustedSuppressNativeMethod/m3uPrune/
   // preventElementSrcLoading in scriptlets.js for value formats.
-  'trusted_prune_inbound_object','trusted_suppress_native_method','m3u_prune','prevent_element_src_loading'];
+  'trusted_prune_inbound_object','trusted_suppress_native_method','m3u_prune','prevent_element_src_loading',
+  // Wired 2026-08-21: generic setter-hijack for anti-adblock overlay
+  // counter-scripts — see trustedSuppressSetter in scriptlets.js for value format.
+  'trusted_suppress_setter'];
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   var rules={},hasAny=false,k,i;

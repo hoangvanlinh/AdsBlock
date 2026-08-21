@@ -70,6 +70,12 @@ Object.defineProperty(NodeStub.prototype, 'textContent', {
 NodeStub.prototype.appendChild = function (node) { (this._children = this._children || []).push(node); return node; };
 NodeStub.prototype.insertBefore = function (node) { (this._children = this._children || []).push(node); return node; };
 class ElementStub extends NodeStub {}
+// trusted_suppress_setter test target — real Element.prototype.innerHTML is
+// an accessor, so the stub needs one too (a plain instance property would
+// have no [[Set]] for trustedSuppressSetter's getOwnPropertyDescriptor to find).
+Object.defineProperty(ElementStub.prototype, 'innerHTML', {
+  get() { return this._html || ''; }, set(v) { this._html = v; }, configurable: true, enumerable: true,
+});
 ElementStub.prototype.insertAdjacentElement = function (position, el) { (this._children = this._children || []).push(el); return el; };
 ElementStub.prototype.append = function (...nodes) { (this._children = this._children || []).push(...nodes); };
 // setAttribute/getAttribute surface for prevent_element_src_loading's
@@ -1025,6 +1031,28 @@ function sendRules(rules) {
   realImg.setAttribute('src', 'https://example.com/real.png');
   check('prevent_element_src_loading: non-matching src passed through unchanged',
     realImg._attrs.src === 'https://example.com/real.png', realImg._attrs.src);
+
+  console.log('\n== 13e. trusted_suppress_setter (2026-08-21, generic setter-hijack for anti-adblock overlays) ==');
+  // 'block' behavior (default): matching assignment is silently dropped,
+  // element keeps its prior content. Non-matching assignment passes through.
+  sendRules({ trusted_suppress_setter: ['Element.prototype.innerHTML, disable your adblocker'] });
+  const overlayEl = new sandbox.Element();
+  overlayEl.innerHTML = '<p>welcome</p>';
+  overlayEl.innerHTML = '<p>please disable your adblocker to continue</p>';
+  check('trusted_suppress_setter: matching assignment dropped, prior content kept',
+    overlayEl.innerHTML === '<p>welcome</p>', overlayEl.innerHTML);
+  overlayEl.innerHTML = '<p>real content</p>';
+  check('trusted_suppress_setter: non-matching assignment passes through',
+    overlayEl.innerHTML === '<p>real content</p>', overlayEl.innerHTML);
+  // 'throw' behavior — throws so the site's own try/catch around the
+  // assignment takes over instead.
+  sendRules({ trusted_suppress_setter: ['Element.prototype.innerHTML, forced-shutdown-message, throw'] });
+  let threwOnMatch = false;
+  try { overlayEl.innerHTML = '<p>forced-shutdown-message</p>'; } catch (e) { threwOnMatch = true; }
+  check('trusted_suppress_setter: throw behavior throws on a matching assignment',
+    threwOnMatch === true);
+  check('trusted_suppress_setter: throw behavior leaves prior content untouched',
+    overlayEl.innerHTML === '<p>real content</p>', overlayEl.innerHTML);
 
   console.log('\n== 14. json_prune: optional stackNeedle scoping (2026-08-16, matches uBO real json-prune.js 3rd arg) ==');
   // Two rules pruning DIFFERENT fields, each gated to a call stack that

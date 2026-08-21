@@ -3777,6 +3777,57 @@
     });
   }
 
+  // ── trustedSuppressSetter (TRUSTED) ─────────────────────────────────
+  // Hijacks a native accessor's SETTER on propChain (e.g.
+  // "Element.prototype.innerHTML") and drops/aborts any assignment whose
+  // stringified value matches needle — pre-emptive DOM-write interception,
+  // unlike remove_node_text/replace_node_text which are MutationObserver-
+  // based and only clean up AFTER the node lands (a visible flash for
+  // anything rendered synchronously). Added 2026-08-21: several real-world
+  // anti-adblock overlay scripts build their "please disable your
+  // adblocker" message as a string and assign it straight to
+  // element.innerHTML — hooking the prototype setter catches every
+  // element instance in one shot instead of listing individual targets.
+  // needle uses the standard _toRegex mini-language (plain substring or
+  // /re/flags). behaviorRaw: 'block' (default — silently skip the
+  // assignment, leaving existing content untouched) or 'throw' (throw a
+  // self-suppressing ReferenceError instead, for sites whose own
+  // try/catch around the assignment falls back to friendlier behavior).
+  function trustedSuppressSetter(propChain, needle, behaviorRaw) {
+    if (!propChain || !needle) return;
+    var parts = propChain.split('.');
+    var leaf = parts.pop();
+    var owner = window;
+    for (var i = 0; i < parts.length; i++) {
+      owner = owner[parts[i]];
+      if (owner == null) return;
+    }
+    var desc;
+    try { desc = Object.getOwnPropertyDescriptor(owner, leaf); } catch (e) {}
+    if (!desc || typeof desc.set !== 'function') return;
+    var origSet = desc.set;
+    var re = _toRegex(needle);
+    var behavior = behaviorRaw === 'throw' ? 'throw' : 'block';
+    var tok = behavior === 'throw' ? _mkToken() : '';
+    try {
+      Object.defineProperty(owner, leaf, {
+        get: desc.get,
+        set: function (v) {
+          if (_scriptletsEnabled) {
+            var s;
+            try { s = String(v); } catch (e) { s = ''; }
+            if (re.test(s)) {
+              if (behavior === 'throw') throw new ReferenceError(tok);
+              return;
+            }
+          }
+          return origSet.call(this, v);
+        },
+        configurable: true, enumerable: desc.enumerable
+      });
+    } catch (e) {}
+  }
+
   // ── m3uPrune ─────────────────────────────────────────────────────────
   // Removes ad-segment lines from HLS (.m3u8) playlist responses — the
   // mechanism livestream server-side ad insertion (SSAI) splices ads into
@@ -4371,6 +4422,13 @@
       _wrapOnce('trusted_suppress_native_method', v, function () {
         var a = _argsOf(v);
         trustedSuppressNativeMethod(a[0] || '', a[1] || '', a[2] || '', a[3] || '');
+      });
+    });
+    // trusted_suppress_setter = propChain, needle[, behavior] (TRUSTED)
+    _eachRule(rules.trusted_suppress_setter, function (v) {
+      _wrapOnce('trusted_suppress_setter', v, function () {
+        var a = _argsOf(v);
+        trustedSuppressSetter(a[0] || '', a[1] || '', a[2] || '');
       });
     });
     // m3u_prune = markerPatterns[, propsToMatch] — registry-based (like json_prune)

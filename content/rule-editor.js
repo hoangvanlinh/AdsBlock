@@ -60,6 +60,7 @@ var SCRIPTLET_KEYS_REF = [
   ['trusted_replace_script_text', '"nodeName, pattern, replacement" — rewrite a <script> tag’s text before it runs.'],
   ['trusted_prune_inbound_object', '"propChain, prunePaths, needlePaths" — prune fields from an object passed INTO a native method call.'],
   ['trusted_suppress_native_method', '"methodPath, signature[, behavior, stack]" — abort or silently no-op a native method call matching a signature.'],
+  ['trusted_suppress_setter', '"propChain, needle[, behavior]" — drop or throw on an accessor setter assignment (e.g. Element.prototype.innerHTML) whose value matches needle.'],
   ['m3u_prune', '"markers, propsToMatch" — remove ad segments from an HLS .m3u8 playlist response.'],
   ['prevent_element_src_loading', '"tagName, match" — fake-succeed a script/img/iframe/link load instead of the real network request.'],
   ['remove_attr', '"attrNames[, selector, behavior]" — remove HTML attributes from matching elements.'],
