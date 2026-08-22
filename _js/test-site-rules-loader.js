@@ -71,7 +71,7 @@ sandbox.self = sandbox;
 sandbox.window = sandbox;
 sandbox.self.ADBLOCK_CONFIG = {
   DEBUG_LOCAL: false,
-  RULES_REMOTE_URL: 'https://remote.test/site-rules.txt',
+  RULES_REMOTE_URL: [{ name: 'Default', url: 'https://remote.test/site-rules.txt', enable: true }],
   RULES_LOCAL_PATH: 'rule/site-rules.txt',
   RULES_CACHE_TEXT_KEY: 'siteRulesCacheText',
   RULES_CACHE_TIME_KEY: 'siteRulesCacheTime',

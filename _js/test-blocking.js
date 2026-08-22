@@ -91,6 +91,11 @@ const chromeStub = {
       dynamicRules.push(...addRules.map(r => JSON.parse(JSON.stringify(r))));
     },
   },
+  i18n: {
+    // Mutable so tests can simulate different browser UI languages for
+    // _autoEnableLangDefaultSources()'s language-match check.
+    getUILanguage: () => stubUILanguage,
+  },
   runtime: {
     getURL: p => 'chrome-extension://test/' + p,
     getManifest: () => ({ version: '1.0.35' }),
@@ -141,6 +146,8 @@ let stubRulesRemoteUnreachable = false;
 // Raw ABP/uBO-format text served for a fetchRemoteRuleText() end-to-end test —
 // mutable so a test can set it right before triggering a fetch.
 let stubAbpSourceText = '';
+// Simulated browser UI language for _autoEnableLangDefaultSources() tests.
+let stubUILanguage = 'en-US';
 // _isFirefoxInstall() (background.js) checks navigator.userAgent — same
 // technique popup.js/dashboard.js already use for this kind of "pick a URL
 // for the current browser" decision. Simulated here by swapping
@@ -164,6 +171,12 @@ async function fetchStub(url) {
   }
   if (u.includes('abp-test-source.txt')) {
     return { ok: true, status: 200, headers: { get: () => '' }, text: async () => stubAbpSourceText };
+  }
+  // Second built-in default source (config.js's RULES_REMOTE_URL, region
+  // list) — always succeeds with empty text so it stays a no-op bystander
+  // in every section below, unless a test overrides it deliberately.
+  if (u.includes('abpvn')) {
+    return { ok: true, status: 200, headers: { get: () => '' }, text: async () => '' };
   }
   return { ok: false, status: 404, headers: { get: () => '' }, text: async () => '' };
 }
@@ -192,6 +205,7 @@ self.__test = {
   parseRuleText, buildRemoteMalwareRules, updateIcon, _incrementTabBlocked, _setTabBadge,
   getParsedRules, resolveSiteKey,
   _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
+  _uiLanguageMatches, _autoEnableLangDefaultSources,
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
   RULE_SOURCE_ERRORS_KEY,
   _buildElementRulesBlock, _applyElementRules,
@@ -1278,6 +1292,79 @@ function check(name, cond, detail = '') {
   check('buildNetworkRedirectRules: IDs start at NETWORK_REDIRECT_RULE_ID_START, dense',
     builtRedirectRules[0].id === T.NETWORK_REDIRECT_RULE_ID_START && builtRedirectRules[1].id === T.NETWORK_REDIRECT_RULE_ID_START + 1,
     JSON.stringify(builtRedirectRules.map(r => r.id)));
+
+  console.log('\n== 25m. Language-matched default Rule Source auto-enable on fresh install (2026-08-22) ==');
+
+  stubUILanguage = 'vi';
+  check('_uiLanguageMatches: browser "vi" matches entry lang "vi"', T._uiLanguageMatches('vi') === true);
+  stubUILanguage = 'vi-VN';
+  check('_uiLanguageMatches: browser "vi-VN" (region variant) matches entry lang "vi"', T._uiLanguageMatches('vi') === true);
+  stubUILanguage = 'en-US';
+  check('_uiLanguageMatches: browser "en-US" does NOT match entry lang "vi"', T._uiLanguageMatches('vi') === false);
+  stubUILanguage = 'vie'; // not a real Chrome locale, but must not false-positive on a naive substring check
+  check('_uiLanguageMatches: "vie" does not falsely match "vi" (no dash boundary)', T._uiLanguageMatches('vi') === false);
+
+  // Real-world case that motivated this fallback: Chrome's own menu/UI
+  // display language (getUILanguage()) set to English while the user's
+  // actual preferred/content language (navigator.language,
+  // chrome://settings/languages — a separate setting) is Vietnamese. uBO's
+  // own detection only checks getUILanguage() and would miss this too; this
+  // repo intentionally goes further.
+  stubUILanguage = 'en-US';
+  sandbox.navigator.language = 'vi-VN';
+  check('_uiLanguageMatches: getUILanguage="en-US" but navigator.language="vi-VN" -> still matches "vi"',
+    T._uiLanguageMatches('vi') === true);
+  delete sandbox.navigator.language;
+  sandbox.navigator.languages = ['fr-FR', 'vi'];
+  check('_uiLanguageMatches: a match anywhere in navigator.languages[] (not just index 0) counts',
+    T._uiLanguageMatches('vi') === true);
+  delete sandbox.navigator.languages;
+  check('_uiLanguageMatches: back to getUILanguage-only ("en-US") -> no match, no leftover fallback state',
+    T._uiLanguageMatches('vi') === false);
+
+  stubUILanguage = 'vi-VN';
+  // Simulate a pre-existing fresh cache (the exact scenario that was
+  // silently broken: an already-running install whose cache stays fresh for
+  // up to 6h would never pick up the newly-enabled source without this).
+  await chromeStub.storage.local.set({
+    defaultRuleSourceOverrides: {},
+    siteRulesCacheText: '[global]\nad_network_patterns = stale-cached.example\n',
+    siteRulesCacheTime: Date.now(),
+  });
+  await T._autoEnableLangDefaultSources();
+  let { defaultRuleSourceOverrides: afterVi, siteRulesCacheText: cacheAfterVi, siteRulesCacheTime: cacheTimeAfterVi } =
+    await chromeStub.storage.local.get(['defaultRuleSourceOverrides', 'siteRulesCacheText', 'siteRulesCacheTime']);
+  check('_autoEnableLangDefaultSources: vi-VN browser auto-enables the "vi"-tagged default source',
+    afterVi && afterVi['https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt'] === true,
+    afterVi);
+  check('_autoEnableLangDefaultSources: a real match busts the stale rules cache so it takes effect immediately',
+    cacheAfterVi === '' && cacheTimeAfterVi === 0,
+    { cacheAfterVi, cacheTimeAfterVi });
+
+  stubUILanguage = 'en-US';
+  await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} });
+  await T._autoEnableLangDefaultSources();
+  let { defaultRuleSourceOverrides: afterEn } = await chromeStub.storage.local.get('defaultRuleSourceOverrides');
+  check('_autoEnableLangDefaultSources: en-US browser leaves the "vi"-tagged default source untouched',
+    !afterEn || afterEn['https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt'] === undefined,
+    afterEn);
+
+  // A user who already explicitly turned the matched source OFF must not
+  // have that choice silently overwritten by a later call — this now runs
+  // on EVERY onInstalled fire (every extension update, every dev reload),
+  // not just a one-time fresh install, so idempotency here is load-bearing.
+  stubUILanguage = 'vi-VN';
+  await chromeStub.storage.local.set({
+    defaultRuleSourceOverrides: { 'https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt': false },
+  });
+  await T._autoEnableLangDefaultSources();
+  let { defaultRuleSourceOverrides: afterExplicitOff } = await chromeStub.storage.local.get('defaultRuleSourceOverrides');
+  check('_autoEnableLangDefaultSources: an existing explicit override is never overwritten',
+    afterExplicitOff['https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt'] === false,
+    afterExplicitOff);
+
+  await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} }); // leave state clean for any later section
+  stubUILanguage = 'en-US';
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

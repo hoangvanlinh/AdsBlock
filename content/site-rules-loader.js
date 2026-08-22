@@ -13,7 +13,8 @@ var _CFG=self.ADBLOCK_CONFIG||{};
 // build.sh patches DEBUG_LOCAL in config.js when the 4th arg is "true",
 // switching every context (this loader + background DNR) to local rules.
 var DEBUG_LOCAL=!!_CFG.DEBUG_LOCAL;
-var REMOTE_RULES_URL=_CFG.RULES_REMOTE_URL;
+// Built-in default Rule Sources — array of {name, url, enable} (config.js).
+var DEFAULT_RULE_SOURCES=_CFG.RULES_REMOTE_URL||[];
 var LOCAL_RULES_PATH=_CFG.RULES_LOCAL_PATH;
 var CACHE_KEY_TEXT=_CFG.RULES_CACHE_TEXT_KEY;
 var CACHE_KEY_TIME=_CFG.RULES_CACHE_TIME_KEY;
@@ -98,6 +99,17 @@ function isFreshCache(entry){
   return !!(entry&&entry.text&&entry.time&&(Date.now()-entry.time)<CACHE_TTL_MS);
 }
 
+// Mirrors background.js's _isDefaultSourceEnabled() — a per-URL override in
+// defaultRuleSourceOverrides wins if present, otherwise the legacy single
+// "all defaults" flag (defaultRuleSourceEnabled===false, pre-multi-source
+// installs) wins if it was ever set, otherwise the entry's own ship-time
+// `enable` field from config.js.
+function _isDefaultSourceEnabled(entry,overrides,legacyAllDisabled){
+  if(overrides&&Object.prototype.hasOwnProperty.call(overrides,entry.url))return overrides[entry.url]!==false;
+  if(legacyAllDisabled)return false;
+  return entry.enable!==false;
+}
+
 function fetchRemoteRules(urls) {
   return Promise.all(urls.map(function(url) {
     return fetch(url, {cache: 'no-store'})
@@ -123,17 +135,23 @@ function fetchLocalRules(){
 // practice to matter, not just when messaging is truly broken.
 function _fetchAndMergeDirect(cached, resolve){
   if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(null);return;}
-  chrome.storage.local.get(['ruleSources','customRulesUrl','customRulesText','defaultRuleSourceEnabled'],function(res){
+  chrome.storage.local.get(['ruleSources','customRulesUrl','customRulesText','defaultRuleSourceEnabled','defaultRuleSourceOverrides'],function(res){
     var sources=res.ruleSources;
-    var urls=res.defaultRuleSourceEnabled===false?[]:[REMOTE_RULES_URL];
+    var defaultUrlSet={};
+    var urls=[];
+    var legacyAllDisabled=res.defaultRuleSourceEnabled===false;
+    DEFAULT_RULE_SOURCES.forEach(function(entry){
+      defaultUrlSet[entry.url]=true;
+      if(_isDefaultSourceEnabled(entry,res.defaultRuleSourceOverrides,legacyAllDisabled))urls.push(entry.url);
+    });
     var fileParts=[];
     if(sources&&sources.length){
       sources.forEach(function(s){
         if(s.enabled===false)return;
-        if(s.type==='url'&&s.url&&s.url!==REMOTE_RULES_URL)urls.push(s.url);
+        if(s.type==='url'&&s.url&&!defaultUrlSet[s.url])urls.push(s.url);
         else if(s.type==='file'&&s.text)fileParts.push(s.text);
       });
-    }else if(res.customRulesUrl&&res.customRulesUrl!==REMOTE_RULES_URL){
+    }else if(res.customRulesUrl&&!defaultUrlSet[res.customRulesUrl]){
       urls.push(res.customRulesUrl);
     }
     // Append user's custom rules text

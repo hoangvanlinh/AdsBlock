@@ -2780,9 +2780,9 @@
       // script often bundles unrelated Haste modules — a stale length
       // fails that check and cascades into unrelated module init errors.
       try {
-        // if (node.hasAttribute('data-content-len')) {
-        //   node.setAttribute('data-content-len', String(textAfter.length));
-        // }
+        if (node.hasAttribute('data-content-len')) {
+          node.setAttribute('data-content-len', String(textAfter.length));
+        }
         _setNodeText(node, textAfter);
       } catch (e) {}
     };

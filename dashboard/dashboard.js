@@ -1065,11 +1065,12 @@ function makeSourceId() {
 }
 
 // A row's checkbox toggles `enabled` without removing the source — separate
-// from the Remove button (permanent). The built-in default (RULES_REMOTE_URL,
-// config.js) is rendered as the first row, toggleable via its own storage
-// key (`defaultRuleSourceEnabled`) since it isn't part of the `ruleSources`
-// array and has no Remove button (it's not user-added).
-function _makeSourceRow({ label, checked, onToggle, onRemove, error }) {
+// from the Remove button (permanent). Each built-in default (config.js's
+// RULES_REMOTE_URL array) is rendered as its own row ahead of the
+// user-added ones, toggleable via a per-URL entry in
+// `defaultRuleSourceOverrides` since these aren't part of the `ruleSources`
+// array and have no Remove button (they're not user-added).
+function _makeSourceRow({ label, title, checked, onToggle, onRemove, error }) {
   const row = document.createElement('div');
   row.className = 'rules-source-item';
   const toggle = document.createElement('input');
@@ -1079,7 +1080,7 @@ function _makeSourceRow({ label, checked, onToggle, onRemove, error }) {
   toggle.addEventListener('change', () => onToggle(toggle.checked));
   const labelSpan = document.createElement('span');
   labelSpan.className = 'source-label';
-  labelSpan.title = label;
+  labelSpan.title = title || label;
   labelSpan.textContent = label;
   row.appendChild(toggle);
   row.appendChild(labelSpan);
@@ -1103,23 +1104,29 @@ function _makeSourceRow({ label, checked, onToggle, onRemove, error }) {
   return row;
 }
 
-function renderRulesSources(sources, defaultEnabled, sourceErrors) {
+function renderRulesSources(sources, defaultOverrides, sourceErrors) {
   const urlList  = document.getElementById('rulesUrlList');
   const fileList = document.getElementById('rulesFileList');
   if (!urlList || !fileList) return;
   const errors = sourceErrors || {};
+  const overrides = defaultOverrides || {};
 
   const urlSources  = sources.filter(s => s.type === 'url');
   const fileSources = sources.filter(s => s.type === 'file');
 
   urlList.innerHTML = '';
-  urlList.appendChild(_makeSourceRow({
-    label: `${self.ADBLOCK_CONFIG.RULES_REMOTE_URL} (default)`,
-    checked: defaultEnabled !== false,
-    onToggle: toggleDefaultRuleSource,
-    error: errors[self.ADBLOCK_CONFIG.RULES_REMOTE_URL],
-    // no onRemove — the built-in default can be turned off, not deleted.
-  }));
+  for (const entry of self.ADBLOCK_CONFIG.RULES_REMOTE_URL) {
+    const hasOverride = Object.prototype.hasOwnProperty.call(overrides, entry.url);
+    const checked = hasOverride ? overrides[entry.url] !== false : entry.enable !== false;
+    urlList.appendChild(_makeSourceRow({
+      label: `${entry.name}`,
+      title: entry.url,
+      checked,
+      onToggle: (checked) => toggleDefaultRuleSource(entry.url, checked),
+      error: errors[entry.url],
+      // no onRemove — a built-in default can be turned off, not deleted.
+    }));
+  }
   for (const src of urlSources) {
     urlList.appendChild(_makeSourceRow({
       label: src.url,
@@ -1143,7 +1150,7 @@ function renderRulesSources(sources, defaultEnabled, sourceErrors) {
 
 function loadRulesSourceSettings() {
   chrome.storage.local.get(
-    ['ruleSources', 'customRulesUrl', 'localRulesFileName', 'defaultRuleSourceEnabled', RULES_CACHE_KEY_TEXT, RULE_SOURCE_ERRORS_KEY],
+    ['ruleSources', 'customRulesUrl', 'localRulesFileName', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides', RULES_CACHE_KEY_TEXT, RULE_SOURCE_ERRORS_KEY],
     (data) => {
       let sources = data.ruleSources;
       if (!sources) {
@@ -1160,16 +1167,32 @@ function loadRulesSourceSettings() {
           chrome.storage.local.remove(['customRulesUrl', 'localRulesFileName']);
         }
       }
-      renderRulesSources(sources || [], data.defaultRuleSourceEnabled, data[RULE_SOURCE_ERRORS_KEY] || {});
+      let overrides = data.defaultRuleSourceOverrides;
+      // Migrate the legacy single "all built-in defaults" toggle into
+      // per-URL overrides now that RULES_REMOTE_URL can hold more than one
+      // built-in source — otherwise a pre-existing "default off" choice
+      // would silently re-enable every default source on next load.
+      if (data.defaultRuleSourceEnabled !== undefined) {
+        if (data.defaultRuleSourceEnabled === false && !overrides) {
+          overrides = {};
+          for (const entry of self.ADBLOCK_CONFIG.RULES_REMOTE_URL) overrides[entry.url] = false;
+          chrome.storage.local.set({ defaultRuleSourceOverrides: overrides });
+        }
+        chrome.storage.local.remove('defaultRuleSourceEnabled');
+      }
+      renderRulesSources(sources || [], overrides, data[RULE_SOURCE_ERRORS_KEY] || {});
     }
   );
 }
 
-function toggleDefaultRuleSource(enabled) {
-  chrome.storage.local.set(
-    { defaultRuleSourceEnabled: enabled, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
-    () => chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {})
-  );
+function toggleDefaultRuleSource(url, enabled) {
+  chrome.storage.local.get('defaultRuleSourceOverrides', ({ defaultRuleSourceOverrides = {} }) => {
+    const updated = { ...defaultRuleSourceOverrides, [url]: enabled };
+    chrome.storage.local.set(
+      { defaultRuleSourceOverrides: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
+      () => chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {})
+    );
+  });
 }
 
 function toggleRulesSource(id, enabled) {

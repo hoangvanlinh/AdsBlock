@@ -6,7 +6,74 @@
 //   - Dashboard page        : <script src="../config.js"> before dashboard.js
 // `self` works in all of them (worker, window, isolated world).
 self.ADBLOCK_CONFIG = {
-  RULES_REMOTE_URL: 'https://raw.githubusercontent.com/hoangvanlinh/AdsBlock/refs/heads/main/rule/site-rules.txt',
+  // Built-in default Rule Sources — each fetched and merged unless the user
+  // disables it from the dashboard's Rule Source page (per-URL toggle,
+  // stored separately; `enable` here is just the ship-time default for a
+  // fresh install). A URL that serves raw ABP/uBO filter-list syntax
+  // (EasyList, region lists, ...) is fine here too — fetchRemoteRuleText()
+  // detects and converts it to this repo's own grammar automatically.
+  //
+  // `lang` (optional — a BCP-47 primary subtag e.g. 'vi', 'ja', or an array
+  // of them when a list covers several languages) marks a source as
+  // region/language-specific. On a fresh install (onInstalled, reason
+  // 'install' only — never on update/reload), background.js compares each
+  // `lang` entry against chrome.i18n.getUILanguage() and auto-enables the
+  // ones that match, so e.g. a Vietnamese-language browser gets the Vietnam
+  // list turned on without a trip to the dashboard. `enable: false` is the
+  // right ship-time default for these — they should stay off for everyone
+  // else, not on-by-default the way a language-agnostic source is.
+  //
+  // The region entries below are every asset tagged `"group": "regions"` in
+  // uBlock Origin's own asset list (github.com/gorhill/uBlock — assets.json)
+  // as of 2026-08-22, one entry per list (first mirror URL when an asset
+  // lists more than one). Re-pull that file and re-filter on group ===
+  // 'regions' to refresh this set instead of hand-editing entries in place.
+  RULES_REMOTE_URL: [
+    { name: 'Default site rules', url: 'https://raw.githubusercontent.com/hoangvanlinh/AdsBlock/refs/heads/main/rule/site-rules.txt', enable: true },
+    { name: 'EasyList', url: 'https://easylist.to/easylist/easylist.txt', enable: false },
+    { name: 'EasyPrivacy', url: 'https://easylist.to/easylist/easyprivacy.txt', enable: false },
+    { name: 'EasyList Cookie List', url: 'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt', enable: false },
+    { name: 'Fanboy\'s Annoyance List', url: 'https://secure.fanboy.co.nz/fanboy-annoyance.txt', enable: false },
+    { name: 'Fanboy\'s Social Blocking List', url: 'https://easylist.to/easylist/fanboy-social.txt', enable: false },
+    { name: 'Albania — Adblock List for Albania', url: 'https://raw.githubusercontent.com/AnXh3L0/blocklist/master/albanian-easylist-addition/Albania.txt', enable: false, lang: ['sq'] },
+    { name: 'Arabic — Liste AR', url: 'https://easylist-downloads.adblockplus.org/Liste_AR.txt', enable: false, lang: ['ar', 'kab'] },
+    { name: 'Bulgaria — Bulgarian Adblock list', url: 'https://stanev.org/abp/adblock_bg.txt', enable: false, lang: ['bg', 'mk'] },
+    { name: 'China/Taiwan — AdGuard Chinese (中文)', url: 'https://filters.adtidy.org/extension/ublock/filters/224.txt', enable: false, lang: ['ug', 'zh'] },
+    { name: 'Czech/Slovakia — EasyList Czech and Slovak', url: 'https://raw.githubusercontent.com/tomasko126/easylistczechandslovak/master/filters.txt', enable: false, lang: ['cs', 'sk'] },
+    { name: 'Germany/Austria/Switzerland — EasyList Germany', url: 'https://easylist.to/easylistgermany/easylistgermany.txt', enable: false, lang: ['de', 'dsb', 'hsb', 'lb', 'rm'] },
+    { name: 'Estonia — Eesti saitidele kohandatud filter', url: 'https://ubo-et.lepik.io/list.txt', enable: false, lang: ['et'] },
+    { name: 'Finland — Adblock List for Finland', url: 'https://raw.githubusercontent.com/finnish-easylist-addition/finnish-easylist-addition/gh-pages/Finland_adb.txt', enable: false, lang: ['fi'] },
+    { name: 'France/Belgium/Canada — AdGuard Français', url: 'https://filters.adtidy.org/extension/ublock/filters/16.txt', enable: false, lang: ['ar', 'br', 'ff', 'fr', 'kab', 'lb', 'oc', 'son'] },
+    { name: 'Greece/Cyprus — Greek AdBlock Filter', url: 'https://www.void.gr/kargig/void-gr-filters.txt', enable: false, lang: ['el'] },
+    { name: 'Croatia/Serbia — Dandelion Sprout\'s Serbo-Croatian filters', url: 'https://raw.githubusercontent.com/DandelionSprout/adfilt/master/SerboCroatianList.txt', enable: false, lang: ['bs', 'hr', 'sr'] },
+    { name: 'Hungary — hufilter', url: 'https://cdn.jsdelivr.net/gh/hufilter/hufilter@gh-pages/hufilter-ublock.txt', enable: false, lang: ['hu'] },
+    { name: 'Indonesia/Malaysia — ABPindo', url: 'https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/abpindo.txt', enable: false, lang: ['id', 'ms'] },
+    { name: 'India/Sri Lanka/Nepal — IndianList', url: 'https://easylist-downloads.adblockplus.org/indianlist.txt', enable: false, lang: ['as', 'bn', 'gu', 'hi', 'kn', 'ml', 'mr', 'ne', 'pa', 'sat', 'si', 'ta', 'te'] },
+    { name: 'Iran — PersianBlocker', url: 'https://raw.githubusercontent.com/MasterKia/PersianBlocker/main/PersianBlocker.txt', enable: false, lang: ['fa', 'ps', 'tg'] },
+    { name: 'Iceland — Icelandic ABP List', url: 'https://raw.githubusercontent.com/brave/adblock-lists/master/custom/is.txt', enable: false, lang: ['is'] },
+    { name: 'Israel — EasyList Hebrew', url: 'https://raw.githubusercontent.com/easylist/EasyListHebrew/master/EasyListHebrew.txt', enable: false, lang: ['he'] },
+    { name: 'Italy — EasyList Italy', url: 'https://easylist-downloads.adblockplus.org/easylistitaly.txt', enable: false, lang: ['fur', 'it', 'lij', 'sc'] },
+    { name: 'Japan — AdGuard Japanese', url: 'https://filters.adtidy.org/extension/ublock/filters/7.txt', enable: false, lang: ['ja'] },
+    { name: 'Korea — 한국어 (Korean)', url: 'https://cdn.jsdelivr.net/npm/@filteringdev/filterslists-ko@latest/dist/filterslist-uBlockOrigin-classic.txt', enable: false, lang: ['ko'] },
+    { name: 'Lithuania — EasyList Lithuania', url: 'https://raw.githubusercontent.com/EasyList-Lithuania/easylist_lithuania/master/easylistlithuania.txt', enable: false, lang: ['lt'] },
+    { name: 'Latvia — Latvian List', url: 'https://raw.githubusercontent.com/Latvian-List/adblock-latvian/master/lists/latvian-list.txt', enable: false, lang: ['lv'] },
+    { name: 'North Macedonia — Macedonian adBlock Filters', url: 'https://raw.githubusercontent.com/DeepSpaceHarbor/Macedonian-adBlock-Filters/master/Filters', enable: false, lang: ['mk'] },
+    { name: 'Netherlands/Belgium — AdGuard Dutch', url: 'https://filters.adtidy.org/extension/ublock/filters/8.txt', enable: false, lang: ['af', 'fy', 'nl'] },
+    { name: 'Norway/Denmark/Iceland — Dandelion Sprouts nordiske filtre', url: 'https://raw.githubusercontent.com/DandelionSprout/adfilt/master/NorwegianList.txt', enable: false, lang: ['nb', 'nn', 'no', 'da', 'is'] },
+    { name: 'Poland — Oficjalne Polskie Filtry do uBlocka Origin', url: 'https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-adblock-filters/adblock.txt', enable: false, lang: ['szl', 'pl'] },
+    { name: 'Poland — CERT.PL\'s Warning List', url: 'https://hole.cert.pl/domains/v2/domains_ublock.txt', enable: false, lang: ['szl', 'pl'] },
+    { name: 'Romania/Moldova — Romanian Ad (ROad) Block List Light', url: 'https://raw.githubusercontent.com/tcptomato/ROad-Block/master/road-block-filters-light.txt', enable: false, lang: ['ro'] },
+    { name: 'Russia/Ukraine/Uzbekistan/Kazakhstan — RU AdList', url: 'https://raw.githubusercontent.com/easylist/ruadlist/master/RuAdList-uBO.txt', enable: false, lang: ['be', 'kk', 'tt', 'ru', 'uz'] },
+    { name: 'Russia/Ukraine/Uzbekistan/Kazakhstan — RU AdList: Counters', url: 'https://raw.githubusercontent.com/easylist/ruadlist/master/cntblock.txt', enable: false },
+    { name: 'Spain/Latin America — EasyList Spanish', url: 'https://easylist-downloads.adblockplus.org/easylistspanish.txt', enable: false, lang: ['an', 'ast', 'ca', 'cak', 'es', 'eu', 'gl', 'gn', 'trs', 'quz'] },
+    { name: 'Spain/Latin America — AdGuard Spanish/Portuguese', url: 'https://filters.adtidy.org/extension/ublock/filters/9.txt', enable: false, lang: ['an', 'ast', 'ca', 'cak', 'es', 'eu', 'gl', 'gn', 'trs', 'pt', 'quz'] },
+    { name: 'Slovenia — Slovenian List', url: 'https://raw.githubusercontent.com/betterwebleon/slovenian-list/master/filters.txt', enable: false, lang: ['sl'] },
+    { name: 'Sweden — Frellwit\'s Swedish Filter', url: 'https://raw.githubusercontent.com/lassekongo83/Frellwits-filter-lists/master/Frellwits-Swedish-Filter.txt', enable: false, lang: ['sv'] },
+    { name: 'Thailand — EasyList Thailand', url: 'https://raw.githubusercontent.com/easylist-thailand/easylist-thailand/master/subscription/easylist-thailand.txt', enable: false, lang: ['th'] },
+    { name: 'Turkey — AdGuard Turkish', url: 'https://filters.adtidy.org/extension/ublock/filters/13.txt', enable: false, lang: ['tr'] },
+    { name: 'Ukraine — AdGuard Ukrainian', url: 'https://filters.adtidy.org/extension/ublock/filters/23.txt', enable: false, lang: ['uk'] },
+    { name: 'Vietnam — ABPVN List', url: 'https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt', enable: false, lang: ['vi'] },
+  ],
   RULES_LOCAL_PATH: 'rule/site-rules.txt',
   RULES_CACHE_TEXT_KEY: 'siteRulesCacheText',
   RULES_CACHE_TIME_KEY: 'siteRulesCacheTime',

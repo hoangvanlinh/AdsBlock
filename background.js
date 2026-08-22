@@ -518,30 +518,131 @@ async function _maybeConvertAbpText(text) {
   });
 }
 
+// Effective enabled/disabled state for one built-in default Rule Source
+// entry ({name, url, enable} from config.js's RULES_REMOTE_URL array): a
+// per-URL override in `defaultRuleSourceOverrides` wins if present,
+// otherwise the legacy single "all defaults" flag (`defaultRuleSourceEnabled
+// === false`, pre-multi-source installs) wins if it was ever set, otherwise
+// fall back to the entry's own ship-time `enable` field.
+function _isDefaultSourceEnabled(entry, overrides, legacyAllDisabled) {
+  if (overrides && Object.prototype.hasOwnProperty.call(overrides, entry.url)) return overrides[entry.url] !== false;
+  if (legacyAllDisabled) return false;
+  return entry.enable !== false;
+}
+
+// Every language candidate worth checking against a RULES_REMOTE_URL
+// entry's `lang` — chrome.i18n.getUILanguage() (the browser's CHROME/MENU
+// display language; uBlock Origin's own listMatchesEnvironment() uses only
+// this) plus navigator.language/navigator.languages (the browser's
+// Accept-Language / "preferred languages" list, chrome://settings/languages
+// — a SEPARATE setting from the UI display language). These can genuinely
+// disagree: a browser can display its own menus in English while the user's
+// actual preferred/content language is Vietnamese, which is exactly the
+// case getUILanguage()-only detection misses. chrome.i18n.getUILanguage()
+// works the same way under Firefox's chrome.* alias; navigator exists in
+// the MV3 service worker global too, so no browser/context branch needed.
+function _candidateUILanguages() {
+  const out = [];
+  try {
+    const ui = chrome.i18n && chrome.i18n.getUILanguage && chrome.i18n.getUILanguage();
+    if (ui) out.push(ui);
+  } catch (e) { /* ignore */ }
+  try {
+    if (typeof navigator !== 'undefined') {
+      if (navigator.language) out.push(navigator.language);
+      if (Array.isArray(navigator.languages)) out.push(...navigator.languages);
+    }
+  } catch (e) { /* ignore */ }
+  return out;
+}
+
+// True if any candidate language matches a RULES_REMOTE_URL entry's `lang`
+// (BCP-47 primary subtag, e.g. 'vi') — exact match or a region variant of
+// it ('vi-VN' matches 'vi').
+function _uiLanguageMatches(lang) {
+  const target = String(lang || '').toLowerCase();
+  if (!target) return false;
+  return _candidateUILanguages().some(cand => {
+    const c = String(cand || '').toLowerCase();
+    return c === target || c.startsWith(target + '-');
+  });
+}
+
+// A RULES_REMOTE_URL entry's `lang` is either a single BCP-47 subtag or an
+// array of them (some region lists cover several languages, e.g. Spain's
+// list also covers Catalan/Basque/Galician) — normalize to an array either
+// way, empty if the entry has no `lang` at all.
+function _entryLangs(entry) {
+  if (!entry.lang) return [];
+  return Array.isArray(entry.lang) ? entry.lang : [entry.lang];
+}
+
+// Auto-enable any built-in default Rule Source whose `lang` matches the
+// browser's UI language, so e.g. a Vietnamese-language install gets the
+// Vietnam list on without a trip to the dashboard. Called from onInstalled
+// on EVERY reason (install, update, chrome_update, ...), not just a genuine
+// fresh install: a user already running the extension from before this
+// feature shipped never gets a fresh 'install' event again, only 'update'
+// ones (including the "Reload" button in chrome://extensions during dev,
+// which fires onInstalled with reason 'update') — gating on 'install' only
+// meant this could never actually run for any existing install. Safe to
+// call unconditionally/repeatedly: only ever SETS an override to true for a
+// matching entry that has no override yet — never touches one the user (or
+// a previous run of this same function) already decided about, and never
+// touches language-agnostic entries (no `lang` field).
+async function _autoEnableLangDefaultSources() {
+  const matches = RULES_REMOTE_URL.filter(e => _entryLangs(e).some(l => _uiLanguageMatches(l)));
+  if (!matches.length) return;
+  const { defaultRuleSourceOverrides = {} } = await chrome.storage.local.get('defaultRuleSourceOverrides');
+  const updated = { ...defaultRuleSourceOverrides };
+  let changed = false;
+  for (const entry of matches) {
+    if (!Object.prototype.hasOwnProperty.call(updated, entry.url)) {
+      updated[entry.url] = true;
+      changed = true;
+    }
+  }
+  if (!changed) return;
+  await chrome.storage.local.set({
+    defaultRuleSourceOverrides: updated,
+    // Bust the rules cache so the newly-enabled source is actually fetched
+    // by the applyNetworkRules() call onInstalled makes right after this —
+    // without this, a pre-existing fresh cache (any install that isn't
+    // brand new) would keep serving the old merged text for up to
+    // RULES_CACHE_TTL_MS (6h) before the new source ever got picked up.
+    [RULES_CACHE_TEXT_KEY]: '',
+    [RULES_CACHE_TIME_KEY]: 0,
+  });
+  _ruleConfigPromise = null;
+  _parsedRules = null;
+}
+
 async function fetchRemoteRuleText() {
-  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled']);
+  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
   const sources = stored.ruleSources;
   const urls = [];
   const fileParts = [];
+  const defaultUrls = new Set(RULES_REMOTE_URL.map(e => e.url));
 
-  // Default remote source — toggleable from the dashboard's Rule Source
-  // page (defaultRuleSourceEnabled, default true when unset). Disabled means
-  // disabled: no default rules at all, not even the bundled local copy —
-  // the user can still layer custom sources/customRulesText on top of
-  // nothing. (getRulesText()'s own catch branch still falls back to the
+  // Default remote sources — each toggleable from the dashboard's Rule
+  // Source page (per-URL, defaultRuleSourceOverrides). Disabled means
+  // disabled: no rules from that source at all, not even the bundled local
+  // copy — the user can still layer custom sources/customRulesText on top
+  // of nothing. (getRulesText()'s own catch branch still falls back to the
   // local file, but only on an actual fetch failure — see the empty-merge
   // check below.)
-  if (stored.defaultRuleSourceEnabled !== false) {
-    urls.push(RULES_REMOTE_URL);
+  const legacyAllDisabled = stored.defaultRuleSourceEnabled === false;
+  for (const entry of RULES_REMOTE_URL) {
+    if (_isDefaultSourceEnabled(entry, stored.defaultRuleSourceOverrides, legacyAllDisabled)) urls.push(entry.url);
   }
 
   if (sources && sources.length) {
     for (const s of sources) {
       if (s.enabled === false) continue;
-      if (s.type === 'url' && s.url && s.url !== RULES_REMOTE_URL) urls.push(s.url);
+      if (s.type === 'url' && s.url && !defaultUrls.has(s.url)) urls.push(s.url);
       else if (s.type === 'file' && s.text) fileParts.push(s.text);
     }
-  } else if (stored.customRulesUrl && stored.customRulesUrl !== RULES_REMOTE_URL) {
+  } else if (stored.customRulesUrl && !defaultUrls.has(stored.customRulesUrl)) {
     urls.push(stored.customRulesUrl);
   }
 
@@ -606,11 +707,14 @@ async function fetchLocalRuleText() {
 
 // ── Remote rules revalidation (ETag) ──────────────────────────────
 // The 6h TTL alone means an urgent rules fix can take up to 6h to reach
-// users. Instead, a 30-minute alarm revalidates the default remote with
-// If-None-Match: a 304 response costs a few hundred bytes and just extends
-// the cache; only a real content change triggers the full reload pipeline.
+// users. Instead, a 30-minute alarm revalidates every enabled default
+// source with If-None-Match: a 304 response costs a few hundred bytes and
+// just extends the cache; only a real content change triggers the full
+// reload pipeline.
 const RULES_REVALIDATE_ALARM = 'rules-revalidate';
 const RULES_REVALIDATE_PERIOD_MIN = 30;
+// Both now { [url]: value } maps — one default source's ETag/hash per key,
+// since RULES_REMOTE_URL can hold more than one built-in source.
 const RULES_REMOTE_ETAG_KEY = 'siteRulesRemoteEtag';
 const RULES_REMOTE_HASH_KEY = 'siteRulesRemoteHash';
 // Fingerprint of the LAST dynamic rule set actually sent to
@@ -646,32 +750,52 @@ async function reloadRules() {
 
 async function revalidateRemoteRules() {
   try {
-    const { defaultRuleSourceEnabled } = await chrome.storage.local.get('defaultRuleSourceEnabled');
-    if (defaultRuleSourceEnabled === false) return false; // default source turned off — nothing to revalidate
-    const stored = await chrome.storage.local.get([RULES_REMOTE_ETAG_KEY, RULES_REMOTE_HASH_KEY]);
-    const etag = stored[RULES_REMOTE_ETAG_KEY] || '';
-    const res = await fetch(RULES_REMOTE_URL, {
-      cache: 'no-store',
-      headers: etag ? { 'If-None-Match': etag } : {},
-    });
-    if (res.status === 304) {
-      // Unchanged — keep serving the cache and push its expiry out.
-      await chrome.storage.local.set({ [RULES_CACHE_TIME_KEY]: Date.now() });
-      return false;
+    const stored = await chrome.storage.local.get([
+      'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides',
+      RULES_REMOTE_ETAG_KEY, RULES_REMOTE_HASH_KEY,
+    ]);
+    const legacyAllDisabled = stored.defaultRuleSourceEnabled === false;
+    const enabledEntries = RULES_REMOTE_URL.filter(
+      e => _isDefaultSourceEnabled(e, stored.defaultRuleSourceOverrides, legacyAllDisabled)
+    );
+    if (!enabledEntries.length) return false; // every default source turned off — nothing to revalidate
+
+    const etags = stored[RULES_REMOTE_ETAG_KEY] || {};
+    const hashes = stored[RULES_REMOTE_HASH_KEY] || {};
+    const nextEtags = { ...etags };
+    const nextHashes = { ...hashes };
+    let changed = false;
+    // Each source revalidated independently — one unreachable/erroring
+    // source (e.g. a region list that moved) must not block the others.
+    for (const entry of enabledEntries) {
+      try {
+        const etag = etags[entry.url] || '';
+        const res = await fetch(entry.url, {
+          cache: 'no-store',
+          headers: etag ? { 'If-None-Match': etag } : {},
+        });
+        if (res.status === 304) continue; // unchanged
+        if (!res.ok) continue;
+        const text = await res.text();
+        const newHash = _hashText(text);
+        nextEtags[entry.url] = res.headers.get('etag') || '';
+        nextHashes[entry.url] = newHash;
+        if (newHash !== (hashes[entry.url] || '')) changed = true;
+      } catch { /* this source failed — keep checking the others */ }
     }
-    if (!res.ok) return false;
-    const text = await res.text();
-    const newHash = _hashText(text);
     await chrome.storage.local.set({
-      [RULES_REMOTE_ETAG_KEY]: res.headers.get('etag') || '',
-      [RULES_REMOTE_HASH_KEY]: newHash,
+      [RULES_REMOTE_ETAG_KEY]: nextEtags,
+      [RULES_REMOTE_HASH_KEY]: nextHashes,
     });
-    if (newHash === (stored[RULES_REMOTE_HASH_KEY] || '')) {
+    if (!changed) {
+      // Nothing changed (all 304s / failures) — keep serving the cache and
+      // push its expiry out.
       await chrome.storage.local.set({ [RULES_CACHE_TIME_KEY]: Date.now() });
       return false;
     }
-    // Content actually changed — run the full pipeline (re-fetches ALL
-    // sources incl. user ruleSources, rebuilds DNR, notifies tabs).
+    // At least one source's content actually changed — run the full
+    // pipeline (re-fetches ALL sources incl. user ruleSources, rebuilds
+    // DNR, notifies tabs).
     await reloadRules();
     console.log('[AdBlock] Remote rules changed — reloaded');
     return true;
@@ -1269,6 +1393,13 @@ function calculatePrivacyScore(domainStats = {}, settings = {}) {
 
 // ── Install / startup ─────────────────────────────────────────────
 chrome.runtime.onInstalled.addListener(async () => {
+  // Run on every onInstalled reason (install, update, chrome_update, ...),
+  // not just 'install' — see _autoEnableLangDefaultSources()'s own comment
+  // for why that gating meant this could never fire for an existing
+  // install. Runs before the first applyNetworkRules() call below so a
+  // newly-auto-enabled source is picked up immediately, not after the next
+  // cache TTL.
+  await _autoEnableLangDefaultSources();
   // Seed default settings
   const existing = await chrome.storage.local.get([
     'enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'stats', 'rules',
