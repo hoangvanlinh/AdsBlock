@@ -32,6 +32,7 @@ const chromeStub = {
   runtime: {
     lastError: null,
     getManifest: () => ({ version: '1.0.35' }),
+    getURL: p => 'chrome-extension://test/' + p,
     sendMessage(msg, cb) {
       if (sendMessageBehavior === 'fail') {
         chromeStub.runtime.lastError = { message: 'simulated: could not establish connection' };
@@ -56,7 +57,12 @@ const chromeStub = {
   },
 };
 
+// Records every URL fetchStub is called with — used by the DEBUG_LOCAL
+// tests below to prove the bundled default entry's URL was never fetched
+// over the network (replaced by the local file instead).
+let fetchCallLog = [];
 async function fetchStub(url) {
+  fetchCallLog.push(url);
   const text = fetchBehavior[url];
   if (text == null) return { ok: false, text: async () => '' };
   return { ok: true, text: async () => text };
@@ -71,7 +77,15 @@ sandbox.self = sandbox;
 sandbox.window = sandbox;
 sandbox.self.ADBLOCK_CONFIG = {
   DEBUG_LOCAL: false,
-  RULES_REMOTE_URL: [{ name: 'Default', url: 'https://remote.test/site-rules.txt', enable: true }],
+  // A second entry (off by default, like a real region list) lets the
+  // DEBUG_LOCAL tests below prove that OTHER enabled default sources still
+  // get fetched even while the first (bundled) entry is replaced by the
+  // local file — off here means the existing non-debug tests above (which
+  // never override it) are unaffected by its presence.
+  RULES_REMOTE_URL: [
+    { name: 'Default', url: 'https://remote.test/site-rules.txt', enable: true },
+    { name: 'Region', url: 'https://remote.test/region-list.txt', enable: false },
+  ],
   RULES_LOCAL_PATH: 'rule/site-rules.txt',
   RULES_CACHE_TEXT_KEY: 'siteRulesCacheText',
   RULES_CACHE_TIME_KEY: 'siteRulesCacheTime',
@@ -83,6 +97,27 @@ const loader = sandbox.window.__qkv1Loader;
 
 function loadSite() {
   return new Promise(resolve => loader.loadSite(resolve));
+}
+
+// Separate context with DEBUG_LOCAL: true — the loader reads that flag once
+// at script-load time (var DEBUG_LOCAL=!!_CFG.DEBUG_LOCAL at the top of the
+// IIFE), so exercising it needs its own instance rather than mutating the
+// config after the fact. Shares storageData/chromeStub/fetchStub with the
+// main context — those are read fresh on every call, not captured at load.
+const sandboxDebug = {
+  console, chrome: chromeStub, fetch: fetchStub,
+  Promise, Set, Array, Object, RegExp, JSON, Date,
+  location: { hostname: 'example.com' },
+};
+sandboxDebug.self = sandboxDebug;
+sandboxDebug.window = sandboxDebug;
+sandboxDebug.self.ADBLOCK_CONFIG = { ...sandbox.self.ADBLOCK_CONFIG, DEBUG_LOCAL: true };
+const ctxDebug = vm.createContext(sandboxDebug);
+vm.runInContext(src, ctxDebug, { filename: 'site-rules-loader.js (DEBUG_LOCAL)' });
+const debugLoader = sandboxDebug.window.__qkv1Loader;
+
+function loadSiteDebug() {
+  return new Promise(resolve => debugLoader.loadSite(resolve));
 }
 
 (async () => {
@@ -130,6 +165,46 @@ function loadSite() {
   // stubbed here, so it resolves ok:false too; the key assertion is just
   // that this path does NOT throw and resolves to *some* well-formed shape.
   check('a real fetch failure resolves without throwing', site3 && typeof site3 === 'object', site3);
+
+  console.log('\n== 4. DEBUG_LOCAL: true layers bundled local rules + OTHER enabled sources + customRulesText (2026-08-22) ==');
+  // "tôi muốn load nhiều rule cùng lúc để test" — DEBUG_LOCAL used to mean
+  // local file + customRulesText ONLY, silently dropping every other
+  // enabled Rule Source (region lists, user-added ruleSources). The bundled
+  // default entry (RULES_REMOTE_URL[0]) is swapped for the local file, but
+  // every OTHER enabled source — the 'Region' entry here, plus ruleSources —
+  // still gets fetched/merged normally, matching background.js.
+  Object.keys(storageData).forEach(k => delete storageData[k]);
+  fetchBehavior = {
+    'chrome-extension://test/rule/site-rules.txt': '[global]\ndirect_hide_selectors = .from-bundled-local',
+    'https://remote.test/region-list.txt': '[global]\ndirect_hide_selectors = .from-region-list',
+    'https://ruleSource.test/x.txt': '[global]\ndirect_hide_selectors = .from-rulesource',
+  };
+  storageData.defaultRuleSourceOverrides = { 'https://remote.test/region-list.txt': true };
+  storageData.ruleSources = [{ id: 'a', type: 'url', url: 'https://ruleSource.test/x.txt', enabled: true }];
+  storageData.customRulesText = '[global]\ndirect_hide_selectors = .from-custom-rules-text';
+  fetchCallLog = [];
+  debugLoader.reset();
+  const debugSite = await loadSiteDebug();
+  check('DEBUG_LOCAL: bundled local rules are included',
+    (debugSite.global.direct_hide_selectors || []).includes('.from-bundled-local'), debugSite.global);
+  check('DEBUG_LOCAL: another currently-enabled default source (region list) is ALSO fetched and merged in',
+    (debugSite.global.direct_hide_selectors || []).includes('.from-region-list'), debugSite.global);
+  check('DEBUG_LOCAL: a user-added ruleSources URL is ALSO fetched and merged in',
+    (debugSite.global.direct_hide_selectors || []).includes('.from-rulesource'), debugSite.global);
+  check('DEBUG_LOCAL: customRulesText is ALSO merged in',
+    (debugSite.global.direct_hide_selectors || []).includes('.from-custom-rules-text'), debugSite.global);
+  check('DEBUG_LOCAL: the bundled default entry\'s URL is NEVER fetched over the network — replaced by the local file',
+    !fetchCallLog.includes('https://remote.test/site-rules.txt'), fetchCallLog);
+
+  console.log('\n== 5. DEBUG_LOCAL: true with nothing else enabled still resolves cleanly to just the local file ==');
+  Object.keys(storageData).forEach(k => delete storageData[k]);
+  fetchCallLog = [];
+  debugLoader.reset();
+  const debugSiteNoCustom = await loadSiteDebug();
+  check('DEBUG_LOCAL: bundled local rules alone still resolve without throwing',
+    (debugSiteNoCustom.global.direct_hide_selectors || []).includes('.from-bundled-local'), debugSiteNoCustom.global);
+  check('DEBUG_LOCAL: with the region entry disabled again (no override), it is not fetched',
+    !fetchCallLog.includes('https://remote.test/region-list.txt'), fetchCallLog);
 
   console.log(`\n== RESULT: ${passed} passed, ${failed} failed ==`);
   process.exit(failed ? 1 : 0);

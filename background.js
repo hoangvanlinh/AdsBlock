@@ -617,48 +617,12 @@ async function _autoEnableLangDefaultSources() {
   _parsedRules = null;
 }
 
-async function fetchRemoteRuleText() {
-  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
-  const sources = stored.ruleSources;
-  const urls = [];
-  const fileParts = [];
-  const defaultUrls = new Set(RULES_REMOTE_URL.map(e => e.url));
-
-  // Default remote sources — each toggleable from the dashboard's Rule
-  // Source page (per-URL, defaultRuleSourceOverrides). Disabled means
-  // disabled: no rules from that source at all, not even the bundled local
-  // copy — the user can still layer custom sources/customRulesText on top
-  // of nothing. (getRulesText()'s own catch branch still falls back to the
-  // local file, but only on an actual fetch failure — see the empty-merge
-  // check below.)
-  const legacyAllDisabled = stored.defaultRuleSourceEnabled === false;
-  for (const entry of RULES_REMOTE_URL) {
-    if (_isDefaultSourceEnabled(entry, stored.defaultRuleSourceOverrides, legacyAllDisabled)) urls.push(entry.url);
-  }
-
-  if (sources && sources.length) {
-    for (const s of sources) {
-      if (s.enabled === false) continue;
-      if (s.type === 'url' && s.url && !defaultUrls.has(s.url)) urls.push(s.url);
-      else if (s.type === 'file' && s.text) fileParts.push(s.text);
-    }
-  } else if (stored.customRulesUrl && !defaultUrls.has(stored.customRulesUrl)) {
-    urls.push(stored.customRulesUrl);
-  }
-
-  // Append user's custom rules text (merged with built-in rules via parseRuleText merge logic)
-  if (stored.customRulesText) fileParts.push(stored.customRulesText);
-
-  // Each fetched/uploaded piece may be in raw ABP/uBO syntax rather than this
-  // repo's own grammar — _maybeConvertAbpText detects and converts, or
-  // returns the text unchanged if it's already native (including the local
-  // fallback/customRulesText pieces in fileParts, which always are).
-  //
-  // A failed fetch (network error or non-ok response) is recorded into
-  // RULE_SOURCE_ERRORS_KEY unconditionally — no "only if X" gating — so the
-  // dashboard's Rule Source page can show the user WHY a source silently
-  // contributed nothing, instead of the only-visible-via-DevTools-console
-  // silence this used to be.
+// Fetch + ABP-convert every URL in `urls`, recording a per-URL fetch error
+// into RULE_SOURCE_ERRORS_KEY unconditionally — no "only if X" gating — so
+// the dashboard's Rule Source page can show the user WHY a source silently
+// contributed nothing, instead of the only-visible-via-DevTools-console
+// silence this used to be.
+async function _fetchAndConvertUrls(urls) {
   const sourceErrors = {};
   const texts = await Promise.all(urls.map(async url => {
     try {
@@ -683,6 +647,55 @@ async function fetchRemoteRuleText() {
     }
     await chrome.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: next });
   }
+  return texts;
+}
+
+async function fetchRemoteRuleText() {
+  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
+  const sources = stored.ruleSources;
+  const urls = [];
+  const fileParts = [];
+  const defaultUrls = new Set(RULES_REMOTE_URL.map(e => e.url));
+
+  // Default remote sources — each toggleable from the dashboard's Rule
+  // Source page (per-URL, defaultRuleSourceOverrides). Disabled means
+  // disabled: no rules from that source at all, not even the bundled local
+  // copy — the user can still layer custom sources/customRulesText on top
+  // of nothing. (getRulesText()'s own catch branch still falls back to the
+  // local file, but only on an actual fetch failure — see the empty-merge
+  // check below.)
+  //
+  // DEBUG_LOCAL swaps ONLY the very first entry's URL (RULES_REMOTE_URL[0]
+  // — this repo's own GitHub-hosted site-rules.txt, by convention always
+  // first) for the bundled local copy, so local edits take effect on
+  // reload without pushing to GitHub. Every other source — other default
+  // entries, ruleSources, customRulesText — flows through this exact same
+  // fetch/merge/cache pipeline in both debug and production; nothing else
+  // about them changes.
+  const legacyAllDisabled = stored.defaultRuleSourceEnabled === false;
+  for (const [i, entry] of RULES_REMOTE_URL.entries()) {
+    if (!_isDefaultSourceEnabled(entry, stored.defaultRuleSourceOverrides, legacyAllDisabled)) continue;
+    urls.push(DEBUG_LOCAL && i === 0 ? chrome.runtime.getURL(RULES_LOCAL_PATH) : entry.url);
+  }
+
+  if (sources && sources.length) {
+    for (const s of sources) {
+      if (s.enabled === false) continue;
+      if (s.type === 'url' && s.url && !defaultUrls.has(s.url)) urls.push(s.url);
+      else if (s.type === 'file' && s.text) fileParts.push(s.text);
+    }
+  } else if (stored.customRulesUrl && !defaultUrls.has(stored.customRulesUrl)) {
+    urls.push(stored.customRulesUrl);
+  }
+
+  // Append user's custom rules text (merged with built-in rules via parseRuleText merge logic)
+  if (stored.customRulesText) fileParts.push(stored.customRulesText);
+
+  // Each fetched/uploaded piece may be in raw ABP/uBO syntax rather than this
+  // repo's own grammar — _maybeConvertAbpText detects and converts, or
+  // returns the text unchanged if it's already native (including the local
+  // fallback/customRulesText pieces in fileParts, which always are).
+  const texts = await _fetchAndConvertUrls(urls);
   const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t)));
 
   const merged = [...texts, ...convertedFileParts].filter(Boolean).join('\n');
@@ -1174,15 +1187,13 @@ function buildAdMainFrameRulesFromConfig(config, startId) {
 // Single source for the merged rules text (fresh cache → remote → cached/local
 // fallback). Used by rule-definition loading, GET_RULES_TEXT, and GET_SITE_CONFIG.
 async function getRulesText() {
-  // Debug build: serve the bundled local rules (skip cache + remote) so the
-  // DNR network rules match what's in the working tree.
-  if (DEBUG_LOCAL) {
-    const baseText = await fetchLocalRuleText();
-    const { customRulesText: customText = '' } = await chrome.storage.local.get('customRulesText');
-    return customText ? baseText + '\n' + customText : baseText;
-  }
   const cached = await getCachedRuleText();
-  if (isFreshRuleCache(cached)) return cached.text;
+  // Debug build: never serve the cache — fetchRemoteRuleText() itself
+  // already swaps the bundled default entry for the local file when
+  // DEBUG_LOCAL is set (see its own comment), so a plain cache-skip here is
+  // all that's needed for local site-rules.txt edits to take effect on
+  // every reload instead of waiting out the 6h TTL.
+  if (!DEBUG_LOCAL && isFreshRuleCache(cached)) return cached.text;
   try {
     return await fetchRemoteRuleText();
   } catch {

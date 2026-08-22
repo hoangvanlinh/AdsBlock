@@ -140,9 +140,15 @@ function _fetchAndMergeDirect(cached, resolve){
     var defaultUrlSet={};
     var urls=[];
     var legacyAllDisabled=res.defaultRuleSourceEnabled===false;
-    DEFAULT_RULE_SOURCES.forEach(function(entry){
+    // DEBUG_LOCAL swaps ONLY the very first entry's URL (this repo's own
+    // GitHub-hosted site-rules.txt, by convention always first) for the
+    // bundled local copy, so local edits take effect on reload without
+    // pushing to GitHub. Every other source flows through this exact same
+    // fetch/merge pipeline in both debug and production.
+    DEFAULT_RULE_SOURCES.forEach(function(entry,i){
       defaultUrlSet[entry.url]=true;
-      if(_isDefaultSourceEnabled(entry,res.defaultRuleSourceOverrides,legacyAllDisabled))urls.push(entry.url);
+      if(!_isDefaultSourceEnabled(entry,res.defaultRuleSourceOverrides,legacyAllDisabled))return;
+      urls.push(DEBUG_LOCAL&&i===0?chrome.runtime.getURL(LOCAL_RULES_PATH):entry.url);
     });
     var fileParts=[];
     if(sources&&sources.length){
@@ -233,7 +239,11 @@ function _fromParsedText(text){
 
 function _loadFallback(resolve){
   getCachedRules().then(function(cached){
-    if(isFreshCache(cached)){resolve(_fromParsedText(cached.text));return;}
+    // DEBUG_LOCAL never serves the cache — _fetchAndMergeDirect() itself
+    // already swaps the bundled default entry for the local file when
+    // DEBUG_LOCAL is set, so a plain cache-skip here is all that's needed
+    // for local site-rules.txt edits to take effect on every reload.
+    if(!DEBUG_LOCAL&&isFreshCache(cached)){resolve(_fromParsedText(cached.text));return;}
     _fetchAndMergeDirect(cached,function(text){resolve(_fromParsedText(text||''));});
   });
 }
@@ -242,12 +252,11 @@ function loadSiteConfig(callback){
   if(_site){callback(_site);return;}
   if(!_loading){
     _loading=new Promise(function(resolve){
-      if(DEBUG_LOCAL){
-        fetchLocalRules()
-          .then(function(t){resolve(_fromParsedText(t));})
-          .catch(function(){resolve({siteKey:'',global:{},site:{}});});
-        return;
-      }
+      // Primary path (GET_SITE_CONFIG message) works unchanged in
+      // DEBUG_LOCAL too — background.js's getRulesText() already handles
+      // the local-vs-remote swap internally, so nothing needs to know about
+      // DEBUG_LOCAL here except the fallback below (used only when
+      // messaging itself is unavailable).
       if(!extValid()){_loadFallback(resolve);return;}
       try{
         chrome.runtime.sendMessage({type:'GET_SITE_CONFIG',host:location.hostname},function(res){
