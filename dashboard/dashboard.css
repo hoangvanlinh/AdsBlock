@@ -958,9 +958,21 @@ body::before {
   color: var(--text-2);
   font-family: monospace;
 }
+.source-error {
+  flex-shrink: 0;
+  color: var(--red);
+  font-size: 11px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .btn-sm {
   padding: 2px 8px;
   font-size: 11px;
+  flex-shrink: 0;
+}
+.source-toggle {
   flex-shrink: 0;
 }
 .rules-file-status {

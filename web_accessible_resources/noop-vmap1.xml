@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Inert stand-in for a VMAP 1.0 ad-break manifest (IAB spec) — an empty
+     <vmap:VMAP> root with zero <vmap:AdBreak> children tells a compliant
+     player there are no scheduled ad breaks in this stream. -->
+<vmap:VMAP xmlns:vmap="http://www.iab.net/videosuite/vmap" version="1.0"></vmap:VMAP>

@@ -63,6 +63,11 @@ copy_static_files() {
 
     cp "$MANIFEST" "$DEST/manifest.json"
     cp "$PROJECT_DIR/config.js" "$DEST/"
+    # background.js's importScripts('scriptlet-alias-map.js') needs this at
+    # the build root too — same reason config.js lives there (shared across
+    # background.js, and scripts/convert-uassets.js/convert-regions.js via
+    # require() offline; scripts/ itself is dev-only tooling, never copied).
+    cp "$PROJECT_DIR/scriptlet-alias-map.js" "$DEST/"
     cp "$PROJECT_DIR/LICENSE" "$DEST/" 2>/dev/null || true
 
     mkdir -p "$DEST/icons" "$DEST/content" "$DEST/rule" "$DEST/dashboard" "$DEST/popup" "$DEST/blocked"

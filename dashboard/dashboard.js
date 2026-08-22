@@ -991,6 +991,7 @@ function escHtml(str) {
 /* ── Rule Source constants — from shared config.js (loaded by dashboard.html) ── */
 const RULES_CACHE_KEY_TEXT = self.ADBLOCK_CONFIG.RULES_CACHE_TEXT_KEY;
 const RULES_CACHE_KEY_TIME = self.ADBLOCK_CONFIG.RULES_CACHE_TIME_KEY;
+const RULE_SOURCE_ERRORS_KEY = self.ADBLOCK_CONFIG.RULE_SOURCE_ERRORS_KEY;
 
 /* ── Init ─────────────────────────────────────── */
 loadOverviewStats();
@@ -1063,55 +1064,86 @@ function makeSourceId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function renderRulesSources(sources) {
+// A row's checkbox toggles `enabled` without removing the source — separate
+// from the Remove button (permanent). The built-in default (RULES_REMOTE_URL,
+// config.js) is rendered as the first row, toggleable via its own storage
+// key (`defaultRuleSourceEnabled`) since it isn't part of the `ruleSources`
+// array and has no Remove button (it's not user-added).
+function _makeSourceRow({ label, checked, onToggle, onRemove, error }) {
+  const row = document.createElement('div');
+  row.className = 'rules-source-item';
+  const toggle = document.createElement('input');
+  toggle.type = 'checkbox';
+  toggle.checked = checked;
+  toggle.className = 'source-toggle';
+  toggle.addEventListener('change', () => onToggle(toggle.checked));
+  const labelSpan = document.createElement('span');
+  labelSpan.className = 'source-label';
+  labelSpan.title = label;
+  labelSpan.textContent = label;
+  row.appendChild(toggle);
+  row.appendChild(labelSpan);
+  // Fetch error, if any — always shown when present, no extra condition
+  // (e.g. "only if the source is enabled"): an error here means the LAST
+  // fetch attempt failed, which is worth knowing regardless of current state.
+  if (error) {
+    const errSpan = document.createElement('span');
+    errSpan.className = 'source-error';
+    errSpan.title = error;
+    errSpan.textContent = '⚠ ' + error;
+    row.appendChild(errSpan);
+  }
+  if (onRemove) {
+    const btn = document.createElement('button');
+    btn.className = 'btn-ghost btn-sm';
+    btn.textContent = 'Remove';
+    btn.addEventListener('click', onRemove);
+    row.appendChild(btn);
+  }
+  return row;
+}
+
+function renderRulesSources(sources, defaultEnabled, sourceErrors) {
   const urlList  = document.getElementById('rulesUrlList');
   const fileList = document.getElementById('rulesFileList');
   if (!urlList || !fileList) return;
+  const errors = sourceErrors || {};
 
   const urlSources  = sources.filter(s => s.type === 'url');
   const fileSources = sources.filter(s => s.type === 'file');
 
   urlList.innerHTML = '';
+  urlList.appendChild(_makeSourceRow({
+    label: `${self.ADBLOCK_CONFIG.RULES_REMOTE_URL} (default)`,
+    checked: defaultEnabled !== false,
+    onToggle: toggleDefaultRuleSource,
+    error: errors[self.ADBLOCK_CONFIG.RULES_REMOTE_URL],
+    // no onRemove — the built-in default can be turned off, not deleted.
+  }));
   for (const src of urlSources) {
-    const row = document.createElement('div');
-    row.className = 'rules-source-item';
-    const urlSpan = document.createElement('span');
-    urlSpan.className = 'source-label';
-    urlSpan.title = src.url;
-    urlSpan.textContent = src.url;
-    const urlBtn = document.createElement('button');
-    urlBtn.className = 'btn-ghost btn-sm remove-source';
-    urlBtn.dataset.id = src.id;
-    urlBtn.textContent = 'Remove';
-    row.appendChild(urlSpan);
-    row.appendChild(urlBtn);
-    urlList.appendChild(row);
+    urlList.appendChild(_makeSourceRow({
+      label: src.url,
+      checked: src.enabled !== false,
+      onToggle: (checked) => toggleRulesSource(src.id, checked),
+      onRemove: () => removeRulesSource(src.id),
+      error: errors[src.url],
+    }));
   }
 
   fileList.innerHTML = '';
   for (const src of fileSources) {
-    const row = document.createElement('div');
-    row.className = 'rules-source-item';
-    const fileSpan = document.createElement('span');
-    fileSpan.className = 'source-label';
-    fileSpan.textContent = src.name;
-    const fileBtn = document.createElement('button');
-    fileBtn.className = 'btn-ghost btn-sm remove-source';
-    fileBtn.dataset.id = src.id;
-    fileBtn.textContent = 'Remove';
-    row.appendChild(fileSpan);
-    row.appendChild(fileBtn);
-    fileList.appendChild(row);
+    fileList.appendChild(_makeSourceRow({
+      label: src.name,
+      checked: src.enabled !== false,
+      onToggle: (checked) => toggleRulesSource(src.id, checked),
+      onRemove: () => removeRulesSource(src.id),
+    }));
   }
-
-  document.querySelectorAll('.remove-source').forEach(btn => {
-    btn.addEventListener('click', () => removeRulesSource(btn.dataset.id));
-  });
 }
 
 function loadRulesSourceSettings() {
   chrome.storage.local.get(
-    ['ruleSources', 'customRulesUrl', 'localRulesFileName', RULES_CACHE_KEY_TEXT],
+    ['ruleSources', 'customRulesUrl', 'localRulesFileName', 'defaultRuleSourceEnabled', RULES_CACHE_KEY_TEXT, RULE_SOURCE_ERRORS_KEY],
     (data) => {
       let sources = data.ruleSources;
       if (!sources) {
@@ -1128,9 +1160,26 @@ function loadRulesSourceSettings() {
           chrome.storage.local.remove(['customRulesUrl', 'localRulesFileName']);
         }
       }
-      renderRulesSources(sources || []);
+      renderRulesSources(sources || [], data.defaultRuleSourceEnabled, data[RULE_SOURCE_ERRORS_KEY] || {});
     }
   );
+}
+
+function toggleDefaultRuleSource(enabled) {
+  chrome.storage.local.set(
+    { defaultRuleSourceEnabled: enabled, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
+    () => chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {})
+  );
+}
+
+function toggleRulesSource(id, enabled) {
+  chrome.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
+    const updated = ruleSources.map(s => s.id === id ? { ...s, enabled } : s);
+    chrome.storage.local.set(
+      { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
+      () => chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {})
+    );
+  });
 }
 
 function removeRulesSource(id) {
@@ -1140,7 +1189,7 @@ function removeRulesSource(id) {
       { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
       () => {
         chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
-        renderRulesSources(updated);
+        loadRulesSourceSettings();
       }
     );
   });
@@ -1158,7 +1207,7 @@ document.getElementById('addRulesUrl')?.addEventListener('click', () => {
       () => {
         chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
         if (input) input.value = '';
-        renderRulesSources(updated);
+        loadRulesSourceSettings();
       }
     );
   });
@@ -1185,7 +1234,7 @@ document.getElementById('rulesFileInput')?.addEventListener('change', (e) => {
             { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
             () => {
               chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
-              renderRulesSources(updated);
+              loadRulesSourceSettings();
             }
           );
         }
@@ -1197,7 +1246,7 @@ document.getElementById('rulesFileInput')?.addEventListener('change', (e) => {
             { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
             () => {
               chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
-              renderRulesSources(updated);
+              loadRulesSourceSettings();
             }
           );
         }

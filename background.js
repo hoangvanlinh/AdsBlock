@@ -8,12 +8,24 @@
 if (typeof importScripts === 'function' && !self.ADBLOCK_CONFIG) {
   importScripts('config.js');
 }
+// scriptlet-alias-map.js (repo root, same place as config.js — both are
+// shared across contexts: background.js here, scripts/convert-uassets.js and
+// scripts/convert-regions.js via `require()` offline, and both get copied to
+// the build root by _build-lib.sh's copy_static_files(), unlike scripts/
+// itself which is dev-only tooling never packaged into a built extension).
+// Dual-exports so this one runtime importScripts() picks up the identical
+// data (see that file's own dual-export comment) instead of forking a
+// second copy that could drift.
+if (typeof importScripts === 'function' && !self.SCRIPTLET_ALIAS_MAP) {
+  importScripts('scriptlet-alias-map.js');
+}
 const {
   RULES_REMOTE_URL,
   RULES_LOCAL_PATH,
   RULES_CACHE_TEXT_KEY,
   RULES_CACHE_TIME_KEY,
   RULES_CACHE_TTL_MS,
+  RULE_SOURCE_ERRORS_KEY,
   DEBUG_LOCAL,
   EXTENSION_META_REMOTE_URL,
   EXTENSION_META_REMOTE_URL_FIREFOX,
@@ -34,6 +46,7 @@ let AD_MAINFRAME_RULES = [];
 let TRACKER_RULE_IDS = new Set();
 let MALWARE_RULE_IDS = new Set();
 let QUERY_STRIP_RULES = [];
+let NETWORK_REDIRECT_RULES = [];
 let _ruleConfigPromise = null;
 
 const QUERY_STRIP_RESOURCE_TYPES = ['main_frame', 'sub_frame', 'stylesheet', 'script', 'image', 'font', 'object', 'xmlhttprequest', 'ping', 'csp_report', 'media', 'websocket', 'other'];
@@ -65,6 +78,31 @@ function buildQueryStripRules(entries, startId) {
       action: { type: 'redirect', redirect: { transform: { queryTransform: { removeParams: params } } } },
       condition,
     });
+  }
+  return rules;
+}
+
+// network_redirect_rules entries: "urlPattern resourceName" — same
+// domain-vs-path condition split as buildQueryStripRules above, but the
+// action is a static-resource redirect (_resolveRedirectResourceName/
+// _redirectAction) instead of a query-param strip. resourceName not
+// resolving to a real shipped file (unknown alias, or a name that maps to
+// a file this extension doesn't actually have) drops the whole entry —
+// same "don't guess" rule as everywhere else a filter-syntax modifier
+// can't be confidently honored.
+function buildNetworkRedirectRules(entries, startId) {
+  const rules = [];
+  let id = startId;
+  for (const entry of entries) {
+    const parts = String(entry || '').trim().split(/\s+/);
+    if (parts.length < 2) continue;
+    const pattern = parts[0];
+    const file = _resolveRedirectResourceName(parts[1]);
+    if (!file) continue;
+    const condition = { resourceTypes: ['script'] }; // real-world redirect= rules are ~always script
+    if (pattern.indexOf('/') === -1) condition.requestDomains = [pattern.toLowerCase()];
+    else condition.urlFilter = '||' + pattern;
+    rules.push({ id: id++, priority: 1, action: _redirectAction(file), condition });
   }
   return rules;
 }
@@ -131,17 +169,375 @@ function isFreshRuleCache(entry) {
   return !!(entry && entry.text && entry.time && (Date.now() - entry.time) < RULES_CACHE_TTL_MS);
 }
 
+// ── ABP/uBO format auto-detect + convert (Rule Source "Add URL") ──────
+// Ported from scripts/convert-uassets.js's own tested parseFile/finalizeGroups/
+// render (this repo's own code, previously offline-only — ran via
+// `node scripts/convert-uassets.js`, never inside the actual extension).
+// parseRuleText() below only understands this repo's own [section]/key=value
+// grammar, so a Rule Source URL/file in raw ABP/uBO syntax (! comments,
+// ##selector cosmetic rules, ##+js(name,args) scriptlet calls, ||domain^ network
+// rules) previously contributed nothing at all, silently. This makes that
+// conversion happen automatically wherever fetchRemoteRuleText() merges in a
+// Rule Source's text.
+//
+// Dropped vs. the offline version: fs/path/require I/O (loadFilterEntries's
+// assets.json batch scaffolding, fs.writeFileSync output — no equivalent for
+// converting one ad-hoc fetched URL at runtime), and the network-rule half
+// (parseNetOptions/buildNetworkRule, which target the currently-unwired
+// rule/network-rules.json structured-DNR path) — simplified here to just bare
+// `||domain^` (optionally $third-party/$~third-party, no path/other modifiers)
+// collected into ad_network_patterns, matching the plain-domain-list shape
+// [global] ad_network_patterns already expects. Anything path/modifier-scoped
+// is dropped rather than guessed at.
+const ABP_PROCEDURAL_RE = /:has-text\(|:matches-css|:xpath\(|:min-text-length|:remove\(|:style\(|:upward\(|:min-outer-height/;
+const ABP_BARE_NETWORK_DOMAIN_RE = /^[a-z0-9.*-]+\^$/i;
+
+// This repo's own grammar always opens with a [section] header (after
+// optional #/; comment lines) — ABP/uBO text uses ! comments and has no
+// bracket sections. First non-blank, non-#/;-comment line starting with '['
+// => native (skip conversion). Empty/comment-only text => nothing to convert
+// either way (falls through unchanged, same as today).
+function _looksLikeAbpFormat(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.charAt(0) === '#' || line.charAt(0) === ';') continue;
+    // The ABP spec requires "[Adblock Plus 2.0]" as literally the first
+    // line of every standard filter list (EasyList, EasyPrivacy, ...) — a
+    // format-version marker, not a section header, but it starts with '['
+    // just like this repo's own [section] syntax. Without this check every
+    // real-world ABP list misdetects as "already native" here and silently
+    // converts to nothing.
+    if (/^\[adblock plus[^\]]*\]$/i.test(line)) continue;
+    return line.charAt(0) !== '[';
+  }
+  return false;
+}
+
+function _abpSplitDomainList(s) {
+  const out = [];
+  let cur = '', inRegex = false;
+  for (const ch of s) {
+    if (ch === '/') { inRegex = !inRegex; cur += ch; continue; }
+    if (ch === ',' && !inRegex) { out.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+function _abpParseDomainPart(domainPart, curatedPatterns) {
+  let hasGlobal = false;
+  const domains = [];
+  for (const raw of _abpSplitDomainList(domainPart.trim())) {
+    const tok = raw.trim();
+    if (!tok || tok.charAt(0) === '~') continue;
+    if (tok === '*') { hasGlobal = true; continue; }
+    if (tok.charAt(0) === '/' && tok.length > 1 && tok.lastIndexOf('/') > 0) {
+      if (!curatedPatterns.has(tok)) domains.push(tok);
+      continue;
+    }
+    const d = tok.toLowerCase();
+    if (!curatedPatterns.has(d)) domains.push(d);
+  }
+  return { domains, hasGlobal };
+}
+
+function _abpStripTld(domain) {
+  const idx = domain.lastIndexOf('.');
+  return idx > 0 ? domain.slice(0, idx) : domain;
+}
+
+function _abpSanitizeKey(domain, curatedSectionNames, usedKeys) {
+  let key = _abpStripTld(domain).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  if (!/^[a-z]/.test(key)) key = 'x' + key;
+  if (curatedSectionNames.has(key) || usedKeys.has(key)) key = 'ua_' + key;
+  return key;
+}
+
+function _abpEscapeValue(v) {
+  return v.replace(/\|/g, '\\|');
+}
+
+// Real-world scriptlet args protect internal commas one of two ways:
+// backslash-escaping each comma individually (\,), or wrapping the WHOLE
+// argument in a leading quote (' or ") and leaving commas inside it
+// unescaped — both conventions show up across real uAssets filter lists
+// (sometimes for the very same rule, in different revisions). A single
+// regex split can only ever handle one of these, so this is a small
+// character scanner instead: a quote is only treated as opening a quoted
+// argument when it's the very first non-space character of that argument
+// (a quote appearing mid-argument, e.g. inside already-written JS, is just
+// a literal character) — everything up to the matching unescaped closing
+// quote is consumed verbatim, commas and all, then dropped from the output
+// (dequoted) the same way \, unescapes to a literal comma outside quotes.
+function _abpSplitScriptletArgs(inner) {
+  const out = [];
+  let cur = '';
+  let i = 0;
+  const n = inner.length;
+  while (i < n) {
+    const ch = inner[i];
+    if ((ch === "'" || ch === '"') && cur.trim() === '') {
+      const quote = ch;
+      i++;
+      while (i < n && !(inner[i] === quote && inner[i - 1] !== '\\')) {
+        cur += inner[i];
+        i++;
+      }
+      i++; // skip the closing quote itself
+      continue;
+    }
+    if (ch === '\\' && inner[i + 1] === ',') {
+      cur += ',';
+      i += 2;
+      continue;
+    }
+    if (ch === ',') {
+      out.push(cur.trim());
+      cur = '';
+      i++;
+      continue;
+    }
+    cur += ch;
+    i++;
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+function _abpFormatScriptletValue(mapping, args) {
+  const used = args.slice(0, mapping.maxArgs).filter(a => a !== '');
+  if (!used.length) return null;
+  return mapping.sep === 'space' ? used.join(' ') : used.join(', ');
+}
+
+// trusted_replace_script_text's own value grammar can't just join args like
+// the generic formatter above: real uBO rpnt/trusted-rpnt rules trail
+// "sedCount, N" / "includes, X" / "excludes, X" pairs AFTER the replacement
+// (args[2]) — but the replacement is arbitrary JS that can itself contain
+// any number of commas, so there's no reliable way to find where it ends
+// once those pairs are just appended after it. Reordering into
+// "nodeName, pattern, key=value..., replacement" (extras BEFORE the
+// unbounded replacement) at THIS layer — while args is still a clean,
+// escape-aware-split array, not yet a flattened string — lets the content-
+// script side peel recognized "key=value," prefixes off the front and
+// safely treat everything left over as the replacement, verbatim commas
+// and all. args here is the FULL split (background.js's caller passes the
+// untruncated parts, ignoring mapping.maxArgs for this one key).
+function _abpFormatTrustedReplaceScriptText(args) {
+  if (args.length < 3) return null;
+  const [nodeName, pattern, replacement, ...rest] = args;
+  const knownExtraKeys = new Set(['sedCount', 'includes', 'excludes']);
+  const extras = [];
+  for (let i = 0; i + 1 < rest.length; i += 2) {
+    if (knownExtraKeys.has(rest[i])) extras.push(rest[i] + '=' + rest[i + 1]);
+  }
+  return [nodeName, pattern, ...extras, replacement].filter(a => a !== '').join(', ');
+}
+
+// Core line-by-line classifier — mirrors convert-uassets.js's parseFile,
+// minus the network-rules.json structured-rule half (see file header comment above).
+function _abpParseFile(text, curatedPatterns, acc) {
+  const { domainSelectors, domainScriptlets, globalSelectors, globalScriptlets, networkDomains, networkRedirects } = acc;
+  const lines = String(text || '').split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || line.charAt(0) === '!') continue;
+
+    const netMatch = /^\|\|([^$]+?)(?:\$(.*))?$/.exec(line);
+    if (netMatch) {
+      const pattern = netMatch[1];
+      const optsStr = netMatch[2] || '';
+      if (ABP_BARE_NETWORK_DOMAIN_RE.test(pattern) && (!optsStr || /^~?third-party$/.test(optsStr))) {
+        networkDomains.add(pattern.slice(0, -1).toLowerCase());
+      } else {
+        // Not a bare-domain block — the one other shape this converter
+        // preserves is a path-scoped rule carrying a $redirect=/$redirect-rule=
+        // that resolves to a resource this extension actually ships
+        // (network_redirect_rules, background.js's buildNetworkRedirectRules).
+        // Everything else about the rule (other modifiers, domain=, @@, ...)
+        // is ignored; a bare-domain redirect isn't worth its own rule since
+        // ad_network_patterns already blocks that domain outright.
+        const redirectMatch = /(?:^|,)redirect(?:-rule)?=([^,]+)/.exec(optsStr);
+        const file = redirectMatch && _resolveRedirectResourceName(redirectMatch[1]);
+        if (file && !ABP_BARE_NETWORK_DOMAIN_RE.test(pattern)) {
+          networkRedirects.add(pattern + ' ' + file);
+        }
+      }
+      continue;
+    }
+    if (line.charAt(0) === '@' && line.charAt(1) === '@') continue; // exceptions — no equivalent here, dropped
+
+    // '#@#' (cosmetic EXCEPTION) never contains '##' as a substring, so it
+    // needs its own detection rather than falling out of the '##' check
+    // below. Real-world lists use '#@#+js(...)' for two different things:
+    // (a) cancelling a `##selector` hide rule from another list — no
+    // equivalent here (direct_hide_selectors has no cancellation model),
+    // still dropped; (b) injecting a scriptlet via exception syntax
+    // specifically so OTHER exception rules can't cancel it (uBO's own
+    // convention). Since this repo's dispatch has no cancellation concept
+    // at all, that distinction is moot here — a '#@#+js(...)' scriptlet
+    // call behaves identically to a '##+js(...)' one, so it's handled the
+    // same way instead of being dropped like a plain cosmetic exception.
+    const excIdx = line.indexOf('#@#');
+    const hideIdx = line.indexOf('##');
+    let sepIdx = -1, sepLen = 0, isException = false;
+    if (hideIdx !== -1 && (excIdx === -1 || hideIdx < excIdx)) { sepIdx = hideIdx; sepLen = 2; }
+    else if (excIdx !== -1) { sepIdx = excIdx; sepLen = 3; isException = true; }
+    if (sepIdx === -1) continue;
+
+    const domainPart = line.slice(0, sepIdx);
+    const selectorPart = line.slice(sepIdx + sepLen);
+
+    if (!selectorPart) continue;
+    const isScriptletCall = selectorPart.indexOf('+js(') === 0 && selectorPart.charAt(selectorPart.length - 1) === ')';
+    if (isException && !isScriptletCall) continue; // plain cosmetic exception — unsupported, dropped
+    if (domainPart.trim().charAt(0) === '[') continue; // AdGuard extended modifier syntax — not supported
+
+    if (isScriptletCall) {
+      const inner = selectorPart.slice(4, -1);
+      const parts = _abpSplitScriptletArgs(inner);
+      const name = (parts.shift() || '').trim();
+      const mapping = self.SCRIPTLET_ALIAS_MAP && self.SCRIPTLET_ALIAS_MAP[name];
+      if (!mapping || !domainPart) continue;
+      const value = mapping.flag ? '1'
+        : mapping.key === 'trusted_replace_script_text' ? _abpFormatTrustedReplaceScriptText(parts)
+        : _abpFormatScriptletValue(mapping, parts);
+      if (value === null) continue;
+      const { domains, hasGlobal } = _abpParseDomainPart(domainPart, curatedPatterns);
+      if (hasGlobal) {
+        if (!globalScriptlets.has(mapping.key)) globalScriptlets.set(mapping.key, new Set());
+        globalScriptlets.get(mapping.key).add(value);
+      }
+      for (const d of domains) {
+        if (!domainScriptlets.has(d)) domainScriptlets.set(d, new Map());
+        const perKey = domainScriptlets.get(d);
+        if (!perKey.has(mapping.key)) perKey.set(mapping.key, new Set());
+        perKey.get(mapping.key).add(value);
+      }
+      continue;
+    }
+
+    if (ABP_PROCEDURAL_RE.test(selectorPart)) continue;
+
+    if (!domainPart) { globalSelectors.add(selectorPart); continue; }
+
+    const { domains, hasGlobal } = _abpParseDomainPart(domainPart, curatedPatterns);
+    if (hasGlobal) globalSelectors.add(selectorPart);
+    for (const d of domains) {
+      if (!domainSelectors.has(d)) domainSelectors.set(d, new Set());
+      domainSelectors.get(d).add(selectorPart);
+    }
+  }
+}
+
+function _abpFinalizeGroups(domainSelectors, domainScriptlets) {
+  const allDomains = new Set([...domainSelectors.keys(), ...domainScriptlets.keys()]);
+  const groups = new Map();
+  for (const domain of allDomains) {
+    const selectors = domainSelectors.get(domain) || new Set();
+    const scriptlets = domainScriptlets.get(domain) || new Map();
+    const scriptletSig = [...scriptlets.entries()].map(([k, vals]) => k + '=' + [...vals].sort().join('')).sort().join('');
+    const sig = [...selectors].sort().join(' ') + scriptletSig;
+    if (!groups.has(sig)) groups.set(sig, { domains: [], selectors, scriptlets });
+    groups.get(sig).domains.push(domain);
+  }
+  return groups;
+}
+
+function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, curatedSectionNames }) {
+  const usedKeys = new Set();
+  const out = [];
+  if (networkDomains.size || (networkRedirects && networkRedirects.size) || globalSelectors.size || globalScriptlets.size) {
+    out.push('[global]');
+    if (networkDomains.size) out.push('ad_network_patterns = ' + [...networkDomains].sort().join(' | '));
+    if (networkRedirects && networkRedirects.size) out.push('network_redirect_rules = ' + [...networkRedirects].sort().map(_abpEscapeValue).join(' | '));
+    if (globalSelectors.size) out.push('direct_hide_selectors = ' + [...globalSelectors].sort().map(_abpEscapeValue).join(' | '));
+    for (const [scriptletKey, vals] of [...globalScriptlets.entries()].sort()) {
+      out.push(scriptletKey + ' = ' + [...vals].sort().map(_abpEscapeValue).join(' | '));
+    }
+    out.push('');
+  }
+  const groupList = [...groups.values()].sort((a, b) => a.domains[0].localeCompare(b.domains[0]));
+  if (groupList.length) {
+    out.push('[host_patterns]');
+    const groupKeys = [];
+    for (const g of groupList) {
+      const key = _abpSanitizeKey(g.domains[0], curatedSectionNames, usedKeys);
+      usedKeys.add(key);
+      groupKeys.push(key);
+      out.push([...g.domains].sort().join('|') + ' = ' + key);
+    }
+    out.push('');
+    groupList.forEach((g, i) => {
+      out.push('[' + groupKeys[i] + ']');
+      if (g.selectors.size) out.push('direct_hide_selectors = ' + [...g.selectors].sort().map(_abpEscapeValue).join(' | '));
+      for (const [scriptletKey, vals] of [...g.scriptlets.entries()].sort()) {
+        out.push(scriptletKey + ' = ' + [...vals].sort().map(_abpEscapeValue).join(' | '));
+      }
+      out.push('');
+    });
+  }
+  return out.join('\n');
+}
+
+// Orchestrator — detect, and if ABP-format, convert to this repo's own
+// site-rules.txt grammar; otherwise return the text unchanged. Dedup against
+// already-active rules reads the last CACHED merged text (getCachedRuleText())
+// rather than the live getParsedRules()/getRulesText() pipeline — this
+// function is itself called FROM inside that pipeline (fetchRemoteRuleText()
+// calls this once per Rule Source), so calling back into getParsedRules()
+// here deadlocks the very first time it runs with no warm cache yet: that
+// promise can't resolve until this call returns, and this call was awaiting
+// it. The cache-only read can't recurse, so cold start just falls back to
+// no dedup (same graceful degradation the try/catch below already had).
+async function _maybeConvertAbpText(text) {
+  if (!_looksLikeAbpFormat(text)) return text;
+  let curatedPatterns = new Set(), curatedSectionNames = new Set();
+  try {
+    const cached = await getCachedRuleText();
+    if (cached && cached.text) {
+      const parsed = parseRuleText(cached.text);
+      if (parsed.host_patterns) curatedPatterns = new Set(Object.keys(parsed.host_patterns));
+      curatedSectionNames = new Set(Object.keys(parsed));
+    }
+  } catch (e) { /* fall back to no dedup */ }
+  const acc = {
+    domainSelectors: new Map(), domainScriptlets: new Map(),
+    globalSelectors: new Set(), globalScriptlets: new Map(),
+    networkDomains: new Set(), networkRedirects: new Set(),
+  };
+  try { _abpParseFile(text, curatedPatterns, acc); } catch (e) { return text; }
+  const groups = _abpFinalizeGroups(acc.domainSelectors, acc.domainScriptlets);
+  return _abpRender({
+    groups, globalSelectors: acc.globalSelectors, globalScriptlets: acc.globalScriptlets,
+    networkRedirects: acc.networkRedirects,
+    networkDomains: acc.networkDomains, curatedSectionNames,
+  });
+}
+
 async function fetchRemoteRuleText() {
-  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText']);
+  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled']);
   const sources = stored.ruleSources;
   const urls = [];
   const fileParts = [];
 
-  // Always load the default remote as base first
-  urls.push(RULES_REMOTE_URL);
+  // Default remote source — toggleable from the dashboard's Rule Source
+  // page (defaultRuleSourceEnabled, default true when unset). Disabled means
+  // disabled: no default rules at all, not even the bundled local copy —
+  // the user can still layer custom sources/customRulesText on top of
+  // nothing. (getRulesText()'s own catch branch still falls back to the
+  // local file, but only on an actual fetch failure — see the empty-merge
+  // check below.)
+  if (stored.defaultRuleSourceEnabled !== false) {
+    urls.push(RULES_REMOTE_URL);
+  }
 
   if (sources && sources.length) {
     for (const s of sources) {
+      if (s.enabled === false) continue;
       if (s.type === 'url' && s.url && s.url !== RULES_REMOTE_URL) urls.push(s.url);
       else if (s.type === 'file' && s.text) fileParts.push(s.text);
     }
@@ -152,15 +548,53 @@ async function fetchRemoteRuleText() {
   // Append user's custom rules text (merged with built-in rules via parseRuleText merge logic)
   if (stored.customRulesText) fileParts.push(stored.customRulesText);
 
+  // Each fetched/uploaded piece may be in raw ABP/uBO syntax rather than this
+  // repo's own grammar — _maybeConvertAbpText detects and converts, or
+  // returns the text unchanged if it's already native (including the local
+  // fallback/customRulesText pieces in fileParts, which always are).
+  //
+  // A failed fetch (network error or non-ok response) is recorded into
+  // RULE_SOURCE_ERRORS_KEY unconditionally — no "only if X" gating — so the
+  // dashboard's Rule Source page can show the user WHY a source silently
+  // contributed nothing, instead of the only-visible-via-DevTools-console
+  // silence this used to be.
+  const sourceErrors = {};
   const texts = await Promise.all(urls.map(async url => {
     try {
       const res = await fetch(url, { cache: 'no-store' });
-      return res.ok ? res.text() : '';
-    } catch { return ''; }
+      if (!res.ok) {
+        sourceErrors[url] = `HTTP ${res.status}`;
+        return '';
+      }
+      const raw = await res.text();
+      return raw ? await _maybeConvertAbpText(raw) : '';
+    } catch (e) {
+      sourceErrors[url] = e && e.message ? e.message : 'fetch failed';
+      return '';
+    }
   }));
+  if (urls.length) {
+    const { [RULE_SOURCE_ERRORS_KEY]: existing = {} } = await chrome.storage.local.get(RULE_SOURCE_ERRORS_KEY);
+    const next = { ...existing };
+    for (const url of urls) {
+      if (sourceErrors[url]) next[url] = sourceErrors[url];
+      else delete next[url]; // this fetch succeeded — clear any stale error for it
+    }
+    await chrome.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: next });
+  }
+  const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t)));
 
-  const merged = [...texts, ...fileParts].filter(Boolean).join('\n');
-  if (!merged) throw new Error('no rules available');
+  const merged = [...texts, ...convertedFileParts].filter(Boolean).join('\n');
+  if (!merged && urls.length) {
+    // At least one remote fetch was attempted and all of them came back
+    // empty — that's an actual failure (network down, bad URL, ...), so
+    // let getRulesText()'s catch branch fall back to cached/local rules.
+    throw new Error('no rules available');
+  }
+  // Empty here with no urls attempted means every source was deliberately
+  // disabled (or the only ones enabled produced no text) — not a fetch
+  // failure, so this is a legitimate zero-rules result, not something to
+  // paper over with the bundled local rules.
   await setCachedRuleText(merged);
   return merged;
 }
@@ -179,6 +613,9 @@ const RULES_REVALIDATE_ALARM = 'rules-revalidate';
 const RULES_REVALIDATE_PERIOD_MIN = 30;
 const RULES_REMOTE_ETAG_KEY = 'siteRulesRemoteEtag';
 const RULES_REMOTE_HASH_KEY = 'siteRulesRemoteHash';
+// Fingerprint of the LAST dynamic rule set actually sent to
+// updateDynamicRules() — see _applyNetworkRulesImpl's own comment for why.
+const DNR_RULES_HASH_KEY = 'dnrRulesAppliedHash';
 
 // djb2 — cheap content fingerprint, fallback when the server rotates ETags
 // (CDN) or omits them, so a 200 with identical content doesn't force a reload.
@@ -209,6 +646,8 @@ async function reloadRules() {
 
 async function revalidateRemoteRules() {
   try {
+    const { defaultRuleSourceEnabled } = await chrome.storage.local.get('defaultRuleSourceEnabled');
+    if (defaultRuleSourceEnabled === false) return false; // default source turned off — nothing to revalidate
     const stored = await chrome.storage.local.get([RULES_REMOTE_ETAG_KEY, RULES_REMOTE_HASH_KEY]);
     const etag = stored[RULES_REMOTE_ETAG_KEY] || '';
     const res = await fetch(RULES_REMOTE_URL, {
@@ -329,25 +768,22 @@ const DOMAIN_PATTERN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[
 // harmlessly, defeating that class of detector. Only resourceTypes with a
 // safe, well-understood placeholder are mapped; anything else still falls
 // back to a hard block.
+// One shared table for BOTH ad and tracker rules (buildPatternRules already
+// takes `resourceTypes` as its own filter argument — an entry here for a
+// type the caller's resourceTypes list doesn't include is simply never
+// looked up, so ads and trackers safely share one merged table instead of
+// keeping two near-duplicate ones in sync by hand). sub_frame is only ever
+// requested by the ad-rule call site, ping only by the tracker-rule call
+// site — trackers get the exact same treatment as ads (analytics beacons
+// fail exactly the same visible way as ad bait requests do); ping reads no
+// response at all, so it gets the 0-byte file rather than a typed placeholder.
 const REDIRECT_RESOURCE_BY_TYPE = {
   script: 'noop.js',
   image: '1x1.gif',
   sub_frame: 'noop.html',
   xmlhttprequest: 'noop.txt', // '{}' — safe for JSON.parse() callers
-  other: 'empty', // uncategorized/misc requests — no format guarantee, 0-byte is safest
-};
-
-// Trackers get the same treatment as ads (see REDIRECT_RESOURCE_BY_TYPE) —
-// analytics beacons (analytics.google.com/g/collect, etc.) fail exactly the
-// same visible way as ad bait requests do. 'ping' (navigator.sendBeacon /
-// <a ping>) reads no response at all, so it gets the 0-byte file rather than
-// a typed placeholder.
-const TRACKER_REDIRECT_RESOURCE_BY_TYPE = {
-  script: 'noop.js',
-  image: '1x1.gif',
-  xmlhttprequest: 'noop.txt',
   ping: 'empty',
-  other: 'empty', // uncategorized/misc beacon traffic — no format guarantee, 0-byte is safest
+  other: 'empty', // uncategorized/misc requests — no format guarantee, 0-byte is safest
 };
 
 // A handful of tracker/ad domains ship a purpose-built, API-compatible stub
@@ -371,6 +807,73 @@ const SPECIFIC_SCRIPT_REDIRECTS = {
   'chartbeat.com': 'chartbeat.js',
   'doubleclick.net': 'doubleclick_instream_ad_status.js',
 };
+
+// Alternate spellings a filter list's own $redirect=/$redirect-rule= value
+// might use for one of the files this extension actually ships in
+// web_accessible_resources/ — only entries for files that exist here are
+// listed; a name that would resolve to a file we don't have is left
+// unresolvable on purpose (network_redirect_rules below drops the whole
+// rule rather than point a redirect at a 404). Grouped by canonical
+// filename for readability; REDIRECT_RESOURCE_ALIASES (below) is the
+// flattened alias->file lookup actually used at match time.
+const REDIRECT_RESOURCE_FILES = {
+  'noop.js': ['noopjs'],
+  'noop.html': ['noopframe'],
+  'noop.txt': ['nooptext'],
+  'noop.json': ['noopjson'],
+  'empty': ['noop'],
+  '1x1.gif': ['1x1-transparent.gif', '1x1transparent.gif'],
+  'google-ima.js': ['google-ima', 'google-ima3', 'googleima3'],
+  'googlesyndication_adsbygoogle.js': ['googlesyndication.com/adsbygoogle.js', 'adsbygoogle.js'],
+  'googletagservices_gpt.js': ['googletagservices.com/gpt.js', 'googletagservices-gpt', 'gpt.js'],
+  'google-analytics_analytics.js': ['google-analytics.com/analytics.js'],
+  'googletagmanager_gtm.js': ['googletagmanager.com/gtm.js', 'gtm.js'],
+  'amazon_apstag.js': ['amazon-adsystem.com/aax2/amazon-apstag.js'],
+  'scorecardresearch_beacon.js': ['scorecardresearch.com/beacon.js'],
+  'doubleclick_instream_ad_status.js': ['doubleclick.net/instream/ad_status.js'],
+  'chartbeat.js': [],
+  'outbrain-widget.js': [],
+  'noop.css': [],
+  '2x2.png': ['2x2-transparent.png'],
+  '32x32.png': ['32x32-transparent.png'],
+  '3x2.png': [],
+  'noop-0.1s.mp3': ['noopmp3-0.1s'],
+  'noop-1s.mp4': ['noopmp4-1s'],
+  'noop-vast2.xml': ['noopvast-2.0', 'noopvast2'],
+  'noop-vast3.xml': ['noopvast-3.0', 'noopvast3'],
+  'noop-vast4.xml': ['noopvast-4.0', 'noopvast4'],
+  'noop-vmap1.xml': ['noop-vmap1.0.xml', 'noopvmap1', 'noopvmap-1.0'],
+  'google-analytics_ga.js': ['google-analytics.com/ga.js'],
+  'google-analytics_cx_api.js': ['google-analytics.com/cx/api.js'],
+  'amazon_ads.js': ['amazon-adsystem.com/aax2/amzn_ads.js'],
+  'fingerprint2.js': [],
+  'fingerprint3.js': [],
+  'nofab.js': ['fuckadblock.js-3.2.0', 'fuckadblock-3.2.0.js'],
+  'popads-dummy.js': [],
+  'popads.js': ['popads.net.js', 'popads.net'],
+  'click2load.html': [],
+  'prebid-ads.js': ['prebid'],
+  'hd-main.js': [],
+  'sensors-analytics.js': [],
+  'ampproject_v0.js': [],
+  'nitropay_ads.js': [],
+  'adthrive_abd.js': [],
+  'noeval.js': [],
+  'noeval-silent.js': [],
+};
+const REDIRECT_RESOURCE_ALIASES = new Map();
+for (const [file, aliases] of Object.entries(REDIRECT_RESOURCE_FILES)) {
+  REDIRECT_RESOURCE_ALIASES.set(file, file);
+  for (const alias of aliases) REDIRECT_RESOURCE_ALIASES.set(alias, file);
+}
+
+// A filter-list $redirect= value can carry a ":priority" suffix (only
+// meaningful when several $redirect rules on the SAME request compete —
+// this project's DNR-based rules only ever redirect to one place, so the
+// suffix is stripped and ignored rather than acted on).
+function _resolveRedirectResourceName(name) {
+  return REDIRECT_RESOURCE_ALIASES.get(String(name || '').replace(/:\d+$/, ''));
+}
 
 // redirect.url (a fully-resolved chrome.runtime.getURL() call, baked in at
 // rule-BUILD time), NOT redirect.extensionPath (a bare relative path Chrome
@@ -467,7 +970,7 @@ function buildDefaultRulesFromConfig(config) {
   // bait-request adblock/tracker-block detectors (image, script, and xhr/
   // beacon failures are all equally visible to page code checking for them).
   const adRules = buildPatternRules(config.adNetworkPatterns, 1, adTypes, 1, REDIRECT_RESOURCE_BY_TYPE, SPECIFIC_SCRIPT_REDIRECTS);
-  const trackerRules = buildPatternRules(config.trackerNetworkPatterns, adRules.length + 1, trackerTypes, 1, TRACKER_REDIRECT_RESOURCE_BY_TYPE, SPECIFIC_SCRIPT_REDIRECTS);
+  const trackerRules = buildPatternRules(config.trackerNetworkPatterns, adRules.length + 1, trackerTypes, 1, REDIRECT_RESOURCE_BY_TYPE, SPECIFIC_SCRIPT_REDIRECTS);
   return { adRules, trackerRules };
 }
 
@@ -655,6 +1158,7 @@ async function ensureRuleDefinitionsLoaded() {
       MALWARE_RULES = buildMalwareRulesFromConfig(config, DEFAULT_RULES.length +1);
       AD_MAINFRAME_RULES = buildAdMainFrameRulesFromConfig(config, DEFAULT_RULES.length + MALWARE_RULES.length + 1);
       QUERY_STRIP_RULES = buildQueryStripRules(global.strip_query_params || [], QUERY_STRIP_RULE_ID_START);
+      NETWORK_REDIRECT_RULES = buildNetworkRedirectRules(global.network_redirect_rules || [], NETWORK_REDIRECT_RULE_ID_START);
       TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
       MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
@@ -669,6 +1173,7 @@ async function ensureRuleDefinitionsLoaded() {
 
 const FOCUS_RULE_ID_START   = 2000;
 const QUERY_STRIP_RULE_ID_START = 3000;
+const NETWORK_REDIRECT_RULE_ID_START = 500000; // for network_redirect_rules
 const REMOTE_MALWARE_RULE_ID_START = 100000; // for fetched blocklists
 const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
 const PAUSE_ALLOW_RULE_ID_START = 300000;    // for pause/allowlist allow-all rules
@@ -844,6 +1349,7 @@ async function buildActiveRulesFromStorage() {
   const customBlockRules = await buildCustomBlockRules();
   const focusRules = await buildFocusRules(focusMode);
   const queryStripActive = blockTrackers ? QUERY_STRIP_RULES : [];
+  const networkRedirectActive = blockAds ? NETWORK_REDIRECT_RULES : [];
 
   // Build allowAllRequests rules for paused + allowlisted domains.
   // These have higher priority and override ALL blocking rules for
@@ -864,7 +1370,7 @@ async function buildActiveRulesFromStorage() {
     enabled: true,
     allRules: [
       ...activeRules, ...adMainFrameActive, ...malwareActive, ...remoteActive,
-      ...customBlockRules, ...focusRules, ...pauseAllowRules, ...queryStripActive,
+      ...customBlockRules, ...focusRules, ...pauseAllowRules, ...queryStripActive, ...networkRedirectActive,
     ],
   };
 }
@@ -903,10 +1409,36 @@ async function _applyNetworkRulesImpl() {
 
   if (!enabled) {
     // Protection OFF — remove all rules
-    await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: removeIds, addRules: [] });
+    if (removeIds.length) {
+      await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: removeIds, addRules: [] });
+    }
+    await chrome.storage.local.remove(DNR_RULES_HASH_KEY);
     activeStatsRules = [];
     statsRulesInitialized = true;
     updateIcon(false);
+    return;
+  }
+
+  // applyNetworkRules() runs unconditionally on every SW cold start
+  // (onStartup) even though the underlying rule text only actually
+  // changes once per TTL/edit — updateDynamicRules() forces Chrome's own
+  // DNR engine to re-index the whole rule set (large requestDomains
+  // arrays included) from scratch, so it's the most expensive part of
+  // this pipeline by far. Skip that ONE call (not the cheaper in-memory
+  // rebuild above, which other code — stats classification, malware
+  // count — needs populated regardless of DNR state) when the rule set
+  // we're about to send is byte-identical to what we last successfully
+  // sent. The hash is content-derived, so it self-invalidates the moment
+  // anything actually changes — no separate cache-clearing step needed,
+  // unlike a plain cached-value replay. existing.length is an extra,
+  // cheap guard against silent drift (rules cleared by something other
+  // than this function since the hash was stored).
+  const newHash = _hashText(JSON.stringify(allRules));
+  const { [DNR_RULES_HASH_KEY]: storedHash } = await chrome.storage.local.get(DNR_RULES_HASH_KEY);
+  if (existing.length === allRules.length && storedHash === newHash) {
+    activeStatsRules = allRules.filter(rule => rule.action?.type === 'block');
+    statsRulesInitialized = true;
+    updateIcon(true);
     return;
   }
 
@@ -914,6 +1446,7 @@ async function _applyNetworkRulesImpl() {
     removeRuleIds: removeIds,
     addRules: allRules,
   });
+  await chrome.storage.local.set({ [DNR_RULES_HASH_KEY]: newHash });
 
   activeStatsRules = allRules.filter(rule => rule.action?.type === 'block');
   statsRulesInitialized = true;

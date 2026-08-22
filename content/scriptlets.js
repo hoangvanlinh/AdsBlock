@@ -40,6 +40,24 @@
   var _strSplit = String.prototype.split;
   var _textGet  = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent').get;
 
+  // Shared choke point for every write site that may target a <script> node
+  // (data-sjs guard, remove/replace-node-text, trusted-replace-script-text)
+  // — each call site already wraps this in its own try/catch, so a page
+  // enforcing Trusted Types (require-trusted-types-for 'script') rejecting
+  // this write is a harmless no-op for that one node. A real TrustedScript
+  // policy was tried here to silence the browser's own console log for that
+  // case, but it removes an accidental safety net: it makes a WRONG
+  // rewrite — e.g. a stale rule replaying against a node it should no
+  // longer target — actually succeed instead of getting rejected. Given the
+  // 2026-08-14 incident documented near trustedReplaceScriptText below (a
+  // rewrite corrupting a real, load-bearing YouTube script) and a
+  // stale-cache-replay repeat of it on 2026-08-22, a rejected write staying
+  // rejected is the safer default until that class of bug is fully closed
+  // off — see _saveScriptletRulesCache's own comment for that fix.
+  function _setNodeText(node, text) {
+    node.textContent = text;
+  }
+
   function _toRegex(p) {
     if (!p) return /^/;
     if (p.charAt(0) === '/' && p.length > 1) {
@@ -2762,10 +2780,10 @@
       // script often bundles unrelated Haste modules — a stale length
       // fails that check and cascades into unrelated module init errors.
       try {
-        if (node.hasAttribute('data-content-len')) {
-          node.setAttribute('data-content-len', String(textAfter.length));
-        }
-        node.textContent = textAfter;
+        // if (node.hasAttribute('data-content-len')) {
+        //   node.setAttribute('data-content-len', String(textAfter.length));
+        // }
+        _setNodeText(node, textAfter);
       } catch (e) {}
     };
     try {
@@ -3045,7 +3063,11 @@
       if (rePattern && !rePattern.test(before)) return;
       var after = rePattern ? before.replace(rePattern, replacement || '') : (replacement || '');
       if (after === before) return;
-      node.textContent = after;
+      // nodeName can match "script" here (rmnt/rpnt rules commonly target
+      // it) — wrapped so a Trusted-Types rejection (or any other reason the
+      // write could fail) can't throw uncaught out of a MutationObserver
+      // callback.
+      try { _setNodeText(node, after); } catch (e) {}
     }
     function scan(root) {
       if (!root) return;
@@ -3095,16 +3117,21 @@
   // present as parsed HTML in a form safe to whole-node-overwrite this way.
   // Do not re-add an initial-scan pass here without first confirming, on a
   // live page, exactly which node matches and that overwriting it is safe.
-  function trustedReplaceScriptText(nodeName, pattern, replacement, extra) {
+  // extras: { sedCount, includes, excludes } — sedCount caps how many nodes
+  // this ONE rule instance will ever rewrite (uBO's real rpnt convention;
+  // "sedCount, 1" = only the first match, then stay inert for the rest of
+  // the page's life). Unset/0/non-numeric = unlimited, matching the
+  // pre-existing behavior for rules with no count given.
+  function trustedReplaceScriptText(nodeName, pattern, replacement, extras) {
     if (!nodeName) return;
     var reNode = _toRegex(nodeName);
     var rePattern = pattern ? _toRegex(pattern) : null;
-    var reIncludes = null, reExcludes = null;
-    if (extra) {
-      var mi = /includes=(\S+)/.exec(extra); if (mi) reIncludes = _toRegex(mi[1]);
-      var me = /excludes=(\S+)/.exec(extra); if (me) reExcludes = _toRegex(me[1]);
-    }
+    var reIncludes = extras && extras.includes ? _toRegex(extras.includes) : null;
+    var reExcludes = extras && extras.excludes ? _toRegex(extras.excludes) : null;
+    var maxCount = extras && extras.sedCount ? (parseInt(extras.sedCount, 10) || 0) : 0;
+    var count = 0;
     function tryRewrite(node) {
+      if (maxCount && count >= maxCount) return;
       // node.nodeName is always UPPERCASE for standard HTML elements, but
       // rule authors commonly write tag names lowercase — try both.
       if (!node || node.nodeType !== 1) return;
@@ -3122,7 +3149,8 @@
       if (rePattern && !rePattern.test(before)) return;
       var after = replacement || '';
       if (after === before) return;
-      try { node.textContent = after; } catch (e) {}
+      try { _setNodeText(node, after); } catch (e) {}
+      count++;
     }
     function hookInsertMethod(methodPath) {
       proxyApplyFn(methodPath, function (context) {
@@ -3285,20 +3313,39 @@
       if (state === 'none') return parsed;
       try {
         if (!parsed || typeof parsed !== 'object' || (!parsed.responseContext && !parsed.playabilityStatus)) return parsed;
+        // Direct watch-page navigation (typing/pasting a /watch URL) gets
+        // the player response fields flat at the top level. Clicking a
+        // video from elsewhere on youtube.com (SPA in-app navigation) gets
+        // a DIFFERENT response shape — the same fields nested one level
+        // down inside `playerResponse`, alongside page-transition metadata
+        // (responseContext/responseType) at the top instead — live-verified
+        // 2026-08-22 (a click-from-homepage video played back muted because
+        // every fix below was reading parsed.playerConfig, which is
+        // undefined on this shape; the real data was at
+        // parsed.playerResponse.playerConfig). Operate on whichever object
+        // actually holds these fields so both navigation paths get fixed.
+        var target = (parsed.playerResponse && typeof parsed.playerResponse === 'object') ? parsed.playerResponse : parsed;
         var text = JSON.stringify(parsed);
         var isError = ERROR_MARKERS.some(function (m) { return text.indexOf(m) !== -1; }) && text.indexOf('CONTENT_CHECK_REQUIRED') === -1;
         if (isError) {
           var idx = STATES.indexOf(state);
           state = STATES[Math.min(idx + 1, STATES.length - 1)];
         } else {
-          if (state === 'param_first' && parsed.playerConfig?.audioConfig?.muteOnStart &&
-              (location.href.indexOf('/watch') !== -1 || (parsed.cards && !parsed.playabilityStatus?.miniplayer))) {
-            delete parsed.playerConfig.audioConfig.muteOnStart;
-            if (parsed.messages?.[0]?.youThereRenderer) delete parsed.messages[0].youThereRenderer;
+          // Reached only when isError is false — a genuinely playable
+          // response, regardless of which ladder rung produced it. This
+          // used to be gated to state === 'param_first' only, so a video
+          // that needed to escalate past the first rung to actually play
+          // (the whole point of the ladder) kept muteOnStart and played
+          // back muted — the escalation "succeeded" at getting a playable
+          // response, then silently failed at this unrelated side fix.
+          if (target.playerConfig?.audioConfig?.muteOnStart &&
+              (location.href.indexOf('/watch') !== -1 || (target.cards && !target.playabilityStatus?.miniplayer))) {
+            delete target.playerConfig.audioConfig.muteOnStart;
+            if (target.messages?.[0]?.youThereRenderer) delete target.messages[0].youThereRenderer;
           }
-          if (state === 'ad_type' && parsed.playerConfig?.granularVariableSpeedConfig) {
-            parsed.playerConfig.granularVariableSpeedConfig.maximumPlaybackRate = 200;
-            parsed.playerConfig.granularVariableSpeedConfig.minimumPlaybackRate = 25;
+          if (state === 'ad_type' && target.playerConfig?.granularVariableSpeedConfig) {
+            target.playerConfig.granularVariableSpeedConfig.maximumPlaybackRate = 200;
+            target.playerConfig.granularVariableSpeedConfig.minimumPlaybackRate = 25;
           }
         }
       } catch (e) {}
@@ -4099,6 +4146,28 @@
     return [value.slice(0, idx1).trim(), value.slice(idx1 + 1, idx2).trim(), value.slice(idx2 + 1).trim()];
   }
 
+  // trusted_replace_script_text's remainder (after nodeName/pattern) is
+  // "[sedCount=N, ][includes=X, ][excludes=X, ]replacement" — extras as
+  // prefixed key=value tokens BEFORE the unbounded replacement, not
+  // trailing bare pairs after it (background.js's _abpFormatTrustedReplace
+  // ScriptText reorders real uBO rpnt rules into this shape at conversion
+  // time, while it still has the replacement as one clean, unsplit array
+  // element). Peeling recognized "key=value," prefixes off the FRONT is
+  // safe regardless of how many commas the replacement itself contains —
+  // unlike scanning from the end, which can't tell "a real trailing pair"
+  // from "the replacement code just happens to end that way".
+  function _peelTrustedReplaceExtras(remainder) {
+    var extras = {};
+    var rest = remainder || '';
+    var re = /^(sedCount|includes|excludes)=([^,]*),\s*/;
+    var m;
+    while ((m = re.exec(rest))) {
+      extras[m[1]] = m[2];
+      rest = rest.slice(m[0].length);
+    }
+    return { extras: extras, replacement: rest };
+  }
+
   // Like _argsOf, but splits on only the LAST top-level comma — for 2-arg
   // values whose FIRST argument is complex (e.g. a JSONPath query with a
   // JSON object/array literal as its assigned value, full of commas) and
@@ -4226,13 +4295,17 @@
 
     // ── trusted_replace_script_text — wrap-once (proxyApplyFn installs a
     // permanent hook per call; re-dispatching the same rule must not stack).
-    // Value: "nodeName, pattern, replacement" — only the first 2 commas are
-    // split on (_splitFirst2), since replacement is arbitrary code that can
-    // itself contain any number of commas.
+    // Value: "nodeName, pattern[, sedCount=N][, includes=X][, excludes=X],
+    // replacement" — only the first 2 commas are split on (_splitFirst2),
+    // since everything after is arbitrary code that can itself contain any
+    // number of commas; _peelTrustedReplaceExtras then strips any
+    // recognized key=value prefixes off the front of that remainder before
+    // what's left is treated as the replacement.
     _eachRule(rules.trusted_replace_script_text, function (v) {
       _wrapOnce('trusted_replace_script_text', v, function () {
         var a = _splitFirst2(v);
-        trustedReplaceScriptText(a[0] || '', a[1] || '', a[2] || '', '');
+        var peeled = _peelTrustedReplaceExtras(a[2] || '');
+        trustedReplaceScriptText(a[0] || '', a[1] || '', peeled.replacement, peeled.extras);
       });
     });
 
@@ -4535,16 +4608,30 @@
   // less likely to bite in practice, not actually immune to it.
   var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'trusted_replace_fetch_response', 'jspb_response_prune', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response', 'set_constant', 'abort_on_property_read', 'abort_on_property_write'];
 
+  // The boot-gate replay (below) only exists to beat the async
+  // GET_SITE_CONFIG round-trip for rules that genuinely need document_start
+  // timing (response/property interception) — it must never carry anything
+  // outside _RESPONSE_FILTER_RULE_KEYS. A DOM-rewrite rule (remove_node_text/
+  // replace_node_text/trusted_replace_script_text) installs a PERMANENT
+  // hook/observer via _wrapOnce; if a stale one ever got cached alongside a
+  // real response-filter key, it would keep rewriting nodes with its stale
+  // pattern for the rest of that page load even after the real, current
+  // rules arrive and overwrite the cache moments later — the fix, not just
+  // the write, was already installed. Caching only an allowlisted subset
+  // instead of the whole `rules` object closes that off structurally,
+  // rather than relying on every future rule type to remember to opt out.
   function _saveScriptletRulesCache(rules) {
+    var filtered = {};
     var has = false;
     for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
-      var v = rules[_RESPONSE_FILTER_RULE_KEYS[i]];
-      if (v && v.length) { has = true; break; }
+      var key = _RESPONSE_FILTER_RULE_KEYS[i];
+      var v = rules[key];
+      if (v && v.length) { filtered[key] = v; has = true; }
     }
     // Only sites with response-filter rules ever get the key written;
     // removeItem on all others is a no-op that leaves no trace.
     try {
-      if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(rules));
+      if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(filtered));
       else localStorage.removeItem(_RULES_CACHE_KEY);
     } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
   }

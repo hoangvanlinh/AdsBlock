@@ -439,6 +439,29 @@ function sendRules(rules) {
   const cachedAbortWrite = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
   check('abort_on_property_write alone now triggers the boot cache',
     !!cachedAbortWrite && Array.isArray(cachedAbortWrite.abort_on_property_write), JSON.stringify(cachedAbortWrite));
+
+  // Regression test (2026-08-22, live-reproduced on youtube.com): a
+  // remove_node_text/replace_node_text/trusted_replace_script_text rule
+  // dispatched ALONGSIDE a response-filter key used to get cached VERBATIM
+  // (the whole `rules` object was cached, not just the response-filter
+  // keys) — meaning a stale one from an earlier session/test would get
+  // permanently replayed at document_start on every later visit, installing
+  // a permanent DOM-rewrite hook before the real, current rules ever
+  // arrived to correct it. The cache must only ever carry
+  // _RESPONSE_FILTER_RULE_KEYS entries.
+  // Patterns are deliberately unique nonsense strings, not 'x'/'y' — this
+  // dispatch installs REAL hooks via _wrapOnce (proxyApplyFn on insertion
+  // methods / a MutationObserver), which stay live for the rest of this
+  // test run; a broadly-matching pattern here would leak into and corrupt
+  // later sections' own trusted_replace_script_text/remove_node_text checks.
+  sendRules({ json_prune_xhr: ['adPlacements'], remove_node_text: ['script, zzz_cache_test_no_match_9f3e1'], trusted_replace_script_text: ['script, zzz_cache_test_no_match_9f3e1, zzz_replacement_9f3e1'] });
+  const cachedWithRewriteKeys = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
+  check('DOM-rewrite keys never make it into the boot cache even when dispatched alongside a response-filter key',
+    !!cachedWithRewriteKeys && !('remove_node_text' in cachedWithRewriteKeys) && !('trusted_replace_script_text' in cachedWithRewriteKeys),
+    JSON.stringify(cachedWithRewriteKeys));
+  check('the response-filter key itself is still cached normally',
+    !!cachedWithRewriteKeys && Array.isArray(cachedWithRewriteKeys.json_prune_xhr), JSON.stringify(cachedWithRewriteKeys));
+
   // Leave the cache holding no boot-relevant keys again so later sections
   // (which assume a clean slate) aren't affected by this regression test.
   sendRules({ direct_hide_selectors: ['.ad'] });
@@ -858,6 +881,36 @@ function sendRules(rules) {
   check('trusted_replace_script_text: replacement with internal commas stays intact',
     complexScript.textContent === complexReplacement, complexScript.textContent);
 
+  // -- trusted_replace_script_text: sedCount/excludes extras (2026-08-22) --
+  // Real uBO rpnt/trusted-rpnt rules trail "sedCount, N" / "excludes, X" as
+  // bare pairs AFTER the replacement — background.js's ABP converter
+  // reorders these into "nodeName, pattern, sedCount=N, excludes=X,
+  // replacement" (extras BEFORE the unbounded replacement) so the
+  // content-script side can peel them off the front safely; this is that
+  // native format, parsed directly (not going through the ABP converter).
+  sendRules({ trusted_replace_script_text: ['SCRIPT, sedTarget(), sedCount=1, excludes=REWRITTEN_MARKER, /* REWRITTEN_MARKER */'] });
+  const sedFirst = new ElementStub();
+  sedFirst.nodeType = 1; sedFirst.nodeName = 'SCRIPT'; sedFirst.textContent = 'sedTarget()';
+  parentEl.appendChild(sedFirst);
+  check('trusted_replace_script_text: sedCount=1 rewrites the first match',
+    sedFirst.textContent === '/* REWRITTEN_MARKER */', sedFirst.textContent);
+
+  const sedSecond = new ElementStub();
+  sedSecond.nodeType = 1; sedSecond.nodeName = 'SCRIPT'; sedSecond.textContent = 'sedTarget()';
+  parentEl.appendChild(sedSecond);
+  check('trusted_replace_script_text: sedCount=1 leaves a SECOND matching node untouched',
+    sedSecond.textContent === 'sedTarget()', sedSecond.textContent);
+
+  // excludes guards against the replacement's own text being matched again
+  // if it's re-inserted (e.g. re-parented) — verified independent of
+  // sedCount by using a fresh rule with no count limit.
+  sendRules({ trusted_replace_script_text: ['SCRIPT, needle(), excludes=ALREADY_DONE, /* ALREADY_DONE */'] });
+  const excludedNode = new ElementStub();
+  excludedNode.nodeType = 1; excludedNode.nodeName = 'SCRIPT'; excludedNode.textContent = '/* ALREADY_DONE */needle()';
+  parentEl.appendChild(excludedNode);
+  check('trusted_replace_script_text: excludes= prevents rewriting a node whose text already contains it',
+    excludedNode.textContent === '/* ALREADY_DONE */needle()', excludedNode.textContent);
+
   console.log('\n== 9. jspb_response_prune: protobuf/jspb player-response path (never touches fetch/XHR/JSON.parse) ==');
   sendRules({ json_prune_fetch: ['adPlacements adSlots playerAds'], jspb_response_prune: ['1'] });
 
@@ -933,6 +986,45 @@ function sendRules(rules) {
   const sent2 = sendPlayerBody('abc123');
   check('ssapUnplayableRetry: state advances to param_second after a rejected response',
     sent2.params === '8AUB', JSON.stringify(sent2));
+
+  // Regression test (2026-08-22): a live report of retried videos playing
+  // back MUTED, traced to the muteOnStart-clearing fix being gated to
+  // state === 'param_first' only — but a retry that needed to escalate
+  // PAST the first rung to get a playable response (the whole point of the
+  // ladder) never reaches that state, so the fix never fired and
+  // muteOnStart survived into the response YouTube's player reads. state
+  // is still 'param_second' here (from sent2's rejection above, same
+  // videoId so the ladder hasn't reset) — a genuinely playable response
+  // arriving at this escalated rung must still get muteOnStart cleared.
+  const playableAtEscalatedState = sandbox.JSON.parse(JSON.stringify({
+    playabilityStatus: { status: 'OK' },
+    playerConfig: { audioConfig: { muteOnStart: true } },
+  }));
+  check('ssapUnplayableRetry: muteOnStart cleared even when the playable response arrives at an escalated ladder state',
+    playableAtEscalatedState.playerConfig?.audioConfig?.muteOnStart === undefined,
+    JSON.stringify(playableAtEscalatedState));
+
+  // Regression test (2026-08-22, live-verified in a real browser): clicking
+  // a video from elsewhere on youtube.com (SPA in-app navigation, e.g. the
+  // homepage) gets a DIFFERENT response shape than direct /watch URL
+  // navigation — playerConfig/playabilityStatus/etc. nested one level down
+  // inside a `playerResponse` wrapper, alongside page-transition metadata
+  // (responseContext/responseType) at the top instead of at the top level
+  // directly. Every fix in this function used to read parsed.playerConfig
+  // unconditionally, which is undefined on this shape — so a video clicked
+  // from the homepage played back muted even though this exact function
+  // "worked" for direct /watch navigation.
+  const playableSpaWrapped = sandbox.JSON.parse(JSON.stringify({
+    responseContext: {},
+    responseType: 'RESPONSE_TYPE_WATCH',
+    playerResponse: {
+      playabilityStatus: { status: 'OK' },
+      playerConfig: { audioConfig: { muteOnStart: true } },
+    },
+  }));
+  check('ssapUnplayableRetry: muteOnStart cleared on the SPA-navigation (playerResponse-wrapped) response shape too',
+    playableSpaWrapped.playerResponse.playerConfig?.audioConfig?.muteOnStart === undefined,
+    JSON.stringify(playableSpaWrapped));
 
   const sent3 = sendPlayerBody('xyz999');
   check('ssapUnplayableRetry: a different videoId resets the ladder back to param_first',

@@ -9,11 +9,13 @@ const vm = require('vm');
 const ROOT = require("path").join(__dirname, "..");
 const rulesText = fs.readFileSync(path.join(ROOT, 'rule/site-rules.txt'), 'utf8');
 const configSrc = fs.readFileSync(path.join(ROOT, 'config.js'), 'utf8');
+const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'scriptlet-alias-map.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'background.js'), 'utf8');
 
 // ── chrome stub ───────────────────────────────────────────────────
 const storageData = {};
 let dynamicRules = [];
+let updateDynamicRulesCallCount = 0;
 const messageListeners = [];
 const noopEvent = { addListener() {} };
 const tabsData = new Map();
@@ -61,6 +63,7 @@ const chromeStub = {
     // reproduce here when it's not properly serialized.
     async getDynamicRules() { await _ipcDelay(); return dynamicRules.slice(); },
     async updateDynamicRules({ removeRuleIds = [], addRules = [] }) {
+      updateDynamicRulesCallCount++;
       await _ipcDelay();
       const removeSet = new Set(removeRuleIds);
       dynamicRules = dynamicRules.filter(r => !removeSet.has(r.id));
@@ -131,6 +134,13 @@ const chromeStub = {
 let stubRemoteManifestVersion = '1.0.0'; // default: below any real local version
 let stubRemoteManifestVersionFirefox = '1.0.0'; // independent — the two manifests CAN diverge
 let stubRemoteManifestUnreachable = false;
+// Only the REMOTE site-rules.txt fetch (RULES_REMOTE_URL) — the local
+// bundled copy fetched via chrome.runtime.getURL() shares the same
+// "site-rules.txt" suffix but a different origin, so it's unaffected.
+let stubRulesRemoteUnreachable = false;
+// Raw ABP/uBO-format text served for a fetchRemoteRuleText() end-to-end test —
+// mutable so a test can set it right before triggering a fetch.
+let stubAbpSourceText = '';
 // _isFirefoxInstall() (background.js) checks navigator.userAgent — same
 // technique popup.js/dashboard.js already use for this kind of "pick a URL
 // for the current browser" decision. Simulated here by swapping
@@ -139,6 +149,9 @@ let stubRemoteManifestUnreachable = false;
 async function fetchStub(url) {
   const u = String(url);
   if (u.includes('site-rules.txt')) {
+    if (stubRulesRemoteUnreachable && u.startsWith('https://raw.githubusercontent.com')) {
+      throw new Error('network error (simulated)');
+    }
     return { ok: true, status: 200, headers: { get: () => '' }, text: async () => rulesText };
   }
   if (u.includes('manifest.firefox.json')) {
@@ -149,6 +162,9 @@ async function fetchStub(url) {
     if (stubRemoteManifestUnreachable) throw new Error('network error (simulated)');
     return { ok: true, status: 200, headers: { get: () => '' }, json: async () => ({ version: stubRemoteManifestVersion }) };
   }
+  if (u.includes('abp-test-source.txt')) {
+    return { ok: true, status: 200, headers: { get: () => '' }, text: async () => stubAbpSourceText };
+  }
   return { ok: false, status: 404, headers: { get: () => '' }, text: async () => '' };
 }
 
@@ -158,7 +174,13 @@ const sandbox = {
   setTimeout, clearTimeout, setInterval, clearInterval,
   URL, Date, Math, JSON, Promise, RegExp, Set, Map, Number, String, Object, Array, Error,
   navigator: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' },
-  importScripts() { vm.runInContext(configSrc, ctx, { filename: 'config.js' }); },
+  importScripts(name) {
+    if (name && name.includes('scriptlet-alias-map')) {
+      vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 'scriptlet-alias-map.js' });
+    } else {
+      vm.runInContext(configSrc, ctx, { filename: 'config.js' });
+    }
+  },
 };
 sandbox.self = sandbox;
 sandbox.globalThis = sandbox;
@@ -166,9 +188,12 @@ const ctx = vm.createContext(sandbox);
 
 const exportSnippet = `
 self.__test = {
-  ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules,
+  ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules, reloadRules,
   parseRuleText, buildRemoteMalwareRules, updateIcon, _incrementTabBlocked, _setTabBadge,
   getParsedRules, resolveSiteKey,
+  _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
+  buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
+  RULE_SOURCE_ERRORS_KEY,
   _buildElementRulesBlock, _applyElementRules,
   _buildGlobalRulesBlock, _applyGlobalRules,
   _buildSiteRuleTextBlock, _applySiteRuleText,
@@ -932,6 +957,327 @@ function check(name, cond, detail = '') {
   check('Firefox install correctly reports an update from ITS OWN manifest, independent of manifest.json',
     firefoxUpdateYes.latestVersion === '1.5.0' && firefoxUpdateYes.available === true, JSON.stringify(firefoxUpdateYes));
   sandbox.navigator.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'; // reset for any later section
+
+  console.log('\n== 25. ABP/uBO format auto-detect + convert (Rule Source "Add URL") (2026-08-22) ==');
+
+  // 25a. Format detection.
+  check('_looksLikeAbpFormat: native site-rules.txt text -> false',
+    T._looksLikeAbpFormat('# comment\n[host_patterns]\nexample.com = ex') === false);
+  check('_looksLikeAbpFormat: ABP text (! comment, no bracket section) -> true',
+    T._looksLikeAbpFormat('! Title: Test List\n||tracker.com^') === true);
+  check('_looksLikeAbpFormat: cosmetic-only ABP text (no ! comment either) -> true',
+    T._looksLikeAbpFormat('example.com##.ad-banner') === true);
+  check('_looksLikeAbpFormat: empty text -> false (nothing to convert either way)',
+    T._looksLikeAbpFormat('') === false);
+
+  // 25b. Conversion — cosmetic rule + mapped scriptlet call + bare network rule
+  // kept; path-scoped network rule + unmapped scriptlet call dropped, not guessed at.
+  const abpSnippet = [
+    '! Title: Test List',
+    '! comment',
+    'abptestdomain.com##.ad-banner',
+    'abptestdomain.com##+js(nowebrtc)',
+    'abptestdomain.com##+js(some-unmapped-scriptlet-xyz, arg1)',
+    '||abptracker.com^',
+    '||abptracker.com/path/ads.js^$script',
+  ].join('\n');
+  const converted = await T._maybeConvertAbpText(abpSnippet);
+  check('_maybeConvertAbpText: cosmetic selector -> direct_hide_selectors',
+    converted.includes('direct_hide_selectors') && converted.includes('.ad-banner'), converted);
+  check('_maybeConvertAbpText: mapped scriptlet call (nowebrtc) -> its gitAdblock key (no_webrtc)',
+    converted.includes('no_webrtc'), converted);
+  check('_maybeConvertAbpText: unmapped scriptlet call dropped entirely (not guessed at)',
+    !converted.includes('some-unmapped-scriptlet-xyz'), converted);
+  check('_maybeConvertAbpText: bare ||domain^ network rule -> ad_network_patterns',
+    converted.includes('ad_network_patterns') && converted.includes('abptracker.com'), converted);
+  check('_maybeConvertAbpText: path-scoped network rule dropped, not folded in as bare abptracker.com',
+    !converted.includes('path/ads.js'), converted);
+  check('_maybeConvertAbpText: [host_patterns] section present, maps the domain to a generated key',
+    converted.includes('[host_patterns]') && converted.includes('abptestdomain.com'), converted);
+
+  // 25c. Native site-rules.txt text passes through completely unchanged (no re-render).
+  const nativeText = '[global]\nad_network_patterns = a.com | b.com\n';
+  const passthrough = await T._maybeConvertAbpText(nativeText);
+  check('_maybeConvertAbpText: native site-rules.txt text passes through byte-for-byte unchanged',
+    passthrough === nativeText, passthrough);
+
+  // 25d. Dedup — a domain already covered by the live parsed rules'
+  // [host_patterns] is excluded from the converted output rather than
+  // re-emitted as a duplicate/conflicting section.
+  const { host_patterns: liveHostPatterns = {} } = await T.getParsedRules();
+  const curatedDomain = Object.keys(liveHostPatterns)[0];
+  if (curatedDomain) {
+    const dedupSnippet = `${curatedDomain}##.some-selector-that-should-be-skipped`;
+    const dedupResult = await T._maybeConvertAbpText(dedupSnippet);
+    check('_maybeConvertAbpText: a domain already in the live [host_patterns] is skipped, not duplicated',
+      !dedupResult.includes('some-selector-that-should-be-skipped'), dedupResult);
+  }
+
+  // 25e. End-to-end through fetchRemoteRuleText(): a Rule Source URL serving
+  // raw ABP text gets converted before merging, instead of silently
+  // contributing nothing (the pre-existing behavior parseRuleText() has for
+  // unconverted ABP text — it recognizes neither `!` comments nor bracketless
+  // key=value lines, so the whole source used to parse to nothing).
+  stubAbpSourceText = [
+    '! Title: E2E Test List',
+    'e2eabptest.com##.popup-ad',
+    '||e2eabpnetwork.com^',
+  ].join('\n');
+  await chromeStub.storage.local.set({
+    ruleSources: [{ id: 'abp-e2e', type: 'url', url: 'https://example.com/abp-test-source.txt', enabled: true }],
+    defaultRuleSourceEnabled: false, // isolate to just this one source's output
+  });
+  const e2eMerged = await T.fetchRemoteRuleText();
+  check('fetchRemoteRuleText: ABP-format Rule Source URL converted and merged in (cosmetic selector present)',
+    e2eMerged.includes('.popup-ad'), e2eMerged);
+  check('fetchRemoteRuleText: ABP-format Rule Source URL converted and merged in (network domain present)',
+    e2eMerged.includes('e2eabpnetwork.com') && e2eMerged.includes('ad_network_patterns'), e2eMerged);
+  await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceEnabled: true }); // reset for any later section
+
+  // 25h. Disabling the default Rule Source must mean ZERO default rules —
+  // not a silent fallback to the bundled local site-rules.txt (which is
+  // effectively the same content, so the toggle used to have no visible
+  // effect: "tôi tắt Rule Source nhưng không có tác dụng", 2026-08-22).
+  await chromeStub.storage.local.set({ ruleSources: [], customRulesText: '', defaultRuleSourceEnabled: false });
+  const allDisabledMerged = await T.fetchRemoteRuleText();
+  check('fetchRemoteRuleText: default disabled + no other source -> empty (no local-file fallback), not thrown',
+    allDisabledMerged === '', allDisabledMerged);
+
+  // But a genuine fetch failure (default enabled, remote unreachable) must
+  // still throw so getRulesText()'s catch branch can fall back to
+  // cached/local rules for resilience — that behavior is untouched.
+  await chromeStub.storage.local.set({ ruleSources: [], customRulesText: '', defaultRuleSourceEnabled: true });
+  stubRulesRemoteUnreachable = true;
+  let threwOnRealFailure = false;
+  try { await T.fetchRemoteRuleText(); } catch { threwOnRealFailure = true; }
+  stubRulesRemoteUnreachable = false;
+  check('fetchRemoteRuleText: a genuine fetch failure (default enabled) still throws, unlike a deliberately-empty config',
+    threwOnRealFailure);
+  await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceEnabled: true }); // reset for any later section
+
+  console.log('\n== 25i. ABP header detection + reentrancy deadlock regression (2026-08-22) ==');
+
+  // Every standard ABP filter list (EasyList, EasyPrivacy, ...) is REQUIRED
+  // to start with "[Adblock Plus 2.0]" — a format-version marker, not a
+  // section header — but it starts with '[' just like this repo's own
+  // [section] syntax, so _looksLikeAbpFormat used to misdetect it as
+  // "already native" and skip conversion of the entire file, silently.
+  check('_looksLikeAbpFormat: standard "[Adblock Plus 2.0]" version header line -> still true (real-world EasyList/EasyPrivacy always start with this)',
+    T._looksLikeAbpFormat('[Adblock Plus 2.0]\n! Title: Test\n||realtracker.com^') === true);
+  const easylistStyleSnippet = ['[Adblock Plus 2.0]', '! Title: Test List', '||abpheadertest.com^'].join('\n');
+  const headerConverted = await T._maybeConvertAbpText(easylistStyleSnippet);
+  check('_maybeConvertAbpText: a file starting with the "[Adblock Plus 2.0]" header still gets converted (previously silently skipped as "already native")',
+    headerConverted.includes('ad_network_patterns') && headerConverted.includes('abpheadertest.com'), headerConverted);
+
+  // Reentrancy deadlock: _maybeConvertAbpText()'s dedup lookup used to call
+  // getParsedRules(), which — on a cold cache — re-enters
+  // fetchRemoteRuleText(), which calls _maybeConvertAbpText() again for the
+  // SAME in-flight source, awaiting a promise that can only resolve once
+  // this very call returns. reloadRules() resets the in-memory parsed-rules
+  // cache the same way a real "toggle a Rule Source" does, reproducing a
+  // genuinely cold start. Guarded with a timeout so a regression fails
+  // loudly instead of hanging the whole test run forever — this is the
+  // real-world "tôi tắt rồi bật lại default source, youtube không load
+  // rule" report, root-caused to this deadlock (2026-08-22).
+  function withTimeout(promise, ms, label) {
+    let timer;
+    const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('TIMEOUT: ' + label)), ms); });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+  stubAbpSourceText = '! t\n||deadlocktest.com^';
+  await chromeStub.storage.local.set({
+    ruleSources: [{ id: 'deadlock-e2e', type: 'url', url: 'https://example.com/abp-test-source.txt', enabled: true }],
+    defaultRuleSourceEnabled: false,
+  });
+  await T.reloadRules(); // cold-starts the in-memory parsed-rules cache, like a real toggle does
+  let deadlockText = null, deadlockError = null;
+  try {
+    deadlockText = await withTimeout(T.fetchRemoteRuleText(), 5000, 'fetchRemoteRuleText() with a cold parsed-rules cache + an ABP-format Rule Source');
+  } catch (e) { deadlockError = e; }
+  check('fetchRemoteRuleText: does not deadlock on a cold parsed-rules cache with an ABP-format Rule Source (previously hung forever)',
+    deadlockError === null, deadlockError && deadlockError.message);
+  check('fetchRemoteRuleText: the ABP source actually converted while cold',
+    !!deadlockText && deadlockText.includes('deadlocktest.com'), deadlockText);
+  await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceEnabled: true });
+  await T.reloadRules(); // leave state clean for any later section
+
+  console.log('\n== 25j. Rule Source fetch errors recorded unconditionally (2026-08-22) ==');
+
+  // A source that 404s must show up in RULE_SOURCE_ERRORS_KEY — this is what
+  // the dashboard's Rule Source page reads to show an inline "⚠ HTTP 404"
+  // next to the row, instead of the silent nothing this used to be.
+  await chromeStub.storage.local.set({
+    ruleSources: [{ id: 'err-e2e', type: 'url', url: 'https://example.com/broken-source.txt', enabled: true }],
+    defaultRuleSourceEnabled: false,
+  });
+  // A source that 404s with nothing else enabled IS a genuine fetch
+  // failure (see 25h above) — fetchRemoteRuleText() correctly throws so
+  // getRulesText()'s caller can fall back; the error-recording happens
+  // before that throw, so it's still there to check afterward.
+  try { await T.fetchRemoteRuleText(); } catch {}
+  let { [T.RULE_SOURCE_ERRORS_KEY]: errAfterFail } = await chromeStub.storage.local.get(T.RULE_SOURCE_ERRORS_KEY);
+  check('fetchRemoteRuleText: a 404 source is recorded into RULE_SOURCE_ERRORS_KEY',
+    !!(errAfterFail && errAfterFail['https://example.com/broken-source.txt']), errAfterFail);
+
+  // Once that same URL succeeds, its stale error entry must be cleared —
+  // otherwise a fixed source would keep showing a warning forever.
+  stubAbpSourceText = '! t\n||clearedafterfix.com^';
+  await chromeStub.storage.local.set({
+    ruleSources: [{ id: 'err-e2e', type: 'url', url: 'https://example.com/abp-test-source.txt', enabled: true }],
+  });
+  // Prime the "was broken" entry under the URL this test now reuses, so the
+  // clear-on-success behavior actually has something to clear.
+  await chromeStub.storage.local.set({ [T.RULE_SOURCE_ERRORS_KEY]: { 'https://example.com/abp-test-source.txt': 'HTTP 404' } });
+  await T.fetchRemoteRuleText();
+  let { [T.RULE_SOURCE_ERRORS_KEY]: errAfterFix } = await chromeStub.storage.local.get(T.RULE_SOURCE_ERRORS_KEY);
+  check('fetchRemoteRuleText: a previously-failing source that now succeeds has its error cleared',
+    !errAfterFix || !errAfterFix['https://example.com/abp-test-source.txt'], errAfterFix);
+  await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceEnabled: true, [T.RULE_SOURCE_ERRORS_KEY]: {} });
+  await T.reloadRules(); // leave state clean for any later section
+
+  console.log('\n== 25k. rpnt/trusted-rpnt now map to trusted_replace_script_text, not replace_node_text (2026-08-22) ==');
+
+  // rpnt/trusted-rpnt/replace-node-text are "requires trust" in real uBO
+  // (aliases of trusted-replace-node-text.js) — they need the pre-execution
+  // insertion hook (trusted_replace_script_text), not the post-insertion
+  // MutationObserver (replace_node_text), which is too late for a
+  // synchronous inline <script>. Real uBO rules trail "sedCount, N" /
+  // "excludes, X" as bare pairs AFTER the replacement — reordered here into
+  // "nodeName, pattern, sedCount=N, excludes=X, replacement" (extras BEFORE
+  // the unbounded replacement) so the content-script side can peel them off
+  // the front safely regardless of how many commas the replacement itself
+  // contains. Uses \, escaping here; the quoted-string convention (the
+  // OTHER real uAssets shape) is covered separately below.
+  const rpntSnippet = [
+    '! t',
+    'example.com##+js(rpnt, script, (function serverContract(), (()=>{const e=1\\,t=2;console.log(e\\,t)})();(function serverContract(), sedCount, 1, excludes, MutationObserver)',
+  ].join('\n');
+  const rpntConverted = await T._maybeConvertAbpText(rpntSnippet);
+  check('rpnt converts to trusted_replace_script_text, not replace_node_text',
+    rpntConverted.includes('trusted_replace_script_text') && !rpntConverted.includes('replace_node_text ='),
+    rpntConverted);
+  check('rpnt: sedCount/excludes reordered to prefixed extras BEFORE the replacement',
+    rpntConverted.includes('sedCount=1, excludes=MutationObserver,'), rpntConverted);
+  check('rpnt: replacement itself keeps its internal (unescaped) commas intact',
+    rpntConverted.includes('console.log(e,t)'), rpntConverted);
+
+  // Same rule, real uAssets alternative convention: replacement wrapped in
+  // a leading quote with UNESCAPED internal commas, instead of \, escaping
+  // — both conventions appear across real uAssets filter revisions.
+  const rpntQuotedSnippet = [
+    '! t',
+    "example.com##+js(rpnt, script, (function serverContract(), '(()=>{const e=1,t=2;console.log(e,t)})();(function serverContract()', sedCount, 1, excludes, MutationObserver)",
+  ].join('\n');
+  const rpntQuotedConverted = await T._maybeConvertAbpText(rpntQuotedSnippet);
+  check('rpnt (quoted-string replacement): converts to trusted_replace_script_text with extras in place',
+    rpntQuotedConverted.includes('sedCount=1, excludes=MutationObserver,'), rpntQuotedConverted);
+  check('rpnt (quoted-string replacement): internal commas preserved, quotes stripped',
+    rpntQuotedConverted.includes('console.log(e,t)') && !rpntQuotedConverted.includes("'(()=>"), rpntQuotedConverted);
+
+  // '#@#+js(...)' (exception-syntax scriptlet injection, real uBO
+  // convention for a scriptlet other exception rules can't cancel) is
+  // handled the same as '##+js(...)' — this repo's dispatch has no
+  // cancellation model either way, so the distinction is moot. A PLAIN
+  // '#@#selector' cosmetic exception (no +js) is still dropped — there's
+  // no equivalent for cancelling a hide rule here.
+  const excJsSnippet = [
+    '! t',
+    'example.com#@#+js(rpnt, script, needle(), sedCount, 1)',
+    'example.com#@#.some-selector-that-should-still-be-dropped',
+  ].join('\n');
+  const excJsConverted = await T._maybeConvertAbpText(excJsSnippet);
+  check('#@#+js(rpnt, ...): scriptlet injection via exception syntax still converts',
+    excJsConverted.includes('trusted_replace_script_text') && excJsConverted.includes('needle()'), excJsConverted);
+  check('#@#.selector (plain cosmetic exception, no +js): still dropped, no cancellation model',
+    !excJsConverted.includes('some-selector-that-should-still-be-dropped'), excJsConverted);
+
+  console.log('\n== 25l. Skip updateDynamicRules() when the rule set is unchanged (2026-08-22) ==');
+
+  // applyNetworkRules() ran unconditionally on every SW cold start
+  // (onStartup) even when nothing changed — updateDynamicRules() forces
+  // Chrome's own DNR engine to re-index the whole rule set from scratch,
+  // the most expensive part of the pipeline. A second call with an
+  // IDENTICAL config must not repeat that IPC round trip.
+  await chromeStub.storage.local.set({ blockAds: true, blockTrackers: true, blockMalware: true, paused: false });
+  await T.applyNetworkRules();
+  const callsAfterFirst = updateDynamicRulesCallCount;
+  await T.applyNetworkRules();
+  check('applyNetworkRules: second call with an unchanged rule set skips updateDynamicRules entirely',
+    updateDynamicRulesCallCount === callsAfterFirst,
+    `calls after 1st: ${callsAfterFirst}, after 2nd: ${updateDynamicRulesCallCount}`);
+
+  // A REAL config change (blockTrackers off) must still register — the
+  // skip is content-derived, not a blanket "only once ever" latch.
+  await chromeStub.storage.local.set({ blockTrackers: false });
+  await T.applyNetworkRules();
+  check('applyNetworkRules: a genuine config change still calls updateDynamicRules',
+    updateDynamicRulesCallCount > callsAfterFirst,
+    `calls after change: ${updateDynamicRulesCallCount}`);
+  await chromeStub.storage.local.set({ blockTrackers: true }); // restore for any later section
+  await T.applyNetworkRules();
+
+  console.log('\n== 25f. network_redirect_rules — path-scoped $redirect=/$redirect-rule= rules the plain ad_network_patterns parser used to drop entirely (2026-08-22) ==');
+
+  // Resolver: canonical name, known alias, ":priority" suffix stripped,
+  // unrecognized name -> undefined (drops the rule, doesn't guess).
+  check('_resolveRedirectResourceName: canonical filename resolves to itself', T._resolveRedirectResourceName('noop.js') === 'noop.js');
+  check('_resolveRedirectResourceName: known alias resolves to the real shipped file', T._resolveRedirectResourceName('noopjs') === 'noop.js');
+  check('_resolveRedirectResourceName: ":priority" suffix stripped before lookup', T._resolveRedirectResourceName('noopjs:5') === 'noop.js');
+  check('_resolveRedirectResourceName: unrecognized name -> undefined (not guessed at)', T._resolveRedirectResourceName('some-resource-nobody-ships') === undefined);
+
+  console.log('\n== 25g. REDIRECT_RESOURCE_FILES — new stub files added 2026-08-22 (one alias sampled per tier) ==');
+  check('_resolveRedirectResourceName: noop.css (static placeholder tier)', T._resolveRedirectResourceName('noop.css') === 'noop.css');
+  check('_resolveRedirectResourceName: 2x2-transparent.png alias -> 2x2.png', T._resolveRedirectResourceName('2x2-transparent.png') === '2x2.png');
+  check('_resolveRedirectResourceName: noopvast-2.0 alias -> noop-vast2.xml', T._resolveRedirectResourceName('noopvast-2.0') === 'noop-vast2.xml');
+  check('_resolveRedirectResourceName: google-analytics.com/ga.js alias -> google-analytics_ga.js (API-mimic tier)', T._resolveRedirectResourceName('google-analytics.com/ga.js') === 'google-analytics_ga.js');
+  check('_resolveRedirectResourceName: fuckadblock-3.2.0.js alias -> nofab.js (fake-API tier)', T._resolveRedirectResourceName('fuckadblock-3.2.0.js') === 'nofab.js');
+  check('_resolveRedirectResourceName: popads.net alias -> popads.js', T._resolveRedirectResourceName('popads.net') === 'popads.js');
+  check('_resolveRedirectResourceName: prebid alias -> prebid-ads.js', T._resolveRedirectResourceName('prebid') === 'prebid-ads.js');
+  check('_resolveRedirectResourceName: hd-main.js (niche no-op tier, no aliases)', T._resolveRedirectResourceName('hd-main.js') === 'hd-main.js');
+
+  // Parser: the exact real-world rule shapes from a BBC filter list —
+  // bare-domain exception (@@) dropped, path-scoped $redirect= now converted
+  // instead of dropped, a scriptlet call on the same domains still converts too.
+  const bbcSnippet = [
+    '@@||imasdk.googleapis.com/js/sdkloader/ima3_dai.js$script,domain=kcra.com|wcvb.com',
+    '||imasdk.googleapis.com/js/sdkloader/ima3.js$script,redirect=google-ima.js,domain=kcra.com|wcvb.com',
+    'kcra.com,wcvb.com##+js(set, google.ima.settings.setDisableFlashAds, noopFunc)',
+  ].join('\n');
+  const bbcConverted = await T._maybeConvertAbpText(bbcSnippet);
+  check('_maybeConvertAbpText: path-scoped $redirect= now converted to network_redirect_rules (previously dropped entirely)',
+    bbcConverted.includes('network_redirect_rules') && bbcConverted.includes('imasdk.googleapis.com/js/sdkloader/ima3.js') && bbcConverted.includes('google-ima.js'),
+    bbcConverted);
+  check('_maybeConvertAbpText: the @@ exception line still contributes nothing (no equivalent here)',
+    !bbcConverted.includes('ima3_dai'), bbcConverted);
+  check('_maybeConvertAbpText: the scriptlet call on the same domains still converts (set_constant)',
+    bbcConverted.includes('set_constant') && bbcConverted.includes('setDisableFlashAds'), bbcConverted);
+
+  // A redirect= modifier pointing at a resource name this extension has no
+  // matching file for is dropped, same as any other unsupported modifier.
+  const unresolvableRedirect = await T._maybeConvertAbpText('||example.com/ads/x.js$script,redirect=some-resource-nobody-ships');
+  check('_maybeConvertAbpText: redirect= to an unresolvable resource name is dropped, not guessed at',
+    !unresolvableRedirect.includes('network_redirect_rules'), unresolvableRedirect);
+
+  // Builder: path pattern -> urlFilter condition; bare domain pattern ->
+  // requestDomains condition; unresolvable resource name drops the entry.
+  const redirectEntries = [
+    'imasdk.googleapis.com/js/sdkloader/ima3.js google-ima.js',
+    'tracker.example.com noopjs', // bare domain — still valid, just uses requestDomains instead
+    'example.com/bad.js some-resource-nobody-ships', // unresolvable — dropped
+  ];
+  const builtRedirectRules = T.buildNetworkRedirectRules(redirectEntries, T.NETWORK_REDIRECT_RULE_ID_START);
+  check('buildNetworkRedirectRules: unresolvable resource name drops the entry entirely', builtRedirectRules.length === 2, JSON.stringify(builtRedirectRules));
+  const pathRule = builtRedirectRules.find(r => r.condition.urlFilter);
+  check('buildNetworkRedirectRules: path pattern -> urlFilter condition + redirect action to the real file',
+    !!pathRule && pathRule.condition.urlFilter === '||imasdk.googleapis.com/js/sdkloader/ima3.js' &&
+    pathRule.action.type === 'redirect' && pathRule.action.redirect.url.includes('google-ima.js'),
+    JSON.stringify(pathRule));
+  const domainRule = builtRedirectRules.find(r => r.condition.requestDomains);
+  check('buildNetworkRedirectRules: bare domain pattern -> requestDomains condition',
+    !!domainRule && domainRule.condition.requestDomains[0] === 'tracker.example.com', JSON.stringify(domainRule));
+  check('buildNetworkRedirectRules: IDs start at NETWORK_REDIRECT_RULE_ID_START, dense',
+    builtRedirectRules[0].id === T.NETWORK_REDIRECT_RULE_ID_START && builtRedirectRules[1].id === T.NETWORK_REDIRECT_RULE_ID_START + 1,
+    JSON.stringify(builtRedirectRules.map(r => r.id)));
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

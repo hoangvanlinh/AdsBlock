@@ -11,6 +11,13 @@ self.ADBLOCK_CONFIG = {
   RULES_CACHE_TEXT_KEY: 'siteRulesCacheText',
   RULES_CACHE_TIME_KEY: 'siteRulesCacheTime',
   RULES_CACHE_TTL_MS: 6 * 60 * 60 * 1000,
+  // fetchRemoteRuleText() (background.js) records a { [url]: message } entry
+  // here for every URL source that fails to fetch, and clears it on the next
+  // successful fetch of that same URL — the dashboard's Rule Source page
+  // reads this to show an inline error per row, unconditionally (no
+  // "is this enabled" gating — a disabled source can't fail since it's
+  // never fetched, so there's nothing to gate).
+  RULE_SOURCE_ERRORS_KEY: 'ruleSourceErrors',
   // Same GitHub repo rule/site-rules.txt is already trusted from — reusing
   // it for a version check means one canonical source, not a second thing
   // to remember to update on release. Deliberately NOT the user-configurable

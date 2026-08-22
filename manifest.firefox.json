@@ -33,7 +33,7 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "scripts": ["config.js", "background.js"],
+    "scripts": ["config.js", "scriptlet-alias-map.js", "background.js"],
     "type": "module"
   },
   "content_scripts": [

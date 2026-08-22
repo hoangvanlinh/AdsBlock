@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Inert stand-in for a VAST 3.0 ad response (IAB spec) — an empty <VAST>
+     root with zero <Ad> children tells a compliant player "no ad available"
+     so it moves straight to content instead of erroring or retrying. -->
+<VAST version="3.0"></VAST>

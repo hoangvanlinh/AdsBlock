@@ -115,15 +115,21 @@ function fetchLocalRules(){
 
 // _fetchAndMergeDirect — fallback when background messaging is unavailable.
 // Reads ruleSources from storage, fetches URL sources, merges with file sources.
+// Mirrors background.js's fetchRemoteRuleText() (same defaultRuleSourceEnabled
+// check, own code/copy here since this path can't call into that function
+// directly) — this used to unconditionally include the default remote
+// regardless of that toggle, a real gap since sendMessage to a cold-starting
+// service worker on a fresh navigation hits this fallback often enough in
+// practice to matter, not just when messaging is truly broken.
 function _fetchAndMergeDirect(cached, resolve){
   if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(null);return;}
-  chrome.storage.local.get(['ruleSources','customRulesUrl','customRulesText'],function(res){
+  chrome.storage.local.get(['ruleSources','customRulesUrl','customRulesText','defaultRuleSourceEnabled'],function(res){
     var sources=res.ruleSources;
-    // Always load the default remote as base first
-    var urls=[REMOTE_RULES_URL];
+    var urls=res.defaultRuleSourceEnabled===false?[]:[REMOTE_RULES_URL];
     var fileParts=[];
     if(sources&&sources.length){
       sources.forEach(function(s){
+        if(s.enabled===false)return;
         if(s.type==='url'&&s.url&&s.url!==REMOTE_RULES_URL)urls.push(s.url);
         else if(s.type==='file'&&s.text)fileParts.push(s.text);
       });
@@ -136,8 +142,19 @@ function _fetchAndMergeDirect(cached, resolve){
       .then(function(urlText){
         var merged=[urlText].concat(fileParts).filter(Boolean).join('\n');
         if(!merged){
-          if(cached&&cached.text)return cached.text;
-          return fetchLocalRules();
+          // Empty because a real fetch was attempted and came back empty
+          // (network down, bad URL) IS a failure — fall back to cached/
+          // local so [host_patterns]/[global] don't silently disappear.
+          // Empty because every source was deliberately disabled (no urls
+          // even attempted) is NOT a failure — same distinction as
+          // background.js's fetchRemoteRuleText(), so a fully-disabled
+          // Rule Source config reliably means zero rules here too, instead
+          // of quietly reverting to the bundled defaults.
+          if(urls.length){
+            if(cached&&cached.text)return cached.text;
+            return fetchLocalRules();
+          }
+          return '';
         }
         return setCachedRules(merged).then(function(){return merged;});
       })
