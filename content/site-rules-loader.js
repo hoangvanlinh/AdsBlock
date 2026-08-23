@@ -190,16 +190,27 @@ function _fetchAndMergeDirect(cached, resolve){
 // _resolveFromPatterns — resolve hostname against [host_patterns] (fallback path;
 // the primary path lets background resolve). Same logic as background resolveSiteKey.
 // LHS forms: hostname | wildcard TLD "base.*" | '|'-separated list | /regex/ (whole LHS).
-function _hostPatternMatches(pat,host){
-  pat=pat.trim();
-  // Raw regex form: /body/flags — the whole LHS, never split on '|'
+//
+// Compiled matcher cached per raw pattern string (mirrors background.js's own
+// fix) — this used to call `new RegExp(...)` fresh on every call, for every
+// pattern; with a large ABP-converted source enabled (e.g. EasyList's ~24k
+// cosmetic rules, each potentially its own [host_patterns] entry) that meant
+// recompiling tens of thousands of regexes on every single hostname
+// resolution. Never invalidated — a pattern string's compiled matcher is a
+// pure function of the string, so stale entries are just unused Map keys.
+var _hostPatternMatchCache=new Map();
+function _compileHostPattern(pat){
   if(pat.charAt(0)==='/'){
     var last=pat.lastIndexOf('/');
     if(last>0){
-      try{return new RegExp(pat.slice(1,last),pat.slice(last+1)).test(host);}catch(e){}
+      try{
+        var wholeRe=new RegExp(pat.slice(1,last),pat.slice(last+1));
+        return function(host){return wholeRe.test(host);};
+      }catch(e){}
     }
-    return false;
+    return null;
   }
+  var subRegexes=[];
   var subs=pat.split('|');
   for(var i=0;i<subs.length;i++){
     var sub=subs[i].trim();
@@ -213,20 +224,103 @@ function _hostPatternMatches(pat,host){
         var escaped=sub.replace(/[.+?^${}()|[\]\\]/g,'\\$&');
         re=new RegExp('(^|\\.)'+escaped+'$');
       }
-      if(re.test(host))return true;
+      subRegexes.push(re);
     }catch(e){}
   }
-  return false;
+  if(!subRegexes.length)return null;
+  return function(host){
+    for(var j=0;j<subRegexes.length;j++){if(subRegexes[j].test(host))return true;}
+    return false;
+  };
+}
+function _hostPatternMatches(pat,host){
+  pat=pat.trim();
+  var matcher=_hostPatternMatchCache.get(pat);
+  if(matcher===undefined){
+    matcher=_compileHostPattern(pat);
+    _hostPatternMatchCache.set(pat,matcher);
+  }
+  return matcher?matcher(host):false;
 }
 
-function _resolveFromPatterns(patterns,host){
+// Mirrors background.js's resolveSiteKey() indexed rewrite — a linear scan
+// through every [host_patterns] entry on every hostname resolution turns
+// into thousands of tests once a large ABP-converted source (e.g.
+// EasyList) is enabled, run in THIS content script's own page-thread
+// fallback path, which is exactly where a live "page unresponsive" symptom
+// was reported (2026-08-23). Same index: plain single-domain patterns (the
+// vast majority) go into an exact-match Map, checked via a short walk up
+// the host's own domain-suffix chain instead of testing every pattern.
+// Wildcard-TLD/regex forms stay in a small fallback list. Cached per
+// `patterns` OBJECT (WeakMap) — a fresh parse naturally invalidates it.
+var _hostPatternIndexCache=new WeakMap();
+function _buildHostPatternIndex(patterns){
+  var exactMap=new Map();
+  var complex=[];
+  var order=0;
   for(var pat in patterns){
     if(!Object.prototype.hasOwnProperty.call(patterns,pat))continue;
-    var targetKey=(patterns[pat]&&patterns[pat][0])||'';
-    if(!targetKey)continue;
-    if(_hostPatternMatches(pat,host))return targetKey;
+    var key=(patterns[pat]&&patterns[pat][0])||'';
+    if(!key)continue;
+    var idx=order++;
+    // Raw regex form (/body/flags) is the WHOLE LHS and must never be split
+    // on '|' — its body can contain a literal '|' as regex alternation
+    // (e.g. "(^|\.)"), not a domain separator. Mirrors the fix in
+    // background.js's own _buildHostPatternIndex (2026-08-23).
+    if(pat.charAt(0)==='/'&&pat.length>1&&pat.lastIndexOf('/')>0){
+      complex.push({pat:pat,key:key,order:idx});
+      continue;
+    }
+    var subs=pat.split('|').map(function(s){return s.trim();}).filter(Boolean);
+    // A '|'-joined LHS with MANY domains is a generic ABP "bucket" pattern
+    // (real lists like EasyList hide a common selector across a couple
+    // hundred loosely related sites on one line); a single-domain LHS is a
+    // dedicated, curated entry for exactly that site. A dedicated entry
+    // must always outrank a bucket entry for the same domain, regardless
+    // of source order — mirrors the fix in background.js's own
+    // _buildHostPatternIndex (2026-08-23).
+    var isBucket=subs.length>1;
+    for(var i=0;i<subs.length;i++){
+      var tok=subs[i];
+      if(tok.slice(-2)==='.*'){
+        complex.push({pat:tok,key:key,order:idx});
+      }else{
+        var d=tok.toLowerCase();
+        var candidate={key:key,order:idx,specific:!isBucket};
+        var existing=exactMap.get(d);
+        if(!existing
+          ||(candidate.specific&&!existing.specific)
+          ||(candidate.specific===existing.specific&&candidate.order<existing.order)){
+          exactMap.set(d,candidate);
+        }
+      }
+    }
   }
-  return '';
+  return {exactMap:exactMap,complex:complex};
+}
+function _resolveFromPatterns(patterns,host){
+  var index=_hostPatternIndexCache.get(patterns);
+  if(!index){
+    index=_buildHostPatternIndex(patterns);
+    _hostPatternIndexCache.set(patterns,index);
+  }
+  var best=null;
+  var h=host;
+  while(h){
+    var hit=index.exactMap.get(h);
+    if(hit&&(!best||hit.order<best.order))best=hit;
+    var dot=h.indexOf('.');
+    if(dot===-1)break;
+    h=h.slice(dot+1);
+  }
+  for(var i=0;i<index.complex.length;i++){
+    var c=index.complex[i];
+    if(best&&c.order>=best.order)continue;
+    if(_hostPatternMatches(c.pat,host)){
+      if(!best||c.order<best.order)best={key:c.key,order:c.order};
+    }
+  }
+  return best?best.key:'';
 }
 
 // Build the {siteKey, global, site} shape from a full rules text (fallback only).

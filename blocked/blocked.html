@@ -55,6 +55,7 @@
     }
     p { font-size: 14px; line-height: 1.6; }
     .hint { color: #64748b; margin-bottom: 24px; }
+    .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     button {
       font: inherit;
       font-weight: 600;
@@ -66,6 +67,28 @@
       color: #fff;
     }
     button:hover { background: #1d4ed8; }
+    button:disabled { opacity: .6; cursor: default; }
+    button.secondary {
+      background: transparent;
+      color: inherit;
+      box-shadow: inset 0 0 0 1.5px #cbd5e1;
+    }
+    button.secondary:hover { background: rgba(100, 116, 139, .1); }
+    @media (prefers-color-scheme: dark) {
+      button.secondary { box-shadow: inset 0 0 0 1.5px #475569; }
+    }
+    .dont-warn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #64748b;
+      margin: 16px 0 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .dont-warn input { margin: 0; }
   </style>
 </head>
 <body>
@@ -77,7 +100,14 @@
       This site is on a malware / phishing blocklist. It may try to steal your
       information, mine cryptocurrency, or install unwanted software.
     </p>
-    <button id="back">Go back</button>
+    <label class="dont-warn" id="dontWarnLabel">
+      <input type="checkbox" id="dontWarn">
+      Don't warn me again about this site
+    </label>
+    <div class="actions">
+      <button id="back" class="secondary">Go back</button>
+      <button id="proceed">Proceed anyway</button>
+    </div>
   </div>
   <script src="blocked.js"></script>
 </body>

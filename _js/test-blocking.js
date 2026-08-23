@@ -33,6 +33,7 @@ function validateDomain(d) {
   return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(d);
 }
 
+const sessionStorageData = {};
 const chromeStub = {
   storage: {
     local: {
@@ -50,6 +51,21 @@ const chromeStub = {
         for (const fn of storageChangeListeners) fn(changes, 'local');
       },
       async clear() { for (const k of Object.keys(storageData)) delete storageData[k]; },
+    },
+    // Separate backing object from `local` — chrome.storage.session is a
+    // genuinely distinct store (in-memory, cleared on browser restart), used
+    // by the "Proceed" button's non-permanent bypass (buildActiveRulesFromStorage's
+    // sessionAllowedDomains / the PROCEED_BLOCKED_HOST handler in background.js).
+    session: {
+      async get(keys) {
+        if (keys == null) return { ...sessionStorageData };
+        const arr = typeof keys === 'string' ? [keys] : Array.isArray(keys) ? keys : Object.keys(keys);
+        const out = {};
+        for (const k of arr) if (k in sessionStorageData) out[k] = sessionStorageData[k];
+        return out;
+      },
+      async set(obj) { Object.assign(sessionStorageData, obj); },
+      async clear() { for (const k of Object.keys(sessionStorageData)) delete sessionStorageData[k]; },
     },
     onChanged: { addListener(fn) { storageChangeListeners.push(fn); } },
   },
@@ -202,6 +218,7 @@ const ctx = vm.createContext(sandbox);
 const exportSnippet = `
 self.__test = {
   ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules, reloadRules,
+  _dedupeMalwarePriority,
   parseRuleText, buildRemoteMalwareRules, updateIcon, _incrementTabBlocked, _setTabBadge,
   getParsedRules, resolveSiteKey,
   _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
@@ -403,9 +420,52 @@ function check(name, cond, detail = '') {
   storageData.pausedDomains = [];
   await T.applyNetworkRules();
 
+  console.log('\n== 7a. "Proceed anyway" (blocked.html) — PROCEED_BLOCKED_HOST message handler (2026-08-23) ==');
+  const send = (msg) => new Promise(res => messageListeners[0](msg, {}, res));
+
+  // Non-permanent ("Don't warn me again" left unchecked): a session-only
+  // bypass — chrome.storage.session, NOT the dashboard's permanent
+  // Allowlist (chrome.storage.local's allowedDomains).
+  const proceedTemp = await send({ type: 'PROCEED_BLOCKED_HOST', host: 'temp-bypass.example', permanent: false });
+  check('PROCEED_BLOCKED_HOST (non-permanent): acks ok', proceedTemp && proceedTemp.ok === true, proceedTemp);
+  const { sessionAllowedDomains: sadAfterTemp } = await chromeStub.storage.session.get('sessionAllowedDomains');
+  check('PROCEED_BLOCKED_HOST (non-permanent): host added to chrome.storage.session',
+    Array.isArray(sadAfterTemp) && sadAfterTemp.includes('temp-bypass.example'), sadAfterTemp);
+  const { allowedDomains: adAfterTemp = [] } = await chromeStub.storage.local.get('allowedDomains');
+  check('PROCEED_BLOCKED_HOST (non-permanent): does NOT touch the permanent allowedDomains list',
+    !adAfterTemp.includes('temp-bypass.example'), adAfterTemp);
+  await T.applyNetworkRules();
+  const tempAllowRule = dynamicRules.find(r => r.action.type === 'allowAllRequests' && r.condition.requestDomains.includes('temp-bypass.example'));
+  check('PROCEED_BLOCKED_HOST (non-permanent): applyNetworkRules() still builds an allowAllRequests rule for it (via sessionAllowedDomains)',
+    !!tempAllowRule, tempAllowRule);
+
+  // Permanent (checkbox checked): the SAME list/UI the dashboard's Allowlist
+  // page already manages — no separate storage key or dashboard section needed.
+  const proceedPermanent = await send({ type: 'PROCEED_BLOCKED_HOST', host: 'permanent-bypass.example', permanent: true });
+  check('PROCEED_BLOCKED_HOST (permanent): acks ok', proceedPermanent && proceedPermanent.ok === true, proceedPermanent);
+  const { allowedDomains: adAfterPermanent = [] } = await chromeStub.storage.local.get('allowedDomains');
+  check('PROCEED_BLOCKED_HOST (permanent): host added to the permanent allowedDomains list',
+    adAfterPermanent.includes('permanent-bypass.example'), adAfterPermanent);
+  await T.applyNetworkRules();
+  const permAllowRule = dynamicRules.find(r => r.action.type === 'allowAllRequests' && r.condition.requestDomains.includes('permanent-bypass.example'));
+  check('PROCEED_BLOCKED_HOST (permanent): applyNetworkRules() builds an allowAllRequests rule for it',
+    !!permAllowRule, permAllowRule);
+
+  await send({ type: 'PROCEED_BLOCKED_HOST', host: 'permanent-bypass.example', permanent: true });
+  const { allowedDomains: adAfterDup = [] } = await chromeStub.storage.local.get('allowedDomains');
+  check('PROCEED_BLOCKED_HOST: proceeding twice for the same host does not duplicate the allowlist entry',
+    adAfterDup.filter(d => d === 'permanent-bypass.example').length === 1, adAfterDup);
+
+  const proceedNoHost = await send({ type: 'PROCEED_BLOCKED_HOST', host: '', permanent: true });
+  check('PROCEED_BLOCKED_HOST: empty host is rejected (ok:false), not silently accepted',
+    proceedNoHost && proceedNoHost.ok === false, proceedNoHost);
+
+  await chromeStub.storage.local.set({ allowedDomains: [] });
+  await chromeStub.storage.session.clear();
+  await T.applyNetworkRules();
+
   console.log('\n== 8. Stats counting via RESOURCE_SEEN (popup/dashboard numbers) ==');
   const listener = messageListeners[0];
-  const send = (msg) => new Promise(res => listener(msg, {}, res));
   await send({ type: 'RESOURCE_SEEN', domain: 'vnexpress.net',
     delta: { seen: 10, ads: 3, trackers: 4, malware: 1 } });
   await T.statsChain;
@@ -1027,6 +1087,29 @@ function check(name, cond, detail = '') {
       !dedupResult.includes('some-selector-that-should-be-skipped'), dedupResult);
   }
 
+  // 25dd. Regression (2026-08-23): dedup must NOT read the merged CACHE —
+  // only the bundled local site-rules.txt. Otherwise enabling one ABP Rule
+  // Source (e.g. EasyList) first, whose conversion happens to touch some
+  // domain, silently drops a LATER-enabled Rule Source's (e.g. Vietnam —
+  // ABPVN List) OWN rules for that same domain instead of merging them —
+  // live-reported as ABPVN "not executing", a .banner-ads selector never
+  // getting injected.
+  {
+    const crossSourceDomain = 'cross-source-dedup-test.example';
+    // Simulate a stale merged cache that already has a host_patterns entry
+    // for this domain (as if some OTHER Rule Source — e.g. EasyList —
+    // converted and cached it on a prior fetch cycle).
+    await chromeStub.storage.local.set({
+      [T.RULES_CACHE_TEXT_KEY || 'siteRulesCacheText']:
+        `[host_patterns]\n${crossSourceDomain} = ua_cross_source_dedup_test\n\n[ua_cross_source_dedup_test]\ndirect_hide_selectors = .from-easylist-stale-cache\n`,
+    });
+    const laterSourceSnippet = `${crossSourceDomain}##.banner-ads`;
+    const laterSourceResult = await T._maybeConvertAbpText(laterSourceSnippet);
+    check('_maybeConvertAbpText: a domain only present in the STALE MERGED CACHE (not the bundled local file) is NOT treated as curated — a later Rule Source\'s own rule for it still converts',
+      laterSourceResult.includes('banner-ads'), laterSourceResult);
+    await chromeStub.storage.local.set({ siteRulesCacheText: '', siteRulesCacheTime: 0 }); // leave state clean
+  }
+
   // 25e. End-to-end through fetchRemoteRuleText(): a Rule Source URL serving
   // raw ABP text gets converted before merging, instead of silently
   // contributing nothing (the pre-existing behavior parseRuleText() has for
@@ -1365,6 +1448,139 @@ function check(name, cond, detail = '') {
 
   await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} }); // leave state clean for any later section
   stubUILanguage = 'en-US';
+
+  console.log('\n== 25o. _dedupeMalwarePriority: malware wins DNR same-priority redirect tie-break (2026-08-23) ==');
+  // A domain in BOTH malwareNetworkDomains and adNetworkPatterns/
+  // trackerNetworkPatterns would otherwise produce two main_frame redirect
+  // rules at the same DNR priority (2) with different targets
+  // (blocked.html?h= vs ?t=ad&h=) — Chrome's tie-break there is
+  // unspecified. Malware must always win, resolved before it ever reaches
+  // Chrome's own rule set.
+  const dedupInput = {
+    adNetworkPatterns: ['ads.example.com', 'evil-overlap.com', 'clean-ad.com'],
+    trackerNetworkPatterns: ['tracker.example.com', 'EVIL-OVERLAP.COM', 'clean-tracker.com'],
+    malwareNetworkDomains: ['evil-overlap.com', 'other-malware.com'],
+    adPatterns: ['adpattern'],
+    trackerPatterns: ['trackerpattern'],
+    malwarePatterns: ['malwarepattern'],
+  };
+  const deduped = T._dedupeMalwarePriority(dedupInput);
+  check('_dedupeMalwarePriority: a domain also flagged as malware is removed from adNetworkPatterns',
+    !deduped.adNetworkPatterns.includes('evil-overlap.com'), deduped.adNetworkPatterns);
+  check('_dedupeMalwarePriority: case-insensitive — trackerNetworkPatterns\' differently-cased duplicate is also removed',
+    !deduped.trackerNetworkPatterns.some(d => d.toLowerCase() === 'evil-overlap.com'), deduped.trackerNetworkPatterns);
+  check('_dedupeMalwarePriority: non-overlapping ad domains are untouched',
+    deduped.adNetworkPatterns.includes('ads.example.com') && deduped.adNetworkPatterns.includes('clean-ad.com'), deduped.adNetworkPatterns);
+  check('_dedupeMalwarePriority: non-overlapping tracker domains are untouched',
+    deduped.trackerNetworkPatterns.includes('tracker.example.com') && deduped.trackerNetworkPatterns.includes('clean-tracker.com'), deduped.trackerNetworkPatterns);
+  check('_dedupeMalwarePriority: malwareNetworkDomains itself is never touched',
+    deduped.malwareNetworkDomains.length === 2 && deduped.malwareNetworkDomains.includes('evil-overlap.com') && deduped.malwareNetworkDomains.includes('other-malware.com'),
+    deduped.malwareNetworkDomains);
+  check('_dedupeMalwarePriority: unrelated keyword-pattern fields pass through unchanged',
+    deduped.adPatterns[0] === 'adpattern' && deduped.trackerPatterns[0] === 'trackerpattern' && deduped.malwarePatterns[0] === 'malwarepattern',
+    deduped);
+
+  const noOverlapInput = {
+    adNetworkPatterns: ['ads.example.com'],
+    trackerNetworkPatterns: ['tracker.example.com'],
+    malwareNetworkDomains: ['malware.example.com'],
+    adPatterns: [], trackerPatterns: [], malwarePatterns: [],
+  };
+  const noOverlapResult = T._dedupeMalwarePriority(noOverlapInput);
+  check('_dedupeMalwarePriority: no overlap -> ad/tracker lists pass through unchanged',
+    noOverlapResult.adNetworkPatterns.length === 1 && noOverlapResult.trackerNetworkPatterns.length === 1,
+    noOverlapResult);
+
+  console.log('\n== 25p. resolveSiteKey(): indexed rewrite preserves exact matching semantics (2026-08-23) ==');
+  // Was a linear scan testing every pattern against the host; now an
+  // exact-match index + a small complex-pattern fallback list. These tests
+  // cover every LHS shape the old regex-based scan supported, plus the
+  // first-insertion-order-wins tie-break the old early-return loop gave for
+  // free and the index has to reconstruct explicitly.
+  const rskPatterns = {
+    'plainsite.example': ['plain_key'],
+    'sub.exactmatch.example': ['exact_sub_key'],
+    'amazon.*': ['wildcard_key'],
+    '/(^|\\.)fmovies[a-z0-9-]*\\./': ['regex_key'],
+    'multi-a.example|multi-b.example': ['multi_key'],
+  };
+  check('resolveSiteKey: exact domain match', T.resolveSiteKey(rskPatterns, 'plainsite.example') === 'plain_key');
+  check('resolveSiteKey: subdomain of a plain domain pattern matches (walks the suffix chain)',
+    T.resolveSiteKey(rskPatterns, 'www.plainsite.example') === 'plain_key');
+  check('resolveSiteKey: a pattern that IS itself a subdomain only matches that subdomain, not the bare parent',
+    T.resolveSiteKey(rskPatterns, 'exactmatch.example') === '');
+  check('resolveSiteKey: ...but does match a deeper subdomain of it',
+    T.resolveSiteKey(rskPatterns, 'a.sub.exactmatch.example') === 'exact_sub_key');
+  check('resolveSiteKey: wildcard-TLD pattern matches any TLD (complex-list fallback)',
+    T.resolveSiteKey(rskPatterns, 'amazon.co.uk') === 'wildcard_key');
+  check('resolveSiteKey: raw regex pattern matches (complex-list fallback)',
+    T.resolveSiteKey(rskPatterns, 'ww4.fmovies-mirror.co') === 'regex_key');
+  check('resolveSiteKey: multi-domain "a|b" pattern matches EITHER side',
+    T.resolveSiteKey(rskPatterns, 'multi-a.example') === 'multi_key' &&
+    T.resolveSiteKey(rskPatterns, 'multi-b.example') === 'multi_key');
+  check('resolveSiteKey: no pattern matches -> empty string, not throwing', T.resolveSiteKey(rskPatterns, 'totally-unrelated.example') === '');
+
+  // First-insertion-order-wins: object key order IS the tie-break — a
+  // later-inserted pattern that also matches must never win over an
+  // earlier one, across exact AND complex patterns, in both directions.
+  const rskOrderA = { 'ordertest.example': ['first'], 'sub.ordertest.example': ['second'] };
+  check('resolveSiteKey: earlier plain pattern wins over a later, more-specific one that also matches',
+    T.resolveSiteKey(rskOrderA, 'sub.ordertest.example') === 'first');
+  const rskOrderB = { '/ordertest2/': ['regex_first'], 'ordertest2.example': ['plain_second'] };
+  check('resolveSiteKey: an earlier COMPLEX pattern still beats a later plain/exact one',
+    T.resolveSiteKey(rskOrderB, 'ordertest2.example') === 'regex_first');
+  const rskOrderC = { 'ordertest3.example': ['plain_first'], '/ordertest3/': ['regex_second'] };
+  check('resolveSiteKey: an earlier plain pattern still beats a later complex one that also matches',
+    T.resolveSiteKey(rskOrderC, 'ordertest3.example') === 'plain_first');
+
+  // Regression (2026-08-23), live-reported: a real-world EasyList "bucket"
+  // line hides a common generic selector across ~150 unrelated sites on
+  // ONE '|'-joined LHS — one of those sites (vnexpress.net) ALSO had its
+  // own dedicated, more specific entry from a LATER-enabled source
+  // (Vietnam — ABPVN List). Because the bucket was parsed FIRST (source
+  // enabled/merged earlier), naive first-insertion-order-wins let the
+  // generic bucket permanently shadow ABPVN's specific rules for that one
+  // domain — ABPVN converted and loaded correctly, but was never reachable.
+  // A dedicated single-domain entry must win regardless of source order.
+  const rskBucket = {
+    // The bucket comes FIRST in insertion order (earlier source).
+    'unrelated-a.example|unrelated-b.example|target-site.example|unrelated-c.example': ['generic_bucket_key'],
+    // The dedicated entry comes SECOND (later-enabled source) but must win.
+    'target-site.example': ['specific_key'],
+  };
+  check('resolveSiteKey: a dedicated single-domain entry wins over an earlier multi-domain bucket that also lists it',
+    T.resolveSiteKey(rskBucket, 'target-site.example') === 'specific_key');
+  check('resolveSiteKey: the bucket entry still resolves normally for its OTHER (non-shadowed) domains',
+    T.resolveSiteKey(rskBucket, 'unrelated-a.example') === 'generic_bucket_key');
+  // Reverse order — the fix must be order-independent, not just "second
+  // entry wins": specificity decides, not merely being the SPECIFIC entry
+  // itself parsed later.
+  const rskBucketReversed = {
+    'target-site2.example': ['specific_key2'],
+    'unrelated-x.example|target-site2.example|unrelated-y.example': ['generic_bucket_key2'],
+  };
+  check('resolveSiteKey: order-independent — the dedicated entry still wins even when the bucket comes SECOND',
+    T.resolveSiteKey(rskBucketReversed, 'target-site2.example') === 'specific_key2');
+  // Two buckets, no dedicated entry at all — falls back to normal
+  // first-insertion-order-wins between them (no specific entry to prefer).
+  const rskTwoBuckets = {
+    'a.example|shared.example': ['bucket_one'],
+    'shared.example|b.example': ['bucket_two'],
+  };
+  check('resolveSiteKey: with no dedicated entry, ties between two buckets still resolve by insertion order',
+    T.resolveSiteKey(rskTwoBuckets, 'shared.example') === 'bucket_one');
+
+  // Cache correctness: the SAME `patterns` object reused across calls (as
+  // getParsedRules()'s cached parse result is) must resolve consistently,
+  // and a DIFFERENT object with the same shape must not share/leak the
+  // first object's cached index.
+  const rskShared = { 'cachetest.example': ['cached_key'] };
+  check('resolveSiteKey: repeated calls on the same patterns object stay consistent (index cache correctness)',
+    T.resolveSiteKey(rskShared, 'cachetest.example') === 'cached_key' &&
+    T.resolveSiteKey(rskShared, 'cachetest.example') === 'cached_key');
+  const rskFresh = { 'cachetest.example': ['different_key_different_object'] };
+  check('resolveSiteKey: a DIFFERENT patterns object with the same key is resolved independently, not from a stale cache',
+    T.resolveSiteKey(rskFresh, 'cachetest.example') === 'different_key_different_object');
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

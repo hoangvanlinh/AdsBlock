@@ -485,21 +485,31 @@ function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains,
 
 // Orchestrator — detect, and if ABP-format, convert to this repo's own
 // site-rules.txt grammar; otherwise return the text unchanged. Dedup against
-// already-active rules reads the last CACHED merged text (getCachedRuleText())
-// rather than the live getParsedRules()/getRulesText() pipeline — this
-// function is itself called FROM inside that pipeline (fetchRemoteRuleText()
-// calls this once per Rule Source), so calling back into getParsedRules()
-// here deadlocks the very first time it runs with no warm cache yet: that
-// promise can't resolve until this call returns, and this call was awaiting
-// it. The cache-only read can't recurse, so cold start just falls back to
-// no dedup (same graceful degradation the try/catch below already had).
+// already-curated rules reads the BUNDLED LOCAL site-rules.txt
+// (fetchLocalRuleText() — a local/bundled fetch, no network, no deadlock
+// risk) rather than the merged CACHE. This used to read getCachedRuleText()
+// instead, which seemed equivalent but silently broke multi-source setups:
+// the cache is the FULL MERGED text from every currently-enabled Rule
+// Source, not just this repo's own hand-curated rules — so enabling EasyList
+// first (which can incidentally cover the same domain a later source also
+// targets, just with worse/generic selectors) would cache a host_patterns
+// entry for that domain, and a Rule Source enabled AFTER it (e.g. Vietnam —
+// ABPVN List) would then see that domain as "already curated" and have its
+// OWN rules for it dropped entirely instead of merged — reported live
+// (2026-08-23) as ABPVN's rules "not executing", a .banner-ads selector
+// never getting injected. Reading only the bundled local file means
+// dedup protects exactly what it was meant to (this repo's own
+// hand-written site-rules.txt), never another Rule Source's output —
+// every OTHER enabled ABP source can still freely contribute its own
+// selectors for the same domain, which parseRuleText()'s normal
+// same-section merge unions together rather than either one winning.
 async function _maybeConvertAbpText(text) {
   if (!_looksLikeAbpFormat(text)) return text;
   let curatedPatterns = new Set(), curatedSectionNames = new Set();
   try {
-    const cached = await getCachedRuleText();
-    if (cached && cached.text) {
-      const parsed = parseRuleText(cached.text);
+    const nativeText = await fetchLocalRuleText();
+    if (nativeText) {
+      const parsed = parseRuleText(nativeText);
       if (parsed.host_patterns) curatedPatterns = new Set(Object.keys(parsed.host_patterns));
       curatedSectionNames = new Set(Object.keys(parsed));
     }
@@ -1235,17 +1245,35 @@ async function getParsedRules() {
 //                                    '|' inside is regex alternation. Do not
 //                                    use '=' inside (the line parser splits on
 //                                    the first '='). Keys are lowercased.
-function _hostPatternMatches(pat, host) {
-  pat = pat.trim();
+//
+// _compileHostPattern() result is cached (below) keyed by the raw pattern
+// string — this used to recompile every `new RegExp(...)` on EVERY call,
+// for EVERY pattern, on EVERY hostname resolution. With only a handful of
+// curated [host_patterns] entries that was unnoticeable; with a large
+// converted ABP source enabled (e.g. EasyList's ~24k cosmetic rules, each
+// potentially becoming its own [host_patterns] entry) resolveSiteKey()'s
+// per-navigation loop could be recompiling tens of thousands of regexes on
+// every single GET_SITE_CONFIG call — live-reported (2026-08-23) as
+// content scripts seemingly not running at all once EasyList was enabled,
+// consistent with the service worker becoming slow/unresponsive enough to
+// look dead. A pattern string's compiled matcher never needs invalidating
+// (it's a pure function of the string), so this cache is never cleared —
+// stale entries for patterns no longer in use are just a few unused Map
+// keys, not a correctness issue.
+const _hostPatternMatchCache = new Map(); // pattern string -> (host)=>bool, or null if invalid
+function _compileHostPattern(pat) {
   // Raw regex form: /body/flags — the whole LHS, never split on '|'
   if (pat.charAt(0) === '/') {
     const last = pat.lastIndexOf('/');
     if (last > 0) {
-      try { return new RegExp(pat.slice(1, last), pat.slice(last + 1)).test(host); }
-      catch { /* bad regex — no match */ }
+      try {
+        const re = new RegExp(pat.slice(1, last), pat.slice(last + 1));
+        return host => re.test(host);
+      } catch { /* bad regex */ }
     }
-    return false;
+    return null;
   }
+  const subRegexes = [];
   for (let sub of pat.split('|')) {
     sub = sub.trim();
     if (!sub) continue;
@@ -1258,20 +1286,141 @@ function _hostPatternMatches(pat, host) {
         const escaped = sub.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
         re = new RegExp('(^|\\.)' + escaped + '$');
       }
-      if (re.test(host)) return true;
-    } catch { /* bad pattern — skip */ }
+      subRegexes.push(re);
+    } catch { /* bad sub-pattern — skip */ }
   }
-  return false;
+  return subRegexes.length ? host => subRegexes.some(re => re.test(host)) : null;
+}
+function _hostPatternMatches(pat, host) {
+  pat = pat.trim();
+  let matcher = _hostPatternMatchCache.get(pat);
+  if (matcher === undefined) {
+    matcher = _compileHostPattern(pat);
+    _hostPatternMatchCache.set(pat, matcher);
+  }
+  return matcher ? matcher(host) : false;
+}
+
+// resolveSiteKey() used to do a linear scan through EVERY [host_patterns]
+// entry, testing each against the host — fine for a handful of curated
+// entries, but a large ABP-converted source (EasyList's ~24k cosmetic rules
+// can expand into thousands of host_patterns entries) turns this into
+// thousands of pattern tests on EVERY SINGLE frame navigation (every
+// iframe on a page gets its own GET_SITE_CONFIG call) — live-reported
+// (2026-08-23) as the page/service worker becoming unresponsive with
+// EasyList enabled, even after caching the compiled regexes (that made
+// each individual test cheaper, but there were still thousands of them per
+// resolution). Indexed instead: the vast majority of patterns are plain
+// single-domain entries (no wildcard, no regex) — those go into an
+// exact-match Map, checked via a short walk up the HOST's own
+// domain-suffix chain (e.g. "a.b.vnexpress.net" -> "b.vnexpress.net" ->
+// "vnexpress.net", a handful of Map lookups) instead of testing every
+// pattern against the host. This exactly reproduces the old regex
+// '(^|\.)domain$' semantics (matches the domain itself or any subdomain).
+// Wildcard-TLD ("domain.*") and raw-regex ("/.../") patterns are rare and
+// stay in a small fallback list, still tested directly — but skipped once
+// something earlier in insertion order has already matched, since it can't
+// possibly win. The index is cached per `patterns` OBJECT via a WeakMap —
+// a fresh parsed-rules object after every rule reload naturally
+// invalidates it, nothing to clear manually.
+const _hostPatternIndexCache = new WeakMap();
+function _buildHostPatternIndex(patterns) {
+  const exactMap = new Map(); // domain -> { key, order, specific }
+  const complex = []; // { pat, key, order } — wildcard-TLD / regex forms
+  let order = 0;
+  for (const pat in patterns) {
+    if (!Object.prototype.hasOwnProperty.call(patterns, pat)) continue;
+    const key = (patterns[pat] && patterns[pat][0]) || '';
+    if (!key) continue;
+    const idx = order++;
+    // Raw regex form (/body/flags) is the WHOLE LHS and must never be split
+    // on '|' — its body can (and often does, e.g. "(^|\.)") contain a
+    // literal '|' as regex alternation, not a domain separator. Splitting
+    // it first (as an earlier version of this function did) shredded the
+    // pattern into garbage fragments and silently dropped it from the
+    // index entirely — caught by a direct regression test (2026-08-23).
+    if (pat.charAt(0) === '/' && pat.length > 1 && pat.lastIndexOf('/') > 0) {
+      complex.push({ pat, key, order: idx });
+      continue;
+    }
+    const subTokens = pat.split('|').map(s => s.trim()).filter(Boolean);
+    // A '|'-joined LHS with MANY domains is a generic ABP "bucket" pattern
+    // — real filter lists (EasyList in particular) routinely hide a common
+    // selector (e.g. a generic ".banner") across a couple hundred loosely
+    // related sites on one line, purely to save space. A single-domain LHS
+    // is a dedicated, curated entry for exactly that one site. Live bug
+    // (2026-08-23): EasyList's bucket line happened to include the same
+    // domain a later-enabled, more specific source (Vietnam — ABPVN List)
+    // had its OWN dedicated entry for — since parseRuleText() treats the
+    // whole joined string as one opaque object key, the two never merge at
+    // the text level, and "first insertion order wins" let EasyList's
+    // generic bucket permanently shadow ABPVN's specific rules for that
+    // domain, even though ABPVN loaded and converted correctly. A
+    // dedicated single-domain entry must always outrank a bucket entry for
+    // the same domain, regardless of which source was enabled/processed
+    // first — that's the whole point of a source being domain-specific.
+    const isBucket = subTokens.length > 1;
+    for (const tok of subTokens) {
+      if (tok.slice(-2) === '.*') {
+        complex.push({ pat: tok, key, order: idx });
+      } else {
+        const d = tok.toLowerCase();
+        const candidate = { key, order: idx, specific: !isBucket };
+        const existing = exactMap.get(d);
+        if (!existing
+          || (candidate.specific && !existing.specific)
+          || (candidate.specific === existing.specific && candidate.order < existing.order)) {
+          exactMap.set(d, candidate);
+        }
+      }
+    }
+  }
+  return { exactMap, complex };
 }
 
 function resolveSiteKey(patterns, host) {
-  for (const pat in patterns) {
-    if (!Object.prototype.hasOwnProperty.call(patterns, pat)) continue;
-    const targetKey = (patterns[pat] && patterns[pat][0]) || '';
-    if (!targetKey) continue;
-    if (_hostPatternMatches(pat, host)) return targetKey;
+  let index = _hostPatternIndexCache.get(patterns);
+  if (!index) {
+    index = _buildHostPatternIndex(patterns);
+    _hostPatternIndexCache.set(patterns, index);
   }
-  return '';
+  let best = null; // { key, order }
+  let h = host;
+  while (h) {
+    const hit = index.exactMap.get(h);
+    if (hit && (!best || hit.order < best.order)) best = hit;
+    const dot = h.indexOf('.');
+    if (dot === -1) break;
+    h = h.slice(dot + 1);
+  }
+  for (const c of index.complex) {
+    if (best && c.order >= best.order) continue; // can't possibly win — skip the test
+    if (_hostPatternMatches(c.pat, host)) {
+      if (!best || c.order < best.order) best = { key: c.key, order: c.order };
+    }
+  }
+  return best ? best.key : '';
+}
+
+// A domain that ends up in BOTH malwareNetworkDomains and adNetworkPatterns/
+// trackerNetworkPatterns (curated sources — default + EasyList + region
+// lists — can genuinely overlap; nothing currently dedupes across them at
+// merge time) would otherwise produce two main_frame redirect rules at the
+// SAME DNR priority (2) with DIFFERENT targets (blocked.html?h= for
+// malware vs blocked.html?t=ad&h= for an ad popup). Chrome's tie-break
+// between same-priority, same-action-type ('redirect') rules is
+// unspecified/undocumented — which warning actually shows would be
+// unpredictable. Malware always wins here: it's the more severe warning,
+// and a user should never see "just an ad" for a domain actually flagged
+// as malware/phishing by resolving the conflict ourselves before it ever
+// reaches Chrome's own (unspecified) tie-break.
+function _dedupeMalwarePriority(config) {
+  const malwareSet = new Set(config.malwareNetworkDomains.map(d => d.toLowerCase()));
+  return {
+    ...config,
+    adNetworkPatterns: config.adNetworkPatterns.filter(d => !malwareSet.has(d.toLowerCase())),
+    trackerNetworkPatterns: config.trackerNetworkPatterns.filter(d => !malwareSet.has(d.toLowerCase())),
+  };
 }
 
 async function ensureRuleDefinitionsLoaded() {
@@ -1280,14 +1429,14 @@ async function ensureRuleDefinitionsLoaded() {
     _ruleConfigPromise = (async () => {
       const parsed = await getParsedRules();
       const global = parsed.global || {};
-      const config = {
+      const config = _dedupeMalwarePriority({
         adNetworkPatterns: global.ad_network_patterns?.length ? global.ad_network_patterns : FALLBACK_RULE_CONFIG.adNetworkPatterns,
         trackerNetworkPatterns: global.tracker_network_patterns?.length ? global.tracker_network_patterns : FALLBACK_RULE_CONFIG.trackerNetworkPatterns,
         malwareNetworkDomains: global.malware_network_domains?.length ? global.malware_network_domains : FALLBACK_RULE_CONFIG.malwareNetworkDomains,
         adPatterns: global.ad_patterns?.length ? global.ad_patterns : FALLBACK_RULE_CONFIG.adPatterns,
         trackerPatterns: global.tracker_patterns?.length ? global.tracker_patterns : FALLBACK_RULE_CONFIG.trackerPatterns,
         malwarePatterns: global.malware_patterns?.length ? global.malware_patterns : FALLBACK_RULE_CONFIG.malwarePatterns,
-      };
+      });
       const { adRules, trackerRules } = buildDefaultRulesFromConfig(config);
       DEFAULT_RULES = [...adRules, ...trackerRules];
       MALWARE_RULES = buildMalwareRulesFromConfig(config, DEFAULT_RULES.length +1);
@@ -1497,7 +1646,20 @@ async function buildActiveRulesFromStorage() {
   // These have higher priority and override ALL blocking rules for
   // requests originating from these domains. This is the only
   // reliable way to fully pause blocking per-domain.
-  const excludedDomains = [...new Set([...pausedDomains, ...allowedDomains])];
+  //
+  // sessionAllowedDomains (chrome.storage.session — cleared on browser
+  // restart, survives a service-worker restart within the same session) is
+  // the "Proceed" button on blocked/blocked.html WITHOUT the "Don't warn me
+  // again" checkbox: a one-session bypass for that specific blocked host so
+  // the very next navigation there doesn't immediately get redirected right
+  // back to the warning page, without permanently allowlisting it the way
+  // checking that box does (that goes into `allowedDomains` instead, via
+  // the PROCEED_BLOCKED_HOST message handler below).
+  let sessionAllowedDomains = [];
+  try {
+    ({ sessionAllowedDomains = [] } = await chrome.storage.session.get('sessionAllowedDomains'));
+  } catch { /* chrome.storage.session unavailable (old browser) — best-effort only */ }
+  const excludedDomains = [...new Set([...pausedDomains, ...allowedDomains, ...sessionAllowedDomains])];
   const pauseAllowRules = excludedDomains.map((domain, i) => ({
     id: PAUSE_ALLOW_RULE_ID_START + i,
     priority: 10, // higher than all block rules (priority 1-2)
@@ -2666,6 +2828,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'ALLOWLIST_CHANGED': {
+        await applyNetworkRules();
+        sendResponse({ ok: true });
+        break;
+      }
+
+      // Sent by blocked/blocked.js's "Proceed anyway" button. msg.permanent
+      // (the "Don't warn me again about this site" checkbox) decides which
+      // list the host goes into — see buildActiveRulesFromStorage()'s own
+      // comment on sessionAllowedDomains vs allowedDomains for why there
+      // are two. Rules are rebuilt and acknowledged BEFORE blocked.js
+      // navigates away, so the real destination doesn't immediately bounce
+      // back to this same warning page.
+      case 'PROCEED_BLOCKED_HOST': {
+        const host = String(msg.host || '').toLowerCase();
+        if (!host) { sendResponse({ ok: false }); break; }
+        if (msg.permanent) {
+          const { allowedDomains: current = [] } = await chrome.storage.local.get('allowedDomains');
+          if (!current.includes(host)) {
+            await chrome.storage.local.set({ allowedDomains: [...current, host] });
+          }
+        } else {
+          try {
+            const { sessionAllowedDomains: current = [] } = await chrome.storage.session.get('sessionAllowedDomains');
+            if (!current.includes(host)) {
+              await chrome.storage.session.set({ sessionAllowedDomains: [...current, host] });
+            }
+          } catch { /* chrome.storage.session unavailable — proceed will just re-warn next time */ }
+        }
         await applyNetworkRules();
         sendResponse({ ok: true });
         break;
