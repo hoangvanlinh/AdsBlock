@@ -147,7 +147,10 @@ mainToggle.addEventListener('change', async () => {
 
       chrome.storage.local.set({ enabled: true, pausedDomains: updatedPaused });
       updateToggleUI(true, false);
-      chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: true });
+      // Wait for background to finish rebuilding declarativeNetRequest rules
+      // before refreshing the rule-count chip — otherwise it re-reads the
+      // stale (pre-toggle) count while applyNetworkRules() is still running.
+      chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: true }, refreshRuleCount);
 
       if (wasPaused) {
         pauseSiteBtn.classList.remove('active');
@@ -160,7 +163,7 @@ mainToggle.addEventListener('change', async () => {
   } else {
     chrome.storage.local.set({ enabled: false });
     updateToggleUI(false);
-    chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: false });
+    chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: false }, refreshRuleCount);
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: false }).catch(() => {});
   }
@@ -314,19 +317,25 @@ document.getElementById('pickElement')?.addEventListener('click', async () => {
 loadState();
 maybeShowReviewPrompt();
 
-// Show how many network blocking rules are actually loaded
-chrome.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {
-  const chip = document.getElementById('ruleChip');
-  if (!chip) return;
-  if (chrome.runtime.lastError || !res) {
-    chip.textContent = 'network rules: ?';
-    chip.classList.add('zero');
-    return;
-  }
-  const n = res.count ?? 0;
-  chip.textContent = `${n} network rules loaded`;
-  chip.classList.toggle('zero', n === 0);
-});
+// Show how many network blocking rules are actually loaded — re-called after
+// the Protection toggle so the chip doesn't keep showing a stale count from
+// before the background finished adding/removing declarativeNetRequest rules.
+function refreshRuleCount() {
+  void chrome.runtime.lastError; // ack TOGGLE's own response, if any
+  chrome.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {
+    const chip = document.getElementById('ruleChip');
+    if (!chip) return;
+    if (chrome.runtime.lastError || !res) {
+      chip.textContent = 'network rules: ?';
+      chip.classList.add('zero');
+      return;
+    }
+    const n = res.count ?? 0;
+    chip.textContent = `${n} network rules loaded`;
+    chip.classList.toggle('zero', n === 0);
+  });
+}
+refreshRuleCount();
 
 // ── Version / update check ──────────────────────────────────────
 // GET_UPDATE_STATUS reads cached state only (background.js checks against
