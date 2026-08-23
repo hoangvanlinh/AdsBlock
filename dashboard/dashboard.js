@@ -501,8 +501,24 @@ document.getElementById('addAllowBtn')?.addEventListener('click', () => {
   document.getElementById('allowForm')?.classList.toggle('hidden');
 });
 
+// The DNR allowAllRequests rule this list feeds (buildActiveRulesFromStorage(),
+// background.js) matches on `requestDomains: [domain]` — a bare hostname,
+// not a URL. Pasting a full URL here ("https://example.com/path?x=1")
+// used to save literally that whole string, which never matches any real
+// request's domain — the entry looked saved but silently did nothing.
+// new URL(...) needs a scheme to parse at all; a bare "example.com" throws
+// on the first attempt, so retry with "https://" prepended before falling
+// back to a plain strip for anything neither form can parse.
+function _extractHostname(input) {
+  const val = (input || '').trim();
+  if (!val) return '';
+  try { return new URL(val).hostname.toLowerCase(); } catch { /* no scheme — try again below */ }
+  try { return new URL('https://' + val).hostname.toLowerCase(); } catch { /* fall through */ }
+  return val.toLowerCase().split(/[/?#]/)[0].split(':')[0];
+}
+
 document.getElementById('saveAllow')?.addEventListener('click', () => {
-  const val = document.getElementById('allowInput')?.value.trim().toLowerCase();
+  const val = _extractHostname(document.getElementById('allowInput')?.value);
   if (!val || allowedDomains.includes(val)) return;
   allowedDomains.push(val);
   renderAllowList();
@@ -992,6 +1008,7 @@ function escHtml(str) {
 const RULES_CACHE_KEY_TEXT = self.ADBLOCK_CONFIG.RULES_CACHE_TEXT_KEY;
 const RULES_CACHE_KEY_TIME = self.ADBLOCK_CONFIG.RULES_CACHE_TIME_KEY;
 const RULE_SOURCE_ERRORS_KEY = self.ADBLOCK_CONFIG.RULE_SOURCE_ERRORS_KEY;
+const RULE_SOURCE_STATS_KEY = self.ADBLOCK_CONFIG.RULE_SOURCE_STATS_KEY;
 
 /* ── Init ─────────────────────────────────────── */
 loadOverviewStats();
@@ -1070,7 +1087,40 @@ function makeSourceId() {
 // user-added ones, toggleable via a per-URL entry in
 // `defaultRuleSourceOverrides` since these aren't part of the `ruleSources`
 // array and have no Remove button (they're not user-added).
-function _makeSourceRow({ label, title, checked, onToggle, onRemove, error }) {
+function _sanitizeExportFileName(name) {
+  return String(name || 'rule-source').replace(/[^a-z0-9._-]+/gi, '_').replace(/^_+|_+$/g, '') || 'rule-source';
+}
+
+// Re-fetches `url` and runs it through the SAME ABP-conversion background.js
+// uses for the real merged rules, then downloads the result — lets the user
+// inspect exactly what a source produced in this repo's own grammar (e.g.
+// checking the "abp_"-prefixed [host_patterns] keys it minted) without
+// digging through DevTools. Always fresh (no cache): background.js only
+// ever keeps the full multi-source MERGED blob, never a per-URL one.
+function _exportConvertedRuleSource(url, btn, label) {
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Exporting…';
+  chrome.runtime.sendMessage({ type: 'EXPORT_CONVERTED_RULE_SOURCE', url }, (res) => {
+    btn.disabled = false;
+    btn.textContent = original;
+    if (chrome.runtime.lastError || !res || !res.ok) {
+      alert('Export failed: ' + ((res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || 'unknown error'));
+      return;
+    }
+    const blob = new Blob([res.text], { type: 'text/plain' });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = _sanitizeExportFileName(label) + '.converted.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  });
+}
+
+function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stats, url }) {
   const row = document.createElement('div');
   row.className = 'rules-source-item';
   const toggle = document.createElement('input');
@@ -1084,6 +1134,37 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error }) {
   labelSpan.textContent = label;
   row.appendChild(toggle);
   row.appendChild(labelSpan);
+  // Skip-stats, if any (RULE_SOURCE_STATS_KEY — only ever set for an
+  // ABP-format source; a native one never gets an entry, so this is silent
+  // for those). Answers "did this source's rules actually load, or did
+  // some silently get skipped/parse-fail" — previously only visible by
+  // manually diffing the source's raw text against the converted output.
+  if (stats && stats.total) {
+    const skipped = stats.total - stats.converted;
+    const statSpan = document.createElement('span');
+    statSpan.className = 'source-stats' + (skipped ? ' has-skips' : '');
+    statSpan.title = `${stats.converted} converted, ${skipped} skipped of ${stats.total} rules` +
+      (stats.exception ? `\n${stats.exception} exception rules (no cancellation model here)` : '') +
+      (stats.procedural ? `\n${stats.procedural} procedural selectors (:has-text, :xpath, ...)` : '') +
+      (stats.adguardExtended ? `\n${stats.adguardExtended} AdGuard-extended modifiers` : '') +
+      (stats.unmappedScriptlet ? `\n${stats.unmappedScriptlet} unmapped scriptlet calls` : '') +
+      (stats.complexNetwork ? `\n${stats.complexNetwork} unsupported network-rule modifiers` : '') +
+      (stats.dedupSkipped ? `\n${stats.dedupSkipped} already curated by this repo's own site-rules.txt` : '') +
+      (stats.unrecognized ? `\n${stats.unrecognized} unrecognized syntax` : '');
+    statSpan.textContent = skipped ? `${stats.converted}/${stats.total} loaded` : `${stats.total} loaded`;
+    row.appendChild(statSpan);
+    // Only ever meaningful alongside the stats badge above — RULE_SOURCE_STATS_KEY
+    // is set only for a source that WAS detected as ABP-format and actually
+    // converted, so this is the same "has something to export" signal.
+    if (url) {
+      const exportBtn = document.createElement('button');
+      exportBtn.className = 'btn-ghost btn-sm';
+      exportBtn.textContent = 'Export';
+      exportBtn.title = 'Download this source\'s rules converted to this repo\'s own grammar';
+      exportBtn.addEventListener('click', () => _exportConvertedRuleSource(url, exportBtn, label));
+      row.appendChild(exportBtn);
+    }
+  }
   // Fetch error, if any — always shown when present, no extra condition
   // (e.g. "only if the source is enabled"): an error here means the LAST
   // fetch attempt failed, which is worth knowing regardless of current state.
@@ -1104,11 +1185,12 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error }) {
   return row;
 }
 
-function renderRulesSources(sources, defaultOverrides, sourceErrors) {
+function renderRulesSources(sources, defaultOverrides, sourceErrors, sourceStats) {
   const urlList  = document.getElementById('rulesUrlList');
   const fileList = document.getElementById('rulesFileList');
   if (!urlList || !fileList) return;
   const errors = sourceErrors || {};
+  const stats = sourceStats || {};
   const overrides = defaultOverrides || {};
 
   const urlSources  = sources.filter(s => s.type === 'url');
@@ -1124,6 +1206,8 @@ function renderRulesSources(sources, defaultOverrides, sourceErrors) {
       checked,
       onToggle: (checked) => toggleDefaultRuleSource(entry.url, checked),
       error: errors[entry.url],
+      stats: stats[entry.url],
+      url: entry.url,
       // no onRemove — a built-in default can be turned off, not deleted.
     }));
   }
@@ -1134,6 +1218,8 @@ function renderRulesSources(sources, defaultOverrides, sourceErrors) {
       onToggle: (checked) => toggleRulesSource(src.id, checked),
       onRemove: () => removeRulesSource(src.id),
       error: errors[src.url],
+      stats: stats[src.url],
+      url: src.url,
     }));
   }
 
@@ -1150,7 +1236,7 @@ function renderRulesSources(sources, defaultOverrides, sourceErrors) {
 
 function loadRulesSourceSettings() {
   chrome.storage.local.get(
-    ['ruleSources', 'customRulesUrl', 'localRulesFileName', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides', RULES_CACHE_KEY_TEXT, RULE_SOURCE_ERRORS_KEY],
+    ['ruleSources', 'customRulesUrl', 'localRulesFileName', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides', RULES_CACHE_KEY_TEXT, RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY],
     (data) => {
       let sources = data.ruleSources;
       if (!sources) {
@@ -1180,7 +1266,7 @@ function loadRulesSourceSettings() {
         }
         chrome.storage.local.remove('defaultRuleSourceEnabled');
       }
-      renderRulesSources(sources || [], overrides, data[RULE_SOURCE_ERRORS_KEY] || {});
+      renderRulesSources(sources || [], overrides, data[RULE_SOURCE_ERRORS_KEY] || {}, data[RULE_SOURCE_STATS_KEY] || {});
     }
   );
 }

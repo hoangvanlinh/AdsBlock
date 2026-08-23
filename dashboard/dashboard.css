@@ -967,6 +967,13 @@ body::before {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.source-stats {
+  flex-shrink: 0;
+  color: var(--text-3);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.source-stats.has-skips { color: var(--amber); }
 .btn-sm {
   padding: 2px 8px;
   font-size: 11px;

@@ -85,6 +85,14 @@ self.ADBLOCK_CONFIG = {
   // "is this enabled" gating — a disabled source can't fail since it's
   // never fetched, so there's nothing to gate).
   RULE_SOURCE_ERRORS_KEY: 'ruleSourceErrors',
+  // Same idea as RULE_SOURCE_ERRORS_KEY but for an ABP-format source that
+  // fetched fine yet had some of its rules silently dropped during
+  // conversion (unsupported syntax, procedural selectors, AdGuard-extended
+  // modifiers, unmapped scriptlets, ...) — a { [url]: skipStats } map,
+  // skipStats being _abpEmptySkipStats()'s shape (background.js). A source
+  // that ISN'T ABP-format (this repo's own grammar, passed through
+  // unchanged) never gets an entry here at all — there's nothing to report.
+  RULE_SOURCE_STATS_KEY: 'ruleSourceStats',
   // Same GitHub repo rule/site-rules.txt is already trusted from — reusing
   // it for a version check means one canonical source, not a second thing
   // to remember to update on release. Deliberately NOT the user-configurable

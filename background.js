@@ -26,6 +26,7 @@ const {
   RULES_CACHE_TIME_KEY,
   RULES_CACHE_TTL_MS,
   RULE_SOURCE_ERRORS_KEY,
+  RULE_SOURCE_STATS_KEY,
   DEBUG_LOCAL,
   EXTENSION_META_REMOTE_URL,
   EXTENSION_META_REMOTE_URL_FIREFOX,
@@ -229,19 +230,20 @@ function _abpSplitDomainList(s) {
 
 function _abpParseDomainPart(domainPart, curatedPatterns) {
   let hasGlobal = false;
+  let dedupSkipped = 0;
   const domains = [];
   for (const raw of _abpSplitDomainList(domainPart.trim())) {
     const tok = raw.trim();
     if (!tok || tok.charAt(0) === '~') continue;
     if (tok === '*') { hasGlobal = true; continue; }
     if (tok.charAt(0) === '/' && tok.length > 1 && tok.lastIndexOf('/') > 0) {
-      if (!curatedPatterns.has(tok)) domains.push(tok);
+      if (!curatedPatterns.has(tok)) domains.push(tok); else dedupSkipped++;
       continue;
     }
     const d = tok.toLowerCase();
-    if (!curatedPatterns.has(d)) domains.push(d);
+    if (!curatedPatterns.has(d)) domains.push(d); else dedupSkipped++;
   }
-  return { domains, hasGlobal };
+  return { domains, hasGlobal, dedupSkipped };
 }
 
 function _abpStripTld(domain) {
@@ -249,10 +251,29 @@ function _abpStripTld(domain) {
   return idx > 0 ? domain.slice(0, idx) : domain;
 }
 
+// Every key this mints always carries the same "abp_" prefix, unlike the old
+// scheme (bare domain name, only "ua_"-prefixed on collision) — so an
+// ABP-source-converted section is visually distinguishable at a glance from
+// a hand-curated one ([youtube], [tuoitre] in the bundled site-rules.txt)
+// and from a picker/dashboard-generated one (_elementRuleSiteKey's "qkv1_"
+// family), the same way those two are already told apart by their own
+// prefixes. On a collision (this key already claimed — by a curated
+// section, or an earlier group in this batch via `usedKeys`, see
+// _maybeConvertAbpText's comment on why usedKeys must be SHARED across every
+// source converted together) a numeric suffix is appended and bumped until
+// free, rather than the old single-shot "ua_" rename — which itself could
+// still collide a second time with 3+ unrelated groups sharing the same
+// TLD-stripped name (e.g. example.com / example.org / example.net) and
+// silently merge the 2nd and 3rd into one section.
 function _abpSanitizeKey(domain, curatedSectionNames, usedKeys) {
-  let key = _abpStripTld(domain).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-  if (!/^[a-z]/.test(key)) key = 'x' + key;
-  if (curatedSectionNames.has(key) || usedKeys.has(key)) key = 'ua_' + key;
+  let base = _abpStripTld(domain).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  if (!/^[a-z]/.test(base)) base = 'x' + base;
+  let key = 'abp_' + base;
+  if (curatedSectionNames.has(key) || usedKeys.has(key)) {
+    let n = 2;
+    while (curatedSectionNames.has(key + '_' + n) || usedKeys.has(key + '_' + n)) n++;
+    key = key + '_' + n;
+  }
   return key;
 }
 
@@ -337,10 +358,34 @@ function _abpFormatTrustedReplaceScriptText(args) {
   return [nodeName, pattern, ...extras, replacement].filter(a => a !== '').join(', ');
 }
 
+// Empty/zeroed skip-stats shape — one bucket per reason a rule LINE (not
+// blank lines/comments — those are just noise, not filter rules) ends up
+// contributing nothing to the converted output, plus `converted` for lines
+// that DID. `dedupSkipped` is its own bucket, separate from the "unsupported
+// syntax" ones — a domain skipped because this repo's own site-rules.txt
+// already curates it is the dedup mechanism working as intended (see
+// _maybeConvertAbpText's own comment), not a parsing failure, and
+// conflating the two would make a perfectly healthy source look broken.
+function _abpEmptySkipStats() {
+  return {
+    total: 0, converted: 0, exception: 0, procedural: 0,
+    adguardExtended: 0, unmappedScriptlet: 0, complexNetwork: 0,
+    dedupSkipped: 0, unrecognized: 0,
+  };
+}
+
 // Core line-by-line classifier — mirrors convert-uassets.js's parseFile,
 // minus the network-rules.json structured-rule half (see file header comment above).
-function _abpParseFile(text, curatedPatterns, acc) {
+// `stats` (optional) tallies why each non-comment line did or didn't end up
+// contributing to the output — see _abpEmptySkipStats() for the buckets;
+// exposed so a caller (fetchRemoteRuleText()'s per-URL loop) can report
+// per-Rule-Source "N lines skipped" instead of the previous all-or-nothing
+// visibility (a source either obviously produced nothing at all, or
+// silently dropped some fraction of its rules with no way to tell how much
+// or why short of manually diffing input against output).
+function _abpParseFile(text, curatedPatterns, acc, stats) {
   const { domainSelectors, domainScriptlets, globalSelectors, globalScriptlets, networkDomains, networkRedirects } = acc;
+  const s = stats || _abpEmptySkipStats();
   const lines = String(text || '').split(/\r?\n/);
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -348,10 +393,12 @@ function _abpParseFile(text, curatedPatterns, acc) {
 
     const netMatch = /^\|\|([^$]+?)(?:\$(.*))?$/.exec(line);
     if (netMatch) {
+      s.total++;
       const pattern = netMatch[1];
       const optsStr = netMatch[2] || '';
       if (ABP_BARE_NETWORK_DOMAIN_RE.test(pattern) && (!optsStr || /^~?third-party$/.test(optsStr))) {
         networkDomains.add(pattern.slice(0, -1).toLowerCase());
+        s.converted++;
       } else {
         // Not a bare-domain block — the one other shape this converter
         // preserves is a path-scoped rule carrying a $redirect=/$redirect-rule=
@@ -364,11 +411,14 @@ function _abpParseFile(text, curatedPatterns, acc) {
         const file = redirectMatch && _resolveRedirectResourceName(redirectMatch[1]);
         if (file && !ABP_BARE_NETWORK_DOMAIN_RE.test(pattern)) {
           networkRedirects.add(pattern + ' ' + file);
+          s.converted++;
+        } else {
+          s.complexNetwork++;
         }
       }
       continue;
     }
-    if (line.charAt(0) === '@' && line.charAt(1) === '@') continue; // exceptions — no equivalent here, dropped
+    if (line.charAt(0) === '@' && line.charAt(1) === '@') { s.total++; s.exception++; continue; } // exceptions — no equivalent here, dropped
 
     // '#@#' (cosmetic EXCEPTION) never contains '##' as a substring, so it
     // needs its own detection rather than falling out of the '##' check
@@ -386,27 +436,28 @@ function _abpParseFile(text, curatedPatterns, acc) {
     let sepIdx = -1, sepLen = 0, isException = false;
     if (hideIdx !== -1 && (excIdx === -1 || hideIdx < excIdx)) { sepIdx = hideIdx; sepLen = 2; }
     else if (excIdx !== -1) { sepIdx = excIdx; sepLen = 3; isException = true; }
-    if (sepIdx === -1) continue;
+    if (sepIdx === -1) { s.total++; s.unrecognized++; continue; }
 
     const domainPart = line.slice(0, sepIdx);
     const selectorPart = line.slice(sepIdx + sepLen);
 
-    if (!selectorPart) continue;
+    if (!selectorPart) { s.total++; s.unrecognized++; continue; }
+    s.total++;
     const isScriptletCall = selectorPart.indexOf('+js(') === 0 && selectorPart.charAt(selectorPart.length - 1) === ')';
-    if (isException && !isScriptletCall) continue; // plain cosmetic exception — unsupported, dropped
-    if (domainPart.trim().charAt(0) === '[') continue; // AdGuard extended modifier syntax — not supported
+    if (isException && !isScriptletCall) { s.exception++; continue; } // plain cosmetic exception — unsupported, dropped
+    if (domainPart.trim().charAt(0) === '[') { s.adguardExtended++; continue; } // AdGuard extended modifier syntax — not supported
 
     if (isScriptletCall) {
       const inner = selectorPart.slice(4, -1);
       const parts = _abpSplitScriptletArgs(inner);
       const name = (parts.shift() || '').trim();
       const mapping = self.SCRIPTLET_ALIAS_MAP && self.SCRIPTLET_ALIAS_MAP[name];
-      if (!mapping || !domainPart) continue;
+      if (!mapping || !domainPart) { s.unmappedScriptlet++; continue; }
       const value = mapping.flag ? '1'
         : mapping.key === 'trusted_replace_script_text' ? _abpFormatTrustedReplaceScriptText(parts)
         : _abpFormatScriptletValue(mapping, parts);
-      if (value === null) continue;
-      const { domains, hasGlobal } = _abpParseDomainPart(domainPart, curatedPatterns);
+      if (value === null) { s.unmappedScriptlet++; continue; }
+      const { domains, hasGlobal, dedupSkipped } = _abpParseDomainPart(domainPart, curatedPatterns);
       if (hasGlobal) {
         if (!globalScriptlets.has(mapping.key)) globalScriptlets.set(mapping.key, new Set());
         globalScriptlets.get(mapping.key).add(value);
@@ -417,19 +468,25 @@ function _abpParseFile(text, curatedPatterns, acc) {
         if (!perKey.has(mapping.key)) perKey.set(mapping.key, new Set());
         perKey.get(mapping.key).add(value);
       }
+      if (domains.length || hasGlobal) s.converted++;
+      else if (dedupSkipped) s.dedupSkipped++;
+      else s.unrecognized++;
       continue;
     }
 
-    if (ABP_PROCEDURAL_RE.test(selectorPart)) continue;
+    if (ABP_PROCEDURAL_RE.test(selectorPart)) { s.procedural++; continue; }
 
-    if (!domainPart) { globalSelectors.add(selectorPart); continue; }
+    if (!domainPart) { globalSelectors.add(selectorPart); s.converted++; continue; }
 
-    const { domains, hasGlobal } = _abpParseDomainPart(domainPart, curatedPatterns);
+    const { domains, hasGlobal, dedupSkipped } = _abpParseDomainPart(domainPart, curatedPatterns);
     if (hasGlobal) globalSelectors.add(selectorPart);
     for (const d of domains) {
       if (!domainSelectors.has(d)) domainSelectors.set(d, new Set());
       domainSelectors.get(d).add(selectorPart);
     }
+    if (domains.length || hasGlobal) s.converted++;
+    else if (dedupSkipped) s.dedupSkipped++;
+    else s.unrecognized++;
   }
 }
 
@@ -447,8 +504,14 @@ function _abpFinalizeGroups(domainSelectors, domainScriptlets) {
   return groups;
 }
 
-function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, curatedSectionNames }) {
-  const usedKeys = new Set();
+// `sharedUsedKeys` (optional): pass the SAME Set across multiple _abpRender
+// calls (one per Rule Source being converted together) so a domain-group key
+// minted by an earlier source blocks a later source from reusing it, instead
+// of each call starting from a fresh empty Set — see _maybeConvertAbpText's
+// own comment on why per-call scoping alone let two independently-enabled
+// sources collide on the same key.
+function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, curatedSectionNames, sharedUsedKeys }) {
+  const usedKeys = sharedUsedKeys || new Set();
   const out = [];
   if (networkDomains.size || (networkRedirects && networkRedirects.size) || globalSelectors.size || globalScriptlets.size) {
     out.push('[global]');
@@ -503,7 +566,32 @@ function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains,
 // every OTHER enabled ABP source can still freely contribute its own
 // selectors for the same domain, which parseRuleText()'s normal
 // same-section merge unions together rather than either one winning.
-async function _maybeConvertAbpText(text) {
+// `statsOut` (optional, mutated in place) — pass an object to receive the
+// per-line skip/convert tally (_abpEmptySkipStats()'s shape) for THIS call.
+// Omit it and the function behaves exactly as before (return value is
+// unchanged either way — a plain string — so every existing caller/test
+// that doesn't care about stats needs no changes).
+// `sharedUsedKeys` (optional): a Set threaded in from the caller and passed
+// straight through to _abpRender(). Each generated [host_patterns] section
+// key is derived purely from its group's leading domain name (_abpSanitizeKey),
+// so two DIFFERENT Rule Sources converted via two SEPARATE calls to this
+// function can independently mint the identical key for two otherwise
+// unrelated domain groups (e.g. EasyList's own "accuweather.com" group and
+// EasyPrivacy's unrelated "accuweather.com|costco.com|delta.com|..." bucket
+// both sanitize to "accuweather") — parseRuleText then merges both groups'
+// selectors/scriptlets into that one shared section, so every domain in
+// EITHER group ends up matched against the UNION of both, leaking rules
+// across completely unrelated sites (confirmed against real EasyList +
+// EasyPrivacy + ABPVN text, 2026-08-23: 10 such collisions). Passing the
+// SAME Set across every source converted together (see _fetchAndConvertUrls
+// and fetchRemoteRuleText) closes this the same way _elementRuleSiteKey's
+// callers already avoid a different flavor of this problem within
+// customRulesText: whichever source's key gets claimed first keeps the
+// plain "abp_"-prefixed name, every later collision on that same key gets a
+// numeric suffix instead of silently merging into the first source's
+// section. Omit it (or pass nothing) and a fresh per-call Set is used —
+// unchanged single-source behavior for every existing caller/test.
+async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys) {
   if (!_looksLikeAbpFormat(text)) return text;
   let curatedPatterns = new Set(), curatedSectionNames = new Set();
   try {
@@ -519,12 +607,18 @@ async function _maybeConvertAbpText(text) {
     globalSelectors: new Set(), globalScriptlets: new Map(),
     networkDomains: new Set(), networkRedirects: new Set(),
   };
-  try { _abpParseFile(text, curatedPatterns, acc); } catch (e) { return text; }
+  const stats = _abpEmptySkipStats();
+  try { _abpParseFile(text, curatedPatterns, acc, stats); } catch (e) {
+    if (statsOut) statsOut.error = (e && e.message) || 'conversion failed';
+    return text;
+  }
+  if (statsOut) Object.assign(statsOut, stats);
   const groups = _abpFinalizeGroups(acc.domainSelectors, acc.domainScriptlets);
   return _abpRender({
     groups, globalSelectors: acc.globalSelectors, globalScriptlets: acc.globalScriptlets,
     networkRedirects: acc.networkRedirects,
     networkDomains: acc.networkDomains, curatedSectionNames,
+    sharedUsedKeys,
   });
 }
 
@@ -632,8 +726,19 @@ async function _autoEnableLangDefaultSources() {
 // the dashboard's Rule Source page can show the user WHY a source silently
 // contributed nothing, instead of the only-visible-via-DevTools-console
 // silence this used to be.
-async function _fetchAndConvertUrls(urls) {
+// `sharedUsedKeys` (optional): one Set shared across every URL fetched here,
+// threaded down to _maybeConvertAbpText/_abpRender — see _maybeConvertAbpText's
+// comment for why generated [host_patterns] keys need this to avoid two
+// unrelated sources' domain groups colliding on the same section name.
+// Concurrency note: Promise.all below only interleaves at the `await fetch`/
+// `await res.text()` I/O points; once a given URL's _maybeConvertAbpText call
+// resumes after its own internal await, its key-minting loop runs to
+// completion with no further await, so mutating the shared Set from several
+// concurrent calls is safe — no two calls can be mid-loop at the same time.
+async function _fetchAndConvertUrls(urls, sharedUsedKeys) {
+  const usedKeys = sharedUsedKeys || new Set();
   const sourceErrors = {};
+  const sourceStats = {}; // url -> _abpEmptySkipStats() shape, only for ABP-format sources
   const texts = await Promise.all(urls.map(async url => {
     try {
       const res = await fetch(url, { cache: 'no-store' });
@@ -642,20 +747,28 @@ async function _fetchAndConvertUrls(urls) {
         return '';
       }
       const raw = await res.text();
-      return raw ? await _maybeConvertAbpText(raw) : '';
+      if (!raw) return '';
+      const stats = {};
+      const converted = await _maybeConvertAbpText(raw, stats, usedKeys);
+      if (Object.keys(stats).length) sourceStats[url] = stats;
+      return converted;
     } catch (e) {
       sourceErrors[url] = e && e.message ? e.message : 'fetch failed';
       return '';
     }
   }));
   if (urls.length) {
-    const { [RULE_SOURCE_ERRORS_KEY]: existing = {} } = await chrome.storage.local.get(RULE_SOURCE_ERRORS_KEY);
-    const next = { ...existing };
+    const { [RULE_SOURCE_ERRORS_KEY]: existingErrors = {}, [RULE_SOURCE_STATS_KEY]: existingStats = {} } =
+      await chrome.storage.local.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
+    const nextErrors = { ...existingErrors };
+    const nextStats = { ...existingStats };
     for (const url of urls) {
-      if (sourceErrors[url]) next[url] = sourceErrors[url];
-      else delete next[url]; // this fetch succeeded — clear any stale error for it
+      if (sourceErrors[url]) nextErrors[url] = sourceErrors[url];
+      else delete nextErrors[url]; // this fetch succeeded — clear any stale error for it
+      if (sourceStats[url]) nextStats[url] = sourceStats[url];
+      else delete nextStats[url]; // not ABP-format (or fetch failed) — nothing to report for it now
     }
-    await chrome.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: next });
+    await chrome.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
   }
   return texts;
 }
@@ -704,9 +817,16 @@ async function fetchRemoteRuleText() {
   // Each fetched/uploaded piece may be in raw ABP/uBO syntax rather than this
   // repo's own grammar — _maybeConvertAbpText detects and converts, or
   // returns the text unchanged if it's already native (including the local
-  // fallback/customRulesText pieces in fileParts, which always are).
-  const texts = await _fetchAndConvertUrls(urls);
-  const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t)));
+  // fallback/customRulesText pieces in fileParts, which always are). One
+  // shared usedKeys Set spans EVERY piece converted below (URLs and uploaded
+  // files alike) so two independently-enabled ABP-format sources can never
+  // mint the same [host_patterns] section key for two unrelated domain
+  // groups — see _maybeConvertAbpText's own comment for the real
+  // cross-source contamination this closes (confirmed with real EasyList +
+  // EasyPrivacy + ABPVN text, 2026-08-23).
+  const sharedAbpKeys = new Set();
+  const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys);
+  const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys)));
 
   const merged = [...texts, ...convertedFileParts].filter(Boolean).join('\n');
   if (!merged && urls.length) {
@@ -2407,8 +2527,21 @@ function _buildElementRulesBlock(elementRules, existingHostPatterns) {
   const sections = hosts.map(h => {
     const ownKey = _elementRuleSiteKey(h);
     const existingKey = resolveSiteKey(existingHostPatterns, h);
-    const targetKey = (existingKey && existingKey !== ownKey) ? existingKey : ownKey;
-    if (targetKey === ownKey) newHostPatternLines.push(`${h} = ${ownKey}`);
+    // BUG (found 2026-08-23): comparing targetKey===ownKey to decide
+    // whether to mint a NEW [host_patterns] line is wrong whenever
+    // existingKey and ownKey happen to be the SAME STRING — which they
+    // always are for a host already covered by a DIFFERENT marker block
+    // of this same qkv1_ family (_elementRuleSiteKey is a pure function of
+    // the host, so Hide-element's and Decline-ad-popup's "own key" for the
+    // identical host are identical too). That made the old check ALWAYS
+    // true in exactly the case it needed to be false, re-emitting a
+    // redundant (if harmless — parseRuleText's merge dedupes it) duplicate
+    // line every time a second feature touched an already-covered host.
+    // The real question is just "did resolveSiteKey find ANYTHING for this
+    // host already" — existingKey truthy already answers that, regardless
+    // of which specific key it is.
+    const targetKey = existingKey || ownKey;
+    if (!existingKey) newHostPatternLines.push(`${h} = ${ownKey}`);
     return `[${targetKey}]\ndirect_hide_selectors = ${elementRules[h].join(' | ')}`;
   });
   const hostPatternsBlock = newHostPatternLines.length ? `[host_patterns]\n${newHostPatternLines.join('\n')}\n\n` : '';
@@ -2421,6 +2554,36 @@ function _buildElementRulesBlock(elementRules, existingHostPatterns) {
 // the start marker onward, same as before — a one-time loss on first save
 // after update, unavoidable since the old format never recorded where the
 // block ended; every save from then on carries the end marker and is safe.
+// Resolves existingHostPatterns for a marker-block rebuild, EXCLUDING that
+// SAME block's own (stale, about-to-be-replaced) prior content — wherever
+// it physically landed in the merged rules text — from the result.
+// Without this, a host already present in the source map being rebuilt
+// (elementRules/globalScopeRules/siteRuleText/noWindowOpenRules) is seen as
+// "pre-existing" via its OWN outdated self-entry (getParsedRules()'s cache
+// still has the pre-update customRulesText baked in until reloadRules()
+// clears it, later in the SAME _applyXRules() call) — so the fix for the
+// cross-feature-duplicate bug this helper exists for would then wrongly
+// SKIP re-emitting that host's [host_patterns] line instead of keeping it,
+// losing the mapping entirely the moment the stale block gets replaced
+// (live-reported + reproduced 2026-08-23, alongside the duplicate-line bug
+// itself). customRulesText is folded VERBATIM into the merged rules text
+// (never ABP-converted — it's already this repo's own grammar), so the
+// same marker strings that delimit a block in customRulesText also delimit
+// it in the full merged text — stripping by marker search is safe
+// regardless of where exactly the block ended up.
+async function _getExistingHostPatternsExcludingBlock(marker, endMarker) {
+  let text = '';
+  try { text = await getRulesText(); } catch { return {}; }
+  const startIdx = text.indexOf(marker);
+  if (startIdx !== -1) {
+    const endIdx = text.indexOf(endMarker);
+    text = (endIdx !== -1 && endIdx > startIdx)
+      ? text.slice(0, startIdx) + text.slice(endIdx + endMarker.length)
+      : text.slice(0, startIdx);
+  }
+  try { return parseRuleText(text).host_patterns || {}; } catch { return {}; }
+}
+
 async function _applyElementRules(elementRules) {
   const { customRulesText = '' } = await chrome.storage.local.get('customRulesText');
   const startIdx = customRulesText.indexOf(ELEMENT_RULES_MARKER);
@@ -2438,16 +2601,89 @@ async function _applyElementRules(elementRules) {
   }
   before = before.replace(/\s*$/, '');
   after = after.replace(/^\s*/, '');
-  let existingHostPatterns = {};
-  try {
-    const parsed = await getParsedRules();
-    existingHostPatterns = parsed.host_patterns || {};
-  } catch {}
+  const existingHostPatterns = await _getExistingHostPatternsExcludingBlock(ELEMENT_RULES_MARKER, ELEMENT_RULES_END_MARKER);
   const block = _buildElementRulesBlock(elementRules, existingHostPatterns);
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
   await chrome.storage.local.set({ customRulesText: newText, elementRules });
+  await reloadRules();
+}
+
+// ── "Decline ad popup, remember for next time" — no_window_open_if rule ──
+// Written when the user ticks "Don't warn me again" on the ad-popup warning
+// page and clicks Go back/Close (see blocked.js's AUTO_DECLINE_KEY comment
+// for why that's a SEPARATE decision from Proceed's permanent-allow). A
+// complementary, PROACTIVE layer on top of autoDeclineHosts: instead of
+// only reacting after the popup already opened, it stops window.open()
+// calls to that EXACT declined ad domain from firing at all on future
+// visits to the SITE that spawned it — narrower than the site-wide
+// close_popunder_tabs flag (per-domain, not "block every popup this site
+// ever opens"), and it only covers the window.open() vector (not
+// target="_blank" click-hijacks, which autoDeclineHosts/close_popunder_tabs
+// still exist to catch). Same marker-block/siteKey-reuse pattern as
+// _buildElementRulesBlock/_applyElementRules just above.
+const NO_WINDOW_OPEN_RULES_MARKER = '# === Auto-generated by "Decline ad popup" — do not hand-edit below this line ===';
+const NO_WINDOW_OPEN_RULES_END_MARKER = '# === End "Decline ad popup" rules ===';
+
+function _buildNoWindowOpenRulesBlock(noWindowOpenRules, existingHostPatterns) {
+  existingHostPatterns = existingHostPatterns || {};
+  const hosts = Object.keys(noWindowOpenRules).filter(h => noWindowOpenRules[h] && noWindowOpenRules[h].length);
+  if (!hosts.length) return '';
+  const newHostPatternLines = [];
+  const sections = hosts.map(h => {
+    const ownKey = _elementRuleSiteKey(h);
+    const existingKey = resolveSiteKey(existingHostPatterns, h);
+    // BUG (found 2026-08-23): comparing targetKey===ownKey to decide
+    // whether to mint a NEW [host_patterns] line is wrong whenever
+    // existingKey and ownKey happen to be the SAME STRING — which they
+    // always are for a host already covered by a DIFFERENT marker block
+    // of this same qkv1_ family (_elementRuleSiteKey is a pure function of
+    // the host, so Hide-element's and Decline-ad-popup's "own key" for the
+    // identical host are identical too). That made the old check ALWAYS
+    // true in exactly the case it needed to be false, re-emitting a
+    // redundant (if harmless — parseRuleText's merge dedupes it) duplicate
+    // line every time a second feature touched an already-covered host.
+    // The real question is just "did resolveSiteKey find ANYTHING for this
+    // host already" — existingKey truthy already answers that, regardless
+    // of which specific key it is.
+    const targetKey = existingKey || ownKey;
+    if (!existingKey) newHostPatternLines.push(`${h} = ${ownKey}`);
+    // "pattern, delayMs, decoy" per declined ad domain — 0 delay, "blank"
+    // decoy (opens about:blank instead of nothing) matches this repo's own
+    // pre-existing hand-curated [global] no_window_open_if convention.
+    // pattern is a bare domain string, not a /regex/ — content/scriptlets.js's
+    // _toRegex() escapes and substring-matches a plain string automatically.
+    const value = noWindowOpenRules[h].map(adHost => `${adHost}, 0, blank`).join(' | ');
+    return `[${targetKey}]\nno_window_open_if = ${value}`;
+  });
+  const hostPatternsBlock = newHostPatternLines.length ? `[host_patterns]\n${newHostPatternLines.join('\n')}\n\n` : '';
+  return `${NO_WINDOW_OPEN_RULES_MARKER}\n${hostPatternsBlock}${sections.join('\n\n')}\n${NO_WINDOW_OPEN_RULES_END_MARKER}`;
+}
+
+async function _applyNoWindowOpenRules(noWindowOpenRules) {
+  const { customRulesText = '' } = await chrome.storage.local.get('customRulesText');
+  const startIdx = customRulesText.indexOf(NO_WINDOW_OPEN_RULES_MARKER);
+  const endIdx = customRulesText.indexOf(NO_WINDOW_OPEN_RULES_END_MARKER);
+  let before, after;
+  if (startIdx === -1) {
+    before = customRulesText;
+    after = '';
+  } else if (endIdx !== -1 && endIdx > startIdx) {
+    before = customRulesText.slice(0, startIdx);
+    after = customRulesText.slice(endIdx + NO_WINDOW_OPEN_RULES_END_MARKER.length);
+  } else {
+    before = customRulesText.slice(0, startIdx);
+    after = '';
+  }
+  before = before.replace(/\s*$/, '');
+  after = after.replace(/^\s*/, '');
+  const existingHostPatterns = await _getExistingHostPatternsExcludingBlock(NO_WINDOW_OPEN_RULES_MARKER, NO_WINDOW_OPEN_RULES_END_MARKER);
+  const block = _buildNoWindowOpenRulesBlock(noWindowOpenRules, existingHostPatterns);
+  let newText = before;
+  if (block) newText += (before ? '\n\n' : '') + block;
+  if (after) newText += (newText ? '\n\n' : '') + after;
+  await chrome.storage.local.set({ customRulesText: newText, noWindowOpenRules });
   await reloadRules();
 }
 
@@ -2501,8 +2737,21 @@ function _buildGlobalRulesBlock(globalScopeRules, existingHostPatterns) {
   const sections = hosts.map(h => {
     const ownKey = _elementRuleSiteKey(h);
     const existingKey = resolveSiteKey(existingHostPatterns, h);
-    const targetKey = (existingKey && existingKey !== ownKey) ? existingKey : ownKey;
-    if (targetKey === ownKey) newHostPatternLines.push(`${h} = ${ownKey}`);
+    // BUG (found 2026-08-23): comparing targetKey===ownKey to decide
+    // whether to mint a NEW [host_patterns] line is wrong whenever
+    // existingKey and ownKey happen to be the SAME STRING — which they
+    // always are for a host already covered by a DIFFERENT marker block
+    // of this same qkv1_ family (_elementRuleSiteKey is a pure function of
+    // the host, so Hide-element's and Decline-ad-popup's "own key" for the
+    // identical host are identical too). That made the old check ALWAYS
+    // true in exactly the case it needed to be false, re-emitting a
+    // redundant (if harmless — parseRuleText's merge dedupes it) duplicate
+    // line every time a second feature touched an already-covered host.
+    // The real question is just "did resolveSiteKey find ANYTHING for this
+    // host already" — existingKey truthy already answers that, regardless
+    // of which specific key it is.
+    const targetKey = existingKey || ownKey;
+    if (!existingKey) newHostPatternLines.push(`${h} = ${ownKey}`);
     const reads = [], setC = [];
     for (const r of globalScopeRules[h]) {
       if (r.action === 'block') reads.push(r.chain);
@@ -2535,11 +2784,7 @@ async function _applyGlobalRules(globalScopeRules) {
   }
   before = before.replace(/\s*$/, '');
   after = after.replace(/^\s*/, '');
-  let existingHostPatterns = {};
-  try {
-    const parsed = await getParsedRules();
-    existingHostPatterns = parsed.host_patterns || {};
-  } catch {}
+  const existingHostPatterns = await _getExistingHostPatternsExcludingBlock(GLOBAL_RULES_MARKER, GLOBAL_RULES_END_MARKER);
   const block = _buildGlobalRulesBlock(globalScopeRules, existingHostPatterns);
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
@@ -2588,8 +2833,21 @@ function _buildSiteRuleTextBlock(siteRuleText, existingHostPatterns) {
   const sections = hosts.map(h => {
     const ownKey = _elementRuleSiteKey(h);
     const existingKey = resolveSiteKey(existingHostPatterns, h);
-    const targetKey = (existingKey && existingKey !== ownKey) ? existingKey : ownKey;
-    if (targetKey === ownKey) newHostPatternLines.push(`${h} = ${ownKey}`);
+    // BUG (found 2026-08-23): comparing targetKey===ownKey to decide
+    // whether to mint a NEW [host_patterns] line is wrong whenever
+    // existingKey and ownKey happen to be the SAME STRING — which they
+    // always are for a host already covered by a DIFFERENT marker block
+    // of this same qkv1_ family (_elementRuleSiteKey is a pure function of
+    // the host, so Hide-element's and Decline-ad-popup's "own key" for the
+    // identical host are identical too). That made the old check ALWAYS
+    // true in exactly the case it needed to be false, re-emitting a
+    // redundant (if harmless — parseRuleText's merge dedupes it) duplicate
+    // line every time a second feature touched an already-covered host.
+    // The real question is just "did resolveSiteKey find ANYTHING for this
+    // host already" — existingKey truthy already answers that, regardless
+    // of which specific key it is.
+    const targetKey = existingKey || ownKey;
+    if (!existingKey) newHostPatternLines.push(`${h} = ${ownKey}`);
     return `[${targetKey}]\n${siteRuleText[h].trim()}`;
   });
   const hostPatternsBlock = newHostPatternLines.length ? `[host_patterns]\n${newHostPatternLines.join('\n')}\n\n` : '';
@@ -2613,11 +2871,7 @@ async function _applySiteRuleText(siteRuleText) {
   }
   before = before.replace(/\s*$/, '');
   after = after.replace(/^\s*/, '');
-  let existingHostPatterns = {};
-  try {
-    const parsed = await getParsedRules();
-    existingHostPatterns = parsed.host_patterns || {};
-  } catch {}
+  const existingHostPatterns = await _getExistingHostPatternsExcludingBlock(SITE_RULE_TEXT_MARKER, SITE_RULE_TEXT_END_MARKER);
   const block = _buildSiteRuleTextBlock(siteRuleText, existingHostPatterns);
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
@@ -2712,6 +2966,28 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           delete elementRules[host]; // no selector given — drop the whole host
         }
         await _applyElementRules(elementRules);
+        sendResponse({ ok: true });
+        break;
+      }
+
+      // Sent by blocked/blocked.js when the user declines an ad-popup (Go
+      // back/Close + "Don't warn me again") AND the popup's opener site
+      // could be resolved (chrome.tabs.get(openerTabId)) — writes a
+      // no_window_open_if rule scoped to the OPENER's siteKey, targeting
+      // just this one declined ad domain. See _applyNoWindowOpenRules's own
+      // comment for how this differs from autoDeclineHosts.
+      case 'SAVE_NO_WINDOW_OPEN_RULE': {
+        const openerHost = String(msg.openerHost || '').toLowerCase();
+        const adHost = String(msg.adHost || '').toLowerCase();
+        if (!openerHost || !DOMAIN_PATTERN_RE.test(openerHost) || !adHost || !DOMAIN_PATTERN_RE.test(adHost)) {
+          sendResponse({ ok: false });
+          break;
+        }
+        const { noWindowOpenRules = {} } = await chrome.storage.local.get('noWindowOpenRules');
+        const list = noWindowOpenRules[openerHost] || [];
+        if (!list.includes(adHost)) list.push(adHost);
+        noWindowOpenRules[openerHost] = list;
+        await _applyNoWindowOpenRules(noWindowOpenRules);
         sendResponse({ ok: true });
         break;
       }
@@ -2866,6 +3142,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // notify every tab — shared with the revalidation alarm.
         await reloadRules();
         sendResponse({ ok: true });
+        break;
+      }
+
+      // Dashboard's per-URL "Export" button on the Rule Source list — lets
+      // the user download what one specific ABP-format source actually
+      // converts to in this repo's own grammar, for inspection/debugging
+      // (e.g. checking the "abp_"-prefixed [host_patterns] keys it minted).
+      // Always re-fetches + re-converts fresh rather than reading any cache:
+      // the merged RULES_CACHE_TEXT_KEY blob is every enabled source
+      // combined, with no per-URL breakdown kept anywhere, and re-fetching
+      // one source's own raw text is cheap/one-shot compared to that.
+      case 'EXPORT_CONVERTED_RULE_SOURCE': {
+        const url = String(msg.url || '');
+        if (!/^https?:\/\//i.test(url)) { sendResponse({ ok: false, error: 'invalid url' }); break; }
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) { sendResponse({ ok: false, error: `HTTP ${res.status}` }); break; }
+          const raw = await res.text();
+          if (!raw) { sendResponse({ ok: false, error: 'empty response' }); break; }
+          const converted = await _maybeConvertAbpText(raw);
+          sendResponse({ ok: true, text: converted, wasAbp: converted !== raw });
+        } catch (e) {
+          sendResponse({ ok: false, error: (e && e.message) || 'fetch failed' });
+        }
         break;
       }
 

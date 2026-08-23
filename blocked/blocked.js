@@ -39,26 +39,60 @@ if (host && !sessionStorage.getItem(countedKey)) {
   } catch { /* extension context gone */ }
 }
 
-// "Don't warn me again about this site" is a standalone preference, not
-// tied to which button is pressed — its label makes no mention of
-// proceeding, so ticking it and then clicking "Go back"/"Close this
-// window" should still be remembered, not silently dropped just because
-// the user chose not to visit the site right now.
-//
-// MUST be awaited by the caller before window.close()/history.back() run —
-// sendMessage() returning does not mean the message has actually reached
-// the service worker yet (it's still an async round trip under the hood,
-// especially if the worker was asleep and needs to spin up). Fire-and-forget
-// here would let window.close() tear down this page's JS context, and with
-// it the in-flight request, before delivery — the "close this window" case
-// specifically, where the tab (and this whole message) can vanish within a
-// tick of the click, is exactly where that race was actually observed
-// silently dropping the preference.
-function _persistDontWarnIfChecked() {
+// Two DIFFERENT meanings for "Don't warn me again", depending on which
+// button it's paired with — these are NOT the same mechanism:
+//   - Go back / Close + checked  -> AUTO-DECLINE next time: still shows
+//     nothing and still doesn't visit the site, just skips asking again —
+//     silently repeats the same close/back action on future encounters.
+//     Pure local storage (autoDeclineHosts), no DNR/network change at all:
+//     the block itself still fires exactly as before, only blocked.html's
+//     OWN on-load behavior changes (see the auto-decline check below).
+//   - Proceed + checked -> PERMANENT ALLOW next time: the site loads
+//     directly, blocked.html never shows again at all — this is the
+//     PROCEED_BLOCKED_HOST / allowedDomains mechanism (DNR allowAllRequests
+//     override), unchanged from before.
+// Corrected 2026-08-23 after initially building Go back/Close + checked to
+// ALSO permanently allow the site — that's wrong: declining and silencing
+// the warning are two separate decisions, and "I don't want to be asked
+// again" must not quietly mean "let me through anyway".
+const AUTO_DECLINE_KEY = 'autoDeclineHosts';
+
+// MUST be awaited by the caller before the tab actually closes/navigates
+// back — chrome.storage.local.set()'s callback firing is the only proof
+// the write landed; closing (or even just navigating this frame away) any
+// sooner risks tearing down this page's JS context mid-write, exactly the
+// race that silently dropped the PROCEED_BLOCKED_HOST version of this same
+// bug (2026-08-23).
+function _saveAutoDeclineIfChecked() {
   if (!host || !document.getElementById('dontWarn')?.checked) return Promise.resolve();
   return new Promise((resolve) => {
     try {
-      chrome.runtime.sendMessage({ type: 'PROCEED_BLOCKED_HOST', host, permanent: true }, () => {
+      chrome.storage.local.get(AUTO_DECLINE_KEY, (res) => {
+        const list = (res && res[AUTO_DECLINE_KEY]) || [];
+        if (list.includes(host)) { resolve(); return; }
+        chrome.storage.local.set({ [AUTO_DECLINE_KEY]: [...list, host] }, () => {
+          void chrome.runtime.lastError;
+          resolve();
+        });
+      });
+    } catch { resolve(); /* extension context gone */ }
+  });
+}
+
+// PROACTIVE complement to autoDeclineHosts above: instead of only reacting
+// after this exact popup already opened, block window.open() calls to this
+// EXACT ad domain from firing at all on future visits to the site that
+// spawned it (via no_window_open_if, scoped to the opener's own siteKey —
+// background.js's SAVE_NO_WINDOW_OPEN_RULE / _applyNoWindowOpenRules).
+// Only meaningful for the ad-popup case with a resolvable opener — see
+// where openerHost gets set below. Only covers the window.open() vector,
+// same limitation as the scriptlet itself; autoDeclineHosts still catches
+// target="_blank" click-hijacks this can't.
+function _saveNoWindowOpenRuleIfChecked() {
+  if (!host || !openerHost || !isAdPopup || !document.getElementById('dontWarn')?.checked) return Promise.resolve();
+  return new Promise((resolve) => {
+    try {
+      chrome.runtime.sendMessage({ type: 'SAVE_NO_WINDOW_OPEN_RULE', openerHost, adHost: host }, () => {
         void chrome.runtime.lastError;
         resolve();
       });
@@ -80,19 +114,33 @@ function _persistDontWarnIfChecked() {
 // it can't be fooled by a redirect chain the way history.length can.
 const backBtn = document.getElementById('back');
 let currentTabId;
+let openerHost = '';
 (async () => {
   let canGoBack = history.length > 1;
+  let openerTabId;
   try {
     const tab = await chrome.tabs.getCurrent();
     if (tab) {
       currentTabId = tab.id;
+      openerTabId = tab.openerTabId;
       if (tab.openerTabId !== undefined) canGoBack = false;
     }
   } catch { /* chrome.tabs.getCurrent unavailable — fall back to history.length */ }
-  backBtn.textContent = canGoBack ? 'Go back' : 'Close this window';
-  backBtn.addEventListener('click', async () => {
-    backBtn.disabled = true;
-    await _persistDontWarnIfChecked();
+
+  // Resolve the opener's hostname for _saveNoWindowOpenRuleIfChecked()
+  // above — only meaningful for the ad-popup case (a same-tab malware
+  // redirect has no "site that spawned a popup" to speak of). Best-effort:
+  // an opener tab that's already closed, or whose URL this extension
+  // doesn't have host permission for, just means that extra layer doesn't
+  // fire for this decline — autoDeclineHosts still fully covers it either way.
+  if (isAdPopup && openerTabId !== undefined) {
+    try {
+      const openerTab = await chrome.tabs.get(openerTabId);
+      if (openerTab && openerTab.url) openerHost = new URL(openerTab.url).hostname.toLowerCase();
+    } catch { /* opener already gone, or URL unavailable — skip */ }
+  }
+
+  const doClose = async () => {
     if (canGoBack) { history.back(); return; }
     // window.close() only works on a tab the PAGE ITSELF opened via
     // window.open() — Chrome silently no-ops it otherwise. A lot of
@@ -105,24 +153,54 @@ let currentTabId;
     // extension API, not subject to that same-origin-opener restriction,
     // so it reliably closes the tab regardless of how it was opened.
     if (currentTabId !== undefined) {
-      try {
-        await chrome.tabs.remove(currentTabId);
-        return;
-      } catch { /* fall through to window.close() as a last resort */ }
+      try { await chrome.tabs.remove(currentTabId); return; }
+      catch { /* fall through to window.close() as a last resort */ }
     }
     window.close();
+  };
+
+  // This host was already declined-with-checkbox on an earlier visit —
+  // skip the interactive warning entirely and just repeat the same
+  // close/back action immediately, no click needed.
+  if (host) {
+    try {
+      const declined = await new Promise((resolve) => {
+        chrome.storage.local.get(AUTO_DECLINE_KEY, (res) => resolve((res && res[AUTO_DECLINE_KEY]) || []));
+      });
+      if (declined.includes(host)) { await doClose(); return; }
+    } catch { /* fall through to the normal interactive flow */ }
+  }
+
+  backBtn.textContent = canGoBack ? 'Go back' : 'Close this window';
+  // The "Don't warn me again" checkbox is shared with the Proceed button
+  // below, where it means the OPPOSITE thing (permanent allow, not
+  // auto-decline) — ticking it while about to click Go back/Close instead
+  // is disabled outright, rather than left ambiguous, so there's no path to
+  // accidentally saving the wrong one of the two mutually-exclusive
+  // outcomes for the same checkbox state.
+  const dontWarnCheckbox = document.getElementById('dontWarn');
+  if (dontWarnCheckbox) {
+    const syncBackBtnDisabled = () => { backBtn.disabled = dontWarnCheckbox.checked; };
+    dontWarnCheckbox.addEventListener('change', syncBackBtnDisabled);
+    syncBackBtnDisabled();
+  }
+  backBtn.addEventListener('click', async () => {
+    backBtn.disabled = true;
+    await Promise.all([_saveAutoDeclineIfChecked(), _saveNoWindowOpenRuleIfChecked()]);
+    await doClose();
   });
 })();
 
 // "Proceed anyway" — mirrors uBlock Origin's own document-blocked page: a
 // Proceed button plus a "Don't warn me again about this site" checkbox.
 // Unchecked, the bypass only lasts this browser session (chrome.storage.
-// session, cleared on restart); checked, it's added to the permanent
-// allowlist (same list/UI as the dashboard's Allowlist page — same message
-// as _persistDontWarnIfChecked() above, just also awaited here since,
-// unlike Go back/Close, this path needs SOME exclusion (session or
-// permanent) actually in effect before navigating, or the very same DNR
-// rule would just redirect right back here.
+// session, cleared on restart); checked, it's added to the PERMANENT
+// allowlist (same list/UI as the dashboard's Allowlist page) — a
+// completely separate mechanism from the Go back/Close auto-decline list
+// above (see the big comment near AUTO_DECLINE_KEY for why they must not
+// be conflated). Always awaited: unlike Go back/Close, this path needs
+// SOME exclusion (session or permanent) actually in effect before
+// navigating, or the very same DNR rule would just redirect right back here.
 const proceedBtn = document.getElementById('proceed');
 if (!host) {
   proceedBtn.disabled = true;
