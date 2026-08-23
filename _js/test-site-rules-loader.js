@@ -46,13 +46,24 @@ const chromeStub = {
   },
   storage: {
     local: {
+      // Callbacks fire via queueMicrotask, not synchronously — a real
+      // chrome.storage.local.get()/set() always round-trips (genuine IPC),
+      // so any OTHER unrelated chrome.runtime.lastError set moments earlier
+      // (e.g. by sendMessage's own synchronous callback, still nested in the
+      // same call stack) is guaranteed cleared by the time these fire in a
+      // real browser. A synchronous callback here let a stale lastError
+      // leak into getCachedRules()'s own check, making it always see a
+      // "failed" storage read even on a genuinely successful one — caught
+      // by section 6 (2026-08-24) when it needed a cache read to actually
+      // succeed after a simulated sendMessage failure, unlike sections 1-5
+      // which never exercised that specific ordering.
       get(keys, cb) {
         const arr = typeof keys === 'string' ? [keys] : keys;
         const out = {};
         for (const k of arr) if (k in storageData) out[k] = storageData[k];
-        cb(out);
+        queueMicrotask(() => cb(out));
       },
-      set(obj, cb) { Object.assign(storageData, obj); if (cb) cb(); },
+      set(obj, cb) { Object.assign(storageData, obj); if (cb) queueMicrotask(cb); },
     },
   },
 };
@@ -71,6 +82,7 @@ async function fetchStub(url) {
 const sandbox = {
   console, chrome: chromeStub, fetch: fetchStub,
   Promise, Set, Array, Object, RegExp, JSON, Date,
+  CompressionStream, DecompressionStream, Response, TextEncoder, TextDecoder, btoa, atob, Uint8Array,
   location: { hostname: 'example.com' },
 };
 sandbox.self = sandbox;
@@ -107,6 +119,7 @@ function loadSite() {
 const sandboxDebug = {
   console, chrome: chromeStub, fetch: fetchStub,
   Promise, Set, Array, Object, RegExp, JSON, Date,
+  CompressionStream, DecompressionStream, Response, TextEncoder, TextDecoder, btoa, atob, Uint8Array,
   location: { hostname: 'example.com' },
 };
 sandboxDebug.self = sandboxDebug;
@@ -205,6 +218,45 @@ function loadSiteDebug() {
     (debugSiteNoCustom.global.direct_hide_selectors || []).includes('.from-bundled-local'), debugSiteNoCustom.global);
   check('DEBUG_LOCAL: with the region entry disabled again (no override), it is not fetched',
     !fetchCallLog.includes('https://remote.test/region-list.txt'), fetchCallLog);
+
+  console.log('\n== 6. Compressed rule-cache storage (2026-08-24) — mirrors background.js\'s wrapper format ==');
+  Object.keys(storageData).forEach(k => delete storageData[k]);
+  storageData.defaultRuleSourceEnabled = false;
+  storageData.ruleSources = [];
+  const repetitiveText = '[global]\ndirect_hide_selectors = ' + Array.from({ length: 300 }, (_, i) => '.ad-slot-marker-' + i).join(' | ');
+  fetchBehavior = { 'https://remote.test/site-rules.txt': '' }; // irrelevant here, default source disabled anyway
+  loader.reset();
+  await loadSite(); // primes an initial (empty) cache write via _fetchAndMergeDirect
+  // Directly exercise setCachedRules/getCachedRules via the SAME storage key
+  // background.js uses — this fallback module doesn't export them (keeps
+  // its public surface to loadSite/load/reset only, matching production),
+  // so drive it through the module's own cache-write path instead: seed a
+  // fresh ruleSources entry serving repetitiveText, force a reload, then
+  // inspect the resulting storageData entry directly.
+  storageData.ruleSources = [{ id: 'c', type: 'url', url: 'https://cache-test.example/x.txt', enabled: true }];
+  fetchBehavior = { 'https://remote.test/site-rules.txt': '', 'https://cache-test.example/x.txt': repetitiveText };
+  loader.reset();
+  await loadSite();
+  const storedRaw = storageData['siteRulesCacheText'];
+  check('cache write produces the {format,data} wrapper, not a bare string',
+    storedRaw && typeof storedRaw === 'object' && typeof storedRaw.data === 'string',
+    JSON.stringify(storedRaw).slice(0, 200));
+  check('format is deflate-raw-b64 (CompressionStream available in this Node runtime)',
+    storedRaw && storedRaw.format === 'deflate-raw-b64', storedRaw && storedRaw.format);
+  check('compressed+base64 data is meaningfully smaller than the merged text it was built from',
+    storedRaw && storedRaw.data.length < repetitiveText.length * 0.5,
+    storedRaw && `stored=${storedRaw.data.length}`);
+  // Second load (fresh reset, no network stub needed) must serve from the
+  // now-fresh cache and still resolve the SAME selector — proving the
+  // compressed value round-trips correctly through this module's own
+  // getCachedRules()/isFreshCache() path, not just background.js's.
+  fetchCallLog = [];
+  loader.reset();
+  const cachedSite = await loadSite();
+  check('a subsequent load serves from the compressed cache (no re-fetch) and resolves correctly',
+    !fetchCallLog.includes('https://cache-test.example/x.txt')
+      && (cachedSite.global.direct_hide_selectors || []).includes('.ad-slot-marker-0'),
+    { fetchCallLog, global: cachedSite.global });
 
   console.log(`\n== RESULT: ${passed} passed, ${failed} failed ==`);
   process.exit(failed ? 1 : 0);

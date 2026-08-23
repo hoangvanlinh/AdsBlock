@@ -68,15 +68,75 @@ function extValid(){
   catch(e){return false;}
 }
 
+// Mirrors background.js's _compressForStorage/_decompressFromStorage
+// (2026-08-24) — this content-script fallback path (only engaged when
+// background messaging itself is unavailable) reads/writes the SAME
+// CACHE_KEY_TEXT storage key, so it must agree on the same {format,data}
+// wrapper. Rule text compresses ~8.5x with deflate-raw (measured on a
+// real-shaped multi-MB ruleset) — a real user's merged siteRulesCacheText
+// can be several MB, a meaningful share of chrome.storage.local's ~10MB
+// default quota. Best-effort: any failure (old browser missing
+// CompressionStream, corrupted data) falls back to plain text / a cache
+// miss, never breaks the fallback path itself.
+var _B64_CHUNK=0x8000;
+function _u8ToBase64(bytes){
+  var binary='';
+  for(var i=0;i<bytes.length;i+=_B64_CHUNK){
+    binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+_B64_CHUNK));
+  }
+  return btoa(binary);
+}
+function _base64ToU8(b64){
+  var binary=atob(b64);
+  var bytes=new Uint8Array(binary.length);
+  for(var i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  return bytes;
+}
+function _compressForStorage(text){
+  try{
+    if(typeof CompressionStream==='undefined')throw new Error('unavailable');
+    var cs=new CompressionStream('deflate-raw');
+    var writer=cs.writable.getWriter();
+    writer.write(new TextEncoder().encode(text));
+    writer.close();
+    return new Response(cs.readable).arrayBuffer().then(function(buf){
+      return {format:'deflate-raw-b64',data:_u8ToBase64(new Uint8Array(buf))};
+    });
+  }catch(e){
+    return Promise.resolve({format:'raw',data:text});
+  }
+}
+function _decompressFromStorage(stored){
+  if(!stored)return Promise.resolve('');
+  if(typeof stored==='string')return Promise.resolve(stored); // pre-existing plain-text value
+  if(stored.format==='raw')return Promise.resolve(stored.data||'');
+  if(stored.format==='deflate-raw-b64'){
+    try{
+      var bytes=_base64ToU8(stored.data);
+      var ds=new DecompressionStream('deflate-raw');
+      var writer=ds.writable.getWriter();
+      writer.write(bytes);
+      writer.close();
+      return new Response(ds.readable).arrayBuffer().then(function(buf){
+        return new TextDecoder().decode(buf);
+      }).catch(function(){return '';});
+    }catch(e){return Promise.resolve('');}
+  }
+  return Promise.resolve('');
+}
+
 function getCachedRules(){
   return new Promise(function(resolve){
     if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(null);return;}
     try{
       chrome.storage.local.get([CACHE_KEY_TEXT,CACHE_KEY_TIME],function(res){
         if(chrome.runtime.lastError||!res||!res[CACHE_KEY_TEXT]){resolve(null);return;}
-        resolve({
-          text: res[CACHE_KEY_TEXT],
-          time: Number(res[CACHE_KEY_TIME]||0)
+        _decompressFromStorage(res[CACHE_KEY_TEXT]).then(function(text){
+          if(!text){resolve(null);return;}
+          resolve({
+            text: text,
+            time: Number(res[CACHE_KEY_TIME]||0)
+          });
         });
       });
     }catch(e){resolve(null);}
@@ -87,10 +147,12 @@ function setCachedRules(text){
   return new Promise(function(resolve){
     if(!extValid()||!chrome.storage||!chrome.storage.local||!text){resolve();return;}
     try{
-      var payload={};
-      payload[CACHE_KEY_TEXT]=text;
-      payload[CACHE_KEY_TIME]=Date.now();
-      chrome.storage.local.set(payload,function(){resolve();});
+      _compressForStorage(text).then(function(stored){
+        var payload={};
+        payload[CACHE_KEY_TEXT]=stored;
+        payload[CACHE_KEY_TIME]=Date.now();
+        chrome.storage.local.set(payload,function(){resolve();});
+      });
     }catch(e){resolve();}
   });
 }

@@ -96,22 +96,67 @@ _sendCss('base', BASE_CSS, true);
 // ── Resource classification for stats ────────────────────────────
 // Seeded from site-rules.txt [global] ad_network_patterns / tracker_network_patterns.
 // Fallback defaults active until config loads.
-let _adPatterns      = ['doubleclick.net', 'googlesyndication.com', 'googleadservices.com'];
-let _trackerPatterns = ['google-analytics.com', 'analytics.google.com', 'facebook.com/tr'];
-let _malwarePatterns = ['coinhive.com', 'coin-hive.com', 'jsecoin.com'];
+//
+// classifyUrl() runs on EVERY observed network resource on the page — a
+// real per-request hot path, not one-time setup. Enabling several large
+// Rule Sources (EasyList, EasyPrivacy, region lists) can grow these arrays
+// into the thousands (2026-08-24: a real user's merged config carried this
+// scale), turning what used to be a handful of `.some()` comparisons into a
+// genuine per-resource linear scan over thousands of entries, times up to 3
+// (malware, tracker, ad) per URL. Every ABP-converted network-domain entry
+// is a BARE domain string (background.js's `_abpParseFile` only ever adds
+// `ABP_BARE_NETWORK_DOMAIN_RE`-matched patterns here, stripped of the
+// trailing `^`) — the same shape resolveSiteKey()'s domain-suffix-walk
+// already exploits in background.js. Patterns are split ONCE per config
+// load (not per resource) into a domain Set (checked via O(host-label-
+// depth) suffix walk, mirroring _patternMatches' own `host === pattern ||
+// host.endsWith('.'+pattern)` semantics) and a small "other" bucket for the
+// rare path-scoped ("facebook.com/tr") or bare-keyword patterns, which
+// still need substring matching against the full URL — same matching
+// semantics as before, just not an O(n) scan for the dominant domain case.
+function _splitPatterns(list) {
+  const domainSet = new Set();
+  const other = [];
+  for (const p of list) {
+    if (p.indexOf('.') !== -1 && p.indexOf('/') === -1) domainSet.add(p);
+    else other.push(p);
+  }
+  return { domainSet, other };
+}
+function _domainSetMatches(domainSet, host) {
+  let h = host;
+  while (h) {
+    if (domainSet.has(h)) return true;
+    const dot = h.indexOf('.');
+    if (dot === -1) break;
+    h = h.slice(dot + 1);
+  }
+  return false;
+}
+function _otherPatternsMatch(patterns, fullUrl) {
+  for (let i = 0; i < patterns.length; i++) if (fullUrl.indexOf(patterns[i]) !== -1) return true;
+  return false;
+}
+
+let { domainSet: _adDomainSet, other: _adOtherPatterns } =
+  _splitPatterns(['doubleclick.net', 'googlesyndication.com', 'googleadservices.com']);
+let { domainSet: _trackerDomainSet, other: _trackerOtherPatterns } =
+  _splitPatterns(['google-analytics.com', 'analytics.google.com', 'facebook.com/tr']);
+let { domainSet: _malwareDomainSet, other: _malwareOtherPatterns } =
+  _splitPatterns(['coinhive.com', 'coin-hive.com', 'jsecoin.com']);
 
 function applyGlobalConfig(cfg) {
   if (!cfg) return;
   // Use ad_network_patterns / tracker_network_patterns for URL stats classification
   const norm = list => list.map(p => String(p).toLowerCase().trim()).filter(Boolean);
   if (Array.isArray(cfg.ad_network_patterns) && cfg.ad_network_patterns.length) {
-    _adPatterns = norm(cfg.ad_network_patterns);
+    ({ domainSet: _adDomainSet, other: _adOtherPatterns } = _splitPatterns(norm(cfg.ad_network_patterns)));
   }
   if (Array.isArray(cfg.tracker_network_patterns) && cfg.tracker_network_patterns.length) {
-    _trackerPatterns = norm(cfg.tracker_network_patterns);
+    ({ domainSet: _trackerDomainSet, other: _trackerOtherPatterns } = _splitPatterns(norm(cfg.tracker_network_patterns)));
   }
   if (Array.isArray(cfg.malware_network_domains) && cfg.malware_network_domains.length) {
-    _malwarePatterns = norm(cfg.malware_network_domains);
+    ({ domainSet: _malwareDomainSet, other: _malwareOtherPatterns } = _splitPatterns(norm(cfg.malware_network_domains)));
   }
 }
 
@@ -126,15 +171,6 @@ const _globalConfigReady = new Promise((resolve) => {
   });
 });
 
-// Mirror DNR matching semantics so stats only count what would be blocked:
-// bare domains anchor on the request hostname (domain or subdomain), while
-// patterns with a path ("facebook.com/tr") or bare keywords stay substrings.
-function _patternMatches(pattern, fullUrl, host) {
-  if (pattern.includes('/')) return fullUrl.includes(pattern);
-  if (pattern.includes('.')) return host === pattern || host.endsWith('.' + pattern);
-  return fullUrl.includes(pattern);
-}
-
 function classifyUrl(url) {
   if (!url) return null;
   let host, full;
@@ -143,9 +179,9 @@ function classifyUrl(url) {
     host = u.hostname.toLowerCase();
     full = u.href.toLowerCase();
   } catch { return null; }
-  if (_malwarePatterns.some(p => _patternMatches(p, full, host))) return 'malware';
-  if (_trackerPatterns.some(p => _patternMatches(p, full, host))) return 'tracker';
-  if (_adPatterns.some(p => _patternMatches(p, full, host)))      return 'ad';
+  if (_domainSetMatches(_malwareDomainSet, host) || _otherPatternsMatch(_malwareOtherPatterns, full)) return 'malware';
+  if (_domainSetMatches(_trackerDomainSet, host) || _otherPatternsMatch(_trackerOtherPatterns, full)) return 'tracker';
+  if (_domainSetMatches(_adDomainSet, host)      || _otherPatternsMatch(_adOtherPatterns, full))      return 'ad';
   return null;
 }
 

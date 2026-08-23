@@ -1245,7 +1245,12 @@ function loadRulesSourceSettings() {
         if (data.customRulesUrl) {
           sources.push({ id: makeSourceId(), type: 'url', url: data.customRulesUrl });
         }
-        if (data.localRulesFileName && data[RULES_CACHE_KEY_TEXT]) {
+        // typeof check: this legacy migration path predates the 2026-08-24
+        // compressed-cache change, which stores {format,data} here instead
+        // of a bare string — an install that never migrated off the old
+        // single-source format AND upgrades past that change would
+        // otherwise push the wrapper object in as if it were rule text.
+        if (data.localRulesFileName && typeof data[RULES_CACHE_KEY_TEXT] === 'string' && data[RULES_CACHE_KEY_TEXT]) {
           sources.push({ id: makeSourceId(), type: 'file', name: data.localRulesFileName, text: data[RULES_CACHE_KEY_TEXT] });
         }
         if (sources.length) {

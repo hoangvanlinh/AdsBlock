@@ -212,6 +212,9 @@ const sandbox = {
   console, chrome: chromeStub, fetch: fetchStub,
   setTimeout, clearTimeout, setInterval, clearInterval,
   URL, Date, Math, JSON, Promise, RegExp, Set, Map, Number, String, Object, Array, Error,
+  // Compressed rule-cache storage (2026-08-24) needs these Web APIs — all
+  // available as real Node globals (v18+), same semantics as in a browser.
+  CompressionStream, DecompressionStream, Response, TextEncoder, TextDecoder, btoa, atob, Uint8Array,
   navigator: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' },
   importScripts(name) {
     if (name && name.includes('scriptlet-alias-map')) {
@@ -231,6 +234,7 @@ self.__test = {
   _dedupeMalwarePriority,
   parseRuleText, buildRemoteMalwareRules, updateIcon, _incrementTabBlocked, _setTabBadge,
   getParsedRules, resolveSiteKey,
+  getCachedRuleText, setCachedRuleText, _compressForStorage, _decompressFromStorage,
   _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
   _abpEmptySkipStats, _fetchAndConvertUrls, RULE_SOURCE_STATS_KEY,
   _uiLanguageMatches, _autoEnableLangDefaultSources,
@@ -1850,6 +1854,42 @@ function check(name, cond, detail = '') {
   check('other-unrelated.example (only in the bucket) does NOT inherit the dedicated selector',
     !((merged25t[keyOther] && merged25t[keyOther].direct_hide_selectors) || []).includes('.dedicated-only'),
     JSON.stringify(merged25t[keyOther]));
+
+  console.log('\n== 25u. Compressed rule-cache storage (2026-08-24) ==');
+  // A real user's merged siteRulesCacheText measured 6.97MB/119k lines —
+  // ~70%+ of chrome.storage.local's ~10MB default quota on this ONE key.
+  // Rule text is highly repetitive, so it's stored deflate-raw-compressed
+  // (+base64, since chrome.storage JSON-serializes values) instead of plain.
+  const repetitiveSample = Array(500).fill('[abp_site_x]\ndirect_hide_selectors = .ad-slot-marker-abcdefgh\n').join('');
+  await T.setCachedRuleText(repetitiveSample);
+  const storedRaw = storageData['siteRulesCacheText'];
+  check('stored value is the {format,data} wrapper, not a bare string',
+    storedRaw && typeof storedRaw === 'object' && typeof storedRaw.data === 'string',
+    JSON.stringify(storedRaw).slice(0, 200));
+  check('format is deflate-raw-b64 (CompressionStream available in this Node runtime)',
+    storedRaw.format === 'deflate-raw-b64', storedRaw.format);
+  check('compressed+base64 data is meaningfully smaller than the original text',
+    storedRaw.data.length < repetitiveSample.length * 0.5,
+    `original=${repetitiveSample.length} stored=${storedRaw.data.length}`);
+  const roundTripped = await T.getCachedRuleText();
+  check('getCachedRuleText() decompresses back to the EXACT original text',
+    roundTripped && roundTripped.text === repetitiveSample,
+    roundTripped && roundTripped.text.length);
+
+  console.log('\n== 25v. Compressed cache: backward compat + corruption safety ==');
+  storageData['siteRulesCacheText'] = 'a plain pre-existing string, written before 2026-08-24';
+  const legacyRead = await T.getCachedRuleText();
+  check('a pre-existing PLAIN STRING value (written before this change) still reads back correctly',
+    legacyRead && legacyRead.text === 'a plain pre-existing string, written before 2026-08-24',
+    legacyRead);
+  storageData['siteRulesCacheText'] = { format: 'some-unknown-future-format', data: 'xyz' };
+  const unknownFormatRead = await T.getCachedRuleText();
+  check('an unrecognized format is treated as a cache miss (null), not a throw',
+    unknownFormatRead === null, unknownFormatRead);
+  storageData['siteRulesCacheText'] = { format: 'deflate-raw-b64', data: 'not-valid-base64-deflate-data!!!' };
+  const corruptRead = await T.getCachedRuleText();
+  check('corrupted compressed data is treated as a cache miss (null), not a throw',
+    corruptRead === null, corruptRead);
 
   console.log('\n== 25r. EXPORT_CONVERTED_RULE_SOURCE — dashboard\'s per-URL "Export" button (2026-08-23) ==');
   const sendExport = (msg) => new Promise(res => messageListeners[0](msg, {}, res));

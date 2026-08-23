@@ -143,12 +143,77 @@ function parseRuleText(text) {
   return out;
 }
 
+// ── Compressed rule-cache storage (2026-08-24) ───────────────────────
+// A real user's merged siteRulesCacheText measured 6.97MB/119k lines
+// (several large Rule Sources enabled) — ~70%+ of chrome.storage.local's
+// ~10MB default quota (no unlimitedStorage permission in manifest.json) on
+// this ONE key alone. Rule text is extremely repetitive (same
+// "direct_hide_selectors = ", [abp_xxx] section headers, domain patterns,
+// thousands of times) — measured deflate-raw compression on a same-shape
+// synthetic dataset: ~8.5x smaller (11.7% of original), ~42ms to compress,
+// ~2ms to decompress. Stored as a small wrapper object (not a bare string)
+// so old-format plain-text values already in storage, and any environment
+// where CompressionStream/DecompressionStream is unavailable, both still
+// round-trip correctly — every reader must go through _decompressFromStorage.
+const _b64Chunk = 0x8000; // avoid a call-stack blowup from String.fromCharCode(...hugeArray)
+function _uint8ToBase64(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += _b64Chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + _b64Chunk));
+  }
+  return btoa(binary);
+}
+function _base64ToUint8(b64) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+async function _compressForStorage(text) {
+  try {
+    if (typeof CompressionStream === 'undefined') throw new Error('CompressionStream unavailable');
+    const cs = new CompressionStream('deflate-raw');
+    const writer = cs.writable.getWriter();
+    writer.write(new TextEncoder().encode(text));
+    writer.close();
+    const buf = await new Response(cs.readable).arrayBuffer();
+    return { format: 'deflate-raw-b64', data: _uint8ToBase64(new Uint8Array(buf)) };
+  } catch (e) {
+    // Old/unsupported browser, or any failure — store as plain text instead
+    // of failing the write outright. Slightly wasteful, never incorrect.
+    return { format: 'raw', data: text };
+  }
+}
+async function _decompressFromStorage(stored) {
+  if (!stored) return '';
+  // Backward compat: a value written before this change is a bare STRING,
+  // not the {format,data} wrapper — treat it as already-decompressed text.
+  if (typeof stored === 'string') return stored;
+  if (stored.format === 'raw') return stored.data || '';
+  if (stored.format === 'deflate-raw-b64') {
+    try {
+      const bytes = _base64ToUint8(stored.data);
+      const ds = new DecompressionStream('deflate-raw');
+      const writer = ds.writable.getWriter();
+      writer.write(bytes);
+      writer.close();
+      const buf = await new Response(ds.readable).arrayBuffer();
+      return new TextDecoder().decode(buf);
+    } catch (e) {
+      return ''; // corrupted/unreadable — caller treats this as a cache miss
+    }
+  }
+  return ''; // unrecognized format — treat as a cache miss, never guess
+}
+
 async function getCachedRuleText() {
   try {
     const cached = await chrome.storage.local.get([RULES_CACHE_TEXT_KEY, RULES_CACHE_TIME_KEY]);
     if (!cached[RULES_CACHE_TEXT_KEY]) return null;
+    const text = await _decompressFromStorage(cached[RULES_CACHE_TEXT_KEY]);
+    if (!text) return null;
     return {
-      text: cached[RULES_CACHE_TEXT_KEY],
+      text,
       time: Number(cached[RULES_CACHE_TIME_KEY] || 0),
     };
   } catch {
@@ -159,8 +224,9 @@ async function getCachedRuleText() {
 async function setCachedRuleText(text) {
   if (!text) return;
   try {
+    const stored = await _compressForStorage(text);
     await chrome.storage.local.set({
-      [RULES_CACHE_TEXT_KEY]: text,
+      [RULES_CACHE_TEXT_KEY]: stored,
       [RULES_CACHE_TIME_KEY]: Date.now(),
     });
   } catch {}
