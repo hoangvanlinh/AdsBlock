@@ -239,6 +239,7 @@ self.__test = {
   _abpEmptySkipStats, _fetchAndConvertUrls, RULE_SOURCE_STATS_KEY,
   _uiLanguageMatches, _autoEnableLangDefaultSources,
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
+  _isValidUrlFilter, buildQueryStripRules,
   RULE_SOURCE_ERRORS_KEY,
   _buildElementRulesBlock, _applyElementRules,
   _buildNoWindowOpenRulesBlock, _applyNoWindowOpenRules,
@@ -1566,6 +1567,45 @@ function check(name, cond, detail = '') {
   check('buildNetworkRedirectRules: IDs start at NETWORK_REDIRECT_RULE_ID_START, dense',
     builtRedirectRules[0].id === T.NETWORK_REDIRECT_RULE_ID_START && builtRedirectRules[1].id === T.NETWORK_REDIRECT_RULE_ID_START + 1,
     JSON.stringify(builtRedirectRules.map(r => r.id)));
+
+  console.log('\n== 25w. _isValidUrlFilter() matches Chrome DNR\'s documented urlFilter constraints (2026-08-24) ==');
+  // Live-reported: adding a third-party ABP list (uAssets annoyances-others.txt)
+  // threw "Rule with id 500009 specifies an incorrect value for the urlFilter
+  // key" — updateDynamicRules() is atomic, so one bad rule from ANY enabled
+  // source used to reject the WHOLE call, breaking every rule this extension
+  // has, default site-rules.txt included. buildNetworkRedirectRules()/
+  // buildQueryStripRules() now validate before ever handing Chrome a
+  // urlFilter/requestDomains built from arbitrary third-party ABP text.
+  check('valid: plain domain+path with single || anchor', T._isValidUrlFilter('||example.com/path/to/file.js') === true);
+  check('valid: single leading | (start-of-url anchor)', T._isValidUrlFilter('|https://example.com/x') === true);
+  check('valid: single trailing | (end-of-url anchor)', T._isValidUrlFilter('example.com/x|') === true);
+  check('valid: wildcard + separator chars', T._isValidUrlFilter('||example.com^*/ads/*') === true);
+  check('invalid: empty string', T._isValidUrlFilter('') === false);
+  check('invalid: null/undefined', T._isValidUrlFilter(null) === false && T._isValidUrlFilter(undefined) === false);
+  check('invalid: "||*" prefix is explicitly disallowed by Chrome', T._isValidUrlFilter('||*/ads/') === false);
+  check('invalid: a stray "|" in the middle of the pattern', T._isValidUrlFilter('example.com/a|b/c') === false);
+  check('invalid: non-ASCII characters', T._isValidUrlFilter('||exämple.com/path') === false);
+
+  console.log('\n== 25x. buildNetworkRedirectRules/buildQueryStripRules drop entries that would reject the WHOLE updateDynamicRules() call ==');
+  const malformedRedirectEntries = [
+    'imasdk.googleapis.com/js/sdkloader/ima3.js google-ima.js', // valid — kept
+    '*|bad/x.js noopjs', // stray '|' mid-pattern — must be dropped, not passed to Chrome
+    'tracker.example.com noopjs', // valid bare domain — kept
+  ];
+  const builtWithMalformed = T.buildNetworkRedirectRules(malformedRedirectEntries, T.NETWORK_REDIRECT_RULE_ID_START);
+  check('buildNetworkRedirectRules: malformed urlFilter entry is dropped, valid ones survive',
+    builtWithMalformed.length === 2 && builtWithMalformed.every(r => T._isValidUrlFilter(r.condition.urlFilter || '||x')),
+    JSON.stringify(builtWithMalformed));
+
+  const malformedStripEntries = [
+    'youtube.com/watch si,is', // valid path pattern — kept
+    '*|bad/x.js si', // stray '|' — must be dropped
+    'example.com si', // valid bare domain — kept
+  ];
+  const builtStripWithMalformed = T.buildQueryStripRules(malformedStripEntries, 3000);
+  check('buildQueryStripRules: malformed urlFilter entry is dropped, valid ones survive',
+    builtStripWithMalformed.length === 2 && builtStripWithMalformed.every(r => !r.condition.urlFilter || T._isValidUrlFilter(r.condition.urlFilter)),
+    JSON.stringify(builtStripWithMalformed));
 
   console.log('\n== 25m. Language-matched default Rule Source auto-enable on fresh install (2026-08-22) ==');
 

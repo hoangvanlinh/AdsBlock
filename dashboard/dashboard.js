@@ -1185,6 +1185,44 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stat
   return row;
 }
 
+// Built-in default sources (config.js RULES_REMOTE_URL) each carry a `group`
+// field ('default' | 'easylist' | 'language') — grouping them here instead
+// of one flat 44-row list, so enabling many language lists doesn't bury the
+// user's own default/EasyList-family toggles in a wall of checkboxes.
+const _RULE_SOURCE_GROUP_LABELS = { default: 'Default', easylist: 'EasyList family', language: 'By language', custom: 'Custom (your own URLs)' };
+const _RULE_SOURCE_GROUP_ORDER = ['default', 'easylist', 'language'];
+// Groups this large collapse behind a <details> (closed unless the user
+// already has one of its entries enabled, so their own active choice is
+// never hidden) — small groups (default, easylist) just get a plain label.
+const _RULE_SOURCE_COLLAPSE_THRESHOLD = 6;
+
+function _makeSourceGroupSection(groupKey, entries, anyEnabled) {
+  const label = _RULE_SOURCE_GROUP_LABELS[groupKey] || groupKey;
+  const rows = document.createElement('div');
+  rows.className = 'rules-source-list rules-source-group-rows';
+  for (const row of entries) rows.appendChild(row);
+
+  if (entries.length >= _RULE_SOURCE_COLLAPSE_THRESHOLD) {
+    const details = document.createElement('details');
+    details.className = 'rules-source-group';
+    details.open = anyEnabled;
+    const summary = document.createElement('summary');
+    summary.className = 'rules-source-group-summary';
+    summary.textContent = `${label} (${entries.length})`;
+    details.appendChild(summary);
+    details.appendChild(rows);
+    return details;
+  }
+  const wrap = document.createElement('div');
+  wrap.className = 'rules-source-group';
+  const header = document.createElement('div');
+  header.className = 'rules-source-group-label';
+  header.textContent = label;
+  wrap.appendChild(header);
+  wrap.appendChild(rows);
+  return wrap;
+}
+
 function renderRulesSources(sources, defaultOverrides, sourceErrors, sourceStats) {
   const urlList  = document.getElementById('rulesUrlList');
   const fileList = document.getElementById('rulesFileList');
@@ -1197,10 +1235,11 @@ function renderRulesSources(sources, defaultOverrides, sourceErrors, sourceStats
   const fileSources = sources.filter(s => s.type === 'file');
 
   urlList.innerHTML = '';
+  const byGroup = new Map(); // groupKey -> { rows: HTMLElement[], anyEnabled: bool }
   for (const entry of self.ADBLOCK_CONFIG.RULES_REMOTE_URL) {
     const hasOverride = Object.prototype.hasOwnProperty.call(overrides, entry.url);
     const checked = hasOverride ? overrides[entry.url] !== false : entry.enable !== false;
-    urlList.appendChild(_makeSourceRow({
+    const row = _makeSourceRow({
       label: `${entry.name}`,
       title: entry.url,
       checked,
@@ -1209,10 +1248,24 @@ function renderRulesSources(sources, defaultOverrides, sourceErrors, sourceStats
       stats: stats[entry.url],
       url: entry.url,
       // no onRemove — a built-in default can be turned off, not deleted.
-    }));
+    });
+    const groupKey = entry.group || 'default';
+    if (!byGroup.has(groupKey)) byGroup.set(groupKey, { rows: [], anyEnabled: false });
+    const g = byGroup.get(groupKey);
+    g.rows.push(row);
+    if (checked) g.anyEnabled = true;
   }
-  for (const src of urlSources) {
-    urlList.appendChild(_makeSourceRow({
+  const orderedGroups = [
+    ..._RULE_SOURCE_GROUP_ORDER.filter(g => byGroup.has(g)),
+    ...[...byGroup.keys()].filter(g => !_RULE_SOURCE_GROUP_ORDER.includes(g)),
+  ];
+  for (const groupKey of orderedGroups) {
+    const g = byGroup.get(groupKey);
+    urlList.appendChild(_makeSourceGroupSection(groupKey, g.rows, g.anyEnabled));
+  }
+
+  if (urlSources.length) {
+    const customRows = urlSources.map(src => _makeSourceRow({
       label: src.url,
       checked: src.enabled !== false,
       onToggle: (checked) => toggleRulesSource(src.id, checked),
@@ -1221,6 +1274,7 @@ function renderRulesSources(sources, defaultOverrides, sourceErrors, sourceStats
       stats: stats[src.url],
       url: src.url,
     }));
+    urlList.appendChild(_makeSourceGroupSection('custom', customRows, true));
   }
 
   fileList.innerHTML = '';

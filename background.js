@@ -52,6 +52,36 @@ let _ruleConfigPromise = null;
 
 const QUERY_STRIP_RESOURCE_TYPES = ['main_frame', 'sub_frame', 'stylesheet', 'script', 'image', 'font', 'object', 'xmlhttprequest', 'ping', 'csp_report', 'media', 'websocket', 'other'];
 
+// Chrome DNR's documented urlFilter constraints (developer.chrome.com/docs/
+// extensions/reference/api/declarativeNetRequest#type-RuleCondition): must
+// be non-empty ASCII, a pattern starting with "||*" is explicitly
+// disallowed, and '|' is only valid as the very first/last character (or as
+// the first TWO characters together, the "||" domain anchor). Chrome's
+// updateDynamicRules() call is ATOMIC — one rule anywhere with an invalid
+// urlFilter/requestDomains value rejects the ENTIRE call (live-reported
+// 2026-08-24: "Rule with id 500009 specifies an incorrect value for the
+// urlFilter key" from adding a third-party ABP list — network_redirect_rules/
+// strip_query_params entries get a raw '||'+pattern urlFilter built directly
+// from arbitrary ABP-source text with no sanitization at all, unlike
+// buildPatternRules() elsewhere in this file, which at least checks
+// DOMAIN_PATTERN_RE before routing a pattern to requestDomains). Validating
+// here — same "don't guess, drop what we can't confidently honor" rule this
+// file already applies to unmapped scriptlets/resource names — means one bad
+// line from a third-party list can no longer take down every rule this
+// extension has, default site-rules.txt included.
+function _isValidUrlFilter(f) {
+  if (!f || !/^[\x00-\x7F]*$/.test(f)) return false;
+  if (f.startsWith('||*')) return false;
+  for (let i = 0; i < f.length; i++) {
+    if (f[i] !== '|') continue;
+    const partOfDomainAnchor = (i === 0 && f[1] === '|') || (i === 1 && f[0] === '|');
+    const leftAnchor = i === 0 && f[1] !== '|';
+    const rightAnchor = i === f.length - 1;
+    if (!(partOfDomainAnchor || leftAnchor || rightAnchor)) return false;
+  }
+  return true;
+}
+
 // strip_query_params entries: "host[/pathSubstr] param1,param2[ doc]"
 // — same-origin query-param removal (tracking IDs like YouTube's ?si=/?is=),
 // doesn't need host permissions since the redirect target stays same-origin.
@@ -69,9 +99,12 @@ function buildQueryStripRules(entries, startId) {
       resourceTypes: parts[2] === 'doc' ? ['main_frame'] : QUERY_STRIP_RESOURCE_TYPES,
     };
     if (slashIdx === -1) {
+      if (!DOMAIN_PATTERN_RE.test(hostPath)) continue; // malformed — don't guess, drop it
       condition.requestDomains = [hostPath.toLowerCase()];
     } else {
-      condition.urlFilter = '||' + hostPath;
+      const urlFilter = '||' + hostPath;
+      if (!_isValidUrlFilter(urlFilter)) continue; // would reject the WHOLE updateDynamicRules() call
+      condition.urlFilter = urlFilter;
     }
     rules.push({
       id: id++,
@@ -101,8 +134,14 @@ function buildNetworkRedirectRules(entries, startId) {
     const file = _resolveRedirectResourceName(parts[1]);
     if (!file) continue;
     const condition = { resourceTypes: ['script'] }; // real-world redirect= rules are ~always script
-    if (pattern.indexOf('/') === -1) condition.requestDomains = [pattern.toLowerCase()];
-    else condition.urlFilter = '||' + pattern;
+    if (pattern.indexOf('/') === -1) {
+      if (!DOMAIN_PATTERN_RE.test(pattern)) continue; // malformed — don't guess, drop it
+      condition.requestDomains = [pattern.toLowerCase()];
+    } else {
+      const urlFilter = '||' + pattern;
+      if (!_isValidUrlFilter(urlFilter)) continue; // would reject the WHOLE updateDynamicRules() call
+      condition.urlFilter = urlFilter;
+    }
     rules.push({ id: id++, priority: 1, action: _redirectAction(file), condition });
   }
   return rules;
@@ -1370,7 +1409,14 @@ function buildPatternRules(patterns, startId, resourceTypes, priority, redirectB
   const urlFilters = [];
   for (const p of patterns) {
     if (DOMAIN_PATTERN_RE.test(p)) domains.push(p.toLowerCase());
-    else urlFilters.push(p);
+    // Everything else (wildcard-TLD patterns like "example.*", or any other
+    // complex ABP construct ad_network_patterns/tracker_network_patterns
+    // can carry from third-party sources) is used directly as a urlFilter
+    // with no other sanitization — validate it first, same "one bad rule
+    // rejects the WHOLE updateDynamicRules() call" reasoning as
+    // buildNetworkRedirectRules/buildQueryStripRules's own _isValidUrlFilter
+    // check (2026-08-24).
+    else if (_isValidUrlFilter(p)) urlFilters.push(p);
   }
 
   const rules = [];
@@ -2189,7 +2235,26 @@ async function _applyNetworkRulesImpl() {
   // e.g. one paused domain or one custom rule is toggled.
   const { removeRuleIds, addRules, nextHashById } = _computeRuleDiff(allRules, existing);
   if (removeRuleIds.length || addRules.length) {
-    await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds, addRules });
+    try {
+      await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds, addRules });
+    } catch (e) {
+      // Chrome validates the WHOLE batch before committing any of it — one
+      // malformed rule anywhere (e.g. a third-party ABP list contributing an
+      // invalid urlFilter/requestDomains entry that slipped past
+      // buildNetworkRedirectRules'/buildQueryStripRules' own validation, or
+      // any other unforeseen edge case) used to throw here as an uncaught
+      // promise rejection, live-reported 2026-08-24 ("Rule with id 500009
+      // specifies an incorrect value for the urlFilter key"). Since the
+      // update is atomic, the previously-applied rules are still intact —
+      // log clearly instead of crashing, and deliberately do NOT update
+      // _lastRuleHashById/DNR_RULES_HASH_KEY/_lastFingerprint below, so the
+      // next applyNetworkRules() call retries the real diff against
+      // Chrome's actual (unchanged) state instead of wrongly assuming this
+      // update landed.
+      console.error('[AdBlock] updateDynamicRules() rejected — rules NOT updated, previous rule set is still active:', e);
+      updateIcon(true);
+      return;
+    }
   }
   _lastRuleHashById = nextHashById;
   await chrome.storage.local.set({ [DNR_RULES_HASH_KEY]: newHash });

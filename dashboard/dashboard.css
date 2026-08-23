@@ -949,6 +949,40 @@ body::before {
   padding: 6px 10px;
   font-size: 12px;
 }
+/* Rule Source groups (Default / EasyList family / By language / Custom) —
+   groups this file, and each other, keeps a single flat 44+ row list from
+   burying the user's own default/EasyList toggles under a wall of
+   language-list checkboxes. Large groups collapse into a <details>. */
+.rules-source-group + .rules-source-group { margin-top: 10px; }
+.rules-source-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.rules-source-group-rows { margin-top: 6px; }
+details.rules-source-group summary.rules-source-group-summary {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-3);
+  cursor: pointer;
+  list-style: none;
+  padding: 4px 0;
+}
+details.rules-source-group summary.rules-source-group-summary::-webkit-details-marker { display: none; }
+details.rules-source-group summary.rules-source-group-summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s ease;
+}
+details.rules-source-group[open] summary.rules-source-group-summary::before {
+  transform: rotate(90deg);
+}
 .source-label {
   flex: 1;
   min-width: 0;
