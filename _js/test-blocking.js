@@ -64,7 +64,17 @@ const chromeStub = {
         for (const k of arr) if (k in sessionStorageData) out[k] = sessionStorageData[k];
         return out;
       },
-      async set(obj) { Object.assign(sessionStorageData, obj); },
+      async set(obj) {
+        // Real chrome.storage.session fires chrome.storage.onChanged with
+        // areaName 'session' too (since Chrome 102) — background.js's
+        // _sessionAllowedDomainsHash listener (Phase 1a fingerprint) relies
+        // on that to invalidate the pauseAllowRules memo (Phase 2c), so the
+        // stub must fire it here just like `local`'s set() does above.
+        const changes = {};
+        for (const k of Object.keys(obj)) changes[k] = { oldValue: sessionStorageData[k], newValue: obj[k] };
+        Object.assign(sessionStorageData, obj);
+        for (const fn of storageChangeListeners) fn(changes, 'session');
+      },
       async clear() { for (const k of Object.keys(sessionStorageData)) delete sessionStorageData[k]; },
     },
     onChanged: { addListener(fn) { storageChangeListeners.push(fn); } },
@@ -413,13 +423,17 @@ function check(name, cond, detail = '') {
     wouldBlock(dynamicRules, 'https://www.google-analytics.com/x.js', 'script').blocked);
 
   console.log('\n== 7. Pause/allowlist override ==');
-  storageData.pausedDomains = ['news.example.com'];
+  // Uses chrome.storage.local.set() (not a direct storageData mutation) so
+  // onChanged fires — background.js's pauseAllowRules build is memoized
+  // (Phase 2c) keyed off the pausedDomains fingerprint, which only updates
+  // via a real storage write, exactly like production.
+  await chromeStub.storage.local.set({ pausedDomains: ['news.example.com'] });
   await T.applyNetworkRules();
   const allowRule = dynamicRules.find(r => r.action.type === 'allowAllRequests');
   check('allowAllRequests rule created for paused domain', !!allowRule);
   check('allow rule outranks block rules (priority 10 > 2)',
     allowRule && allowRule.priority > Math.max(...dynamicRules.filter(r => r.action.type === 'block').map(r => r.priority || 1)));
-  storageData.pausedDomains = [];
+  await chromeStub.storage.local.set({ pausedDomains: [] });
   await T.applyNetworkRules();
 
   console.log('\n== 7a. "Proceed anyway" (blocked.html) — PROCEED_BLOCKED_HOST message handler (2026-08-23) ==');
@@ -542,8 +556,11 @@ function check(name, cond, detail = '') {
   check('invalid host rejected', bad && bad.ok === false);
 
   console.log('\n== 12. RESOURCE_SEEN respects blocking toggles ==');
-  storageData.blockTrackers = false;
-  storageData.blockMalware = false;
+  // Uses the real chrome.storage.local.set() path (not a direct storageData
+  // mutation) so the stub's onChanged listeners fire — background.js's
+  // RESOURCE_SEEN handler reads these toggles from _settingsCache, which is
+  // kept in sync via onChanged, exactly like a real chrome.storage write.
+  await chromeStub.storage.local.set({ blockTrackers: false, blockMalware: false });
   await send2({ type: 'RESOURCE_SEEN', domain: 'toggletest.com',
     delta: { seen: 6, ads: 2, trackers: 3, malware: 1 } });
   await T.statsChain;
@@ -553,15 +570,13 @@ function check(name, cond, detail = '') {
   check('malware NOT counted when blockMalware=false', tt && tt.malwareBlocked === 0);
   check('ads still counted (blockAds=true)', tt && tt.adsBlocked === 2);
   check('totalSeen still recorded', tt && tt.totalSeen === 6);
-  storageData.blockTrackers = true;
-  storageData.blockMalware = true;
-  storageData.pausedDomains = ['paused.example.com'];
+  await chromeStub.storage.local.set({ blockTrackers: true, blockMalware: true, pausedDomains: ['paused.example.com'] });
   await send2({ type: 'RESOURCE_SEEN', domain: 'paused.example.com',
     delta: { seen: 5, ads: 5, trackers: 0, malware: 0 } });
   await T.statsChain;
   const { stats: stats4 } = await chromeStub.storage.local.get('stats');
   check('paused domain not counted at all', !stats4['paused.example.com']);
-  storageData.pausedDomains = [];
+  await chromeStub.storage.local.set({ pausedDomains: [] });
 
   console.log('\n== 13. Cosmetic hides counted but excluded from bandwidth ==');
   await send2({ type: 'COSMETIC_HIDDEN', count: 5, url: 'https://bwtest.com/page' });
@@ -1787,6 +1802,54 @@ function check(name, cond, detail = '') {
   check('collidekey.example itself still keeps its OWN specific selector',
     (mergedAB[keyA].direct_hide_selectors || []).includes('.a-only-selector'),
     JSON.stringify(mergedAB[keyA]));
+
+  console.log('\n== 25s. Shared dedicatedKeyMap merges two DIFFERENT sources\' rules for the SAME domain (2026-08-23) ==');
+  // Opposite scenario from 25q: two SEPARATE sources each have their OWN
+  // DEDICATED (single-domain, non-bucket) rule for the exact same domain.
+  // resolveSiteKey()/_buildHostPatternIndex() only ever keep ONE key per
+  // domain (patterns[pat][0] — first-wins), so without sharing a
+  // dedicatedKeyMap the second source's own selector for that domain
+  // silently never resolves at all (confirmed live: only source A's
+  // selector was ever reachable). Passing the SAME Map across both calls
+  // (mirroring how sharedUsedKeys is already threaded in production via
+  // _fetchAndConvertUrls/fetchRemoteRuleText) makes the second source reuse
+  // the first one's key, so parseRuleText's normal same-section merge
+  // unions both selectors into one section instead.
+  const dedupSourceA = 'news-site.example##.ad-slot-from-source-A';
+  const dedupSourceB = 'news-site.example##.ad-slot-from-source-B';
+  const sharedKeys25s = new Set();
+  const sharedDedicated25s = new Map();
+  const dedupConvA = await T._maybeConvertAbpText(dedupSourceA, undefined, sharedKeys25s, sharedDedicated25s);
+  const dedupConvB = await T._maybeConvertAbpText(dedupSourceB, undefined, sharedKeys25s, sharedDedicated25s);
+  const dedupMerged = T.parseRuleText(dedupConvA + '\n' + dedupConvB);
+  const dedupKey = T.resolveSiteKey(dedupMerged.host_patterns, 'news-site.example');
+  const dedupSelectors = (dedupMerged[dedupKey] && dedupMerged[dedupKey].direct_hide_selectors) || [];
+  check('both sources\' selectors for the same domain end up in the SAME resolved section',
+    dedupSelectors.includes('.ad-slot-from-source-A') && dedupSelectors.includes('.ad-slot-from-source-B'),
+    JSON.stringify({ dedupKey, dedupSelectors }));
+  check('only ONE [host_patterns] entry was minted for the domain, not two competing ones',
+    dedupMerged.host_patterns['news-site.example'].length === 1,
+    JSON.stringify(dedupMerged.host_patterns['news-site.example']));
+
+  console.log('\n== 25t. ...but a dedicated rule must NOT merge into an unrelated BUCKET\'s key (regression guard) ==');
+  // Without sharing sharedDedicatedKeyMap across a dedicated call and a
+  // LATER bucket call for a domain the bucket also happens to list, the
+  // dedicated key must still be minted fresh (never matched against a
+  // bucket group) — otherwise the bucket's other, unrelated domains would
+  // inherit the dedicated source's selector, reintroducing the exact leak
+  // 25q/25s exist to prevent.
+  const sk25t = new Set(); const sd25t = new Map();
+  const dedicatedFirst = await T._maybeConvertAbpText('shared-target.example##.dedicated-only', undefined, sk25t, sd25t);
+  const bucketSecond = await T._maybeConvertAbpText('shared-target.example,other-unrelated.example##.bucket-shared', undefined, sk25t, sd25t);
+  const merged25t = T.parseRuleText(dedicatedFirst + '\n' + bucketSecond);
+  const keyTarget = T.resolveSiteKey(merged25t.host_patterns, 'shared-target.example');
+  const keyOther = T.resolveSiteKey(merged25t.host_patterns, 'other-unrelated.example');
+  check('the dedicated source\'s own key still wins for shared-target.example (higher specificity)',
+    (merged25t[keyTarget].direct_hide_selectors || []).includes('.dedicated-only'),
+    JSON.stringify(merged25t[keyTarget]));
+  check('other-unrelated.example (only in the bucket) does NOT inherit the dedicated selector',
+    !((merged25t[keyOther] && merged25t[keyOther].direct_hide_selectors) || []).includes('.dedicated-only'),
+    JSON.stringify(merged25t[keyOther]));
 
   console.log('\n== 25r. EXPORT_CONVERTED_RULE_SOURCE — dashboard\'s per-URL "Export" button (2026-08-23) ==');
   const sendExport = (msg) => new Promise(res => messageListeners[0](msg, {}, res));

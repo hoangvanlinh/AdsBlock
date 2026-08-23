@@ -510,8 +510,25 @@ function _abpFinalizeGroups(domainSelectors, domainScriptlets) {
 // of each call starting from a fresh empty Set — see _maybeConvertAbpText's
 // own comment on why per-call scoping alone let two independently-enabled
 // sources collide on the same key.
-function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, curatedSectionNames, sharedUsedKeys }) {
+// `sharedDedicatedKeyMap` (optional): a Map<domain, key> spanning the same
+// batch of sources as sharedUsedKeys. When TWO different sources each have
+// their own DEDICATED (single-domain, non-bucket — g.domains.length === 1)
+// group for the EXACT SAME domain, the second one REUSES the first one's
+// key instead of minting a fresh one — so parseRuleText()'s own same-section
+// merge (see its comment) unions both sources' selectors/scriptlets into one
+// section, instead of the second source's rules for that domain silently
+// resolving to nothing (resolveSiteKey()/_buildHostPatternIndex() only ever
+// keep ONE key per domain — confirmed live, 2026-08-23: two sources with
+// their own dedicated rule for the same domain, only the first-processed
+// one's selector ever became reachable). Only applies domain-for-domain
+// between two DEDICATED groups — a multi-domain BUCKET group is never
+// added to or matched against this map, so it can't inherit a dedicated
+// group's selector for its OTHER (unrelated) domains, which would
+// reintroduce the exact cross-source leak _abpSanitizeKey's usedKeys
+// sharing was built to close.
+function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, curatedSectionNames, sharedUsedKeys, sharedDedicatedKeyMap }) {
   const usedKeys = sharedUsedKeys || new Set();
+  const dedicatedKeyMap = sharedDedicatedKeyMap || new Map();
   const out = [];
   if (networkDomains.size || (networkRedirects && networkRedirects.size) || globalSelectors.size || globalScriptlets.size) {
     out.push('[global]');
@@ -528,8 +545,13 @@ function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains,
     out.push('[host_patterns]');
     const groupKeys = [];
     for (const g of groupList) {
-      const key = _abpSanitizeKey(g.domains[0], curatedSectionNames, usedKeys);
-      usedKeys.add(key);
+      const isDedicated = g.domains.length === 1;
+      const existingKey = isDedicated ? dedicatedKeyMap.get(g.domains[0]) : undefined;
+      const key = existingKey || _abpSanitizeKey(g.domains[0], curatedSectionNames, usedKeys);
+      if (!existingKey) {
+        usedKeys.add(key);
+        if (isDedicated) dedicatedKeyMap.set(g.domains[0], key);
+      }
       groupKeys.push(key);
       out.push([...g.domains].sort().join('|') + ' = ' + key);
     }
@@ -591,17 +613,40 @@ function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains,
 // numeric suffix instead of silently merging into the first source's
 // section. Omit it (or pass nothing) and a fresh per-call Set is used —
 // unchanged single-source behavior for every existing caller/test.
-async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys) {
+// Memoized bundled-local-file dedup sets (Phase 2a perf fix) — every enabled
+// ABP-format source's own _maybeConvertAbpText() call used to independently
+// re-fetch (chrome.runtime.getURL, still an actual fetch() I/O call) AND
+// re-parseRuleText() this repo's own bundled site-rules.txt, purely to
+// rebuild the same two dedup Sets. That file is static extension content —
+// it cannot change without a new extension version (which always cold-starts
+// the service worker anyway) — so it's safe to compute this once per SW
+// lifetime and reuse across every source converted in the same
+// fetchRemoteRuleText() run (N enabled ABP sources = 1 fetch+parse instead
+// of N). Reset alongside _parsedRules in reloadRules() purely for symmetry
+// (tying its invalidation to the same reset point costs nothing extra).
+let _curatedDedupPromise = null;
+function _getCuratedDedupSets() {
+  if (!_curatedDedupPromise) {
+    _curatedDedupPromise = (async () => {
+      try {
+        const nativeText = await fetchLocalRuleText();
+        if (!nativeText) return { curatedPatterns: new Set(), curatedSectionNames: new Set() };
+        const parsed = parseRuleText(nativeText);
+        return {
+          curatedPatterns: new Set(parsed.host_patterns ? Object.keys(parsed.host_patterns) : []),
+          curatedSectionNames: new Set(Object.keys(parsed)),
+        };
+      } catch (e) {
+        return { curatedPatterns: new Set(), curatedSectionNames: new Set() };
+      }
+    })();
+  }
+  return _curatedDedupPromise;
+}
+
+async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedicatedKeyMap) {
   if (!_looksLikeAbpFormat(text)) return text;
-  let curatedPatterns = new Set(), curatedSectionNames = new Set();
-  try {
-    const nativeText = await fetchLocalRuleText();
-    if (nativeText) {
-      const parsed = parseRuleText(nativeText);
-      if (parsed.host_patterns) curatedPatterns = new Set(Object.keys(parsed.host_patterns));
-      curatedSectionNames = new Set(Object.keys(parsed));
-    }
-  } catch (e) { /* fall back to no dedup */ }
+  const { curatedPatterns, curatedSectionNames } = await _getCuratedDedupSets();
   const acc = {
     domainSelectors: new Map(), domainScriptlets: new Map(),
     globalSelectors: new Set(), globalScriptlets: new Map(),
@@ -618,7 +663,7 @@ async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys) {
     groups, globalSelectors: acc.globalSelectors, globalScriptlets: acc.globalScriptlets,
     networkRedirects: acc.networkRedirects,
     networkDomains: acc.networkDomains, curatedSectionNames,
-    sharedUsedKeys,
+    sharedUsedKeys, sharedDedicatedKeyMap,
   });
 }
 
@@ -730,13 +775,18 @@ async function _autoEnableLangDefaultSources() {
 // threaded down to _maybeConvertAbpText/_abpRender — see _maybeConvertAbpText's
 // comment for why generated [host_patterns] keys need this to avoid two
 // unrelated sources' domain groups colliding on the same section name.
+// `sharedDedicatedKeyMap` (optional): one Map<domain,key> shared the same
+// way, so two DIFFERENT sources that each have their OWN dedicated rule for
+// the SAME domain get merged into one section instead of the second one
+// silently never resolving — see _abpRender's own comment.
 // Concurrency note: Promise.all below only interleaves at the `await fetch`/
 // `await res.text()` I/O points; once a given URL's _maybeConvertAbpText call
 // resumes after its own internal await, its key-minting loop runs to
-// completion with no further await, so mutating the shared Set from several
-// concurrent calls is safe — no two calls can be mid-loop at the same time.
-async function _fetchAndConvertUrls(urls, sharedUsedKeys) {
+// completion with no further await, so mutating the shared Set/Map from
+// several concurrent calls is safe — no two calls can be mid-loop at once.
+async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap) {
   const usedKeys = sharedUsedKeys || new Set();
+  const dedicatedKeyMap = sharedDedicatedKeyMap || new Map();
   const sourceErrors = {};
   const sourceStats = {}; // url -> _abpEmptySkipStats() shape, only for ABP-format sources
   const texts = await Promise.all(urls.map(async url => {
@@ -749,7 +799,7 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys) {
       const raw = await res.text();
       if (!raw) return '';
       const stats = {};
-      const converted = await _maybeConvertAbpText(raw, stats, usedKeys);
+      const converted = await _maybeConvertAbpText(raw, stats, usedKeys, dedicatedKeyMap);
       if (Object.keys(stats).length) sourceStats[url] = stats;
       return converted;
     } catch (e) {
@@ -823,10 +873,15 @@ async function fetchRemoteRuleText() {
   // mint the same [host_patterns] section key for two unrelated domain
   // groups — see _maybeConvertAbpText's own comment for the real
   // cross-source contamination this closes (confirmed with real EasyList +
-  // EasyPrivacy + ABPVN text, 2026-08-23).
+  // EasyPrivacy + ABPVN text, 2026-08-23). sharedDedicatedDomains is the
+  // complementary fix (2026-08-23): when two DIFFERENT sources each have
+  // their OWN dedicated rule for the exact same domain, they now merge into
+  // one section instead of only the first-processed source's rules for that
+  // domain ever actually resolving (see _abpRender's own comment).
   const sharedAbpKeys = new Set();
-  const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys);
-  const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys)));
+  const sharedDedicatedDomains = new Map();
+  const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys, sharedDedicatedDomains);
+  const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys, sharedDedicatedDomains)));
 
   const merged = [...texts, ...convertedFileParts].filter(Boolean).join('\n');
   if (!merged && urls.length) {
@@ -872,6 +927,51 @@ function _hashText(s) {
   return h.toString(36);
 }
 
+// ── Rule-input fingerprint (Phase 1a perf fix) ───────────────────────
+// buildActiveRulesFromStorage()'s output is a PURE function of: these
+// storage keys, sessionAllowedDomains (chrome.storage.session), and the
+// static DEFAULT_RULES/MALWARE_RULES/etc. definitions (which only change
+// when ensureRuleDefinitionsLoaded() actually rebuilds them, tracked below
+// via _ruleGeneration). Hashing each input individually — computed once
+// per storage WRITE via onChanged, not once per applyNetworkRules() CALL —
+// instead of JSON.stringify-ing the full generated `allRules` array (which
+// can carry a remoteMalwareDomains list up to REMOTE_MAX_DOMAINS=25000
+// entries spread across requestDomains conditions) turns the "did anything
+// change" check from O(total rule/domain count) per call into O(1) per
+// call, paying the real cost only when an input actually changes.
+const RULE_INPUT_KEYS = [
+  'enabled', 'blockAds', 'blockTrackers', 'blockMalware', 'focusMode',
+  'pausedDomains', 'allowedDomains', 'rules', 'remoteMalwareDomains',
+  'remoteMalwareRules', 'distractionDomains',
+];
+let _ruleGeneration = 0; // bumped each time ensureRuleDefinitionsLoaded() actually rebuilds
+const _ruleInputHashes = {};
+let _sessionAllowedDomainsHash = '';
+function _hashValue(v) {
+  return _hashText(JSON.stringify(v === undefined ? null : v));
+}
+chrome.storage.local.get(RULE_INPUT_KEYS).then(r => {
+  for (const key of RULE_INPUT_KEYS) _ruleInputHashes[key] = _hashValue(r[key]);
+}).catch(() => {});
+try {
+  chrome.storage.session.get('sessionAllowedDomains').then(r => {
+    _sessionAllowedDomainsHash = _hashValue(r.sessionAllowedDomains);
+  }).catch(() => {});
+} catch { /* chrome.storage.session unavailable (old browser) — best-effort only */ }
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'session') {
+    if (changes.sessionAllowedDomains) _sessionAllowedDomainsHash = _hashValue(changes.sessionAllowedDomains.newValue);
+    return;
+  }
+  if (area !== 'local') return;
+  for (const key of RULE_INPUT_KEYS) {
+    if (changes[key]) _ruleInputHashes[key] = _hashValue(changes[key].newValue);
+  }
+});
+function _ruleFingerprint() {
+  return _hashText(JSON.stringify({ gen: _ruleGeneration, session: _sessionAllowedDomainsHash, ..._ruleInputHashes }));
+}
+
 // Full reload pipeline — shared by the dashboard's RULES_CHANGED message and
 // the revalidation alarm: drop caches, rebuild DNR rules, notify all tabs.
 async function reloadRules() {
@@ -884,11 +984,40 @@ async function reloadRules() {
   AD_MAINFRAME_RULES = [];
   _ruleConfigPromise = null;
   _parsedRules = null;
+  _curatedDedupPromise = null;
   await applyNetworkRules();
   const tabs = await chrome.tabs.query({});
   for (const tab of tabs) {
     chrome.tabs.sendMessage(tab.id, { type: 'RULES_CHANGED' }).catch(() => {});
   }
+}
+
+// Debounced trailing-edge wrapper around reloadRules(), used ONLY by the
+// dashboard's own RULES_CHANGED message handler below — not by the
+// revalidation alarm or other direct reloadRules() callers, which are each
+// already single, deliberate actions. Toggling several rule sources on/off
+// in quick succession (or an autosaving custom-rules textarea) previously
+// fired one full re-fetch-all-sources+rebuild pass PER message; this
+// coalesces any messages arriving within RULES_CHANGED_DEBOUNCE_MS into a
+// single reloadRules() call reflecting the final state, while still
+// resolving every caller's sendResponse once that single run finishes.
+const RULES_CHANGED_DEBOUNCE_MS = 400;
+let _rulesChangedTimer = null;
+let _rulesChangedWaiters = [];
+function debouncedReloadRules() {
+  return new Promise((resolve, reject) => {
+    _rulesChangedWaiters.push({ resolve, reject });
+    if (_rulesChangedTimer) clearTimeout(_rulesChangedTimer);
+    _rulesChangedTimer = setTimeout(() => {
+      _rulesChangedTimer = null;
+      const waiters = _rulesChangedWaiters;
+      _rulesChangedWaiters = [];
+      reloadRules().then(
+        () => { for (const w of waiters) w.resolve(); },
+        (err) => { for (const w of waiters) w.reject(err); }
+      );
+    }, RULES_CHANGED_DEBOUNCE_MS);
+  });
 }
 
 async function revalidateRemoteRules() {
@@ -1341,15 +1470,47 @@ async function getRulesText() {
 let _parsedRules = null;
 let _parsedRulesPromise = null;
 
+// Cross-SW-restart parse cache (2026-08-23). `_parsedRules` above only
+// survives ONE service-worker lifetime — a real user with several large Rule
+// Sources enabled can have a multi-MB merged siteRulesCacheText (measured
+// live: 6.97MB / 119k lines), and MV3 service workers restart on a short
+// idle timeout, far more often than the rules text itself actually changes.
+// That means the custom line-by-line parseRuleText() reran on EVERY cold
+// start even though its input was identical — measured ~72ms at that real
+// scale, once per restart. chrome.storage.session (cleared on browser
+// restart, NOT on SW restart, and a SEPARATE quota pool from
+// chrome.storage.local — doesn't worsen local's already-tight usage) lets
+// the ALREADY-PARSED object itself survive a cold start: reading it back
+// via chrome.storage.session's built-in structured-clone deserialization
+// measured ~27ms at the same scale — the parser's own per-line/regex work
+// is what that skips, not just an IPC round-trip. Keyed by a content hash
+// of the raw rules text so it's self-invalidating the moment that text
+// actually changes (reloadRules() doesn't need to explicitly clear this —
+// the hash simply won't match next time, same self-invalidation style the
+// hash-based caches elsewhere in this file already use), and best-effort
+// (old-browser session-storage-unavailable, or any read/write failure,
+// just falls through to a real parse — never blocks or breaks anything).
+const PARSED_RULES_SESSION_KEY = 'parsedRulesSessionCache'; // { hash, parsed }
+
 async function getParsedRules() {
   if (_parsedRules) return _parsedRules;
   if (!_parsedRulesPromise) {
-    _parsedRulesPromise = getRulesText()
-      .then(text => {
-        _parsedRules = parseRuleText(text);
-        return _parsedRules;
-      })
-      .finally(() => { _parsedRulesPromise = null; });
+    _parsedRulesPromise = (async () => {
+      const text = await getRulesText();
+      const textHash = _hashText(text);
+      try {
+        const { [PARSED_RULES_SESSION_KEY]: cached } = await chrome.storage.session.get(PARSED_RULES_SESSION_KEY);
+        if (cached && cached.hash === textHash && cached.parsed) {
+          _parsedRules = cached.parsed;
+          return _parsedRules;
+        }
+      } catch { /* chrome.storage.session unavailable — fall through to a real parse */ }
+      _parsedRules = parseRuleText(text);
+      try {
+        await chrome.storage.session.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, parsed: _parsedRules } });
+      } catch { /* best-effort — a failed cache write just means the next cold start re-parses */ }
+      return _parsedRules;
+    })().finally(() => { _parsedRulesPromise = null; });
   }
   return _parsedRulesPromise;
 }
@@ -1568,6 +1729,7 @@ async function ensureRuleDefinitionsLoaded() {
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
       TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...config.trackerPatterns);
       MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...config.malwarePatterns);
+      _ruleGeneration++; // invalidates _ruleFingerprint() — static rule defs just changed
     })().finally(() => {
       _ruleConfigPromise = null;
     });
@@ -1581,6 +1743,53 @@ const NETWORK_REDIRECT_RULE_ID_START = 500000; // for network_redirect_rules
 const REMOTE_MALWARE_RULE_ID_START = 100000; // for fetched blocklists
 const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
 const PAUSE_ALLOW_RULE_ID_START = 300000;    // for pause/allowlist allow-all rules
+
+// ── Stable content-addressed rule IDs (Phase 3a prerequisite) ────────────
+// pauseAllowRules/customBlockRules/focusRules used to assign ids
+// POSITIONALLY (START + array index) over pausedDomains/allowedDomains/
+// rules/distractionDomains — lists whose ORDER can change (an item removed
+// from the middle shifts every later id) even when their CONTENT mostly
+// didn't. That made a real id-level diff (below) meaningless: removing one
+// paused domain would look like "every subsequent paused domain's rule
+// changed". _stableIdFor() derives an id purely from the item's own content
+// (djb2 hash of a caller-provided key, folded into a fixed-size slot range
+// reserved between this category's *_ID_START and the next category's
+// start), so the SAME domain/rule always gets the SAME id regardless of
+// what else is in the list or what order it's in. `claimed` is a plain Set
+// scoped to ONE _assignStableIds() call — collisions (two different keys
+// hashing to the same slot) are resolved via linear probing within that
+// call, so ids are always unique in a single addRules batch; the (rare)
+// case where a collision's resolution order shifts between calls just means
+// a slightly less optimal diff for the colliding items, never a dropped or
+// duplicated rule.
+function _stableIdSlot(key, rangeSize, claimed) {
+  let slot = parseInt(_hashText(key), 36) % rangeSize;
+  while (claimed.has(slot)) slot = (slot + 1) % rangeSize;
+  claimed.add(slot);
+  return slot;
+}
+function _assignStableIds(items, keyFn, idStart, rangeSize) {
+  const claimed = new Set();
+  return items.map(item => ({ item, id: idStart + _stableIdSlot(keyFn(item), rangeSize, claimed) }));
+}
+const FOCUS_ID_RANGE       = 900;    // FOCUS_RULE_ID_START..+900, buffer before QUERY_STRIP at 3000
+const CUSTOM_ID_RANGE       = 90000; // CUSTOM_RULE_ID_START..+90000, buffer before PAUSE_ALLOW at 300000
+const PAUSE_ALLOW_ID_RANGE  = 190000; // PAUSE_ALLOW_RULE_ID_START..+190000, buffer before NETWORK_REDIRECT at 500000
+
+// Per-rule content-hash cache (Phase 3a), keyed by object REFERENCE so a
+// rule object reused across calls (e.g. from Phase 2c's sub-build memos, or
+// DEFAULT_RULES/MALWARE_RULES/etc. which only get rebuilt on a generation
+// bump) never gets re-JSON.stringify-ed after the first time it's seen —
+// only genuinely new/changed rule objects pay that cost.
+const _ruleContentHashCache = new WeakMap();
+function _hashRule(rule) {
+  let h = _ruleContentHashCache.get(rule);
+  if (h === undefined) {
+    h = _hashText(JSON.stringify(rule));
+    _ruleContentHashCache.set(rule, h);
+  }
+  return h;
+}
 
 // Remote blocklist domains are grouped into a few requestDomains rules instead
 // of one rule per domain, so the dynamic-rule quota is no longer the constraint.
@@ -1726,6 +1935,17 @@ chrome.runtime.onStartup.addListener(() => {
 
 let activeStatsRules = [];
 let statsRulesInitialized = false;
+let _lastFingerprint = null; // last _ruleFingerprint() this SW lifetime actually applied (Phase 2b skip check)
+let _lastRuleHashById = null; // Map<id,hash> from the last successful updateDynamicRules() this SW lifetime (Phase 3a diff)
+
+// Phase 2c: in-memory-only memoization for the two remaining sub-builds
+// inside buildActiveRulesFromStorage() that don't have their own dedicated
+// function-level memo (buildRemoteMalwareRules() is a plain sync mapper,
+// and pauseAllowRules is built inline) — same pattern as
+// _customBlockRulesMemo/_focusRulesMemo above, keyed off the same
+// _ruleInputHashes/_sessionAllowedDomainsHash Phase 1a already maintains.
+let _remoteMalwareRulesMemo = { key: undefined, rules: null };
+let _pauseAllowRulesMemo = { key: undefined, rules: null };
 
 async function buildActiveRulesFromStorage() {
   await ensureRuleDefinitionsLoaded();
@@ -1756,7 +1976,16 @@ async function buildActiveRulesFromStorage() {
   // rewrites storage in the new format.
   const remoteDomains = remoteMalwareDomains
     || remoteMalwareRules.flatMap(r => r.condition?.requestDomains || []);
-  const remoteActive = blockMalware ? buildRemoteMalwareRules(remoteDomains) : [];
+  let remoteActive = [];
+  if (blockMalware) {
+    const remoteKey = _ruleInputHashes.remoteMalwareDomains + '|' + _ruleInputHashes.remoteMalwareRules;
+    if (_remoteMalwareRulesMemo.rules && _remoteMalwareRulesMemo.key === remoteKey) {
+      remoteActive = _remoteMalwareRulesMemo.rules;
+    } else {
+      remoteActive = buildRemoteMalwareRules(remoteDomains);
+      _remoteMalwareRulesMemo = { key: remoteKey, rules: remoteActive };
+    }
+  }
   const customBlockRules = await buildCustomBlockRules();
   const focusRules = await buildFocusRules(focusMode);
   const queryStripActive = blockTrackers ? QUERY_STRIP_RULES : [];
@@ -1779,16 +2008,25 @@ async function buildActiveRulesFromStorage() {
   try {
     ({ sessionAllowedDomains = [] } = await chrome.storage.session.get('sessionAllowedDomains'));
   } catch { /* chrome.storage.session unavailable (old browser) — best-effort only */ }
-  const excludedDomains = [...new Set([...pausedDomains, ...allowedDomains, ...sessionAllowedDomains])];
-  const pauseAllowRules = excludedDomains.map((domain, i) => ({
-    id: PAUSE_ALLOW_RULE_ID_START + i,
-    priority: 10, // higher than all block rules (priority 1-2)
-    action: { type: 'allowAllRequests' },
-    condition: {
-      requestDomains: [domain],
-      resourceTypes: ['main_frame', 'sub_frame'],
-    },
-  }));
+  const pauseAllowKey = _ruleInputHashes.pausedDomains + '|' + _ruleInputHashes.allowedDomains + '|' + _sessionAllowedDomainsHash;
+  let pauseAllowRules;
+  if (_pauseAllowRulesMemo.rules && _pauseAllowRulesMemo.key === pauseAllowKey) {
+    pauseAllowRules = _pauseAllowRulesMemo.rules;
+  } else {
+    const excludedDomains = [...new Set([...pausedDomains, ...allowedDomains, ...sessionAllowedDomains])];
+    // Stable id (Phase 3a) keyed on the domain itself, not array position.
+    const withIds = _assignStableIds(excludedDomains, domain => domain, PAUSE_ALLOW_RULE_ID_START, PAUSE_ALLOW_ID_RANGE);
+    pauseAllowRules = withIds.map(({ item: domain, id }) => ({
+      id,
+      priority: 10, // higher than all block rules (priority 1-2)
+      action: { type: 'allowAllRequests' },
+      condition: {
+        requestDomains: [domain],
+        resourceTypes: ['main_frame', 'sub_frame'],
+      },
+    }));
+    _pauseAllowRulesMemo = { key: pauseAllowKey, rules: pauseAllowRules };
+  }
 
   return {
     enabled: true,
@@ -1838,6 +2076,8 @@ async function _applyNetworkRulesImpl() {
     }
     await chrome.storage.local.remove(DNR_RULES_HASH_KEY);
     activeStatsRules = [];
+    _lastFingerprint = null;
+    _lastRuleHashById = null;
     statsRulesInitialized = true;
     updateIcon(false);
     return;
@@ -1852,38 +2092,121 @@ async function _applyNetworkRulesImpl() {
   // rebuild above, which other code — stats classification, malware
   // count — needs populated regardless of DNR state) when the rule set
   // we're about to send is byte-identical to what we last successfully
-  // sent. The hash is content-derived, so it self-invalidates the moment
-  // anything actually changes — no separate cache-clearing step needed,
-  // unlike a plain cached-value replay. existing.length is an extra,
-  // cheap guard against silent drift (rules cleared by something other
-  // than this function since the hash was stored).
-  const newHash = _hashText(JSON.stringify(allRules));
+  // sent. newHash is now an INPUT fingerprint (_ruleFingerprint(), see its
+  // own comment above) rather than a hash of the generated `allRules`
+  // array itself — buildActiveRulesFromStorage() is a pure function of
+  // those inputs, so equal fingerprints guarantee equal output without
+  // ever JSON.stringify-ing the (potentially thousands-of-domains-large)
+  // allRules array just to detect "nothing changed". existing.length is an
+  // extra, cheap guard against silent drift (rules cleared by something
+  // other than this function since the hash was stored).
+  const newHash = _ruleFingerprint();
   const { [DNR_RULES_HASH_KEY]: storedHash } = await chrome.storage.local.get(DNR_RULES_HASH_KEY);
   if (existing.length === allRules.length && storedHash === newHash) {
-    activeStatsRules = allRules.filter(rule => rule.action?.type === 'block');
+    // Same fingerprint as our own last successful run within this SW
+    // lifetime (statsRulesInitialized true, _lastFingerprint matches) means
+    // activeStatsRules is already correct in memory — skip re-filtering the
+    // full allRules array. A cold-start call (statsRulesInitialized false)
+    // still falls through and filters once, same as before.
+    if (!(statsRulesInitialized && _lastFingerprint === newHash)) {
+      activeStatsRules = allRules.filter(rule => rule.action?.type === 'block');
+    }
+    _lastFingerprint = newHash;
     statsRulesInitialized = true;
     updateIcon(true);
     return;
   }
 
-  await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: removeIds,
-    addRules: allRules,
-  });
+  // Phase 3a: diff against what's actually different, instead of always
+  // remove-ALL-existing + add-ALL-new — Chrome's DNR engine only has to
+  // re-index the rules that actually changed, not the whole set, every time
+  // e.g. one paused domain or one custom rule is toggled.
+  const { removeRuleIds, addRules, nextHashById } = _computeRuleDiff(allRules, existing);
+  if (removeRuleIds.length || addRules.length) {
+    await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds, addRules });
+  }
+  _lastRuleHashById = nextHashById;
   await chrome.storage.local.set({ [DNR_RULES_HASH_KEY]: newHash });
 
   activeStatsRules = allRules.filter(rule => rule.action?.type === 'block');
+  _lastFingerprint = newHash;
   statsRulesInitialized = true;
   updateIcon(true);
 }
 
+// Computes a precise add/remove diff for chrome.declarativeNetRequest.
+// updateDynamicRules() instead of blindly replacing everything (Phase 3a).
+// Fast path: if _lastRuleHashById is populated (a successful apply already
+// happened this SW lifetime), diff purely from our own bookkeeping — no
+// need to touch `existing` (the freshly chrome.declarativeNetRequest.
+// getDynamicRules()-fetched objects) at all, since Chrome always returns
+// NEW JS objects there (no reference-equality win possible on that side).
+// Cold-start path (SW just started, no bookkeeping yet): must compare
+// against `existing` directly — this pays a real per-rule hash cost once,
+// same "cold start does one real pass" invariant as the rest of this file
+// (ensureRuleDefinitionsLoaded, getParsedRules, etc.), then _lastRuleHashById
+// carries forward for every subsequent call this lifetime.
+function _computeRuleDiff(allRules, existing) {
+  const newById = new Map();
+  for (const rule of allRules) newById.set(rule.id, rule);
+  const removeRuleIds = [];
+  const addRules = [];
+
+  if (_lastRuleHashById) {
+    for (const id of _lastRuleHashById.keys()) {
+      if (!newById.has(id)) removeRuleIds.push(id);
+    }
+    for (const [id, rule] of newById) {
+      const oldHash = _lastRuleHashById.get(id);
+      const newHash = _hashRule(rule); // WeakMap-cached — cheap on a reused object reference
+      if (oldHash === undefined) {
+        addRules.push(rule);
+      } else if (oldHash !== newHash) {
+        removeRuleIds.push(id);
+        addRules.push(rule);
+      }
+    }
+  } else {
+    const existingById = new Map();
+    for (const rule of existing) existingById.set(rule.id, rule);
+    for (const id of existingById.keys()) {
+      if (!newById.has(id)) removeRuleIds.push(id);
+    }
+    for (const [id, rule] of newById) {
+      const oldRule = existingById.get(id);
+      if (!oldRule) {
+        addRules.push(rule);
+      } else if (_hashRule(oldRule) !== _hashRule(rule)) {
+        removeRuleIds.push(id);
+        addRules.push(rule);
+      }
+    }
+  }
+
+  const nextHashById = new Map();
+  for (const [id, rule] of newById) nextHashById.set(id, _hashRule(rule));
+  return { removeRuleIds, addRules, nextHashById };
+}
+
 // ── User custom blocking rules ────────────────────────────────────
+// Phase 2c perf fix: memoized in-memory (never persisted, so a real SW
+// restart always recomputes once) keyed by _ruleInputHashes.rules — the
+// same per-key hash Phase 1a already maintains via storage.onChanged, kept
+// fresh at write-time rather than recomputed per call. A repeat call within
+// the same SW lifetime with an unchanged `rules` storage key skips rebuilding
+// this array (and the chrome.storage.local.get round-trip) entirely.
+let _customBlockRulesMemo = { hash: undefined, rules: null };
 async function buildCustomBlockRules() {
+  const hash = _ruleInputHashes.rules;
+  if (_customBlockRulesMemo.rules && _customBlockRulesMemo.hash === hash) return _customBlockRulesMemo.rules;
   const { rules = [] } = await chrome.storage.local.get('rules');
   const blockRules = rules.filter(r => r.active && r.action === 'block');
-  return blockRules.map((r, i) => {
-    const ruleId = CUSTOM_RULE_ID_START + i;
-    const condition = { resourceTypes: [  
+  // Stable id (Phase 3a) keyed on the rule's own type+pattern, not array
+  // position — removing one custom rule no longer shifts every other
+  // custom rule's DNR id.
+  const withIds = _assignStableIds(blockRules, r => `${r.type}|${r.pattern}`, CUSTOM_RULE_ID_START, CUSTOM_ID_RANGE);
+  const result = withIds.map(({ item: r, id: ruleId }) => {
+    const condition = { resourceTypes: [
     'main_frame',
     'sub_frame',
     'stylesheet',
@@ -1911,16 +2234,25 @@ async function buildCustomBlockRules() {
     }
     return { id: ruleId, priority: 1, action: { type: 'block' }, condition };
   }).filter(Boolean);
+  _customBlockRulesMemo = { hash, rules: result };
+  return result;
 }
 
 // ── Focus mode blocking rules ─────────────────────────────────────
 const DISTRACTION_DEFAULTS = ['twitter.com', 'youtube.com', 'reddit.com', 'instagram.com', 'tiktok.com'];
 
+// Phase 2c: same in-memory memoization approach as buildCustomBlockRules()
+// above, keyed by (focusMode, _ruleInputHashes.distractionDomains).
+let _focusRulesMemo = { key: undefined, rules: null };
 async function buildFocusRules(focusMode) {
   if (!focusMode) return [];
+  const key = focusMode + '|' + _ruleInputHashes.distractionDomains;
+  if (_focusRulesMemo.rules && _focusRulesMemo.key === key) return _focusRulesMemo.rules;
   const { distractionDomains = DISTRACTION_DEFAULTS } = await chrome.storage.local.get('distractionDomains');
-  return distractionDomains.map((domain, i) => ({
-    id:       FOCUS_RULE_ID_START + i,
+  // Stable id (Phase 3a) keyed on the domain itself, not array position.
+  const withIds = _assignStableIds(distractionDomains, domain => domain, FOCUS_RULE_ID_START, FOCUS_ID_RANGE);
+  const result = withIds.map(({ item: domain, id }) => ({
+    id,
     priority: 2,
     action:   { type: 'block' },
     condition: {
@@ -1928,6 +2260,8 @@ async function buildFocusRules(focusMode) {
       resourceTypes:  ['main_frame', 'sub_frame', 'script', 'image', 'xmlhttprequest'],
     },
   }));
+  _focusRulesMemo = { key, rules: result };
+  return result;
 }
 
 // ── Icon badge ────────────────────────────────────────────────────
@@ -2410,14 +2744,34 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // its hot path — it only reads already-in-memory state (tabContextManager,
 // parsed filter lists) — confirmed by reading their source. This cache
 // mirrors that: kept in sync via onChanged instead of read fresh per call.
-const _settingsCache = { enabled: true, pausedDomains: [], allowedDomains: [], collectStats: true };
-chrome.storage.local.get(['enabled', 'pausedDomains', 'allowedDomains', 'collectStats']).then(r => {
+// pausedDomains/allowedDomains are Sets (not the raw storage arrays) so the
+// per-new-tab / per-blocked-request membership checks below are O(1) instead
+// of an O(n) Array scan. blockAds/blockTrackers/blockMalware are cached here
+// too so the RESOURCE_SEEN hot path (below) doesn't need its own fresh
+// chrome.storage.local.get() IPC round-trip on every blocked-resource report.
+// gpcSignal/referrerAnonymization are cached here too (2026-08-23) so
+// GET_SITE_CONFIG — which fires once per FRAME on every navigation/iframe
+// load, the actual per-domain hot path, not resolveSiteKey()/getParsedRules()
+// which were already indexed/cached earlier the same day — no longer does
+// its own chrome.storage.local.get() round-trip on every single call.
+const _SETTINGS_CACHE_SCALAR_KEYS = ['enabled', 'collectStats', 'blockAds', 'blockTrackers', 'blockMalware', 'gpcSignal', 'referrerAnonymization'];
+const _settingsCache = {
+  enabled: true, collectStats: true, blockAds: true, blockTrackers: true, blockMalware: true,
+  gpcSignal: true, referrerAnonymization: true,
+  pausedDomains: new Set(), allowedDomains: new Set(),
+};
+chrome.storage.local.get([..._SETTINGS_CACHE_SCALAR_KEYS, 'pausedDomains', 'allowedDomains']).then(r => {
   Object.assign(_settingsCache, r);
+  _settingsCache.pausedDomains = new Set(r.pausedDomains || []);
+  _settingsCache.allowedDomains = new Set(r.allowedDomains || []);
 }).catch(() => {});
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
-  for (const key of ['enabled', 'pausedDomains', 'allowedDomains', 'collectStats']) {
+  for (const key of _SETTINGS_CACHE_SCALAR_KEYS) {
     if (changes[key]) _settingsCache[key] = changes[key].newValue;
+  }
+  for (const key of ['pausedDomains', 'allowedDomains']) {
+    if (changes[key]) _settingsCache[key] = new Set(changes[key].newValue || []);
   }
 });
 
@@ -2477,7 +2831,7 @@ chrome.tabs.onCreated.addListener(async (tab) => {
     if (!opener || !opener.url) return;
     let openerHost;
     try { openerHost = new URL(opener.url).hostname.toLowerCase(); } catch { return; }
-    if (_settingsCache.pausedDomains.includes(openerHost) || _settingsCache.allowedDomains.includes(openerHost)) return;
+    if (_settingsCache.pausedDomains.has(openerHost) || _settingsCache.allowedDomains.has(openerHost)) return;
     const parsed = await getParsedRules();
     const siteKey = resolveSiteKey(parsed.host_patterns || {}, openerHost);
     const siteCfg = (siteKey && parsed[siteKey]) || {};
@@ -2880,6 +3234,12 @@ async function _applySiteRuleText(siteRuleText) {
   await reloadRules();
 }
 
+// In-memory memo for GET_SITE_CONFIG's computed `global` object — see that
+// handler's own comment. Never persisted; naturally cleared (and correctly
+// recomputed once) on every SW restart, same as every other in-memory memo
+// in this file (_customBlockRulesMemo, _focusRulesMemo, etc.).
+let _siteConfigGlobalMemo = { parsed: null, gpcSignal: null, referrerAnonymization: null, global: null };
+
 // ── Message handler ───────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
@@ -3139,8 +3499,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'RULES_CHANGED': {
         // Invalidate caches, re-fetch all sources, rebuild DNR rules and
-        // notify every tab — shared with the revalidation alarm.
-        await reloadRules();
+        // notify every tab. Debounced (see debouncedReloadRules()'s own
+        // comment) so several rapid dashboard edits collapse into one pass.
+        await debouncedReloadRules();
         sendResponse({ ok: true });
         break;
       }
@@ -3209,26 +3570,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'RESOURCE_SEEN': {
         // Sent by content.js MutationObserver with classification counts.
         // delta: { seen, ads, trackers, malware }
-        const {
-          collectStats = true, enabled: statsEnabled = true,
-          blockAds: rsAds = true, blockTrackers: rsTrackers = true, blockMalware: rsMalware = true,
-          pausedDomains: rsPaused = [], allowedDomains: rsAllowed = [],
-        } = await chrome.storage.local.get(
-          ['collectStats', 'enabled', 'blockAds', 'blockTrackers', 'blockMalware', 'pausedDomains', 'allowedDomains']
-        );
-        if (!collectStats) { sendResponse({ ok: true }); break; }
+        // Reads _settingsCache (kept in sync via storage.onChanged, see its
+        // own comment above) instead of a fresh chrome.storage.local.get()
+        // — this handler fires once per blocked-resource report, a genuine
+        // per-request hot path, so skipping the IPC round-trip and the
+        // Array.includes() scans (Set.has() instead) both matter here.
+        if (!_settingsCache.collectStats) { sendResponse({ ok: true }); break; }
 
         const domain = msg.domain || '_global';
         // Only count categories whose blocking is actually active — a matched
         // URL is only "blocked" if the corresponding DNR rules are installed.
-        if (!statsEnabled || rsPaused.includes(domain) || rsAllowed.includes(domain)) {
+        if (!_settingsCache.enabled || _settingsCache.pausedDomains.has(domain) || _settingsCache.allowedDomains.has(domain)) {
           sendResponse({ ok: true });
           break;
         }
         const d = msg.delta || {};
-        const ads      = rsAds      ? (d.ads      || 0) : 0;
-        const trackers = rsTrackers ? (d.trackers || 0) : 0;
-        const malware  = rsMalware  ? (d.malware  || 0) : 0;
+        const ads      = _settingsCache.blockAds      ? (d.ads      || 0) : 0;
+        const trackers = _settingsCache.blockTrackers ? (d.trackers || 0) : 0;
+        const malware  = _settingsCache.blockMalware  ? (d.malware  || 0) : 0;
         _enqueueStatWrite(() => _writeDomainStatDelta(domain, {
           totalSeen:       d.seen || 0,
           adsBlocked:      ads,
@@ -3350,7 +3709,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'GET_SITE_CONFIG': {
         // Sends a frame only what it needs: [global] + its resolved site section
         // (a few KB), instead of the full rules text that every frame previously
-        // fetched and re-parsed independently.
+        // fetched and re-parsed independently. This handler fires once per
+        // FRAME on every navigation/iframe load — the real per-domain hot
+        // path here — so nothing below it should do a fresh
+        // chrome.storage.local.get() or rebuild an object that didn't change.
         try {
           const parsed = await getParsedRules();
           const host = String(msg.host || '').toLowerCase();
@@ -3360,11 +3722,26 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           // global entries so they ride the same SCRIPTLET_KEYS pipeline as
           // every other MAIN-world scriptlet, with no [global] override path
           // to worry about (see background.js:1305-1345 applyPrivacySettings).
-          const { gpcSignal = true, referrerAnonymization = true } =
-            await chrome.storage.local.get(['gpcSignal', 'referrerAnonymization']);
-          const global = Object.assign({}, parsed.global || {});
-          if (gpcSignal) global.gpc_signal = ['1'];
-          if (referrerAnonymization) global.hide_document_referrer = ['1'];
+          // Read from _settingsCache (kept in sync via storage.onChanged, see
+          // its own comment) instead of chrome.storage.local.get() — this
+          // used to be a real per-call storage IPC round-trip on every single
+          // frame/navigation, confirmed 2026-08-23.
+          const { gpcSignal, referrerAnonymization } = _settingsCache;
+          // The computed `global` object only actually changes when parsed
+          // (a stable reference across calls — see getParsedRules()'s own
+          // comment) or these two flags change, so memoize it instead of
+          // reallocating + re-assigning on every call.
+          let global;
+          if (_siteConfigGlobalMemo.parsed === parsed
+            && _siteConfigGlobalMemo.gpcSignal === gpcSignal
+            && _siteConfigGlobalMemo.referrerAnonymization === referrerAnonymization) {
+            global = _siteConfigGlobalMemo.global;
+          } else {
+            global = Object.assign({}, parsed.global || {});
+            if (gpcSignal) global.gpc_signal = ['1'];
+            if (referrerAnonymization) global.hide_document_referrer = ['1'];
+            _siteConfigGlobalMemo = { parsed, gpcSignal, referrerAnonymization, global };
+          }
           sendResponse({
             siteKey,
             global,
@@ -3439,12 +3816,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // ── Tab tracking (pause badge + per-tab block count) ────────────────
 // Pause state always wins the badge (⏸); otherwise the tab shows its own
 // _tabBlockedCounts entry via _setTabBadge.
-async function updateBadgeForTab(tabId, url) {
+function updateBadgeForTab(tabId, url) {
   if (!url) return;
   let domain = '';
   try { domain = new URL(url).hostname; } catch { return; }
-  const { pausedDomains = [] } = await chrome.storage.local.get('pausedDomains');
-  if (pausedDomains.includes(domain)) {
+  // Reads _settingsCache (Set, kept in sync via storage.onChanged) instead
+  // of a fresh chrome.storage.local.get() + Array.includes() — this runs on
+  // every tab activate/navigation-complete, a genuine per-navigation hot path.
+  if (_settingsCache.pausedDomains.has(domain)) {
     chrome.action.setBadgeText({ text: '⏸', tabId }).catch(() => {});
     chrome.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId }).catch(() => {});
   } else {
