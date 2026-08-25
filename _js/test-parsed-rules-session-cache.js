@@ -33,6 +33,7 @@ const sessionStorageData = {};
 
 function makeSandbox() {
   const noopEvent = { addListener() {} };
+  const messageListeners = [];
   const chromeStub = {
     storage: {
       local: {
@@ -61,9 +62,11 @@ function makeSandbox() {
     declarativeNetRequest: { getDynamicRules: async () => [], updateDynamicRules: async () => {} },
     runtime: {
       getURL: p => 'chrome-extension://test/' + p, getManifest: () => ({ version: '1.0.0' }),
-      onMessage: noopEvent, onInstalled: noopEvent, onStartup: noopEvent,
+      onMessage: { addListener(fn) { messageListeners.push(fn); } }, onInstalled: noopEvent, onStartup: noopEvent,
     },
-    tabs: { query: async () => [], onCreated: noopEvent, onRemoved: noopEvent, onActivated: noopEvent, onUpdated: noopEvent },
+    // Real dashboard-triggered reloads query every open tab to notify them —
+    // no tabs open in this harness, just needs to resolve to an empty list.
+    tabs: { query: async () => [], sendMessage: async () => {}, onCreated: noopEvent, onRemoved: noopEvent, onActivated: noopEvent, onUpdated: noopEvent },
     action: { setIcon() {}, setBadgeText() {}, setBadgeBackgroundColor() {} },
     alarms: { create() {}, onAlarm: noopEvent },
     scripting: { insertCSS: async () => {}, removeCSS: async () => {} },
@@ -87,7 +90,15 @@ function makeSandbox() {
   sandbox.self = sandbox; sandbox.globalThis = sandbox;
   const ctx = vm.createContext(sandbox);
   vm.runInContext(bgSrc + '\nself.__test = { getParsedRules, resolveSiteKey, PARSED_RULES_SESSION_KEY };', ctx, { filename: 'background.js' });
-  return sandbox.__test;
+  const t = sandbox.__test;
+  // Dispatches a message through the REAL chrome.runtime.onMessage listener
+  // this SW instance registered (background.js's own top-level listener) —
+  // used below to trigger the exact same 'RULES_CHANGED' path the dashboard
+  // sends, not a direct call to an internal function.
+  t.dispatchMessage = (msg) => new Promise((resolve) => {
+    messageListeners[0](msg, {}, resolve);
+  });
+  return t;
 }
 
 (async () => {
@@ -117,6 +128,71 @@ function makeSandbox() {
   check('after rules text changes, a new cold start re-parses instead of serving the stale cache',
     !!(parsed3.newsection && (parsed3.newsection.direct_hide_selectors || []).includes('.totally-new-marker')),
     JSON.stringify(parsed3.newsection));
+
+  console.log('\n== Real dashboard-triggered path: RULES_CHANGED message -> debouncedReloadRules() -> reloadRules() -> applyNetworkRules() -> getParsedRules() (2026-08-25) ==');
+  // Reset to a clean slate — T1-T3 above left storageData.siteRulesCacheText
+  // set to a hand-crafted string, not what a real fetch would produce.
+  for (const k of Object.keys(storageData)) delete storageData[k];
+  for (const k of Object.keys(sessionStorageData)) delete sessionStorageData[k];
+
+  const T4 = makeSandbox(); // fresh "SW" — establishes the baseline (bundled local rules only)
+  const parsedBaseline = await T4.getParsedRules();
+  const baselineHash = sessionStorageData[T4.PARSED_RULES_SESSION_KEY] && sessionStorageData[T4.PARSED_RULES_SESSION_KEY].hash;
+  check('baseline load (no custom rules yet) resolves youtube.com correctly',
+    T4.resolveSiteKey(parsedBaseline.host_patterns, 'youtube.com') === 'youtube');
+  check('baseline load wrote a session cache entry', !!baselineHash);
+
+  // Simulate a real dashboard edit: user adds a custom rule and clicks Save
+  // (dashboard.js writes customRulesText via chrome.storage.local.set, THEN
+  // sends RULES_CHANGED — mirrored here in the same order).
+  storageData.customRulesText = '[global]\ndirect_hide_selectors = .rule-B-marker';
+  const t0 = Date.now();
+  const reply1 = await T4.dispatchMessage({ type: 'RULES_CHANGED' });
+  const reloadMs = Date.now() - t0;
+  check('RULES_CHANGED message is acknowledged (ok:true) after the real reload completes', reply1 && reply1.ok === true, reply1);
+  console.log(`  (real reloadRules() round-trip, incl. the 400ms debounce window: ${reloadMs}ms)`);
+
+  const parsedAfterEdit = await T4.getParsedRules(); // same SW instance, _parsedRules already updated in-memory
+  check('after RULES_CHANGED, the SAME SW instance sees the new custom rule immediately',
+    (parsedAfterEdit.global && parsedAfterEdit.global.direct_hide_selectors || []).includes('.rule-B-marker'),
+    parsedAfterEdit.global);
+  const hashAfterEdit = sessionStorageData[T4.PARSED_RULES_SESSION_KEY] && sessionStorageData[T4.PARSED_RULES_SESSION_KEY].hash;
+  check('the session cache entry was actually REPLACED (new hash), not left stale from before the edit',
+    !!hashAfterEdit && hashAfterEdit !== baselineHash, { baselineHash, hashAfterEdit });
+
+  // A SEPARATE SW instance ("restart" #2, e.g. the idle-timeout kind that
+  // has nothing to do with this edit) must see rule B too — proving the
+  // real dashboard-triggered edit is visible across a genuine restart, not
+  // just to the SW instance that happened to process the RULES_CHANGED
+  // message.
+  const T5 = makeSandbox();
+  const t1 = Date.now();
+  const parsedT5 = await T5.getParsedRules();
+  const t5Ms = Date.now() - t1;
+  check('a FRESH SW instance after the edit sees rule B too (via the warm session cache, not a stale copy)',
+    (parsedT5.global && parsedT5.global.direct_hide_selectors || []).includes('.rule-B-marker'), parsedT5.global);
+  console.log(`  (cross-restart getParsedRules() served from the warm session cache: ${t5Ms}ms)`);
+
+  // Now the "dashboard Save clicked but nothing actually changed" case: send
+  // RULES_CHANGED again with customRulesText untouched. reloadRules() always
+  // busts+refetches the raw text regardless (it can't know in advance
+  // whether content changed), but since the refetched text is BYTE-IDENTICAL
+  // to what's already cached, the session-cache hash comes out the same —
+  // so a LATER restart still gets to reuse the warm cache instead of paying
+  // for a real re-parse it doesn't need.
+  const reply2 = await T4.dispatchMessage({ type: 'RULES_CHANGED' }); // same instance, no real change
+  check('a second RULES_CHANGED with no real content change still acks ok', reply2 && reply2.ok === true, reply2);
+  const hashAfterNoopEdit = sessionStorageData[T4.PARSED_RULES_SESSION_KEY] && sessionStorageData[T4.PARSED_RULES_SESSION_KEY].hash;
+  check('a no-op RULES_CHANGED (content unchanged) leaves the session-cache hash IDENTICAL',
+    hashAfterNoopEdit === hashAfterEdit, { hashAfterEdit, hashAfterNoopEdit });
+
+  const T6 = makeSandbox();
+  const t2 = Date.now();
+  const parsedT6 = await T6.getParsedRules();
+  const t6Ms = Date.now() - t2;
+  check('a restart AFTER the no-op edit still gets served from the (still-valid) warm session cache',
+    (parsedT6.global && parsedT6.global.direct_hide_selectors || []).includes('.rule-B-marker'), parsedT6.global);
+  console.log(`  (restart after a no-op edit, still warm-cache-served: ${t6Ms}ms)`);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

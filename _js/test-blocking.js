@@ -51,6 +51,12 @@ const chromeStub = {
         for (const fn of storageChangeListeners) fn(changes, 'local');
       },
       async clear() { for (const k of Object.keys(storageData)) delete storageData[k]; },
+      async remove(k) {
+        const keys = Array.isArray(k) ? k : [k];
+        const changes = {};
+        for (const key of keys) { changes[key] = { oldValue: storageData[key] }; delete storageData[key]; }
+        for (const fn of storageChangeListeners) fn(changes, 'local');
+      },
     },
     // Separate backing object from `local` — chrome.storage.session is a
     // genuinely distinct store (in-memory, cleared on browser restart), used
@@ -240,6 +246,9 @@ self.__test = {
   ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules, reloadRules,
   _dedupeMalwarePriority,
   parseRuleText, buildRemoteMalwareRules, updateIcon, _incrementTabBlocked, _setTabBadge,
+  fetchMalwareBlocklists, maybeUpdateMalwareLists, DOMAIN_PATTERN_RE,
+  _compressDomainsForStorage, _decompressDomainsFromStorage,
+  get REMOTE_MAX_DOMAINS() { return REMOTE_MAX_DOMAINS; },
   getParsedRules, resolveSiteKey,
   getCachedRuleText, setCachedRuleText, _compressForStorage, _decompressFromStorage,
   _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
@@ -1998,6 +2007,60 @@ function check(name, cond, detail = '') {
   check('generated key carries the "abp_" prefix', /\[abp_exporttest\]/.test(rExport.text), rExport.text);
   const rExportUnreachable = await sendExport({ type: 'EXPORT_CONVERTED_RULE_SOURCE', url: 'https://example.com/does-not-exist-source.txt' });
   check('a 404/unreachable url reports ok:false with an error, not a throw', rExportUnreachable.ok === false && !!rExportUnreachable.error, JSON.stringify(rExportUnreachable));
+
+  console.log('\n== 26. remoteMalwareDomains: cap raised 25k->200k + compressed storage (2026-08-25) ==');
+  // The 25,000 cap used to truncate the (much larger) Phishing Army source
+  // alphabetically partway through, permanently dropping most of the list
+  // every day. Raised to 200,000 (Chrome's dynamic-rule COUNT quota was never
+  // the real constraint — REMOTE_DOMAINS_PER_RULE=1000 chunking already
+  // keeps rule count tiny) and the domain list is now stored compressed
+  // (same deflate-raw approach as siteRulesCacheText) so the larger cap
+  // doesn't reintroduce chrome.storage.local quota pressure.
+  check('REMOTE_MAX_DOMAINS raised well past the old 25,000 truncation point', T.REMOTE_MAX_DOMAINS >= 100000, T.REMOTE_MAX_DOMAINS);
+
+  stubUrlTextMap['https://urlhaus.abuse.ch/downloads/hostfile/'] =
+    '# comment\n127.0.0.1 evil-host-1.example\n0.0.0.0 evil-host-2.example\nlocalhost\n';
+  const manyDomainsLines = [];
+  for (let i = 0; i < 3000; i++) manyDomainsLines.push(`phish-${i}.example`);
+  stubUrlTextMap['https://phishing.army/download/phishing_army_blocklist.txt'] =
+    '# Phishing Army header\n' + manyDomainsLines.join('\n');
+
+  const fetchedCount = await T.fetchMalwareBlocklists();
+  check('fetchMalwareBlocklists() parses both sources and returns the total unique count',
+    fetchedCount === 3002, fetchedCount); // 2 from URLhaus + 3000 from Phishing Army, comment/localhost excluded
+
+  const storedWrapper = storageData['remoteMalwareDomains'];
+  check('stored value is the compressed {format,data} wrapper, not a bare array',
+    storedWrapper && typeof storedWrapper === 'object' && !Array.isArray(storedWrapper) && 'format' in storedWrapper,
+    JSON.stringify(storedWrapper).slice(0, 120));
+  check('compressed storage is smaller than the raw JSON array would be (this dataset has enough repetition to compress)',
+    JSON.stringify(storedWrapper).length < JSON.stringify(manyDomainsLines).length,
+    `wrapper=${JSON.stringify(storedWrapper).length} raw=${JSON.stringify(manyDomainsLines).length}`);
+
+  const decompressedBack = await T._decompressDomainsFromStorage(storedWrapper);
+  check('decompressing the stored wrapper yields back all 3002 domains, byte-identical set',
+    decompressedBack.length === 3002 && decompressedBack.includes('evil-host-1.example') && decompressedBack.includes('phish-2999.example'),
+    decompressedBack.length);
+
+  check('backward compat: a pre-compression bare array still decompresses (passes through) correctly',
+    (await T._decompressDomainsFromStorage(['legacy-domain-1.example', 'legacy-domain-2.example'])).length === 2);
+  check('backward compat: undefined/missing value decompresses to an empty array, not a throw',
+    (await T._decompressDomainsFromStorage(undefined)).length === 0);
+
+  // buildActiveRulesFromStorage() must actually DECOMPRESS before building
+  // rules — this is the real regression this section exists to catch: it's
+  // easy to compress on write and forget to decompress on read, which would
+  // silently turn every remote-malware domain into dead weight (rules built
+  // from the wrapper object instead of the real domain array).
+  Object.assign(storageData, { enabled: true, blockMalware: true });
+  const activeWithRemote = await T.buildActiveRulesFromStorage();
+  const remoteBlockRule = activeWithRemote.allRules.find(r => r.id >= 100000 && r.id < 200000 && r.action.type === 'block');
+  check('buildActiveRulesFromStorage() decompresses the stored domains and builds real requestDomains rules from them',
+    !!remoteBlockRule && remoteBlockRule.condition.requestDomains.includes('phish-0.example'),
+    remoteBlockRule && remoteBlockRule.condition.requestDomains.slice(0, 3));
+
+  delete stubUrlTextMap['https://urlhaus.abuse.ch/downloads/hostfile/'];
+  delete stubUrlTextMap['https://phishing.army/download/phishing_army_blocklist.txt'];
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

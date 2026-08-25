@@ -245,6 +245,23 @@ async function _decompressFromStorage(stored) {
   return ''; // unrecognized format — treat as a cache miss, never guess
 }
 
+// remoteMalwareDomains (see fetchMalwareBlocklists()) is an array, not text —
+// reuse the same deflate-raw machinery by round-tripping through JSON first.
+async function _compressDomainsForStorage(domains) {
+  return _compressForStorage(JSON.stringify(domains));
+}
+async function _decompressDomainsFromStorage(stored) {
+  if (!stored) return [];
+  // Backward compat: installs from before this change stored a bare array.
+  if (Array.isArray(stored)) return stored;
+  try {
+    const parsed = JSON.parse(await _decompressFromStorage(stored));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return []; // corrupted/unreadable — treat as empty rather than guess
+  }
+}
+
 async function getCachedRuleText() {
   try {
     const cached = await chrome.storage.local.get([RULES_CACHE_TEXT_KEY, RULES_CACHE_TIME_KEY]);
@@ -1073,7 +1090,7 @@ function _hashText(s) {
 // via _ruleGeneration). Hashing each input individually — computed once
 // per storage WRITE via onChanged, not once per applyNetworkRules() CALL —
 // instead of JSON.stringify-ing the full generated `allRules` array (which
-// can carry a remoteMalwareDomains list up to REMOTE_MAX_DOMAINS=25000
+// can carry a remoteMalwareDomains list up to REMOTE_MAX_DOMAINS=200000
 // entries spread across requestDomains conditions) turns the "did anything
 // change" check from O(total rule/domain count) per call into O(1) per
 // call, paying the real cost only when an input actually changes.
@@ -1943,8 +1960,19 @@ function _hashRule(rule) {
 }
 
 // Remote blocklist domains are grouped into a few requestDomains rules instead
-// of one rule per domain, so the dynamic-rule quota is no longer the constraint.
-const REMOTE_MAX_DOMAINS = 25000;
+// of one rule per domain (REMOTE_DOMAINS_PER_RULE), so Chrome's dynamic-rule
+// COUNT quota is not the real constraint even at real full-feed scale
+// (URLhaus + Phishing Army combined ~155k domains today = ~310 rules, far
+// under Chrome's dynamic+session rule limit). The cap below exists only to
+// bound storage/memory against a misbehaving or unexpectedly huge feed, not
+// because of the rule quota — raised from 25,000 (which used to truncate
+// Phishing Army's alphabetically-sorted list partway through, silently and
+// permanently dropping every domain past early "a") to comfortably cover the
+// real current combined feed size with headroom for growth. Domains are
+// stored compressed (_compressDomainsForStorage/_decompressDomainsFromStorage)
+// specifically so this higher cap doesn't reintroduce the chrome.storage.local
+// quota pressure that motivated compressing siteRulesCacheText.
+const REMOTE_MAX_DOMAINS = 200000;
 const REMOTE_DOMAINS_PER_RULE = 1000;
 
 function buildRemoteMalwareRules(domains) {
@@ -2126,7 +2154,8 @@ async function buildActiveRulesFromStorage() {
   // Flatten them back to a domain list until the next blocklist refresh
   // rewrites storage in the new format.
   const remoteDomains = remoteMalwareDomains
-    || remoteMalwareRules.flatMap(r => r.condition?.requestDomains || []);
+    ? await _decompressDomainsFromStorage(remoteMalwareDomains)
+    : remoteMalwareRules.flatMap(r => r.condition?.requestDomains || []);
   let remoteActive = [];
   if (blockMalware) {
     const remoteKey = _ruleInputHashes.remoteMalwareDomains + '|' + _ruleInputHashes.remoteMalwareRules;
@@ -2613,9 +2642,12 @@ async function fetchMalwareBlocklists() {
 
   // Store only the domain list — rules are rebuilt on apply. Storing rule
   // objects (~150 bytes each as JSON) wasted storage; the old per-rule key
-  // is removed on first update after migration.
+  // is removed on first update after migration. Compressed (deflate-raw) the
+  // same way as siteRulesCacheText — necessary now that REMOTE_MAX_DOMAINS
+  // covers the real ~155k-domain combined feed instead of truncating it.
+  const compressedDomains = await _compressDomainsForStorage(domains);
   await chrome.storage.local.set({
-    remoteMalwareDomains: domains,
+    remoteMalwareDomains: compressedDomains,
     malwareListLastUpdate: Date.now(),
     malwareListCount: domains.length,
   });
