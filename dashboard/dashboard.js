@@ -453,7 +453,12 @@ const CUSTOM_RULES_DEFAULT = `# Custom rules — same format as site-rules.txt
 function loadCustomRules() {
   EXT.storage.local.get('customRulesText', ({ customRulesText }) => {
     const el = document.getElementById('customRulesEditor');
-    if (el) el.value = customRulesText != null ? customRulesText : CUSTOM_RULES_DEFAULT;
+    // Not just != null — the element/global-rules picker flows (background.js's
+    // _applyElementRules() etc.) write back a literal '' once the last
+    // auto-generated rule is removed and nothing hand-written remains, which
+    // is functionally "no custom rules" same as the key never having been
+    // set, so the sample template should show for that case too.
+    if (el) el.value = (customRulesText && customRulesText.trim()) ? customRulesText : CUSTOM_RULES_DEFAULT;
   });
 }
 

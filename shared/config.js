@@ -44,7 +44,6 @@ self.ADBLOCK_CONFIG = {
     // banners, popups, chat/AI/newsletter overlays), not ads/trackers —
     // complementary to, not a replacement for, the lists above.
     { name: 'AdGuard – Social Widgets', url: 'https://filters.adtidy.org/extension/ublock/filters/4.txt', enable: false, group: "easylist" },
-    { name: 'Fanboy – FB', url: 'https://secure.fanboy.co.nz/fanboy-antifacebook.txt', enable: false, group: "easylist" },
     { name: 'AdGuard – Cookie Notices', url: 'https://filters.adtidy.org/extension/ublock/filters/18.txt', enable: false, group: "easylist" },
     { name: 'AdGuard – Popup Overlays', url: 'https://filters.adtidy.org/extension/ublock/filters/19.txt', enable: false, group: "easylist" },
     { name: 'AdGuard – Mobile App Banners', url: 'https://filters.adtidy.org/extension/ublock/filters/20.txt', enable: false, group: "easylist" },

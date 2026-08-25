@@ -2549,6 +2549,10 @@ async function updateIcon(enabled) {
   if (!enabled) {
     EXT.action.setBadgeText({ text: 'OFF' });
     EXT.action.setBadgeBackgroundColor({ color: '#f87171' });
+    const [offTab] = await EXT.tabs.query({ active: true, currentWindow: true }).catch(() => []);
+    let offDomain = '';
+    try { offDomain = offTab?.url ? new URL(offTab.url).hostname : ''; } catch {}
+    updateContextMenuVisibility(offDomain, false);
     return;
   }
   // Clear the global "OFF" value so tabs with no per-tab override go blank
@@ -4104,6 +4108,25 @@ function updateBadgeForTab(tabId, url) {
     EXT.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId }).catch(() => {});
   } else {
     _setTabBadge(tabId);
+  }
+  updateContextMenuVisibility(domain);
+}
+
+// "Pick element to hide…" (and the two DEBUG_LOCAL-only power-user items)
+// only make sense where blocking would actually apply — hide them entirely
+// (not just grey out) for the active tab's domain while protection is
+// globally off, the site is paused, or the site is allowlisted, since a
+// rule captured there would never take effect. `enabledOverride` lets
+// updateIcon(false) pass the just-computed `enabled` value directly instead
+// of reading _settingsCache.enabled, which may not have caught up yet via
+// storage.onChanged at that exact call site.
+function updateContextMenuVisibility(domain, enabledOverride) {
+  const enabled = enabledOverride !== undefined ? enabledOverride : _settingsCache.enabled;
+  const visible = enabled && !!domain && !_settingsCache.pausedDomains.has(domain) && !_settingsCache.allowedDomains.has(domain);
+  EXT.contextMenus?.update?.('qkv1-pick-element', { visible }, () => { void EXT.runtime.lastError; });
+  if (DEBUG_LOCAL) {
+    EXT.contextMenus?.update?.('qkv1-scan-globals', { visible }, () => { void EXT.runtime.lastError; });
+    EXT.contextMenus?.update?.('qkv1-edit-rules', { visible }, () => { void EXT.runtime.lastError; });
   }
 }
 
