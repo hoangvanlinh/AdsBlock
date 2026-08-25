@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.42
+
+- Internal: consolidated the `chrome.*`/`browser.*` namespace handling that background.js and the content-script fast-path cache each duplicated into one shared module.
+- Internal: reorganized the project layout — shared runtime modules moved into `shared/`, Node test suites into `test/`, build/diagnostic tooling into `tools/` — no behavior change for users.
+
 ## 1.0.25
 
 - Fixed a YouTube ad-tracking gap: in-player ads (playerAds) weren't being pruned from network responses, only adPlacements/adSlots were.

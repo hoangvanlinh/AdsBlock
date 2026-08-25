@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// _js/inject-web-accessible-resources.js — lists every file in
+// tools/inject-web-accessible-resources.js — lists every file in
 // web_accessible_resources/ and writes "web_accessible_resources/<file>"
 // into its OWN dedicated web_accessible_resources[] entry in a build's
 // manifest.json (separate from the rule/site-rules.txt and blocked/
@@ -8,7 +8,7 @@
 // copy_static_files, once the folder has already been copied into the dist
 // dir and the manifest already copied to its destination path.
 //
-// Usage: node _js/inject-web-accessible-resources.js <dest-manifest.json>
+// Usage: node tools/inject-web-accessible-resources.js <dest-manifest.json>
 
 const fs = require('fs');
 const path = require('path');
@@ -18,7 +18,7 @@ const RESOURCES_DIR = path.join(ROOT, 'web_accessible_resources');
 
 const destManifestPath = process.argv[2];
 if (!destManifestPath) {
-  console.error('Usage: node _js/inject-web-accessible-resources.js <dest-manifest.json>');
+  console.error('Usage: node tools/inject-web-accessible-resources.js <dest-manifest.json>');
   process.exit(1);
 }
 

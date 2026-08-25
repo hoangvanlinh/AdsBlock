@@ -8,10 +8,10 @@ const vm = require('vm');
 
 const ROOT = require("path").join(__dirname, "..");
 const rulesText = fs.readFileSync(path.join(ROOT, 'rule/site-rules.txt'), 'utf8');
-const configSrc = fs.readFileSync(path.join(ROOT, 'config.js'), 'utf8');
-const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'browser-compat.js'), 'utf8');
-const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'scriptlet-alias-map.js'), 'utf8');
-const bgSrc = fs.readFileSync(path.join(ROOT, 'background.js'), 'utf8');
+const configSrc = fs.readFileSync(path.join(ROOT, 'shared/config.js'), 'utf8');
+const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'shared/browser-compat.js'), 'utf8');
+const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'shared/scriptlet-alias-map.js'), 'utf8');
+const bgSrc = fs.readFileSync(path.join(ROOT, 'shared/background.js'), 'utf8');
 
 // ── chrome stub ───────────────────────────────────────────────────
 const storageData = {};

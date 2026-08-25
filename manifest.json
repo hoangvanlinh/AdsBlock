@@ -21,7 +21,7 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "shared/background.js"
   },
   "content_scripts": [
     {
@@ -37,7 +37,7 @@
       "matches": [
         "<all_urls>"
       ],
-      "js": ["config.js", "browser-compat.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
+      "js": ["shared/config.js", "shared/browser-compat.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
       "run_at": "document_start",
       "all_frames": false
     }

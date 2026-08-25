@@ -116,28 +116,35 @@ Available on Chrome, Firefox, and Edge:
 ## Project Structure
 
 ```
-ablock/
-├── manifest.json             # Extension manifest (MV3, Chrome)
-├── manifest.firefox.json     # Extension manifest (Firefox)
-├── background.js             # Service worker — DNR rules, stats, malware lists, alarms
-├── build.sh                  # Build script (packages dist for Chrome & Firefox)
+gitAdblock/
+├── manifest.json               # Extension manifest (MV3, Chrome/Edge)
+├── manifest.firefox.json       # Extension manifest (MV3, Firefox)
+├── build.sh                    # Build orchestrator (chrome | firefox | edge | all)
+├── build-chrome.sh / build-firefox.sh / build-edge.sh   # Per-target build scripts
+├── _build-lib.sh                # Shared build steps (sourced by the scripts above)
+├── shared/
+│   ├── background.js           # Service worker — DNR rules, stats, malware lists, alarms
+│   ├── config.js                # Shared constants (single source of truth)
+│   ├── browser-compat.js        # Shared chrome./browser. namespace alias (self.EXT)
+│   └── scriptlet-alias-map.js   # uBO scriptlet-name → local-scriptlet alias table
 ├── content/
-│   ├── content.js            # Content script — cosmetic engine, injects scriptlets into MAIN world
-│   ├── content.css           # Cosmetic filter CSS rules (scoped to html.adblock-on)
-│   ├── scriptlets.js         # MAIN-world scriptlets — API proxies, popup blockers, navigation guards
-│   ├── site-rules-loader.js  # Shared parser for remote/local text-based site rules
-│   └── site-block.js         # Generic native ad blocker driven by site rules
+│   ├── content.js               # Content script — cosmetic engine, injects scriptlets into MAIN world
+│   ├── scriptlets.js            # MAIN-world scriptlets — API proxies, popup blockers, navigation guards
+│   ├── site-rules-loader.js     # Shared parser for remote/local text-based site rules
+│   ├── site-block.js            # Generic native ad blocker driven by site rules
+│   ├── fastpath-storage.js      # Cross-browser storage.session/local fast-path cache adapter
+│   ├── element-picker.js        # "Pick element to hide" UI
+│   ├── global-scanner.js        # "Scan page for scripts/variables" UI
+│   └── rule-editor.js           # Hand-written custom-rules editor bridge
 ├── rule/
-│   └── site-rules.txt        # Local fallback for the remote rule map
-├── popup/
-│   ├── popup.html            # Browser action popup UI
-│   ├── popup.js              # Popup logic — toggle, stats, pause, focus mode
-│   └── popup.css             # Popup styles (glassmorphism dark theme)
-├── dashboard/
-│   ├── dashboard.html        # Full-page dashboard / options page
-│   ├── dashboard.js          # Dashboard logic — charts, rules, allowlist, settings
-│   └── dashboard.css         # Dashboard styles
-└── icons/                    # Extension icons (16/48/128, on/off states)
+│   └── site-rules.txt           # Local fallback for the remote rule map
+├── popup/                       # Browser action popup (popup.html/js/css)
+├── dashboard/                   # Full-page dashboard / options page (dashboard.html/js/css)
+├── blocked/                     # Interstitial page shown for blocked navigations
+├── icons/                       # Extension icons (16/48/128, on/off states)
+├── web_accessible_resources/    # Redirect-resource stub files (noop.js, 1x1.gif, ...)
+├── test/                        # Node test suites (run directly: node test/test-*.js)
+└── tools/                       # Build tooling + console-paste diagnostic scripts
 ```
 
 ## How It Works

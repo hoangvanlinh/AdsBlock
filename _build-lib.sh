@@ -29,7 +29,7 @@ OBFUSCATOR_OPTS=(
 
 # JS files to obfuscate (or copy when obfuscation is disabled)
 JS_FILES=(
-    "background.js"
+    "shared/background.js"
     "content/content.js"
     "content/site-rules-loader.js"
     "content/site-block.js"
@@ -62,18 +62,17 @@ copy_static_files() {
     local MANIFEST="$2"
 
     cp "$MANIFEST" "$DEST/manifest.json"
-    cp "$PROJECT_DIR/config.js" "$DEST/"
-    # browser-compat.js (self.EXT / self.EXT_SESSION_STORAGE) needs this at
-    # the build root too, for the same reason config.js does: background.js's
-    # importScripts('browser-compat.js'), the isolated-world content_scripts
-    # js array, and dashboard/popup/blocked's own <script> tags all load it
-    # from here.
-    cp "$PROJECT_DIR/browser-compat.js" "$DEST/"
-    # background.js's importScripts('scriptlet-alias-map.js') needs this at
-    # the build root too — same reason config.js lives there (shared across
-    # background.js, and scripts/convert-uassets.js/convert-regions.js via
-    # require() offline; scripts/ itself is dev-only tooling, never copied).
-    cp "$PROJECT_DIR/scriptlet-alias-map.js" "$DEST/"
+    mkdir -p "$DEST/shared"
+    # config.js, browser-compat.js (self.EXT / self.EXT_SESSION_STORAGE), and
+    # scriptlet-alias-map.js all live in shared/ and get loaded the same
+    # dual-context way: background.js's importScripts(), the isolated-world
+    # content_scripts js array, and dashboard/popup/blocked's own <script>
+    # tags. scripts/convert-uassets.js and convert-regions.js also require()
+    # scriptlet-alias-map.js offline from shared/ directly — scripts/ itself is
+    # dev-only tooling, never copied here.
+    cp "$PROJECT_DIR/shared/config.js" "$DEST/shared/"
+    cp "$PROJECT_DIR/shared/browser-compat.js" "$DEST/shared/"
+    cp "$PROJECT_DIR/shared/scriptlet-alias-map.js" "$DEST/shared/"
     cp "$PROJECT_DIR/LICENSE" "$DEST/" 2>/dev/null || true
 
     mkdir -p "$DEST/icons" "$DEST/content" "$DEST/rule" "$DEST/dashboard" "$DEST/popup" "$DEST/blocked"
@@ -101,7 +100,7 @@ copy_static_files() {
     # when a file is added/removed from the folder.
     if [[ -d "$PROJECT_DIR/web_accessible_resources" ]]; then
         cp -r "$PROJECT_DIR/web_accessible_resources" "$DEST/"
-        node "$PROJECT_DIR/_js/inject-web-accessible-resources.js" "$DEST/manifest.json"
+        node "$PROJECT_DIR/tools/inject-web-accessible-resources.js" "$DEST/manifest.json"
     fi
 }
 
@@ -145,7 +144,7 @@ substitute_qkv1_token() {
 patch_debug() {
     local DEST="$1"
     sed -i '' 's/DEBUG_LOCAL: false/DEBUG_LOCAL: true/' \
-        "$DEST/config.js" 2>/dev/null || true
+        "$DEST/shared/config.js" 2>/dev/null || true
 }
 
 # Strip every comment and console.* call from every shipped .js file — run

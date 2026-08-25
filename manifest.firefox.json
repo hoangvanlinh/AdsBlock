@@ -33,7 +33,7 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "scripts": ["config.js", "browser-compat.js", "scriptlet-alias-map.js", "background.js"],
+    "scripts": ["shared/config.js", "shared/browser-compat.js", "shared/scriptlet-alias-map.js", "shared/background.js"],
     "type": "module"
   },
   "content_scripts": [
@@ -50,7 +50,7 @@
       "matches": [
        "<all_urls>"
       ],
-      "js": ["config.js", "browser-compat.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
+      "js": ["shared/config.js", "shared/browser-compat.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
       "run_at": "document_start",
       "all_frames": false
     }

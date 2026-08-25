@@ -2535,10 +2535,15 @@ async function buildFocusRules(focusMode) {
 // top of the global value for that tab only.
 async function updateIcon(enabled) {
   EXT.action.setIcon({
+    // Absolute extension URLs, not bare relative paths — setIcon() resolves
+    // a relative path against the CALLING SCRIPT's own URL, not the
+    // extension root, so a bare 'icons/...' silently broke ("Failed to
+    // fetch") once background.js moved into shared/ (would resolve to
+    // shared/icons/... instead of the real root-level icons/).
     path: {
-      16:  enabled ? 'icons/icon16.png'     : 'icons/icon16_off.png',
-      48:  enabled ? 'icons/icon48.png'     : 'icons/icon48_off.png',
-      128: enabled ? 'icons/icon128.png'    : 'icons/icon128_off.png',
+      16:  EXT.runtime.getURL(enabled ? 'icons/icon16.png'  : 'icons/icon16_off.png'),
+      48:  EXT.runtime.getURL(enabled ? 'icons/icon48.png'  : 'icons/icon48_off.png'),
+      128: EXT.runtime.getURL(enabled ? 'icons/icon128.png' : 'icons/icon128_off.png'),
     },
   });
   if (!enabled) {
@@ -2758,9 +2763,14 @@ EXT.alarms?.onAlarm.addListener(async (alarm) => {
 // Arms content/element-picker.js for the clicked tab/frame; the actual
 // pick/hide/persist flow happens entirely client-side after that (see
 // element-picker.js), reporting back only the final SAVE_ELEMENT_RULE.
-// contextMenus.create throws "duplicate id" if called again while a menu
-// with that id still exists — removeAll() first makes this idempotent
-// across service-worker restarts (no onInstalled-only guard needed).
+// contextMenus.create() fails (async, via runtime.lastError — not a thrown
+// exception) if called again while a menu with that id still exists —
+// removeAll() first makes this idempotent across service-worker restarts
+// (no onInstalled-only guard needed). Two overlapping removeAll()->create()
+// sequences can still race during rapid dev-reload cycles though (each
+// instance's removeAll finishes, then their create()s interleave) — every
+// create() below takes a callback that reads runtime.lastError so that race
+// logs nothing instead of an "Unchecked runtime.lastError" console warning.
 // documentUrlPatterns scopes these to http/https pages only — matches
 // where the content scripts they arm (element-picker.js/global-scanner.js/
 // rule-editor.js) actually run. <all_urls> (the manifest's content_scripts
@@ -2780,7 +2790,7 @@ try {
       title: 'Pick element to hide…',
       contexts: ['all'],
       documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
-    });
+    }, () => { void EXT.runtime.lastError; });
     // "Scan page globals" and "Edit rules for this site" are still-evolving
     // power-user tools — real risk of breaking a page if misused (permanent
     // configurable:false locks / raw rule-text entry), and the global-scope
@@ -2797,13 +2807,13 @@ try {
         title: 'Scan page for scripts/variables…',
         contexts: ['all'],
         documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
-      });
+      }, () => { void EXT.runtime.lastError; });
       EXT.contextMenus.create({
         id: 'qkv1-edit-rules',
         title: 'Edit rules for this site…',
         contexts: ['all'],
         documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
-      });
+      }, () => { void EXT.runtime.lastError; });
     }
   });
 } catch (e) {}
