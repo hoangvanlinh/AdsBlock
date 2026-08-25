@@ -174,6 +174,10 @@ let stubRulesRemoteUnreachable = false;
 let stubAbpSourceText = '';
 // Simulated browser UI language for _autoEnableLangDefaultSources() tests.
 let stubUILanguage = 'en-US';
+// Generic url -> response-text map for ad-hoc tests that need arbitrary
+// URLs served without writing bespoke substring-matching branches below
+// (checked first, before every other hardcoded branch in fetchStub).
+const stubUrlTextMap = {};
 // _isFirefoxInstall() (background.js) checks navigator.userAgent — same
 // technique popup.js/dashboard.js already use for this kind of "pick a URL
 // for the current browser" decision. Simulated here by swapping
@@ -181,6 +185,9 @@ let stubUILanguage = 'en-US';
 // separate flag.
 async function fetchStub(url) {
   const u = String(url);
+  if (Object.prototype.hasOwnProperty.call(stubUrlTextMap, u)) {
+    return { ok: true, status: 200, headers: { get: () => '' }, text: async () => stubUrlTextMap[u] };
+  }
   if (u.includes('site-rules.txt')) {
     if (stubRulesRemoteUnreachable && u.startsWith('https://raw.githubusercontent.com')) {
       throw new Error('network error (simulated)');
@@ -238,6 +245,7 @@ self.__test = {
   _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
   _abpEmptySkipStats, _fetchAndConvertUrls, RULE_SOURCE_STATS_KEY,
   _uiLanguageMatches, _autoEnableLangDefaultSources,
+  _entryUrls, _primaryUrl, _isDefaultSourceEnabled,
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
   _isValidUrlFilter, buildQueryStripRules,
   RULE_SOURCE_ERRORS_KEY,
@@ -1322,6 +1330,52 @@ function check(name, cond, detail = '') {
   check('fetchRemoteRuleText: ABP-format Rule Source URL converted and merged in (network domain present)',
     e2eMerged.includes('e2eabpnetwork.com') && e2eMerged.includes('ad_network_patterns'), e2eMerged);
   await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceEnabled: true }); // reset for any later section
+
+  console.log('\n== 25y. RULES_REMOTE_URL entry.url as an ARRAY — every url fetched+merged, not a mirror/fallback list (2026-08-25) ==');
+  check('_entryUrls: single string url normalizes to a 1-element array',
+    JSON.stringify(T._entryUrls({ url: 'https://a.example/x.txt' })) === '["https://a.example/x.txt"]');
+  check('_entryUrls: array url passes through unchanged',
+    JSON.stringify(T._entryUrls({ url: ['https://a.example/x.txt', 'https://b.example/y.txt'] })) === '["https://a.example/x.txt","https://b.example/y.txt"]');
+  check('_entryUrls: no url at all -> empty array', JSON.stringify(T._entryUrls({})) === '[]');
+  check('_primaryUrl: first url of an array', T._primaryUrl({ url: ['https://a.example/x.txt', 'https://b.example/y.txt'] }) === 'https://a.example/x.txt');
+  check('_primaryUrl: the url itself when it\'s a single string', T._primaryUrl({ url: 'https://a.example/x.txt' }) === 'https://a.example/x.txt');
+
+  // Inject a synthetic multi-url default entry (same array reference
+  // background.js's RULES_REMOTE_URL binding reads from — mutating it here
+  // doesn't touch the real config.js on disk) and confirm BOTH its urls get
+  // fetched and merged, and one toggle (keyed by the group's primary/first
+  // url) controls the whole group together.
+  const multiUrlEntry = { name: 'Multi-URL Test Group', url: ['https://multi.test/a.txt', 'https://multi.test/b.txt'], enable: false, group: 'language' };
+  sandbox.self.ADBLOCK_CONFIG.RULES_REMOTE_URL.push(multiUrlEntry);
+  stubUrlTextMap['https://multi.test/a.txt'] = '[global]\ndirect_hide_selectors = .from-multi-a';
+  stubUrlTextMap['https://multi.test/b.txt'] = '[global]\ndirect_hide_selectors = .from-multi-b';
+  try {
+    await chromeStub.storage.local.set({
+      ruleSources: [], customRulesText: '', defaultRuleSourceEnabled: true,
+      defaultRuleSourceOverrides: { [T._primaryUrl(multiUrlEntry)]: true }, // enable JUST this group, toggled by its primary url
+    });
+    check('_isDefaultSourceEnabled: override keyed by the primary (first) url enables the WHOLE group',
+      T._isDefaultSourceEnabled(multiUrlEntry, { [T._primaryUrl(multiUrlEntry)]: true }, false) === true);
+    const multiMerged = await T.fetchRemoteRuleText();
+    check('fetchRemoteRuleText: BOTH urls in the array are fetched and merged (not a fallback — first url\'s content present)',
+      multiMerged.includes('.from-multi-a'), multiMerged);
+    check('fetchRemoteRuleText: BOTH urls in the array are fetched and merged (second url\'s content ALSO present)',
+      multiMerged.includes('.from-multi-b'), multiMerged);
+
+    // Disabling the group (still keyed by the primary url) must stop BOTH urls.
+    await chromeStub.storage.local.set({ defaultRuleSourceOverrides: { [T._primaryUrl(multiUrlEntry)]: false } });
+    const multiDisabledMerged = await T.fetchRemoteRuleText();
+    check('fetchRemoteRuleText: disabling via the primary url\'s override stops BOTH urls in the group',
+      !multiDisabledMerged.includes('.from-multi-a') && !multiDisabledMerged.includes('.from-multi-b'),
+      multiDisabledMerged);
+  } finally {
+    // Always remove the synthetic entry, even if a check throws above —
+    // this array is shared with every other test section in this file.
+    sandbox.self.ADBLOCK_CONFIG.RULES_REMOTE_URL.pop();
+    delete stubUrlTextMap['https://multi.test/a.txt'];
+    delete stubUrlTextMap['https://multi.test/b.txt'];
+    await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceEnabled: true, defaultRuleSourceOverrides: {} });
+  }
 
   // 25h. Disabling the default Rule Source must mean ZERO default rules —
   // not a silent fallback to the bundled local site-rules.txt (which is

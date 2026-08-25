@@ -258,6 +258,38 @@ function loadSiteDebug() {
       && (cachedSite.global.direct_hide_selectors || []).includes('.ad-slot-marker-0'),
     { fetchCallLog, global: cachedSite.global });
 
+  console.log('\n== 7. entry.url as an ARRAY in the fallback path too (2026-08-25) — mirrors background.js\'s _entryUrls ==');
+  Object.keys(storageData).forEach(k => delete storageData[k]);
+  storageData.defaultRuleSourceEnabled = false;
+  storageData.ruleSources = [];
+  sandbox.self.ADBLOCK_CONFIG.RULES_REMOTE_URL.push({
+    name: 'Multi-URL Test Group', url: ['https://remote.test/multi-a.txt', 'https://remote.test/multi-b.txt'], enable: false,
+  });
+  try {
+    storageData.defaultRuleSourceOverrides = { 'https://remote.test/multi-a.txt': true }; // enable keyed by the PRIMARY (first) url
+    fetchBehavior = {
+      'https://remote.test/multi-a.txt': '[global]\ndirect_hide_selectors = .fallback-multi-a',
+      'https://remote.test/multi-b.txt': '[global]\ndirect_hide_selectors = .fallback-multi-b',
+    };
+    loader.reset();
+    const multiSite = await loadSite();
+    check('fallback path: BOTH urls in the array are fetched and merged (first url\'s content present)',
+      (multiSite.global.direct_hide_selectors || []).includes('.fallback-multi-a'), multiSite.global);
+    check('fallback path: BOTH urls in the array are fetched and merged (second url\'s content ALSO present)',
+      (multiSite.global.direct_hide_selectors || []).includes('.fallback-multi-b'), multiSite.global);
+
+    delete storageData.siteRulesCacheText; delete storageData.siteRulesCacheTime; // else the previous (enabled) fetch's cache would still be "fresh"
+    storageData.defaultRuleSourceOverrides = { 'https://remote.test/multi-a.txt': false }; // disable via the SAME primary-url key
+    loader.reset();
+    const multiSiteDisabled = await loadSite();
+    check('fallback path: disabling via the primary url\'s override stops BOTH urls in the group',
+      !(multiSiteDisabled.global.direct_hide_selectors || []).includes('.fallback-multi-a')
+        && !(multiSiteDisabled.global.direct_hide_selectors || []).includes('.fallback-multi-b'),
+      multiSiteDisabled.global);
+  } finally {
+    sandbox.self.ADBLOCK_CONFIG.RULES_REMOTE_URL.pop();
+  }
+
   console.log(`\n== RESULT: ${passed} passed, ${failed} failed ==`);
   process.exit(failed ? 1 : 0);
 })();

@@ -1237,16 +1237,33 @@ function renderRulesSources(sources, defaultOverrides, sourceErrors, sourceStats
   urlList.innerHTML = '';
   const byGroup = new Map(); // groupKey -> { rows: HTMLElement[], anyEnabled: bool }
   for (const entry of self.ADBLOCK_CONFIG.RULES_REMOTE_URL) {
-    const hasOverride = Object.prototype.hasOwnProperty.call(overrides, entry.url);
-    const checked = hasOverride ? overrides[entry.url] !== false : entry.enable !== false;
+    // entry.url can be a single string or an ARRAY of urls (2026-08-25) —
+    // ALL of them fetched and merged in, not a mirror/fallback list. The
+    // FIRST url is the stable key for this group's enable/disable toggle
+    // (defaultRuleSourceOverrides) and its "Export" button; errors/stats
+    // are tracked per-url in storage (each url is its own independent
+    // fetch) so they're combined here into one summary for the row.
+    const groupUrls = Array.isArray(entry.url) ? entry.url : [entry.url];
+    const key = groupUrls[0];
+    const hasOverride = Object.prototype.hasOwnProperty.call(overrides, key);
+    const checked = hasOverride ? overrides[key] !== false : entry.enable !== false;
+    let combinedError = null;
+    let combinedStats = null;
+    for (const u of groupUrls) {
+      if (errors[u] && !combinedError) combinedError = groupUrls.length > 1 ? `${errors[u]} (${u})` : errors[u];
+      if (stats[u]) {
+        if (!combinedStats) combinedStats = {};
+        for (const k of Object.keys(stats[u])) combinedStats[k] = (combinedStats[k] || 0) + stats[u][k];
+      }
+    }
     const row = _makeSourceRow({
       label: `${entry.name}`,
-      title: entry.url,
+      title: groupUrls.join('\n'),
       checked,
-      onToggle: (checked) => toggleDefaultRuleSource(entry.url, checked),
-      error: errors[entry.url],
-      stats: stats[entry.url],
-      url: entry.url,
+      onToggle: (checked) => toggleDefaultRuleSource(key, checked),
+      error: combinedError,
+      stats: combinedStats,
+      url: key,
       // no onRemove — a built-in default can be turned off, not deleted.
     });
     const groupKey = entry.group || 'default';
@@ -1320,7 +1337,9 @@ function loadRulesSourceSettings() {
       if (data.defaultRuleSourceEnabled !== undefined) {
         if (data.defaultRuleSourceEnabled === false && !overrides) {
           overrides = {};
-          for (const entry of self.ADBLOCK_CONFIG.RULES_REMOTE_URL) overrides[entry.url] = false;
+          for (const entry of self.ADBLOCK_CONFIG.RULES_REMOTE_URL) {
+            overrides[Array.isArray(entry.url) ? entry.url[0] : entry.url] = false;
+          }
           chrome.storage.local.set({ defaultRuleSourceOverrides: overrides });
         }
         chrome.storage.local.remove('defaultRuleSourceEnabled');

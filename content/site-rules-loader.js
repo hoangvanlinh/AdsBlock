@@ -166,8 +166,20 @@ function isFreshCache(entry){
 // "all defaults" flag (defaultRuleSourceEnabled===false, pre-multi-source
 // installs) wins if it was ever set, otherwise the entry's own ship-time
 // `enable` field from config.js.
+// Mirrors background.js's _entryUrls()/_primaryUrl() (2026-08-25) — an
+// entry's `url` can be a single string or an ARRAY of urls, ALL of which
+// get fetched and merged in (not a mirror/fallback list). _primaryUrl (the
+// first url) is the stable key used for the group's enable/disable toggle.
+function _entryUrls(entry){
+  if(!entry.url)return [];
+  return Array.isArray(entry.url)?entry.url:[entry.url];
+}
+function _primaryUrl(entry){
+  return _entryUrls(entry)[0];
+}
 function _isDefaultSourceEnabled(entry,overrides,legacyAllDisabled){
-  if(overrides&&Object.prototype.hasOwnProperty.call(overrides,entry.url))return overrides[entry.url]!==false;
+  var key=_primaryUrl(entry);
+  if(overrides&&Object.prototype.hasOwnProperty.call(overrides,key))return overrides[key]!==false;
   if(legacyAllDisabled)return false;
   return entry.enable!==false;
 }
@@ -208,9 +220,14 @@ function _fetchAndMergeDirect(cached, resolve){
     // pushing to GitHub. Every other source flows through this exact same
     // fetch/merge pipeline in both debug and production.
     DEFAULT_RULE_SOURCES.forEach(function(entry,i){
-      defaultUrlSet[entry.url]=true;
+      var entryUrls=_entryUrls(entry);
+      entryUrls.forEach(function(u){defaultUrlSet[u]=true;});
       if(!_isDefaultSourceEnabled(entry,res.defaultRuleSourceOverrides,legacyAllDisabled))return;
-      urls.push(DEBUG_LOCAL&&i===0?chrome.runtime.getURL(LOCAL_RULES_PATH):entry.url);
+      if(DEBUG_LOCAL&&i===0){
+        urls.push(chrome.runtime.getURL(LOCAL_RULES_PATH));
+      }else{
+        entryUrls.forEach(function(u){urls.push(u);});
+      }
     });
     var fileParts=[];
     if(sources&&sources.length){

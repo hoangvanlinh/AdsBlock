@@ -779,7 +779,8 @@ async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedica
 // === false`, pre-multi-source installs) wins if it was ever set, otherwise
 // fall back to the entry's own ship-time `enable` field.
 function _isDefaultSourceEnabled(entry, overrides, legacyAllDisabled) {
-  if (overrides && Object.prototype.hasOwnProperty.call(overrides, entry.url)) return overrides[entry.url] !== false;
+  const key = _primaryUrl(entry);
+  if (overrides && Object.prototype.hasOwnProperty.call(overrides, key)) return overrides[key] !== false;
   if (legacyAllDisabled) return false;
   return entry.enable !== false;
 }
@@ -831,6 +832,31 @@ function _entryLangs(entry) {
   return Array.isArray(entry.lang) ? entry.lang : [entry.lang];
 }
 
+// 2026-08-25: an entry's `url` is likewise either a single URL string or an
+// ARRAY of urls (same "string-or-array" pattern as `lang` above) — ALL urls
+// in the array are fetched and merged in, same as if they were separate
+// entries (NOT a mirror/fallback list — every url is used every time, not
+// just tried until one succeeds; a fetch failure on one url is reported and
+// skipped independently, same as any other single-URL source failing
+// today, while the rest of the group's urls still contribute normally).
+// _entryUrls() normalizes either shape to an array; _primaryUrl() (the
+// FIRST url) is the one stable identifier used for every piece of tracking
+// keyed by "this source" as a GROUP — defaultRuleSourceOverrides (one
+// toggle enables/disables every url in the group together),
+// RULES_REMOTE_ETAG_KEY/RULES_REMOTE_HASH_KEY (per-url, see
+// revalidateRemoteRules), RULE_SOURCE_ERRORS_KEY/RULE_SOURCE_STATS_KEY
+// (also per-url — each url in the group is its own independent fetch, so
+// each gets its own error/stats entry), and the dashboard's single row for
+// the whole group.
+function _entryUrls(entry) {
+  if (!entry.url) return [];
+  return Array.isArray(entry.url) ? entry.url : [entry.url];
+}
+function _primaryUrl(entry) {
+  return _entryUrls(entry)[0];
+}
+
+
 // Auto-enable any built-in default Rule Source whose `lang` matches the
 // browser's UI language, so e.g. a Vietnamese-language install gets the
 // Vietnam list on without a trip to the dashboard. Called from onInstalled
@@ -851,8 +877,9 @@ async function _autoEnableLangDefaultSources() {
   const updated = { ...defaultRuleSourceOverrides };
   let changed = false;
   for (const entry of matches) {
-    if (!Object.prototype.hasOwnProperty.call(updated, entry.url)) {
-      updated[entry.url] = true;
+    const key = _primaryUrl(entry);
+    if (!Object.prototype.hasOwnProperty.call(updated, key)) {
+      updated[key] = true;
       changed = true;
     }
   }
@@ -933,27 +960,33 @@ async function fetchRemoteRuleText() {
   const sources = stored.ruleSources;
   const urls = [];
   const fileParts = [];
-  const defaultUrls = new Set(RULES_REMOTE_URL.map(e => e.url));
+  const defaultUrls = new Set(RULES_REMOTE_URL.flatMap(e => _entryUrls(e)));
 
   // Default remote sources — each toggleable from the dashboard's Rule
-  // Source page (per-URL, defaultRuleSourceOverrides). Disabled means
-  // disabled: no rules from that source at all, not even the bundled local
-  // copy — the user can still layer custom sources/customRulesText on top
-  // of nothing. (getRulesText()'s own catch branch still falls back to the
-  // local file, but only on an actual fetch failure — see the empty-merge
-  // check below.)
+  // Source page (per-GROUP, defaultRuleSourceOverrides keyed by the group's
+  // _primaryUrl — see _entryUrls' own comment). Disabled means disabled: no
+  // rules from that source at all, not even the bundled local copy — the
+  // user can still layer custom sources/customRulesText on top of nothing.
+  // (getRulesText()'s own catch branch still falls back to the local file,
+  // but only on an actual fetch failure — see the empty-merge check below.)
+  // An entry whose `url` is an array contributes EVERY url in it — all
+  // fetched and merged in, not a mirror/fallback list.
   //
-  // DEBUG_LOCAL swaps ONLY the very first entry's URL (RULES_REMOTE_URL[0]
-  // — this repo's own GitHub-hosted site-rules.txt, by convention always
-  // first) for the bundled local copy, so local edits take effect on
-  // reload without pushing to GitHub. Every other source — other default
-  // entries, ruleSources, customRulesText — flows through this exact same
-  // fetch/merge/cache pipeline in both debug and production; nothing else
-  // about them changes.
+  // DEBUG_LOCAL swaps ONLY the very first entry's ENTIRE group (RULES_
+  // REMOTE_URL[0] — this repo's own GitHub-hosted site-rules.txt, by
+  // convention always first and single-url) for the bundled local copy, so
+  // local edits take effect on reload without pushing to GitHub. Every
+  // other source — other default entries, ruleSources, customRulesText —
+  // flows through this exact same fetch/merge/cache pipeline in both debug
+  // and production; nothing else about them changes.
   const legacyAllDisabled = stored.defaultRuleSourceEnabled === false;
   for (const [i, entry] of RULES_REMOTE_URL.entries()) {
     if (!_isDefaultSourceEnabled(entry, stored.defaultRuleSourceOverrides, legacyAllDisabled)) continue;
-    urls.push(DEBUG_LOCAL && i === 0 ? chrome.runtime.getURL(RULES_LOCAL_PATH) : entry.url);
+    if (DEBUG_LOCAL && i === 0) {
+      urls.push(chrome.runtime.getURL(RULES_LOCAL_PATH));
+    } else {
+      for (const u of _entryUrls(entry)) urls.push(u);
+    }
   }
 
   if (sources && sources.length) {
@@ -1142,23 +1175,29 @@ async function revalidateRemoteRules() {
     const nextEtags = { ...etags };
     const nextHashes = { ...hashes };
     let changed = false;
-    // Each source revalidated independently — one unreachable/erroring
-    // source (e.g. a region list that moved) must not block the others.
+    // Each url revalidated independently — one unreachable/erroring url
+    // (e.g. a region list that moved) must not block the others, whether
+    // it's a whole other source or just another url in the SAME entry's
+    // group (an entry's `url` can be an array — see _entryUrls' own
+    // comment; every url in the group is tracked by its own ETag/hash,
+    // same as if they were separate entries).
     for (const entry of enabledEntries) {
-      try {
-        const etag = etags[entry.url] || '';
-        const res = await fetch(entry.url, {
-          cache: 'no-store',
-          headers: etag ? { 'If-None-Match': etag } : {},
-        });
-        if (res.status === 304) continue; // unchanged
-        if (!res.ok) continue;
-        const text = await res.text();
-        const newHash = _hashText(text);
-        nextEtags[entry.url] = res.headers.get('etag') || '';
-        nextHashes[entry.url] = newHash;
-        if (newHash !== (hashes[entry.url] || '')) changed = true;
-      } catch { /* this source failed — keep checking the others */ }
+      for (const url of _entryUrls(entry)) {
+        try {
+          const etag = etags[url] || '';
+          const res = await fetch(url, {
+            cache: 'no-store',
+            headers: etag ? { 'If-None-Match': etag } : {},
+          });
+          if (res.status === 304) continue; // unchanged
+          if (!res.ok) continue;
+          const text = await res.text();
+          const newHash = _hashText(text);
+          nextEtags[url] = res.headers.get('etag') || '';
+          nextHashes[url] = newHash;
+          if (newHash !== (hashes[url] || '')) changed = true;
+        } catch { /* this url failed — keep checking the rest of the group and other sources */ }
+      }
     }
     await chrome.storage.local.set({
       [RULES_REMOTE_ETAG_KEY]: nextEtags,
