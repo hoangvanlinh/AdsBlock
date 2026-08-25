@@ -30,13 +30,35 @@ self.ADBLOCK_CONFIG = {
   // 'regions' to refresh this set instead of hand-editing entries in place.
   RULES_REMOTE_URL: [
     { name: 'Default site rules', url: 'https://raw.githubusercontent.com/hoangvanlinh/AdsBlock/refs/heads/main/rule/site-rules.txt', enable: true, group: "default" },
-    { name: 'EasyList', url: 'https://easylist.to/easylist/easylist.txt', enable: false, group: "easylist" },
+    { name: 'EasyList', url: 'https://easylist.to/easylist/easylist.txt', enable: true, group: "easylist" },
     { name: 'EasyPrivacy', url: 'https://easylist.to/easylist/easyprivacy.txt', enable: true, group: "easylist" },
     { name: 'EasyList Cookie List', url: 'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt', enable: false, group: "easylist" },
     { name: 'Fanboy\'s Annoyance List', url: 'https://secure.fanboy.co.nz/fanboy-annoyance.txt', enable: false, group: "easylist" },
     { name: 'Fanboy\'s Social Blocking List', url: 'https://easylist.to/easylist/fanboy-social.txt', enable: false, group: "easylist" },
     { name: 'AdGuard Base Filter', url: 'https://filters.adtidy.org/extension/ublock/filters/2.txt', enable: false, group: "easylist" },
     { name: 'AdGuard Tracking Protection', url: 'https://filters.adtidy.org/extension/ublock/filters/3.txt', enable: false, group: "easylist" },
+    // Supplementary "annoyances" lists (2026-08-25) — pulled from uBlock
+    // Origin's own assets.json the same way the region entries above were,
+    // filtered on group === 'annoyances' this time instead of 'regions'.
+    // These target specific ANNOYANCE behaviors (social widgets, cookie
+    // banners, popups, chat/AI/newsletter overlays), not ads/trackers —
+    // complementary to, not a replacement for, the lists above.
+    { name: 'AdGuard – Social Widgets', url: 'https://filters.adtidy.org/extension/ublock/filters/4.txt', enable: false, group: "easylist" },
+    { name: 'Fanboy – FB', url: 'https://secure.fanboy.co.nz/fanboy-antifacebook.txt', enable: false, group: "easylist" },
+    { name: 'AdGuard – Cookie Notices', url: 'https://filters.adtidy.org/extension/ublock/filters/18.txt', enable: false, group: "easylist" },
+    { name: 'AdGuard – Popup Overlays', url: 'https://filters.adtidy.org/extension/ublock/filters/19.txt', enable: false, group: "easylist" },
+    { name: 'AdGuard – Mobile App Banners', url: 'https://filters.adtidy.org/extension/ublock/filters/20.txt', enable: false, group: "easylist" },
+    { name: 'AdGuard – Other Annoyances', url: 'https://filters.adtidy.org/extension/ublock/filters/21.txt', enable: false, group: "easylist" },
+    { name: 'AdGuard – Widgets', url: 'https://filters.adtidy.org/extension/ublock/filters/22.txt', enable: false, group: "easylist" },
+    { name: 'EasyList – Chat Widgets', url: 'https://ublockorigin.github.io/uAssets/thirdparties/easylist-chat.txt', enable: false, group: "easylist" },
+    { name: 'EasyList – AI Widgets', url: 'https://ublockorigin.github.io/uAssets/thirdparties/easylist-ai.txt', enable: false, group: "easylist" },
+    { name: 'EasyList – Newsletter Notices', url: 'https://ublockorigin.github.io/uAssets/thirdparties/easylist-newsletters.txt', enable: false, group: "easylist" },
+    { name: 'EasyList – Notifications', url: 'https://ublockorigin.github.io/uAssets/thirdparties/easylist-notifications.txt', enable: false, group: "easylist" },
+    { name: 'EasyList – Other Annoyances', url: 'https://ublockorigin.github.io/uAssets/thirdparties/easylist-annoyances.txt', enable: false, group: "easylist" },
+    // Same list that previously triggered the urlFilter/DNR validation-gap
+    // bug (see fix history near _isValidUrlFilter in background.js) — safe
+    // to add now that that gap is closed.
+    { name: 'uBlock filters – Annoyances (Others)', url: 'https://ublockorigin.github.io/uAssets/filters/annoyances-others.txt', enable: false, group: "easylist" },
     { name: 'Albania — Adblock List for Albania', url: 'https://raw.githubusercontent.com/AnXh3L0/blocklist/master/albanian-easylist-addition/Albania.txt', enable: false, lang: ['sq'], group: "language" },
     { name: 'Arabic — Liste AR', url: 'https://easylist-downloads.adblockplus.org/Liste_AR.txt', enable: false, lang: ['ar', 'kab'], group: "language" },
     { name: 'Bulgaria — Bulgarian Adblock list', url: 'https://stanev.org/abp/adblock_bg.txt', enable: false, lang: ['bg', 'mk'], group: "language" },
