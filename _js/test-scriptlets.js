@@ -211,14 +211,10 @@ sandbox.fetch = async (url, init) => {
   return new FakeResponse(fetchPayload, { headers: fetchResponseHeaders });
 };
 
-// localStorage stub — the boot gate reads the rules cache saved on a
-// previous visit (key derived from TEST_TOKEN, same as the real
-// _RULES_CACHE_KEY). Preset = "returning visit to a site whose rules use
-// response filters": wrappers install AND these rules apply at boot.
-const _TEST_RULES_CACHE_KEY = `__${TEST_TOKEN}_rules_cache__`;
-const localStorageStore = new Map([
-  [_TEST_RULES_CACHE_KEY, JSON.stringify({ json_prune_xhr: ['adPlacements adSlots'] })],
-]);
+// localStorage stub — some scriptlets (e.g. set-local-storage-item-style
+// rules around line 3612 of the real file) read/write the page's own
+// localStorage directly; a plain Map-backed stub is enough to exercise that.
+const localStorageStore = new Map();
 sandbox.localStorage = {
   getItem: k => (localStorageStore.has(k) ? localStorageStore.get(k) : null),
   setItem: (k, v) => { localStorageStore.set(k, String(v)); },
@@ -257,19 +253,7 @@ function sendRules(rules) {
 }
 
 (async () => {
-  console.log('== 0. cached rules apply synchronously at boot (before any dispatch) ==');
-  blockedEvents = [];
-  const BootXHR = sandbox.XMLHttpRequest;
-  check('wrappers installed at boot from cache', xhrWrapped());
-  const xhrBoot = new BootXHR();
-  xhrBoot.open('GET', 'https://www.youtube.com/youtubei/v1/player');
-  xhrBoot._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }], videoDetails: { title: 'boot' } });
-  const bootObj = JSON.parse(xhrBoot.response);
-  check('cached rules prune with NO rules dispatch at all', !bootObj.adPlacements,
-    String(xhrBoot.response));
-  check('non-ad fields kept', bootObj.videoDetails.title === 'boot');
-
-  console.log('\n== 1. window.open blocking dispatches on ALL block paths ==');
+  console.log('== 1. window.open blocking dispatches on ALL block paths ==');
   sendRules({ no_window_open_if: ['/adsite\\.com/ 0 blank'] });
   blockedEvents = [];
   const r1 = sandbox.open('https://adsite.com/popup');
@@ -364,14 +348,23 @@ function sendRules(rules) {
   check('no block event when disabled', blockedEvents.length === 0);
 
   console.log('\n== 4. boot race: requests fired BEFORE rules arrive are still filtered ==');
-  // XHR opened + response ready before the rules land — the wrapper installed
-  // at document_start must still prune when the page reads .response later.
+  // XHR opened + response ready before the rules land — the wrapper installs
+  // lazily on the PROTOTYPE getter, so it still prunes when the page reads
+  // .response later even though the getter override landed after .open().
   blockedEvents = [];
   const XHR2 = sandbox.XMLHttpRequest;
   const xhrEarly = new XHR2();
   xhrEarly.open('GET', 'https://www.youtube.com/youtubei/v1/player');
   xhrEarly._fakeResponse = JSON.stringify({ adPlacements: [{ ad: 1 }], videoDetails: { title: 'race' } });
-  // fetch fired before rules too — payload carries an ad field
+  // fetch is a different shape of race: the proxy has to be installed BEFORE
+  // the call (it wraps window.fetch itself, not a lazily-read getter), so an
+  // in-flight fetch from before the very first json_prune_fetch dispatch in
+  // this document is NOT retroactively caught — unlike XHR above. This used
+  // to be masked by a boot-time localStorage cache that pre-installed all
+  // proxies at document_start regardless of dispatch timing; that cache was
+  // removed (page-storage fingerprint exposure), so this is now the real,
+  // accepted behavior: fetch protection starts from the first dispatch
+  // onward, not before it, on a fresh page load.
   fetchPayload = { adPlacements: [{ ad: 1 }], videoDetails: { title: 'race' } };
   const earlyFetchPromise = sandbox.fetch('https://www.youtube.com/youtubei/v1/player');
   // rules arrive only NOW (re-enables scriptlets after section 3's disable)
@@ -382,9 +375,14 @@ function sendRules(rules) {
   check('XHR opened before rules: non-ad fields kept', earlyXhrObj.videoDetails.title === 'race');
   const earlyFetchResp = await earlyFetchPromise;
   const earlyFetchObj = await earlyFetchResp.json();
-  check('fetch fired before rules: ad field pruned', !earlyFetchObj.adPlacements,
-    JSON.stringify(earlyFetchObj));
-  check('fetch fired before rules: non-ad fields kept', earlyFetchObj.videoDetails.title === 'race');
+  check('fetch fired before the first-ever dispatch is NOT pruned (accepted, see comment above)',
+    !!earlyFetchObj.adPlacements, JSON.stringify(earlyFetchObj));
+  // A SECOND fetch, issued after the proxy is installed, is pruned normally.
+  fetchPayload = { adPlacements: [{ ad: 1 }], videoDetails: { title: 'race2' } };
+  const laterFetchObj = await (await sandbox.fetch('https://www.youtube.com/youtubei/v1/player')).json();
+  check('fetch fired AFTER the dispatch is pruned normally', !laterFetchObj.adPlacements,
+    JSON.stringify(laterFetchObj));
+  check('fetch: non-ad fields kept', laterFetchObj.videoDetails.title === 'race2');
 
   console.log('\n== 5. re-dispatching rules does not stack proxy layers ==');
   // Same full rule set dispatched again (unpause / RULES_CHANGED path):
@@ -399,72 +397,6 @@ function sendRules(rules) {
   check('double dispatch: pruned response counted exactly once', blockedEvents.length === 1,
     String(blockedEvents.length));
   check('XMLHttpRequest not re-subclassed on re-dispatch', sandbox.XMLHttpRequest === XHR2);
-
-  console.log('\n== 6. rules cache follows dispatched rules ==');
-  // Rules WITH response-filter keys → full rule set cached for the next load
-  sendRules({ json_prune_xhr: ['adPlacements adSlots'], no_window_open_if: ['/y\\.com/'] });
-  const cached = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
-  check('full rule set cached when rules contain response-filter keys',
-    !!cached && Array.isArray(cached.json_prune_xhr) && Array.isArray(cached.no_window_open_if),
-    JSON.stringify(cached));
-  // Rules WITHOUT response-filter keys → cache cleared (site no longer needs
-  // boot wrappers, e.g. after a rules update removed them). no_window_open_if
-  // now counts as a boot-cached key, so use a cosmetic-only rule set here.
-  sendRules({ direct_hide_selectors: ['.ad'] });
-  check('cache cleared when rules have no response-filter keys',
-    !localStorageStore.has(_TEST_RULES_CACHE_KEY));
-  sendRules({ json_prune_fetch: ['adPlacements'] });
-  const recached = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
-  check('cache re-saved on next dispatch with response-filter keys',
-    !!recached && Array.isArray(recached.json_prune_fetch));
-
-  // Regression test (2026-08-18, live-reproduced via the "Scan page globals"
-  // picker on tuoitre.vn — a Delete rule took effect instantly via the
-  // ad-hoc apply-now path but silently had NO effect after a reload,
-  // because set_constant/abort_on_property_read/abort_on_property_write
-  // were never in _RESPONSE_FILTER_RULE_KEYS despite that list's own
-  // comment already claiming "set_constant ... run before the page's
-  // inline scripts" as the intent — only the async _EVT_RULES dispatch
-  // ever applied them, well after document_start, giving the page's own
-  // script time to read/bind the original unlocked reference first).
-  sendRules({ set_constant: ['someGlobal 1'] });
-  const cachedSetConstant = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
-  check('set_constant alone now triggers the boot cache (closes the reload race)',
-    !!cachedSetConstant && Array.isArray(cachedSetConstant.set_constant), JSON.stringify(cachedSetConstant));
-  sendRules({ abort_on_property_read: ['someGlobal'] });
-  const cachedAbortRead = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
-  check('abort_on_property_read alone now triggers the boot cache',
-    !!cachedAbortRead && Array.isArray(cachedAbortRead.abort_on_property_read), JSON.stringify(cachedAbortRead));
-  sendRules({ abort_on_property_write: ['someGlobal'] });
-  const cachedAbortWrite = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
-  check('abort_on_property_write alone now triggers the boot cache',
-    !!cachedAbortWrite && Array.isArray(cachedAbortWrite.abort_on_property_write), JSON.stringify(cachedAbortWrite));
-
-  // Regression test (2026-08-22, live-reproduced on youtube.com): a
-  // remove_node_text/replace_node_text/trusted_replace_script_text rule
-  // dispatched ALONGSIDE a response-filter key used to get cached VERBATIM
-  // (the whole `rules` object was cached, not just the response-filter
-  // keys) — meaning a stale one from an earlier session/test would get
-  // permanently replayed at document_start on every later visit, installing
-  // a permanent DOM-rewrite hook before the real, current rules ever
-  // arrived to correct it. The cache must only ever carry
-  // _RESPONSE_FILTER_RULE_KEYS entries.
-  // Patterns are deliberately unique nonsense strings, not 'x'/'y' — this
-  // dispatch installs REAL hooks via _wrapOnce (proxyApplyFn on insertion
-  // methods / a MutationObserver), which stay live for the rest of this
-  // test run; a broadly-matching pattern here would leak into and corrupt
-  // later sections' own trusted_replace_script_text/remove_node_text checks.
-  sendRules({ json_prune_xhr: ['adPlacements'], remove_node_text: ['script, zzz_cache_test_no_match_9f3e1'], trusted_replace_script_text: ['script, zzz_cache_test_no_match_9f3e1, zzz_replacement_9f3e1'] });
-  const cachedWithRewriteKeys = JSON.parse(localStorageStore.get(_TEST_RULES_CACHE_KEY) || 'null');
-  check('DOM-rewrite keys never make it into the boot cache even when dispatched alongside a response-filter key',
-    !!cachedWithRewriteKeys && !('remove_node_text' in cachedWithRewriteKeys) && !('trusted_replace_script_text' in cachedWithRewriteKeys),
-    JSON.stringify(cachedWithRewriteKeys));
-  check('the response-filter key itself is still cached normally',
-    !!cachedWithRewriteKeys && Array.isArray(cachedWithRewriteKeys.json_prune_xhr), JSON.stringify(cachedWithRewriteKeys));
-
-  // Leave the cache holding no boot-relevant keys again so later sections
-  // (which assume a clean slate) aren't affected by this regression test.
-  sendRules({ direct_hide_selectors: ['.ad'] });
 
   console.log('\n== 7. blockAdNavigations — back-button hijack vectors ==');
   // Protocol-relative cross-origin URL via the patched location.href setter.

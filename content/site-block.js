@@ -1,5 +1,58 @@
 // site-block.js — generic native ad blocker driven by rule/site-rules.txt
 (function(){
+// Substituted with a random string at build time (_build-lib.sh) — must
+// match content.js/content/scriptlets.js's own copy of the placeholder.
+var _QKV1_TOKEN='__QKV1_BUILD_TOKEN__';
+
+// _directAuthInjected/_DIRECT_CSS_SESSION_KEY/_fastPathDirectStyle() must come
+// FIRST, before any other declaration in this file: the goal is to fire the
+// last-known-good 'direct' CSS (see _injectDirectStyle() further down) as
+// early as possible, before loadSite()'s GET_SITE_CONFIG round-trip to
+// background even resolves. `_sendCssSlot`/`_fastPathDirectStyle` are
+// `function` declarations (fully hoisted, body and all) so calling
+// _fastPathDirectStyle() here — before their textual definition further down
+// — is safe; only the `var`s right below it are NOT hoisted-with-value, so
+// they genuinely must be assigned before this call.
+var _directAuthInjected=false;
+// Per-host LRU-capped map (NOT a single shared slot — chrome.storage.session
+// isn't naturally per-origin the way localStorage is, so this manages that
+// scoping ourselves) holding the last CSS computed for the 'direct' slot per
+// hostname, in chrome.storage.session — background.js grants this script
+// access via setAccessLevel({accessLevel:'TRUSTED_AND_UNTRUSTED_CONTEXTS'}).
+// Lives in the extension's own storage: unlike the page's own localStorage,
+// no page JS (not even a same-origin third-party iframe like an embedded
+// Facebook widget) can ever read, enumerate, or tamper with it — chrome.storage
+// simply isn't reachable from page JS under any circumstance. Capped at
+// _DIRECT_CSS_LRU_LIMIT entries (evict-oldest-by-timestamp) because
+// chrome.storage.session's quota is SHARED across the whole extension —
+// background.js's own parsedRulesSessionCache alone measured up to 8.27MB of
+// the 10MB total on a real large config, so an unbounded per-host map here
+// would compete with (and could starve) that far higher-value cache instead
+// of just costing a few KB per entry as intended. Trade-off accepted:
+// chrome.storage.session.get() is still asynchronous (no API gives a truly
+// synchronous read here), so this is a best-effort head start, not a
+// guaranteed pre-paint — same timing class as the original chrome.storage.local
+// design, just a storage area that's wiped on browser close instead of
+// persisting indefinitely.
+var _DIRECT_CSS_SESSION_KEY=(self.ADBLOCK_CONFIG&&self.ADBLOCK_CONFIG.DIRECT_CSS_FASTPATH_KEY)||'directCssFastPath';
+var _DIRECT_CSS_LRU_LIMIT=50;
+_fastPathDirectStyle();
+
+// _scriptletAuthDispatched/_SCRIPTLET_RULES_SESSION_KEY/
+// _fastPathDispatchScriptletRules() — same early-fire pattern as the direct
+// CSS fast path above, but bridges a curated-safe subset of scriptlet rules
+// into scriptlets.js's MAIN world via the existing _EVT_RULES CustomEvent
+// (see _dispatchScriptletRules() further down), since MAIN world has NO
+// chrome.* access at all and can never read chrome.storage itself — this is
+// the only way to get it anything before the real GET_SITE_CONFIG round-trip
+// resolves. Only SCRIPTLET_SAFE_CACHE_KEYS (defined near SCRIPTLET_KEYS
+// below) are ever cached/replayed here — see that constant's own comment for
+// why the rest of SCRIPTLET_KEYS is excluded.
+var _scriptletAuthDispatched=false;
+var _SCRIPTLET_RULES_SESSION_KEY=(self.ADBLOCK_CONFIG&&self.ADBLOCK_CONFIG.SCRIPTLET_RULES_FASTPATH_KEY)||'scriptletRulesFastPath';
+var _SCRIPTLET_RULES_LRU_LIMIT=50;
+_fastPathDispatchScriptletRules();
+
 var siteKey='';
 
 var _enabled=true,_observer=null,_hidden=0,_raf=0,_config=null;
@@ -33,9 +86,6 @@ function extValid(){
   catch(e){return false;}
 }
 
-// Substituted with a random string at build time (_build-lib.sh) — must
-// match content.js/content/scriptlets.js's own copy of the placeholder.
-var _QKV1_TOKEN='__QKV1_BUILD_TOKEN__';
 // Marker attribute for elements already hidden by hide()/collapseParentIfEmpty
 // (dedup + collapse-propagation state, see below). Generated fresh per page
 // load by content.js (runs earlier in this same content_scripts entry — see
@@ -99,7 +149,9 @@ function collectFast(root,selectorStr){
 
 // _rebuildSelectorCache — compute and cache flattened+joined selector strings from _config.
 // Called once after _config is assigned so scan() and the observer don't recompute per call.
+var _directCounted=false;
 function _rebuildSelectorCache(){
+  _directCounted=false;
   if(!_config){_cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedStripClasses=[];_cachedStripInlineStyles=[];_cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';return;}
   _cachedDirect=flattenSelectors(_config,DIRECT_HIDE_KEYS);
   _cachedCandidates=flattenSelectors(_config,CANDIDATE_KEYS);
@@ -170,21 +222,168 @@ function _sendCssSlot(slot,css){
 // Bare `body`/`html`-anchored selectors (e.g. `body:has(x) > y`) must skip
 // the auto-prefix below — 'body '+'body:has(...)' is always false.
 var _ALREADY_ROOT_SCOPED_RE=/^(body|html)(?![\w-])/i;
+// _evictOldestLruEntry — drop the least-recently-written host entry from a
+// per-host session-cache map (shared by the direct-CSS and scriptlet-rules
+// fast-path caches below) so it stays within its own LRU cap. O(n) over the
+// capped map (at most a few dozen entries) — trivial, only runs on a NEW
+// host being added while already at the cap, not on every write.
+function _evictOldestLruEntry(map){
+  var oldestHost=null,oldestTs=Infinity;
+  for(var h in map){
+    if(!Object.prototype.hasOwnProperty.call(map,h))continue;
+    var ts=(map[h]&&map[h].ts)||0;
+    if(ts<oldestTs){oldestTs=ts;oldestHost=h;}
+  }
+  if(oldestHost!==null)delete map[oldestHost];
+}
+
+// _updateDirectCssCacheEntry — read-modify-write the per-host LRU map for
+// THIS host only. A plain read-then-write (not atomic) is fine here: worst
+// case under a race is one write among several independent frames/hosts
+// gets clobbered, which just means that ONE host's fast-path guess is a
+// visit older than it could've been — self-corrects on its own next real
+// visit, same "lossy cache, not a source of truth" tolerance the rest of
+// this fast-path already relies on.
+function _updateDirectCssCacheEntry(host,css){
+  if(!extValid()||!chrome.storage||!chrome.storage.session)return;
+  try{
+    chrome.storage.session.get([_DIRECT_CSS_SESSION_KEY],function(res){
+      if(chrome.runtime.lastError)return;
+      var map=(res&&res[_DIRECT_CSS_SESSION_KEY])||{};
+      if(!css){
+        // Nothing to hide on this host — drop any stale non-empty guess from
+        // an earlier visit rather than keep serving it.
+        delete map[host];
+      }else{
+        var isNewHost=!Object.prototype.hasOwnProperty.call(map,host);
+        if(isNewHost&&Object.keys(map).length>=_DIRECT_CSS_LRU_LIMIT)_evictOldestLruEntry(map);
+        map[host]={css:css,ts:Date.now()};
+      }
+      var payload={};payload[_DIRECT_CSS_SESSION_KEY]=map;
+      // See _injectDirectStyle()'s old comment history: chrome.storage.session
+      // .set() returns a Promise — needs .catch(), a bare try/catch around
+      // the call doesn't cover a rejection.
+      chrome.storage.session.set(payload).catch(function(){});
+    });
+  }catch(e){}
+}
+
 function _injectDirectStyle(){
-  if(!_cachedDirect.length){_sendCssSlot('direct','');return;}
-  // Validate each selector — one invalid selector drops the whole CSS rule.
-  var valid=[];
+  _directAuthInjected=true; // real config wins over the fast-path guess from here on
+  var host=location.hostname;
+  if(!_cachedDirect.length){
+    _sendCssSlot('direct','');
+    _updateDirectCssCacheEntry(host,'');
+    return;
+  }
+  // Scope under `body ` so a broad selector can never match body/html itself
+  // and blank the whole page — skipped when already root-scoped. No per-selector
+  // document.querySelector() validation needed: :where() is a forgiving selector
+  // list, so the browser silently drops any invalid entry instead of invalidating
+  // the whole rule — avoids an O(n) synchronous DOM call per selector on every
+  // boot()/rules-change, which got noticeably slow with large merged selector sets.
+  var scoped=[];
   for(var i=0;i<_cachedDirect.length;i++){
     var sel=_cachedDirect[i];
-    try{
-      document.querySelector(sel);
-      // Scope under `body ` so a broad selector can never match body/html
-      // itself and blank the whole page — skipped when already root-scoped.
-      valid.push(_ALREADY_ROOT_SCOPED_RE.test(sel)?sel:'body '+sel);
-    }catch(e){}
+    scoped.push(_ALREADY_ROOT_SCOPED_RE.test(sel)?sel:'body '+sel);
   }
-  if(!valid.length){_sendCssSlot('direct','');return;}
-  _sendCssSlot('direct',valid.join(',\n')+'{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;pointer-events:none!important}');
+  var css=':where('+scoped.join(',\n')+'){display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;pointer-events:none!important}';
+  _sendCssSlot('direct',css);
+  _updateDirectCssCacheEntry(host,css);
+}
+
+// _fastPathDirectStyle — fires the LAST successfully-computed 'direct' CSS
+// for THIS host (from its own last visit — see the LRU map comment near
+// _DIRECT_CSS_LRU_LIMIT above) as early as possible at content-script start,
+// before loadSite()'s GET_SITE_CONFIG round-trip to background even
+// resolves. That round-trip is fast on a warm service worker but can cost a
+// chrome.storage.session read (cold-started SW) or a full remote rule fetch
+// (no valid parsed-rules cache yet) with no timeout — during which ads would
+// otherwise flash unhidden. This read is itself a chrome.storage.session
+// call (same async class as that round-trip), so it's a best-effort head
+// start, not a guaranteed win — chosen over the page's own localStorage
+// specifically because chrome.storage is never reachable from page JS (no
+// fingerprint exposure, not even inside a same-page third-party iframe like
+// an embedded Facebook widget). _injectDirectStyle() always re-sends the
+// real CSS once loadSite() resolves and _directAuthInjected stops this
+// stale guess from winning a race against it.
+function _fastPathDirectStyle(){
+  if(!extValid()||!chrome.storage||!chrome.storage.session)return;
+  try{
+    chrome.storage.session.get([_DIRECT_CSS_SESSION_KEY],function(res){
+      if(_directAuthInjected||chrome.runtime.lastError)return;
+      var map=res&&res[_DIRECT_CSS_SESSION_KEY];
+      var entry=map&&map[location.hostname];
+      var css=entry&&entry.css;
+      if(css)_sendCssSlot('direct',css);
+    });
+  }catch(e){}
+}
+
+// _sendScriptletRulesEvent — the actual isolated-world→MAIN-world handoff,
+// shared by the real dispatch (_dispatchScriptletRules, further down) and
+// the early fast-path guess (_fastPathDispatchScriptletRules, right below).
+// cloneInto: see _dispatchScriptletRules's own comment on this line — Firefox
+// Xray-wraps a plain object handed across the world boundary, which would
+// make every key silently read undefined on the MAIN-world side.
+function _sendScriptletRulesEvent(rules){
+  var detail=rules;
+  try{if(typeof cloneInto==='function')detail=cloneInto(rules,window);}catch(e){}
+  try{window.dispatchEvent(new CustomEvent('__'+_QKV1_TOKEN+'_rules__',{detail:detail}));}catch(e){}
+}
+
+// _fastPathDispatchScriptletRules — mirrors _fastPathDirectStyle's timing
+// strategy, but for scriptlets.js instead of the 'direct' CSS slot.
+// scriptlets.js runs in MAIN world, which has NO chrome.* access at all
+// (browsers never inject extension APIs into the page's own JS realm — a
+// hard platform limit, not a permissions one), so it can never read
+// chrome.storage itself. This isolated-world script reads the per-host cache
+// instead and bridges it across via the SAME _EVT_RULES CustomEvent
+// _dispatchScriptletRules() uses for the real data — scriptlets.js doesn't
+// need to know or care whether a given dispatch was the early guess or the
+// real one; _applyScriptletRules() already replaces its registries on every
+// dispatch (replace semantics), so the real one arriving after this one
+// simply supersedes it. Only ever fires SCRIPTLET_SAFE_CACHE_KEYS values
+// (enforced by what _updateScriptletCacheEntry writes below, not by any
+// filtering here) — the whole reason that curated subset exists in the
+// first place.
+function _fastPathDispatchScriptletRules(){
+  if(!extValid()||!chrome.storage||!chrome.storage.session)return;
+  try{
+    chrome.storage.session.get([_SCRIPTLET_RULES_SESSION_KEY],function(res){
+      if(_scriptletAuthDispatched||chrome.runtime.lastError)return;
+      var map=res&&res[_SCRIPTLET_RULES_SESSION_KEY];
+      var entry=map&&map[location.hostname];
+      var rules=entry&&entry.rules;
+      if(rules&&Object.keys(rules).length){
+        _sendScriptletRulesEvent(rules);
+        _scriptletRulesActive=true;
+      }
+    });
+  }catch(e){}
+}
+
+// _updateScriptletCacheEntry — read-modify-write the per-host LRU map for
+// THIS host's SAFE-subset scriptlet rules, same lossy-cache tolerance as
+// _updateDirectCssCacheEntry above (a clobbered write just means a slightly
+// staler guess next visit, self-corrects on the next real dispatch).
+function _updateScriptletCacheEntry(host,safeRules){
+  if(!extValid()||!chrome.storage||!chrome.storage.session)return;
+  try{
+    chrome.storage.session.get([_SCRIPTLET_RULES_SESSION_KEY],function(res){
+      if(chrome.runtime.lastError)return;
+      var map=(res&&res[_SCRIPTLET_RULES_SESSION_KEY])||{};
+      if(!safeRules||!Object.keys(safeRules).length){
+        delete map[host];
+      }else{
+        var isNewHost=!Object.prototype.hasOwnProperty.call(map,host);
+        if(isNewHost&&Object.keys(map).length>=_SCRIPTLET_RULES_LRU_LIMIT)_evictOldestLruEntry(map);
+        map[host]={rules:safeRules,ts:Date.now()};
+      }
+      var payload={};payload[_SCRIPTLET_RULES_SESSION_KEY]=map;
+      chrome.storage.session.set(payload).catch(function(){});
+    });
+  }catch(e){}
 }
 
 function matchesAny(value,patterns){
@@ -351,8 +550,18 @@ function hide(el){
 function scan(root){
   if(!_enabled||!_config||!isEligiblePage(_config))return;
   var count=0;
-  var direct=collectFast(root,_cachedDirectStr);
-  for(var d=0;d<direct.length;d++)if(hide(direct[d]))count++;
+  // direct_hide_selectors are already hidden the instant they exist by the
+  // injected stylesheet (_injectDirectStyle) — re-matching the full (often
+  // large, merged-across-sources) selector string against every mutation
+  // batch bought nothing visually and got slower the more rules were enabled.
+  // Only re-run it once per boot (root===document catches the first full
+  // scan) purely to seed the "ads blocked" counter; later dynamically-added
+  // matches are still hidden instantly by CSS, just not re-counted.
+  if(!_directCounted&&root===document){
+    _directCounted=true;
+    var direct=collectFast(root,_cachedDirectStr);
+    for(var d=0;d<direct.length;d++)if(hide(direct[d]))count++;
+  }
   var candidates=collectFast(root,_cachedCandidateStr);
   for(var i=0;i<candidates.length;i++){
     if(!isAdCandidate(candidates[i],_config))continue;
@@ -531,13 +740,38 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   // hand-written in site-rules.txt. See spoofGpcSignal/hideDocumentReferrerJs
   // in scriptlets.js.
   'gpc_signal','hide_document_referrer'];
+// SCRIPTLET_SAFE_CACHE_KEYS — the ONLY SCRIPTLET_KEYS entries ever written
+// to/replayed from _fastPathDispatchScriptletRules()'s per-host cache.
+// Audited 2026-08-25 key by key against scriptlets.js's actual
+// implementation (not assumed): SAFE means _applyScriptletRules() fully
+// resets and rebuilds that rule's registry/array on every dispatch
+// (`_fetchPruneRules.length=0` etc.), so a stale cached value is completely
+// superseded the instant the real dispatch lands — no residue. Everything
+// else in SCRIPTLET_KEYS installs a PERMANENT hook at install time (a
+// non-configurable defineProperty trap, a MutationObserver, a wrap-once
+// proxy with the pattern baked into its closure) that nothing ever
+// un-installs — a stale value there can win FOREVER even after the real one
+// arrives, not just briefly. This audit found two former assumptions wrong:
+// set_constant and abort_on_property_read/write were in an EARLIER (now
+// removed) cache's "safe" list, but actually use a non-configurable
+// defineProperty — a second call with a different same-typed value is
+// silently swallowed, so a stale cached constant would permanently block
+// the real one from ever taking effect. Excluded here on that basis.
+var SCRIPTLET_SAFE_CACHE_KEYS=['json_prune_fetch','json_prune_xhr','json_edit','jsonl_edit_xhr','json_prune',
+  'no_window_open_if','trusted_edit_request','trusted_edit_response','trusted_replace_xhr_response',
+  'trusted_replace_fetch_response','m3u_prune','set_cookie','set_local_storage_item','refresh_defuser',
+  'no_webrtc','prevent_bab','disable_newtab_links','gpc_signal','hide_document_referrer'];
+var _SCRIPTLET_SAFE_CACHE_SET={};
+(function(){for(var i=0;i<SCRIPTLET_SAFE_CACHE_KEYS.length;i++)_SCRIPTLET_SAFE_CACHE_SET[SCRIPTLET_SAFE_CACHE_KEYS[i]]=true;})();
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
-  var rules={},hasAny=false,k,i;
+  _scriptletAuthDispatched=true; // real config wins over the fast-path guess from here on
+  var rules={},safeRules={},hasAny=false,hasSafe=false,k,i;
   for(i=0;i<SCRIPTLET_KEYS.length;i++){
     k=SCRIPTLET_KEYS[i];
     if(cfg[k]&&cfg[k].length){
       rules[k]=cfg[k];hasAny=true;
+      if(_SCRIPTLET_SAFE_CACHE_SET[k]){safeRules[k]=cfg[k];hasSafe=true;}
     }
   }
   if(hasAny){
@@ -547,10 +781,11 @@ function _dispatchScriptletRules(cfg){
     // and e.g. YouTube pre-roll ads play unblocked. cloneInto() clones the
     // object into the page's own compartment so it reads normally there.
     // Chrome has no Xray vision and no cloneInto global, so this is a no-op there.
-    var detail=rules;
-    try{if(typeof cloneInto==='function')detail=cloneInto(rules,window);}catch(e){}
-    try{window.dispatchEvent(new CustomEvent('__'+_QKV1_TOKEN+'_rules__',{detail:detail}));_scriptletRulesActive=true;}catch(e){}
+    // (see _sendScriptletRulesEvent, shared with the fast-path dispatch above)
+    _sendScriptletRulesEvent(rules);
+    _scriptletRulesActive=true;
   }
+  _updateScriptletCacheEntry(location.hostname,hasSafe?safeRules:null);
 }
 
 function sync(cb){

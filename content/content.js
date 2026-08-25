@@ -468,13 +468,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  if (msg.type === 'CLEAR_SCRIPTLET_CACHE') {
-    // Relay into the MAIN world — the rules cache lives in this page's own
-    // localStorage, which content.js (isolated world) can't touch directly.
-    window.dispatchEvent(new CustomEvent(`__${_QKV1_TOKEN}_clr__`));
-    sendResponse({ ok: true });
-  }
-
 });
 
 

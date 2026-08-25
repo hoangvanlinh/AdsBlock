@@ -32,6 +32,31 @@ const {
   EXTENSION_META_REMOTE_URL_FIREFOX,
 } = self.ADBLOCK_CONFIG;
 
+// Grants content scripts (untrusted contexts) direct chrome.storage.session
+// access — default access level is TRUSTED_CONTEXTS only (background/extension
+// pages), so without this a content script's own chrome.storage.session.get/
+// set calls silently no-op or reject. Must be (re)called every time this
+// service worker starts, not just on install — the access level does not
+// reliably survive a SW restart. See site-block.js's DIRECT_CSS_FASTPATH_KEY
+// fast-path cache, which needs this (data lives in the extension's own
+// storage, never the page's — chrome.storage.session isn't reachable from
+// page JS under any circumstance, unlike the page's own localStorage).
+// Takes an { accessLevel } OPTIONS OBJECT, not a bare string — a bare string
+// throws SYNCHRONOUSLY ("No matching signature"), live-reproduced 2026-08-25
+// sitting at the TOP of this file with nothing around it: an uncaught
+// synchronous throw here would abort the rest of this script's top-level
+// evaluation, not just silently skip this one grant. try/catch below guards
+// the synchronous form of that failure; .catch() guards an async rejection
+// from a call that DID match the signature but still failed for some other
+// reason (old browser, disabled API, etc.) — need both, one doesn't cover
+// the other.
+try {
+  chrome.storage.session?.setAccessLevel?.({accessLevel:'TRUSTED_AND_UNTRUSTED_CONTEXTS'})
+    ?.catch(e => console.error('[AdBlock] chrome.storage.session.setAccessLevel rejected — content-script fast-path caches will silently no-op:', e));
+} catch (e) {
+  console.error('[AdBlock] chrome.storage.session.setAccessLevel threw synchronously — content-script fast-path caches will silently no-op:', e);
+}
+
 const FALLBACK_RULE_CONFIG = {
   adNetworkPatterns: ['doubleclick.net', 'googlesyndication.com', 'googleadservices.com', 'adnxs.com', 'outbrain.com', 'taboola.com', 'ads.yahoo.com', 'amazon-adsystem.com', 'media.net', 'criteo.com'],
   trackerNetworkPatterns: ['google-analytics.com', 'analytics.google.com', 'facebook.com/tr', 'hotjar.com', 'mixpanel.com', 'segment.com', 'amplitude.com', 'fullstory.com', 'clarity.ms', 'quantserve.com'],
@@ -1638,27 +1663,36 @@ async function getRulesText() {
 let _parsedRules = null;
 let _parsedRulesPromise = null;
 
-// Cross-SW-restart parse cache (2026-08-23). `_parsedRules` above only
-// survives ONE service-worker lifetime — a real user with several large Rule
-// Sources enabled can have a multi-MB merged siteRulesCacheText (measured
-// live: 6.97MB / 119k lines), and MV3 service workers restart on a short
-// idle timeout, far more often than the rules text itself actually changes.
-// That means the custom line-by-line parseRuleText() reran on EVERY cold
-// start even though its input was identical — measured ~72ms at that real
-// scale, once per restart. chrome.storage.session (cleared on browser
-// restart, NOT on SW restart, and a SEPARATE quota pool from
-// chrome.storage.local — doesn't worsen local's already-tight usage) lets
-// the ALREADY-PARSED object itself survive a cold start: reading it back
-// via chrome.storage.session's built-in structured-clone deserialization
-// measured ~27ms at the same scale — the parser's own per-line/regex work
-// is what that skips, not just an IPC round-trip. Keyed by a content hash
-// of the raw rules text so it's self-invalidating the moment that text
+// Cross-SW-restart parse cache (2026-08-23, compressed 2026-08-25).
+// `_parsedRules` above only survives ONE service-worker lifetime — a real
+// user with several large Rule Sources enabled can have a multi-MB merged
+// siteRulesCacheText, and MV3 service workers restart on a short idle
+// timeout, far more often than the rules text itself actually changes. That
+// means the custom line-by-line parseRuleText() reran on EVERY cold start
+// even though its input was identical — measured live 654.6ms at a real
+// 18.79MB/344,586-line multi-source config, once per restart.
+// chrome.storage.session (cleared on browser restart, NOT on SW restart, and
+// a SEPARATE quota pool from chrome.storage.local — doesn't worsen local's
+// already-tight usage) lets the ALREADY-PARSED object itself survive a cold
+// start. Stored COMPRESSED (deflate-raw, same _compressForStorage/
+// _decompressFromStorage helpers as siteRulesCacheText), not the bare
+// object: at that same real scale, the raw parsed object was 14.84MB —
+// OVER chrome.storage.session's 10MB quota, so an uncompressed write
+// silently failed every time (caught by the try/catch below) and this cache
+// never populated at all — every cold start paid the full parse cost above
+// for zero benefit, invisibly. Compressed, that object measured 5.40MB
+// (fits), and decompress+JSON.parse read-back measured 116.4ms — an 82%
+// reduction vs re-parsing from scratch. The extra stringify+compress cost on
+// write (~378ms measured) doesn't matter: it happens once per rules change,
+// not on the cold-start hot path this cache exists for. Keyed by a content
+// hash of the raw rules text so it's self-invalidating the moment that text
 // actually changes (reloadRules() doesn't need to explicitly clear this —
 // the hash simply won't match next time, same self-invalidation style the
 // hash-based caches elsewhere in this file already use), and best-effort
-// (old-browser session-storage-unavailable, or any read/write failure,
-// just falls through to a real parse — never blocks or breaks anything).
-const PARSED_RULES_SESSION_KEY = 'parsedRulesSessionCache'; // { hash, parsed }
+// (old-browser session-storage-unavailable, corrupt/undersized cache, or any
+// read/write failure just falls through to a real parse — never blocks or
+// breaks anything).
+const PARSED_RULES_SESSION_KEY = 'parsedRulesSessionCache'; // { hash, compressed }
 
 async function getParsedRules() {
   if (_parsedRules) return _parsedRules;
@@ -1668,14 +1702,29 @@ async function getParsedRules() {
       const textHash = _hashText(text);
       try {
         const { [PARSED_RULES_SESSION_KEY]: cached } = await chrome.storage.session.get(PARSED_RULES_SESSION_KEY);
-        if (cached && cached.hash === textHash && cached.parsed) {
-          _parsedRules = cached.parsed;
-          return _parsedRules;
+        if (cached && cached.hash === textHash && cached.compressed) {
+          const json = await _decompressFromStorage(cached.compressed);
+          if (json) {
+            _parsedRules = JSON.parse(json);
+            return _parsedRules;
+          }
         }
-      } catch { /* chrome.storage.session unavailable — fall through to a real parse */ }
+      } catch { /* chrome.storage.session unavailable, or corrupt cache — fall through to a real parse */ }
       _parsedRules = parseRuleText(text);
+      // Compressed, not the bare object (2026-08-25 live measurement: a real
+      // multi-source config's parsed object hit 14.84MB — OVER
+      // chrome.storage.session's 10MB quota, so the uncompressed write
+      // silently failed and this cache never populated at all, meaning every
+      // cold start paid the full parseRuleText() cost — 654.6ms measured —
+      // for zero benefit. Compressed (deflate-raw, same helper as
+      // siteRulesCacheText) that same object measured 5.40MB — fits — and
+      // read-back (decompress + JSON.parse) measured 116.4ms, an 82%
+      // reduction vs reparsing from scratch. The extra stringify+compress
+      // cost on write (~378ms measured) doesn't matter: it happens once per
+      // rules change, not on the cold-start hot path this cache exists for.
       try {
-        await chrome.storage.session.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, parsed: _parsedRules } });
+        const compressed = await _compressForStorage(JSON.stringify(_parsedRules));
+        await chrome.storage.session.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, compressed } });
       } catch { /* best-effort — a failed cache write just means the next cold start re-parses */ }
       return _parsedRules;
     })().finally(() => { _parsedRulesPromise = null; });

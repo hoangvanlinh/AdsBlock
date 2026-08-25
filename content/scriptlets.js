@@ -21,7 +21,6 @@
   var _EVT_RULES = '__' + _qkv1Token + '_rules__';
   var _EVT_BLK   = '__' + _qkv1Token + '_blk__';
   var _EVT_DIS   = '__' + _qkv1Token + '_dis__';
-  var _EVT_CLR   = '__' + _qkv1Token + '_clr__';
   // "Scan page globals" picker bridge (content/global-scanner.js, isolated
   // world) — the first on-demand request/response pair in this codebase
   // (every other _EVT_* above is a fixed one-shot lifecycle event). Details
@@ -51,9 +50,9 @@
   // longer target — actually succeed instead of getting rejected. Given the
   // 2026-08-14 incident documented near trustedReplaceScriptText below (a
   // rewrite corrupting a real, load-bearing YouTube script) and a
-  // stale-cache-replay repeat of it on 2026-08-22, a rejected write staying
-  // rejected is the safer default until that class of bug is fully closed
-  // off — see _saveScriptletRulesCache's own comment for that fix.
+  // stale-cache-replay repeat of it on 2026-08-22 (that particular replay
+  // path no longer exists — the boot-time rules cache it replayed from was
+  // removed), a rejected write staying rejected is still the safer default.
   function _setNodeText(node, text) {
     node.textContent = text;
   }
@@ -4192,9 +4191,6 @@
 
   function _applyScriptletRules(rules) {
     if (!rules) return;
-    // Cache the full rule set for the NEXT page load so the install gate
-    // below can apply it synchronously at document_start.
-    _saveScriptletRulesCache(rules);
     _fetchPruneRules.length = 0;
     _xhrPruneRules.length = 0;
     _xhrJsonlRules.length = 0;
@@ -4558,114 +4554,11 @@
     });
   }
 
-  // ── Install response-filtering wrappers at document_start ────────
-  // The wrappers AND their rules must exist BEFORE any page script runs to
-  // close the boot race, but the site's config only arrives async. Bridge:
-  // every rules dispatch caches the full scriptlet rule set in localStorage
-  // (only on sites whose rules contain response-filter keys — json_prune_* /
-  // json_edit / jsonl_edit_xhr). On the next load the cache is read
-  // synchronously here, the wrappers install and the rules apply
-  // immediately — set_constant/json_edit run before the page's inline
-  // scripts, and the registries are live for its very first requests. The
-  // async dispatch then re-applies fresh rules (replace semantics), so a
-  // stale cache self-corrects on every load.
-  // Sites without the cache keep fetch/XHR/JSON.parse completely untouched:
-  // no extension frame in stack traces, no per-request overhead. If
-  // response-filter rules arrive anyway (very first visit, rules update),
-  // the registration functions install the wrappers lazily mid-session.
-  var _RULES_CACHE_KEY = '__' + _qkv1Token + '_rules_cache__';
-  // _qkv1Token is a fresh random value baked in by every single build (see
-  // substitute_qkv1_token in _build-lib.sh) — each rebuild/update therefore
-  // mints a brand new cache key, and nothing before this ever cleaned up the
-  // PREVIOUS token's entry, so every prior build/version's cache accumulates
-  // forever in this origin's localStorage. One-time sweep at boot: any key
-  // matching our fixed __..._rules_cache__ wrapper that isn't this build's
-  // own key is necessarily a stale one from a past token — safe to drop.
-  try {
-    for (var _si = localStorage.length - 1; _si >= 0; _si--) {
-      var _sk = localStorage.key(_si);
-      if (_sk && _sk !== _RULES_CACHE_KEY && _sk.slice(0, 2) === '__' && _sk.slice(-14) === '_rules_cache__') {
-        localStorage.removeItem(_sk);
-      }
-    }
-  } catch (e) {}
-  // Despite the name, this gates ANY rule key that needs to exist BEFORE the
-  // page's own inline scripts run, not just response-filtering ones — the
-  // comment above already documented "set_constant/json_edit run before the
-  // page's inline scripts" as the intent, but set_constant/abort_on_property_*
-  // were never actually IN this list, so they never got that guarantee: only
-  // the async _EVT_RULES dispatch applied them, which lands well after
-  // document_start. Confirmed as a real, live-reproduced bug (2026-08-18,
-  // "Scan page globals" picker) — locking a page-defined function (e.g.
-  // tuoitre.vn's SearchAllPage) via Delete/Block took effect instantly (the
-  // ad-hoc apply-now path calls setConstant/abortOnPropertyRead directly,
-  // synchronously, at click time) but silently had NO effect after a reload:
-  // the page's own script had already read/bound the original, unlocked
-  // reference before the async dispatch arrived. Existing curated rules
-  // (e.g. [youtube]'s ytInitialPlayerResponse.* set_constant entries) likely
-  // have the same latent gap — they just happen to target globals YouTube's
-  // own code reads slightly later in its boot sequence, making the race far
-  // less likely to bite in practice, not actually immune to it.
-  var _RESPONSE_FILTER_RULE_KEYS = ['json_prune_fetch', 'json_prune_xhr', 'jsonl_edit_xhr', 'json_edit', 'json_prune', 'trusted_replace_xhr_response', 'trusted_replace_fetch_response', 'jspb_response_prune', 'no_window_open_if', 'trusted_edit_request', 'trusted_edit_response', 'set_constant', 'abort_on_property_read', 'abort_on_property_write'];
-
-  // The boot-gate replay (below) only exists to beat the async
-  // GET_SITE_CONFIG round-trip for rules that genuinely need document_start
-  // timing (response/property interception) — it must never carry anything
-  // outside _RESPONSE_FILTER_RULE_KEYS. A DOM-rewrite rule (remove_node_text/
-  // replace_node_text/trusted_replace_script_text) installs a PERMANENT
-  // hook/observer via _wrapOnce; if a stale one ever got cached alongside a
-  // real response-filter key, it would keep rewriting nodes with its stale
-  // pattern for the rest of that page load even after the real, current
-  // rules arrive and overwrite the cache moments later — the fix, not just
-  // the write, was already installed. Caching only an allowlisted subset
-  // instead of the whole `rules` object closes that off structurally,
-  // rather than relying on every future rule type to remember to opt out.
-  function _saveScriptletRulesCache(rules) {
-    var filtered = {};
-    var has = false;
-    for (var i = 0; i < _RESPONSE_FILTER_RULE_KEYS.length; i++) {
-      var key = _RESPONSE_FILTER_RULE_KEYS[i];
-      var v = rules[key];
-      if (v && v.length) { filtered[key] = v; has = true; }
-    }
-    // Only sites with response-filter rules ever get the key written;
-    // removeItem on all others is a no-op that leaves no trace.
-    try {
-      if (has) localStorage.setItem(_RULES_CACHE_KEY, JSON.stringify(filtered));
-      else localStorage.removeItem(_RULES_CACHE_KEY);
-    } catch (e) { /* sandboxed frame / storage blocked — lazy install still applies */ }
-  }
-
-  (function () {
-    var cached = null;
-    try { cached = localStorage.getItem(_RULES_CACHE_KEY); } catch (e) {}
-    if (!cached) return;
-    try { _installFetchResponseProxy(); } catch (e) {}
-    try { _installXhrResponseProxy(); } catch (e) {}
-    try { _installJsonEditProxy(); } catch (e) {}
-    try { _installSjsGuard(); } catch (e) {}
-    try {
-      var rules = JSON.parse(cached);
-      // The cache lives in page-writable storage, so treat it as untrusted
-      // input: anything non-object is ignored. A page corrupting it can only
-      // affect its own MAIN world — same privilege it already has.
-      if (rules && typeof rules === 'object') _applyScriptletRules(rules);
-    } catch (e) { /* corrupt cache — wrappers stay pass-through until dispatch */ }
-  })();
-
   // Bridge: content.js dispatches '<token>_rules__' after async rule load.
   // Content script and MAIN world share DOM events — standard cross-world pattern.
   window.addEventListener(_EVT_RULES, function(ev) {
     _scriptletsEnabled = true;
     try { _applyScriptletRules(ev.detail); } catch (e) {}
-  });
-
-  // Bridge: "Reset all data" in the dashboard only clears chrome.storage.local
-  // (extension storage) — it has no reach into this page's own localStorage,
-  // where the rules cache actually lives. content.js relays this event after
-  // the dashboard broadcasts CLEAR_SCRIPTLET_CACHE to every open tab.
-  window.addEventListener(_EVT_CLR, function() {
-    try { localStorage.removeItem(_RULES_CACHE_KEY); } catch (e) {}
   });
 
   // When protection is toggled OFF or domain paused, disable all scriptlet logic.

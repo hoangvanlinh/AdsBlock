@@ -102,6 +102,29 @@ self.ADBLOCK_CONFIG = {
   RULES_CACHE_TEXT_KEY: 'siteRulesCacheText',
   RULES_CACHE_TIME_KEY: 'siteRulesCacheTime',
   RULES_CACHE_TTL_MS: 6 * 60 * 60 * 1000,
+  // Per-host LRU-capped map (see site-block.js's _DIRECT_CSS_LRU_LIMIT)
+  // holding the last CSS site-block.js successfully computed for
+  // direct_hide_selectors, keyed by hostname — read via chrome.storage.session
+  // (background.js grants content scripts access via setAccessLevel) at
+  // content-script start as a "fire now, correct shortly after" fast path so
+  // ads don't flash while GET_SITE_CONFIG's message round-trip to a
+  // cold-started background is still in flight. Lives in the extension's own
+  // storage, never the page's — no page-JS can ever read or enumerate it,
+  // unlike the page's own localStorage. See site-block.js's
+  // _fastPathDirectStyle()/_injectDirectStyle().
+  DIRECT_CSS_FASTPATH_KEY: 'directCssFastPath',
+  // Same fast-path pattern as DIRECT_CSS_FASTPATH_KEY above, but for a
+  // CURATED SUBSET of scriptlet rules (json_prune_*/no_window_open_if/
+  // trusted_edit_*/etc. — see site-block.js's SCRIPTLET_SAFE_CACHE_KEYS) that
+  // are safe to replay from a stale cache: each one's registry is fully
+  // reset+rebuilt on every real dispatch, so a stale cached value causes no
+  // lasting effect once the real one arrives. Deliberately excludes rules
+  // that install a permanent, non-resettable hook (set_constant,
+  // abort_on_property_*, remove_node_text, etc.) — replaying one of those
+  // stale would let an outdated value win PERMANENTLY even after the real
+  // rule arrives, since nothing ever un-installs it. See site-block.js's
+  // _fastPathDispatchScriptletRules()/_dispatchScriptletRules().
+  SCRIPTLET_RULES_FASTPATH_KEY: 'scriptletRulesFastPath',
   // fetchRemoteRuleText() (background.js) records a { [url]: message } entry
   // here for every URL source that fails to fetch, and clears it on the next
   // successful fetch of that same URL — the dashboard's Rule Source page
