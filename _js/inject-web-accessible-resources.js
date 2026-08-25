@@ -43,11 +43,18 @@ manifest.web_accessible_resources = manifest.web_accessible_resources.filter(ent
   !(Array.isArray(entry.resources) && entry.resources.length &&
     entry.resources.every(r => r.startsWith('web_accessible_resources/')))
 );
-manifest.web_accessible_resources.push({
-  resources: files,
-  matches: ['<all_urls>'],
-  use_dynamic_url: true,
-});
+// use_dynamic_url is Chrome-only (MV3) — Firefox's manifest schema doesn't
+// recognize it at all ("An unexpected property was found", live-reproduced
+// 2026-08-25) and doesn't need it anyway: moz-extension:// URLs already
+// carry a per-INSTALL random UUID by default (not a static id the way
+// chrome-extension:// URLs are), so there's no static-id leak here for this
+// property to fix on Firefox in the first place. Detect Firefox the same
+// way manifest.firefox.json is itself distinguished from manifest.json — it
+// carries browser_specific_settings.gecko, which Chrome's manifest doesn't.
+const isFirefox = !!(manifest.browser_specific_settings && manifest.browser_specific_settings.gecko);
+const entry = { resources: files, matches: ['<all_urls>'] };
+if (!isFirefox) entry.use_dynamic_url = true;
+manifest.web_accessible_resources.push(entry);
 
 fs.writeFileSync(destManifestPath, JSON.stringify(manifest, null, 2) + '\n');
 console.log(`  Injected ${files.length} web_accessible_resources/* file(s) as their own manifest entry in ${path.relative(ROOT, destManifestPath)}`);

@@ -14,28 +14,38 @@ var _QKV1_TOKEN='__QKV1_BUILD_TOKEN__';
 // — is safe; only the `var`s right below it are NOT hoisted-with-value, so
 // they genuinely must be assigned before this call.
 var _directAuthInjected=false;
-// Per-host LRU-capped map (NOT a single shared slot — chrome.storage.session
-// isn't naturally per-origin the way localStorage is, so this manages that
-// scoping ourselves) holding the last CSS computed for the 'direct' slot per
-// hostname, in chrome.storage.session — background.js grants this script
-// access via setAccessLevel({accessLevel:'TRUSTED_AND_UNTRUSTED_CONTEXTS'}).
-// Lives in the extension's own storage: unlike the page's own localStorage,
-// no page JS (not even a same-origin third-party iframe like an embedded
-// Facebook widget) can ever read, enumerate, or tamper with it — chrome.storage
-// simply isn't reachable from page JS under any circumstance. Capped at
-// _DIRECT_CSS_LRU_LIMIT entries (evict-oldest-by-timestamp) because
-// chrome.storage.session's quota is SHARED across the whole extension —
-// background.js's own parsedRulesSessionCache alone measured up to 8.27MB of
-// the 10MB total on a real large config, so an unbounded per-host map here
-// would compete with (and could starve) that far higher-value cache instead
-// of just costing a few KB per entry as intended. Trade-off accepted:
-// chrome.storage.session.get() is still asynchronous (no API gives a truly
-// synchronous read here), so this is a best-effort head start, not a
-// guaranteed pre-paint — same timing class as the original chrome.storage.local
-// design, just a storage area that's wiped on browser close instead of
-// persisting indefinitely.
+// content/fastpath-storage.js (listed right before this file in
+// manifest.json/manifest.firefox.json) already resolved, ONCE, whether
+// chrome.storage.session is actually reachable from this content script and
+// falls back to chrome.storage.local transparently when it isn't
+// (setAccessLevel not granted, or genuinely unavailable — see
+// background.js's own setAccessLevel comment for a live-reproduced case).
+// _fpStorage.get()/.set() are always Promise-based (never callback-style —
+// mixing styles broke an earlier version of this once the underlying object
+// could resolve to Firefox's native, Promise-only browser.storage.session).
+// Falls back to an inert no-op stub if fastpath-storage.js somehow didn't
+// run first (defensive — should never happen given the fixed manifest.json
+// load order, same defensive fallback style as _HIDE_ATTR below).
+var _fpStorage=window.__qkv1FastpathStorage||{get:function(){return Promise.resolve({});},set:function(){return Promise.resolve();},lruLimit:10,usingSession:false};
+// Per-host LRU-capped map (NOT a single shared slot — neither storage.session
+// nor storage.local is naturally per-origin the way localStorage is, so this
+// manages that scoping ourselves) holding the last CSS computed for the
+// 'direct' slot per hostname. Lives in the extension's own storage: unlike
+// the page's own localStorage, no page JS (not even a same-origin
+// third-party iframe like an embedded Facebook widget) can ever read,
+// enumerate, or tamper with it — chrome.storage simply isn't reachable from
+// page JS under any circumstance, whichever area _fpStorage lands on.
+// Capped at _fpStorage.lruLimit entries (evict-oldest-by-timestamp, smaller
+// when the .local fallback is in play — see fastpath-storage.js's own
+// comment) because the underlying quota is SHARED across the whole
+// extension either way — background.js's own parsedRulesSessionCache alone
+// measured up to 8.27MB of chrome.storage.session's 10MB on a real large
+// config, and siteRulesCacheText alone measured ~76-87% of
+// chrome.storage.local's — an unbounded per-host map here would compete
+// with (and could starve) either. Trade-off accepted: _fpStorage.get() is
+// still asynchronous (no API gives a truly synchronous read here), so this
+// is a best-effort head start, not a guaranteed pre-paint.
 var _DIRECT_CSS_SESSION_KEY=(self.ADBLOCK_CONFIG&&self.ADBLOCK_CONFIG.DIRECT_CSS_FASTPATH_KEY)||'directCssFastPath';
-var _DIRECT_CSS_LRU_LIMIT=50;
 _fastPathDirectStyle();
 
 // _scriptletAuthDispatched/_SCRIPTLET_RULES_SESSION_KEY/
@@ -50,7 +60,6 @@ _fastPathDirectStyle();
 // why the rest of SCRIPTLET_KEYS is excluded.
 var _scriptletAuthDispatched=false;
 var _SCRIPTLET_RULES_SESSION_KEY=(self.ADBLOCK_CONFIG&&self.ADBLOCK_CONFIG.SCRIPTLET_RULES_FASTPATH_KEY)||'scriptletRulesFastPath';
-var _SCRIPTLET_RULES_LRU_LIMIT=50;
 _fastPathDispatchScriptletRules();
 
 var siteKey='';
@@ -82,7 +91,7 @@ var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[], _cachedStripClasses
 var _cachedDirectStr='', _cachedCandidateStr='', _cachedHostStr='';
 
 function extValid(){
-  try{return !!(chrome.runtime&&chrome.runtime.getManifest());}
+  try{return !!(EXT.runtime&&EXT.runtime.getManifest());}
   catch(e){return false;}
 }
 
@@ -217,7 +226,7 @@ function stopPageClassWatch(){
 // pause/disable, clears this slot the same way it clears 'base'/'custom').
 function _sendCssSlot(slot,css){
   if(!extValid())return;
-  try{chrome.runtime.sendMessage({type:'CSS_SET',slot:slot,css:css||''}).catch(function(){});}catch(e){}
+  try{EXT.runtime.sendMessage({type:'CSS_SET',slot:slot,css:css||''}).catch(function(){});}catch(e){}
 }
 // Bare `body`/`html`-anchored selectors (e.g. `body:has(x) > y`) must skip
 // the auto-prefix below — 'body '+'body:has(...)' is always false.
@@ -245,10 +254,9 @@ function _evictOldestLruEntry(map){
 // visit, same "lossy cache, not a source of truth" tolerance the rest of
 // this fast-path already relies on.
 function _updateDirectCssCacheEntry(host,css){
-  if(!extValid()||!chrome.storage||!chrome.storage.session)return;
+  if(!extValid())return;
   try{
-    chrome.storage.session.get([_DIRECT_CSS_SESSION_KEY],function(res){
-      if(chrome.runtime.lastError)return;
+    _fpStorage.get([_DIRECT_CSS_SESSION_KEY]).then(function(res){
       var map=(res&&res[_DIRECT_CSS_SESSION_KEY])||{};
       if(!css){
         // Nothing to hide on this host — drop any stale non-empty guess from
@@ -256,15 +264,12 @@ function _updateDirectCssCacheEntry(host,css){
         delete map[host];
       }else{
         var isNewHost=!Object.prototype.hasOwnProperty.call(map,host);
-        if(isNewHost&&Object.keys(map).length>=_DIRECT_CSS_LRU_LIMIT)_evictOldestLruEntry(map);
+        if(isNewHost&&Object.keys(map).length>=_fpStorage.lruLimit)_evictOldestLruEntry(map);
         map[host]={css:css,ts:Date.now()};
       }
       var payload={};payload[_DIRECT_CSS_SESSION_KEY]=map;
-      // See _injectDirectStyle()'s old comment history: chrome.storage.session
-      // .set() returns a Promise — needs .catch(), a bare try/catch around
-      // the call doesn't cover a rejection.
-      chrome.storage.session.set(payload).catch(function(){});
-    });
+      _fpStorage.set(payload).catch(function(){});
+    }).catch(function(){});
   }catch(e){}
 }
 
@@ -294,7 +299,7 @@ function _injectDirectStyle(){
 
 // _fastPathDirectStyle — fires the LAST successfully-computed 'direct' CSS
 // for THIS host (from its own last visit — see the LRU map comment near
-// _DIRECT_CSS_LRU_LIMIT above) as early as possible at content-script start,
+// _fpStorage above) as early as possible at content-script start,
 // before loadSite()'s GET_SITE_CONFIG round-trip to background even
 // resolves. That round-trip is fast on a warm service worker but can cost a
 // chrome.storage.session read (cold-started SW) or a full remote rule fetch
@@ -308,15 +313,15 @@ function _injectDirectStyle(){
 // real CSS once loadSite() resolves and _directAuthInjected stops this
 // stale guess from winning a race against it.
 function _fastPathDirectStyle(){
-  if(!extValid()||!chrome.storage||!chrome.storage.session)return;
+  if(!extValid())return;
   try{
-    chrome.storage.session.get([_DIRECT_CSS_SESSION_KEY],function(res){
-      if(_directAuthInjected||chrome.runtime.lastError)return;
+    _fpStorage.get([_DIRECT_CSS_SESSION_KEY]).then(function(res){
+      if(_directAuthInjected)return;
       var map=res&&res[_DIRECT_CSS_SESSION_KEY];
       var entry=map&&map[location.hostname];
       var css=entry&&entry.css;
       if(css)_sendCssSlot('direct',css);
-    });
+    }).catch(function(){});
   }catch(e){}
 }
 
@@ -348,18 +353,25 @@ function _sendScriptletRulesEvent(rules){
 // filtering here) — the whole reason that curated subset exists in the
 // first place.
 function _fastPathDispatchScriptletRules(){
-  if(!extValid()||!chrome.storage||!chrome.storage.session)return;
+  if(!extValid())return;
   try{
-    chrome.storage.session.get([_SCRIPTLET_RULES_SESSION_KEY],function(res){
-      if(_scriptletAuthDispatched||chrome.runtime.lastError)return;
+    _fpStorage.get([_SCRIPTLET_RULES_SESSION_KEY]).then(function(res){
+      if(_scriptletAuthDispatched)return;
       var map=res&&res[_SCRIPTLET_RULES_SESSION_KEY];
       var entry=map&&map[location.hostname];
       var rules=entry&&entry.rules;
       if(rules&&Object.keys(rules).length){
+        // Deliberately does NOT set _scriptletRulesActive — that flag means
+        // "the REAL dispatch has happened" and gates sync()'s decision to
+        // call _dispatchScriptletRules() below. Setting it here from a
+        // stale cache guess was a real bug: it made sync() think the real
+        // dispatch already ran and permanently skip it for the rest of this
+        // page's life whenever the fast path fired successfully — the exact
+        // opposite of "replace semantics" this function's own comment
+        // promises, live-caught 2026-08-25 by re-auditing the flag's usage.
         _sendScriptletRulesEvent(rules);
-        _scriptletRulesActive=true;
       }
-    });
+    }).catch(function(){});
   }catch(e){}
 }
 
@@ -368,21 +380,20 @@ function _fastPathDispatchScriptletRules(){
 // _updateDirectCssCacheEntry above (a clobbered write just means a slightly
 // staler guess next visit, self-corrects on the next real dispatch).
 function _updateScriptletCacheEntry(host,safeRules){
-  if(!extValid()||!chrome.storage||!chrome.storage.session)return;
+  if(!extValid())return;
   try{
-    chrome.storage.session.get([_SCRIPTLET_RULES_SESSION_KEY],function(res){
-      if(chrome.runtime.lastError)return;
+    _fpStorage.get([_SCRIPTLET_RULES_SESSION_KEY]).then(function(res){
       var map=(res&&res[_SCRIPTLET_RULES_SESSION_KEY])||{};
       if(!safeRules||!Object.keys(safeRules).length){
         delete map[host];
       }else{
         var isNewHost=!Object.prototype.hasOwnProperty.call(map,host);
-        if(isNewHost&&Object.keys(map).length>=_SCRIPTLET_RULES_LRU_LIMIT)_evictOldestLruEntry(map);
+        if(isNewHost&&Object.keys(map).length>=_fpStorage.lruLimit)_evictOldestLruEntry(map);
         map[host]={rules:safeRules,ts:Date.now()};
       }
       var payload={};payload[_SCRIPTLET_RULES_SESSION_KEY]=map;
-      chrome.storage.session.set(payload).catch(function(){});
-    });
+      _fpStorage.set(payload).catch(function(){});
+    }).catch(function(){});
   }catch(e){}
 }
 
@@ -576,7 +587,7 @@ function scan(root){
   }
   if(count>0){
     _hidden+=count;
-    if(extValid())chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:count,url:location.href}).catch(function(){});
+    if(extValid())EXT.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:count,url:location.href}).catch(function(){});
   }
 }
 
@@ -790,7 +801,7 @@ function _dispatchScriptletRules(cfg){
 
 function sync(cb){
   if(!extValid())return;
-  try{chrome.storage.local.get(['enabled','pausedDomains','cosmeticFiltering'],function(res){
+  try{EXT.storage.local.get(['enabled','pausedDomains','cosmeticFiltering'],function(res){
     var paused=(res.pausedDomains||[]).indexOf(location.hostname)!==-1;
     _enabled=(res.enabled!==false)&&res.cosmeticFiltering!==false&&!paused;
     if(_enabled){
@@ -873,10 +884,10 @@ document.addEventListener('yt-page-data-updated',_onSpaNav);
 window.addEventListener('__'+_QKV1_TOKEN+'_blk__',function(e){
   if(!extValid()||!_enabled)return;
   var url=location.href;
-  chrome.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
+  EXT.runtime.sendMessage({type:'COSMETIC_HIDDEN',count:1,url:url}).catch(function(){});
 });
 
-chrome.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
+EXT.runtime.onMessage.addListener(function(msg,_sender,sendResponse){
   if(msg.type==='TOGGLE'||msg.type==='PAUSE_DOMAIN'||msg.type==='COSMETIC_TOGGLE'){
     sync(sendResponse);
     return true;

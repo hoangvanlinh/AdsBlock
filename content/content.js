@@ -10,7 +10,7 @@
 function extValid() {
   try {
     // chrome.runtime.id is static; use getManifest() to actually probe the context
-    return !!(chrome.runtime && chrome.runtime.getManifest());
+    return !!(EXT.runtime && EXT.runtime.getManifest());
   } catch { return false; }
 }
 
@@ -53,13 +53,13 @@ window.__qkv1HideAttr = _HIDE_ATTR;
 function _sendCss(slot, css, fresh) {
   if (!extValid()) return;
   try {
-    chrome.runtime.sendMessage({ type: 'CSS_SET', slot, css: css || '', fresh: !!fresh }).catch(() => {});
+    EXT.runtime.sendMessage({ type: 'CSS_SET', slot, css: css || '', fresh: !!fresh }).catch(() => {});
   } catch { /* extension context invalidated */ }
 }
 
 function _clearAllCss() {
   if (!extValid()) return;
-  try { chrome.runtime.sendMessage({ type: 'CSS_CLEAR_ALL' }).catch(() => {}); } catch { /* invalidated */ }
+  try { EXT.runtime.sendMessage({ type: 'CSS_CLEAR_ALL' }).catch(() => {}); } catch { /* invalidated */ }
 }
 
 // ── Base cosmetic CSS (default known-ad-provider selectors) ────────
@@ -217,7 +217,7 @@ function flushStats() {
   const delta = { ..._statBatch };
   _statBatch = { seen: 0, ads: 0, trackers: 0, malware: 0 };
   if (delta.seen === 0) return;
-  chrome.runtime.sendMessage({
+  EXT.runtime.sendMessage({
     type: 'RESOURCE_SEEN',
     domain: location.hostname,
     delta,
@@ -231,9 +231,9 @@ let enabled = true;
 // The base CSS was already sent synchronously above.
 if (extValid()) {
   try {
-    chrome.storage.local.get(['enabled', 'pausedDomains', 'cosmeticFiltering'], (result) => {
+    EXT.storage.local.get(['enabled', 'pausedDomains', 'cosmeticFiltering'], (result) => {
       try {
-        if (chrome.runtime.lastError || !result) return;
+        if (EXT.runtime.lastError || !result) return;
         const { enabled: e = true, pausedDomains = [], cosmeticFiltering = true } = result;
         const host = location.hostname;
         if (!e || pausedDomains.includes(host) || !cosmeticFiltering) {
@@ -259,9 +259,9 @@ if (document.readyState === 'loading') {
 function init() {
   if (!extValid()) return;
   try {
-    chrome.storage.local.get(['enabled', 'pausedDomains'], (result) => {
+    EXT.storage.local.get(['enabled', 'pausedDomains'], (result) => {
       try {
-        if (chrome.runtime.lastError || !result) return;
+        if (EXT.runtime.lastError || !result) return;
         const { enabled: e = true, pausedDomains = [] } = result;
         const host = location.hostname;
         if (!e || pausedDomains.includes(host)) {
@@ -315,9 +315,9 @@ function injectBaseCss() {
 function injectCustomCssRules() {
   if (!extValid()) return;
   try {
-    chrome.storage.local.get('rules', (result) => {
+    EXT.storage.local.get('rules', (result) => {
       try {
-        if (chrome.runtime.lastError || !result) return;
+        if (EXT.runtime.lastError || !result) return;
         const rules = result.rules || [];
         const cssRules = rules.filter(r => r.active && r.action === 'hide' && r.type === 'css' && r.pattern);
         const kwRules  = rules.filter(r => r.active && r.action === 'hide' && r.type === 'keyword' && r.pattern);
@@ -416,7 +416,7 @@ function disconnectObserver() {
 }
 
 // ── Message listener (from popup / background) ───────────────────
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+EXT.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'TOGGLE') {
     enabled = msg.enabled;
     try { localStorage.setItem('__yt_pb', enabled ? '1' : '0'); } catch (_e) {}

@@ -37,9 +37,9 @@
       "matches": [
         "<all_urls>"
       ],
-      "js": ["config.js", "content/site-rules-loader.js", "content/content.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
+      "js": ["config.js", "browser-compat.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
       "run_at": "document_start",
-      "all_frames": true
+      "all_frames": false
     }
   ],
   "web_accessible_resources": [

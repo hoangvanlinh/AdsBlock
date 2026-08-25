@@ -284,8 +284,8 @@ function _buildPanel(host, initialText, existingText) {
     var text = textarea.value;
     status.textContent = '';
     try {
-      chrome.runtime.sendMessage({ type: 'SAVE_SITE_RULE_TEXT', host: host, text: text }, function (res) {
-        void chrome.runtime.lastError;
+      EXT.runtime.sendMessage({ type: 'SAVE_SITE_RULE_TEXT', host: host, text: text }, function (res) {
+        void EXT.runtime.lastError;
         if (res && res.ok) {
           status.textContent = 'Saved — reload this page to see the rules applied.';
         } else {
@@ -320,8 +320,8 @@ function _enterEditorMode() {
   document.addEventListener('keydown', _onKeyDown, true);
   var host = location.hostname;
   try {
-    chrome.runtime.sendMessage({ type: 'GET_SITE_RULE_TEXT', host: host }, function (res) {
-      void chrome.runtime.lastError;
+    EXT.runtime.sendMessage({ type: 'GET_SITE_RULE_TEXT', host: host }, function (res) {
+      void EXT.runtime.lastError;
       if (!_active) return; // cancelled before the round trip returned
       _buildPanel(host, res && res.ok ? res.text : '', res && res.ok ? res.existingText : '');
     });
@@ -336,7 +336,7 @@ function _exitEditorMode() {
 }
 
 try {
-  chrome.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
+  EXT.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
     if (msg && msg.type === 'QKV1_ENTER_RULE_EDITOR_MODE') {
       _enterEditorMode();
       sendResponse({ ok: true });

@@ -14,6 +14,7 @@ const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
 const configSrc = fs.readFileSync(path.join(ROOT, 'config.js'), 'utf8');
+const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'browser-compat.js'), 'utf8');
 const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'scriptlet-alias-map.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'background.js'), 'utf8');
 const localRules = fs.readFileSync(path.join(ROOT, 'rule/site-rules.txt'), 'utf8');
@@ -84,6 +85,7 @@ function makeSandbox() {
     navigator: { userAgent: 'x' },
     importScripts(name) {
       if (name && name.includes('scriptlet-alias-map')) vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 's.js' });
+      else if (name && name.includes('browser-compat')) vm.runInContext(browserCompatSrc, ctx, { filename: 'b.js' });
       else vm.runInContext(configSrc, ctx, { filename: 'c.js' });
     },
   };

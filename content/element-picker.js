@@ -184,8 +184,8 @@ function _confirmHide(el, selector) {
   // again before writing the rule text, so this is belt-and-suspenders.
   var safeSelector = selector.replace(/\|/g, '\\|');
   try {
-    chrome.runtime.sendMessage({ type: 'SAVE_ELEMENT_RULE', host: location.hostname, selector: safeSelector }, function () {
-      void chrome.runtime.lastError;
+    EXT.runtime.sendMessage({ type: 'SAVE_ELEMENT_RULE', host: location.hostname, selector: safeSelector }, function () {
+      void EXT.runtime.lastError;
     });
   } catch (e) {}
   _exitPickerMode();
@@ -235,7 +235,7 @@ function _exitPickerMode() {
 }
 
 try {
-  chrome.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
+  EXT.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
     if (msg && msg.type === 'QKV1_ENTER_PICKER_MODE') {
       _enterPickerMode();
       sendResponse({ ok: true });

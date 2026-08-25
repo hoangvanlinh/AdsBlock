@@ -64,7 +64,7 @@ function mergeDefaults(defaults, overrides){
 }
 
 function extValid(){
-  try{return !!(chrome.runtime&&chrome.runtime.getManifest());}
+  try{return !!(EXT.runtime&&EXT.runtime.getManifest());}
   catch(e){return false;}
 }
 
@@ -127,10 +127,10 @@ function _decompressFromStorage(stored){
 
 function getCachedRules(){
   return new Promise(function(resolve){
-    if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(null);return;}
+    if(!extValid()||!EXT.storage||!EXT.storage.local){resolve(null);return;}
     try{
-      chrome.storage.local.get([CACHE_KEY_TEXT,CACHE_KEY_TIME],function(res){
-        if(chrome.runtime.lastError||!res||!res[CACHE_KEY_TEXT]){resolve(null);return;}
+      EXT.storage.local.get([CACHE_KEY_TEXT,CACHE_KEY_TIME],function(res){
+        if(EXT.runtime.lastError||!res||!res[CACHE_KEY_TEXT]){resolve(null);return;}
         _decompressFromStorage(res[CACHE_KEY_TEXT]).then(function(text){
           if(!text){resolve(null);return;}
           resolve({
@@ -145,13 +145,13 @@ function getCachedRules(){
 
 function setCachedRules(text){
   return new Promise(function(resolve){
-    if(!extValid()||!chrome.storage||!chrome.storage.local||!text){resolve();return;}
+    if(!extValid()||!EXT.storage||!EXT.storage.local||!text){resolve();return;}
     try{
       _compressForStorage(text).then(function(stored){
         var payload={};
         payload[CACHE_KEY_TEXT]=stored;
         payload[CACHE_KEY_TIME]=Date.now();
-        chrome.storage.local.set(payload,function(){resolve();});
+        EXT.storage.local.set(payload,function(){resolve();});
       });
     }catch(e){resolve();}
   });
@@ -195,7 +195,7 @@ function fetchRemoteRules(urls) {
 }
 
 function fetchLocalRules(){
-  return fetch(chrome.runtime.getURL(LOCAL_RULES_PATH),{cache:'no-store'})
+  return fetch(EXT.runtime.getURL(LOCAL_RULES_PATH),{cache:'no-store'})
     .then(function(res){return res.ok?res.text():'';});
 }
 
@@ -208,8 +208,8 @@ function fetchLocalRules(){
 // service worker on a fresh navigation hits this fallback often enough in
 // practice to matter, not just when messaging is truly broken.
 function _fetchAndMergeDirect(cached, resolve){
-  if(!extValid()||!chrome.storage||!chrome.storage.local){resolve(null);return;}
-  chrome.storage.local.get(['ruleSources','customRulesUrl','customRulesText','defaultRuleSourceEnabled','defaultRuleSourceOverrides'],function(res){
+  if(!extValid()||!EXT.storage||!EXT.storage.local){resolve(null);return;}
+  EXT.storage.local.get(['ruleSources','customRulesUrl','customRulesText','defaultRuleSourceEnabled','defaultRuleSourceOverrides'],function(res){
     var sources=res.ruleSources;
     var defaultUrlSet={};
     var urls=[];
@@ -224,7 +224,7 @@ function _fetchAndMergeDirect(cached, resolve){
       entryUrls.forEach(function(u){defaultUrlSet[u]=true;});
       if(!_isDefaultSourceEnabled(entry,res.defaultRuleSourceOverrides,legacyAllDisabled))return;
       if(DEBUG_LOCAL&&i===0){
-        urls.push(chrome.runtime.getURL(LOCAL_RULES_PATH));
+        urls.push(EXT.runtime.getURL(LOCAL_RULES_PATH));
       }else{
         entryUrls.forEach(function(u){urls.push(u);});
       }
@@ -432,8 +432,8 @@ function loadSiteConfig(callback){
       // messaging itself is unavailable).
       if(!extValid()){_loadFallback(resolve);return;}
       try{
-        chrome.runtime.sendMessage({type:'GET_SITE_CONFIG',host:location.hostname},function(res){
-          if(chrome.runtime.lastError||!res){_loadFallback(resolve);return;}
+        EXT.runtime.sendMessage({type:'GET_SITE_CONFIG',host:location.hostname},function(res){
+          if(EXT.runtime.lastError||!res){_loadFallback(resolve);return;}
           resolve({siteKey:res.siteKey||'',global:res.global||{},site:res.site||{}});
         });
       }catch(e){_loadFallback(resolve);}
@@ -463,9 +463,9 @@ window.__qkv1Loader={
 
 // Listen for RULES_CHANGED from background (triggered when rule sources are updated).
 // Reset the in-memory parsed cache so the next load() call re-fetches with new sources.
-if(typeof chrome!=='undefined'&&chrome.runtime&&chrome.runtime.onMessage){
+if(typeof chrome!=='undefined'&&EXT.runtime&&EXT.runtime.onMessage){
   try{
-    chrome.runtime.onMessage.addListener(function(msg){
+    EXT.runtime.onMessage.addListener(function(msg){
       if(msg&&msg.type==='RULES_CHANGED'){
         _parsed=null;
         _loading=null;

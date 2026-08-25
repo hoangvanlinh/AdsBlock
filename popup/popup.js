@@ -46,7 +46,7 @@ function calculatePrivacyScore(domainStats = {}, settings = {}) {
 
 // ── Get current tab domain ──────────────────────
 async function getCurrentDomain() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
   if (!tab?.url) return '';
   try { return new URL(tab.url).hostname; }
   catch { return ''; }
@@ -57,7 +57,7 @@ async function loadState() {
   const domain = await getCurrentDomain();
   domainLabel.textContent = domain || 'Unknown site';
 
-  chrome.storage.local.get(
+  EXT.storage.local.get(
     ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'stats', 'referrerAnonymization'],
     ({ enabled = true, pausedDomains = [], allowedDomains = [], focusMode = false, stats = {}, referrerAnonymization = true }) => {
 
@@ -138,46 +138,46 @@ mainToggle.addEventListener('change', async () => {
 
   if (on) {
     // If site was paused, clear the pause first
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
     const domain = tab?.url ? (() => { try { return new URL(tab.url).hostname; } catch { return ''; } })() : '';
 
-    chrome.storage.local.get(['pausedDomains'], ({ pausedDomains = [] }) => {
+    EXT.storage.local.get(['pausedDomains'], ({ pausedDomains = [] }) => {
       const wasPaused = domain && pausedDomains.includes(domain);
       const updatedPaused = wasPaused ? pausedDomains.filter(d => d !== domain) : pausedDomains;
 
-      chrome.storage.local.set({ enabled: true, pausedDomains: updatedPaused });
+      EXT.storage.local.set({ enabled: true, pausedDomains: updatedPaused });
       updateToggleUI(true, false);
       // Wait for background to finish rebuilding declarativeNetRequest rules
       // before refreshing the rule-count chip — otherwise it re-reads the
       // stale (pre-toggle) count while applyNetworkRules() is still running.
-      chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: true }, refreshRuleCount);
+      EXT.runtime.sendMessage({ type: 'TOGGLE', enabled: true }, refreshRuleCount);
 
       if (wasPaused) {
         pauseSiteBtn.classList.remove('active');
         pauseSiteBtn.textContent = '⏸ Pause on site';
-        chrome.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: false });
+        EXT.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: false });
       }
 
-      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: true }).catch(() => {});
+      if (tab?.id) EXT.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: true }).catch(() => {});
     });
   } else {
-    chrome.storage.local.set({ enabled: false });
+    EXT.storage.local.set({ enabled: false });
     updateToggleUI(false);
-    chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: false }, refreshRuleCount);
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: false }).catch(() => {});
+    EXT.runtime.sendMessage({ type: 'TOGGLE', enabled: false }, refreshRuleCount);
+    const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) EXT.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: false }).catch(() => {});
   }
 });
 
 // ── Pause on site ──────────────────────────────
 pauseSiteBtn.addEventListener('click', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
   if (!tab?.url) return;
   let domain = '';
   try { domain = new URL(tab.url).hostname; } catch { return; }
   if (!domain) return;
 
-  chrome.storage.local.get(['pausedDomains'], ({ pausedDomains = [] }) => {
+  EXT.storage.local.get(['pausedDomains'], ({ pausedDomains = [] }) => {
     const idx = pausedDomains.indexOf(domain);
     const pausing = idx === -1; // true = we're pausing, false = we're resuming
     if (pausing) {
@@ -189,17 +189,17 @@ pauseSiteBtn.addEventListener('click', async () => {
       pauseSiteBtn.classList.remove('active');
       pauseSiteBtn.textContent = '⏸ Pause on site';
     }
-    chrome.storage.local.set({ pausedDomains });
+    EXT.storage.local.set({ pausedDomains });
     // Tell background to update declarativeNetRequest rules — WAIT for it
     // to finish before reloading, otherwise the old rules still block.
-    chrome.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: pausing }, () => {
+    EXT.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: pausing }, () => {
       // Update hero UI to reflect paused/active state
       mainToggle.checked = !pausing;
-      chrome.storage.local.get('enabled', ({ enabled = true }) => {
+      EXT.storage.local.get('enabled', ({ enabled = true }) => {
         updateToggleUI(enabled, pausing);
       });
       // Reload the tab AFTER rules are updated
-      chrome.tabs.reload(tab.id);
+      EXT.tabs.reload(tab.id);
     });
   });
 });
@@ -208,10 +208,10 @@ pauseSiteBtn.addEventListener('click', async () => {
 document.getElementById('removeAllowlist')?.addEventListener('click', async () => {
   const domain = await getCurrentDomain();
   if (!domain) return;
-  chrome.storage.local.get('allowedDomains', ({ allowedDomains = [] }) => {
+  EXT.storage.local.get('allowedDomains', ({ allowedDomains = [] }) => {
     const updated = allowedDomains.filter(d => d !== domain);
-    chrome.storage.local.set({ allowedDomains: updated });
-    chrome.runtime.sendMessage({ type: 'ALLOWLIST_CHANGED' });
+    EXT.storage.local.set({ allowedDomains: updated });
+    EXT.runtime.sendMessage({ type: 'ALLOWLIST_CHANGED' });
     // Reload popup state
     loadState();
   });
@@ -219,7 +219,7 @@ document.getElementById('removeAllowlist')?.addEventListener('click', async () =
 
 // ── Focus mode ─────────────────────────────────
 focusModeBtn.addEventListener('click', () => {
-  chrome.storage.local.get(['focusMode', 'focusDuration'], ({ focusMode = false, focusDuration = 25 }) => {
+  EXT.storage.local.get(['focusMode', 'focusDuration'], ({ focusMode = false, focusDuration = 25 }) => {
     const next = !focusMode;
     const updates = { focusMode: next };
     if (next) {
@@ -227,26 +227,26 @@ focusModeBtn.addEventListener('click', () => {
     } else {
       updates.focusEndTime = null;
     }
-    chrome.storage.local.set(updates);
+    EXT.storage.local.set(updates);
     focusModeBtn.classList.toggle('active', next);
     focusModeBtn.classList.toggle('accent', !next);
-    chrome.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: next });
+    EXT.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: next });
   });
 });
 
 // ── Dashboard ──────────────────────────────────
 document.getElementById('openDashboard').addEventListener('click', () => {
-  chrome.runtime.openOptionsPage();
+  EXT.runtime.openOptionsPage();
 });
 document.getElementById('openSettings').addEventListener('click', () => {
-  chrome.runtime.openOptionsPage();
+  EXT.runtime.openOptionsPage();
 });
 
 // ── Donate ─────────────────────────────────────
 // Replace with your actual PayPal.me or donate link
 const PAYPAL_DONATE_URL = 'https://www.paypal.me/linhhvtt/5';
 document.getElementById('donateBtnPopup')?.addEventListener('click', () => {
-  chrome.tabs.create({ url: PAYPAL_DONATE_URL });
+  EXT.tabs.create({ url: PAYPAL_DONATE_URL });
 });
 
 // ── Review prompt ────────────────────────────────
@@ -280,7 +280,7 @@ function _detectReviewStoreUrl() {
 function maybeShowReviewPrompt() {
   const banner = document.getElementById('reviewBanner');
   if (!banner) return;
-  chrome.storage.local.get(
+  EXT.storage.local.get(
     ['reviewPromptState', 'totalBlockedAllTime', 'installDate'],
     ({ reviewPromptState = 'unseen', totalBlockedAllTime = 0, installDate }) => {
       if (reviewPromptState !== 'unseen') return;
@@ -291,12 +291,12 @@ function maybeShowReviewPrompt() {
   );
 }
 document.getElementById('reviewRateBtn')?.addEventListener('click', () => {
-  chrome.storage.local.set({ reviewPromptState: 'reviewed' });
-  chrome.tabs.create({ url: _detectReviewStoreUrl() });
+  EXT.storage.local.set({ reviewPromptState: 'reviewed' });
+  EXT.tabs.create({ url: _detectReviewStoreUrl() });
   document.getElementById('reviewBanner')?.classList.add('hidden');
 });
 document.getElementById('reviewDismissBtn')?.addEventListener('click', () => {
-  chrome.storage.local.set({ reviewPromptState: 'dismissed' });
+  EXT.storage.local.set({ reviewPromptState: 'dismissed' });
   document.getElementById('reviewBanner')?.classList.add('hidden');
 });
 
@@ -305,10 +305,10 @@ document.getElementById('reviewDismissBtn')?.addEventListener('click', () => {
 // the right-click context menu item sends, just a second entry point for
 // discoverability without needing to right-click the exact element first.
 document.getElementById('pickElement')?.addEventListener('click', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) return;
-  chrome.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_PICKER_MODE' }, () => {
-    void chrome.runtime.lastError;
+  EXT.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_PICKER_MODE' }, () => {
+    void EXT.runtime.lastError;
     window.close();
   });
 });
@@ -321,11 +321,11 @@ maybeShowReviewPrompt();
 // the Protection toggle so the chip doesn't keep showing a stale count from
 // before the background finished adding/removing declarativeNetRequest rules.
 function refreshRuleCount() {
-  void chrome.runtime.lastError; // ack TOGGLE's own response, if any
-  chrome.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {
+  void EXT.runtime.lastError; // ack TOGGLE's own response, if any
+  EXT.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {
     const chip = document.getElementById('ruleChip');
     if (!chip) return;
-    if (chrome.runtime.lastError || !res) {
+    if (EXT.runtime.lastError || !res) {
       chip.textContent = 'network rules: ?';
       chip.classList.add('zero');
       return;
@@ -341,14 +341,14 @@ refreshRuleCount();
 // GET_UPDATE_STATUS reads cached state only (background.js checks against
 // this repo's own manifest.json on its own daily schedule) — the popup
 // never triggers a network fetch itself just from being opened.
-chrome.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, (res) => {
+EXT.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, (res) => {
   const chip = document.getElementById('versionChip');
   if (!chip) return;
-  if (chrome.runtime.lastError || !res || !res.available || !res.latestVersion) return; // stays hidden
+  if (EXT.runtime.lastError || !res || !res.available || !res.latestVersion) return; // stays hidden
   chip.textContent = `Update available — v${res.currentVersion} → v${res.latestVersion}`;
   chip.title = 'A newer version is available — click to open the store listing';
   chip.classList.remove('hidden');
   chip.addEventListener('click', () => {
-    chrome.tabs.create({ url: _detectStoreUrl() });
+    EXT.tabs.create({ url: _detectStoreUrl() });
   });
 });

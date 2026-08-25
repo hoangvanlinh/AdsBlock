@@ -63,6 +63,12 @@ copy_static_files() {
 
     cp "$MANIFEST" "$DEST/manifest.json"
     cp "$PROJECT_DIR/config.js" "$DEST/"
+    # browser-compat.js (self.EXT / self.EXT_SESSION_STORAGE) needs this at
+    # the build root too, for the same reason config.js does: background.js's
+    # importScripts('browser-compat.js'), the isolated-world content_scripts
+    # js array, and dashboard/popup/blocked's own <script> tags all load it
+    # from here.
+    cp "$PROJECT_DIR/browser-compat.js" "$DEST/"
     # background.js's importScripts('scriptlet-alias-map.js') needs this at
     # the build root too — same reason config.js lives there (shared across
     # background.js, and scripts/convert-uassets.js/convert-regions.js via
@@ -74,6 +80,7 @@ copy_static_files() {
 
     cp "$PROJECT_DIR/icons/"*.png "$DEST/icons/"
     cp "$PROJECT_DIR/content/site-rules-loader.js" "$DEST/content/"
+    cp "$PROJECT_DIR/content/fastpath-storage.js"  "$DEST/content/"
     cp "$PROJECT_DIR/content/site-block.js"        "$DEST/content/"
     # scriptlets run in MAIN world — never obfuscated
     cp "$PROJECT_DIR/content/element-picker.js"        "$DEST/content/"

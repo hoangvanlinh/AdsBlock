@@ -8,6 +8,11 @@
 if (typeof importScripts === 'function' && !self.ADBLOCK_CONFIG) {
   importScripts('config.js');
 }
+// browser-compat.js (repo root, same dual-loading story as config.js) —
+// defines self.EXT (shared chrome./browser. alias) and self.EXT_SESSION_STORAGE.
+if (typeof importScripts === 'function' && !self.EXT) {
+  importScripts('browser-compat.js');
+}
 // scriptlet-alias-map.js (repo root, same place as config.js — both are
 // shared across contexts: background.js here, scripts/convert-uassets.js and
 // scripts/convert-regions.js via `require()` offline, and both get copied to
@@ -32,9 +37,19 @@ const {
   EXTENSION_META_REMOTE_URL_FIREFOX,
 } = self.ADBLOCK_CONFIG;
 
-// Grants content scripts (untrusted contexts) direct chrome.storage.session
+// Resolution logic (browser.storage.session preferred over the chrome.*
+// compat shim) now lives in browser-compat.js as self.EXT_SESSION_STORAGE —
+// see that file for why. Live-reproduced 2026-08-25: on that build,
+// chrome.storage.session.get/set/getBytesInUse all worked but
+// .setAccessLevel was undefined on BOTH chrome.storage.session and
+// browser.storage.session — so preferring browser.* alone isn't expected to
+// fix that specific case, but it's the same call uBOL itself makes and
+// removes any doubt about whether the compat shim specifically was the gap.
+var _sessionStorage = self.EXT_SESSION_STORAGE;
+
+// Grants content scripts (untrusted contexts) direct _sessionStorage
 // access — default access level is TRUSTED_CONTEXTS only (background/extension
-// pages), so without this a content script's own chrome.storage.session.get/
+// pages), so without this a content script's own storage.session.get/
 // set calls silently no-op or reject. Must be (re)called every time this
 // service worker starts, not just on install — the access level does not
 // reliably survive a SW restart. See site-block.js's DIRECT_CSS_FASTPATH_KEY
@@ -51,10 +66,10 @@ const {
 // reason (old browser, disabled API, etc.) — need both, one doesn't cover
 // the other.
 try {
-  chrome.storage.session?.setAccessLevel?.({accessLevel:'TRUSTED_AND_UNTRUSTED_CONTEXTS'})
-    ?.catch(e => console.error('[AdBlock] chrome.storage.session.setAccessLevel rejected — content-script fast-path caches will silently no-op:', e));
+  _sessionStorage?.setAccessLevel?.({accessLevel:'TRUSTED_AND_UNTRUSTED_CONTEXTS'})
+    ?.catch(e => console.error('[AdBlock] storage.session.setAccessLevel rejected — content-script fast-path caches will silently no-op:', e));
 } catch (e) {
-  console.error('[AdBlock] chrome.storage.session.setAccessLevel threw synchronously — content-script fast-path caches will silently no-op:', e);
+  console.error('[AdBlock] storage.session.setAccessLevel threw synchronously — content-script fast-path caches will silently no-op:', e);
 }
 
 const FALLBACK_RULE_CONFIG = {
@@ -289,7 +304,7 @@ async function _decompressDomainsFromStorage(stored) {
 
 async function getCachedRuleText() {
   try {
-    const cached = await chrome.storage.local.get([RULES_CACHE_TEXT_KEY, RULES_CACHE_TIME_KEY]);
+    const cached = await EXT.storage.local.get([RULES_CACHE_TEXT_KEY, RULES_CACHE_TIME_KEY]);
     if (!cached[RULES_CACHE_TEXT_KEY]) return null;
     const text = await _decompressFromStorage(cached[RULES_CACHE_TEXT_KEY]);
     if (!text) return null;
@@ -306,7 +321,7 @@ async function setCachedRuleText(text) {
   if (!text) return;
   try {
     const stored = await _compressForStorage(text);
-    await chrome.storage.local.set({
+    await EXT.storage.local.set({
       [RULES_CACHE_TEXT_KEY]: stored,
       [RULES_CACHE_TIME_KEY]: Date.now(),
     });
@@ -841,7 +856,7 @@ function _isDefaultSourceEnabled(entry, overrides, legacyAllDisabled) {
 function _candidateUILanguages() {
   const out = [];
   try {
-    const ui = chrome.i18n && chrome.i18n.getUILanguage && chrome.i18n.getUILanguage();
+    const ui = EXT.i18n && EXT.i18n.getUILanguage && EXT.i18n.getUILanguage();
     if (ui) out.push(ui);
   } catch (e) { /* ignore */ }
   try {
@@ -915,7 +930,7 @@ function _primaryUrl(entry) {
 async function _autoEnableLangDefaultSources() {
   const matches = RULES_REMOTE_URL.filter(e => _entryLangs(e).some(l => _uiLanguageMatches(l)));
   if (!matches.length) return;
-  const { defaultRuleSourceOverrides = {} } = await chrome.storage.local.get('defaultRuleSourceOverrides');
+  const { defaultRuleSourceOverrides = {} } = await EXT.storage.local.get('defaultRuleSourceOverrides');
   const updated = { ...defaultRuleSourceOverrides };
   let changed = false;
   for (const entry of matches) {
@@ -926,7 +941,7 @@ async function _autoEnableLangDefaultSources() {
     }
   }
   if (!changed) return;
-  await chrome.storage.local.set({
+  await EXT.storage.local.set({
     defaultRuleSourceOverrides: updated,
     // Bust the rules cache so the newly-enabled source is actually fetched
     // by the applyNetworkRules() call onInstalled makes right after this —
@@ -983,7 +998,7 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap)
   }));
   if (urls.length) {
     const { [RULE_SOURCE_ERRORS_KEY]: existingErrors = {}, [RULE_SOURCE_STATS_KEY]: existingStats = {} } =
-      await chrome.storage.local.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
+      await EXT.storage.local.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
     const nextErrors = { ...existingErrors };
     const nextStats = { ...existingStats };
     for (const url of urls) {
@@ -992,13 +1007,13 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap)
       if (sourceStats[url]) nextStats[url] = sourceStats[url];
       else delete nextStats[url]; // not ABP-format (or fetch failed) — nothing to report for it now
     }
-    await chrome.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
+    await EXT.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
   }
   return texts;
 }
 
 async function fetchRemoteRuleText() {
-  const stored = await chrome.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
+  const stored = await EXT.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
   const sources = stored.ruleSources;
   const urls = [];
   const fileParts = [];
@@ -1025,7 +1040,7 @@ async function fetchRemoteRuleText() {
   for (const [i, entry] of RULES_REMOTE_URL.entries()) {
     if (!_isDefaultSourceEnabled(entry, stored.defaultRuleSourceOverrides, legacyAllDisabled)) continue;
     if (DEBUG_LOCAL && i === 0) {
-      urls.push(chrome.runtime.getURL(RULES_LOCAL_PATH));
+      urls.push(EXT.runtime.getURL(RULES_LOCAL_PATH));
     } else {
       for (const u of _entryUrls(entry)) urls.push(u);
     }
@@ -1079,7 +1094,7 @@ async function fetchRemoteRuleText() {
 }
 
 async function fetchLocalRuleText() {
-  const res = await fetch(chrome.runtime.getURL(RULES_LOCAL_PATH), { cache: 'no-store' });
+  const res = await fetch(EXT.runtime.getURL(RULES_LOCAL_PATH), { cache: 'no-store' });
   return res.ok ? res.text() : '';
 }
 
@@ -1130,15 +1145,15 @@ let _sessionAllowedDomainsHash = '';
 function _hashValue(v) {
   return _hashText(JSON.stringify(v === undefined ? null : v));
 }
-chrome.storage.local.get(RULE_INPUT_KEYS).then(r => {
+EXT.storage.local.get(RULE_INPUT_KEYS).then(r => {
   for (const key of RULE_INPUT_KEYS) _ruleInputHashes[key] = _hashValue(r[key]);
 }).catch(() => {});
 try {
-  chrome.storage.session.get('sessionAllowedDomains').then(r => {
+  _sessionStorage.get('sessionAllowedDomains').then(r => {
     _sessionAllowedDomainsHash = _hashValue(r.sessionAllowedDomains);
   }).catch(() => {});
-} catch { /* chrome.storage.session unavailable (old browser) — best-effort only */ }
-chrome.storage.onChanged.addListener((changes, area) => {
+} catch { /* storage.session unavailable (old browser) — best-effort only */ }
+EXT.storage.onChanged.addListener((changes, area) => {
   if (area === 'session') {
     if (changes.sessionAllowedDomains) _sessionAllowedDomainsHash = _hashValue(changes.sessionAllowedDomains.newValue);
     return;
@@ -1155,7 +1170,7 @@ function _ruleFingerprint() {
 // Full reload pipeline — shared by the dashboard's RULES_CHANGED message and
 // the revalidation alarm: drop caches, rebuild DNR rules, notify all tabs.
 async function reloadRules() {
-  await chrome.storage.local.set({
+  await EXT.storage.local.set({
     [RULES_CACHE_TEXT_KEY]: '',
     [RULES_CACHE_TIME_KEY]: 0,
   });
@@ -1166,9 +1181,9 @@ async function reloadRules() {
   _parsedRules = null;
   _curatedDedupPromise = null;
   await applyNetworkRules();
-  const tabs = await chrome.tabs.query({});
+  const tabs = await EXT.tabs.query({});
   for (const tab of tabs) {
-    chrome.tabs.sendMessage(tab.id, { type: 'RULES_CHANGED' }).catch(() => {});
+    EXT.tabs.sendMessage(tab.id, { type: 'RULES_CHANGED' }).catch(() => {});
   }
 }
 
@@ -1202,7 +1217,7 @@ function debouncedReloadRules() {
 
 async function revalidateRemoteRules() {
   try {
-    const stored = await chrome.storage.local.get([
+    const stored = await EXT.storage.local.get([
       'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides',
       RULES_REMOTE_ETAG_KEY, RULES_REMOTE_HASH_KEY,
     ]);
@@ -1241,14 +1256,14 @@ async function revalidateRemoteRules() {
         } catch { /* this url failed — keep checking the rest of the group and other sources */ }
       }
     }
-    await chrome.storage.local.set({
+    await EXT.storage.local.set({
       [RULES_REMOTE_ETAG_KEY]: nextEtags,
       [RULES_REMOTE_HASH_KEY]: nextHashes,
     });
     if (!changed) {
       // Nothing changed (all 304s / failures) — keep serving the cache and
       // push its expiry out.
-      await chrome.storage.local.set({ [RULES_CACHE_TIME_KEY]: Date.now() });
+      await EXT.storage.local.set({ [RULES_CACHE_TIME_KEY]: Date.now() });
       return false;
     }
     // At least one source's content actually changed — run the full
@@ -1301,7 +1316,7 @@ function _isFirefoxInstall() {
 }
 
 async function checkForExtensionUpdate() {
-  const currentVersion = chrome.runtime.getManifest().version;
+  const currentVersion = EXT.runtime.getManifest().version;
   const metaUrl = _isFirefoxInstall() ? EXTENSION_META_REMOTE_URL_FIREFOX : EXTENSION_META_REMOTE_URL;
   try {
     const res = await fetch(metaUrl, { cache: 'no-store' });
@@ -1314,21 +1329,21 @@ async function checkForExtensionUpdate() {
       lastChecked: Date.now(),
       lastCheckOk: true,
     };
-    await chrome.storage.local.set({ updateInfo });
+    await EXT.storage.local.set({ updateInfo });
     return updateInfo;
   } catch {
     // Offline / repo unreachable — keep whatever was last known, just stamp
     // the failed attempt so the UI can show "last checked: failed just now"
     // instead of silently reusing a possibly stale success from days ago.
-    const { updateInfo: prev = {} } = await chrome.storage.local.get('updateInfo');
+    const { updateInfo: prev = {} } = await EXT.storage.local.get('updateInfo');
     const updateInfo = { ...prev, lastChecked: Date.now(), lastCheckOk: false };
-    await chrome.storage.local.set({ updateInfo });
+    await EXT.storage.local.set({ updateInfo });
     return updateInfo;
   }
 }
 
 async function maybeCheckForExtensionUpdate() {
-  const { updateInfo = {} } = await chrome.storage.local.get('updateInfo');
+  const { updateInfo = {} } = await EXT.storage.local.get('updateInfo');
   const ONE_DAY = 24 * 60 * 60 * 1000;
   if (Date.now() - (updateInfo.lastChecked || 0) > ONE_DAY) {
     await checkForExtensionUpdate();
@@ -1473,7 +1488,7 @@ function _resolveRedirectResourceName(name) {
 // noop.txt failures by switching this back to extensionPath — that trades
 // a staleness bug for a strictly worse, already-diagnosed static-id leak.
 function _redirectAction(file) {
-  return { type: 'redirect', redirect: { url: chrome.runtime.getURL(`/web_accessible_resources/${file}`) } };
+  return { type: 'redirect', redirect: { url: EXT.runtime.getURL(`/web_accessible_resources/${file}`) } };
 }
 
 // One invalid domain in requestDomains rejects the whole updateDynamicRules
@@ -1572,7 +1587,7 @@ const MALWARE_REDIRECT_REGEX = '^[a-zA-Z]+://([^/:]+)';
 function malwareMainFrameRedirect() {
   return {
     type: 'redirect',
-    redirect: { regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?h=\\1' },
+    redirect: { regexSubstitution: EXT.runtime.getURL('blocked/blocked.html') + '?h=\\1' },
   };
 }
 
@@ -1613,7 +1628,7 @@ function buildMalwareRulesFromConfig(config, startId) {
 function adMainFrameRedirect() {
   return {
     type: 'redirect',
-    redirect: { regexSubstitution: chrome.runtime.getURL('blocked/blocked.html') + '?t=ad&h=\\1' },
+    redirect: { regexSubstitution: EXT.runtime.getURL('blocked/blocked.html') + '?t=ad&h=\\1' },
   };
 }
 
@@ -1651,7 +1666,7 @@ async function getRulesText() {
   } catch {
     // Fallback: use cached/local rules, but still append customRulesText
     const baseText = (cached && cached.text) || await fetchLocalRuleText();
-    const { customRulesText: customText = '' } = await chrome.storage.local.get('customRulesText');
+    const { customRulesText: customText = '' } = await EXT.storage.local.get('customRulesText');
     const text = customText ? baseText + '\n' + customText : baseText;
     if (text) await setCachedRuleText(text);
     return text;
@@ -1701,7 +1716,7 @@ async function getParsedRules() {
       const text = await getRulesText();
       const textHash = _hashText(text);
       try {
-        const { [PARSED_RULES_SESSION_KEY]: cached } = await chrome.storage.session.get(PARSED_RULES_SESSION_KEY);
+        const { [PARSED_RULES_SESSION_KEY]: cached } = await _sessionStorage.get(PARSED_RULES_SESSION_KEY);
         if (cached && cached.hash === textHash && cached.compressed) {
           const json = await _decompressFromStorage(cached.compressed);
           if (json) {
@@ -1724,7 +1739,7 @@ async function getParsedRules() {
       // rules change, not on the cold-start hot path this cache exists for.
       try {
         const compressed = await _compressForStorage(JSON.stringify(_parsedRules));
-        await chrome.storage.session.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, compressed } });
+        await _sessionStorage.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, compressed } });
       } catch { /* best-effort — a failed cache write just means the next cold start re-parses */ }
       return _parsedRules;
     })().finally(() => { _parsedRulesPromise = null; });
@@ -2109,7 +2124,7 @@ function calculatePrivacyScore(domainStats = {}, settings = {}) {
 }
 
 // ── Install / startup ─────────────────────────────────────────────
-chrome.runtime.onInstalled.addListener(async () => {
+EXT.runtime.onInstalled.addListener(async () => {
   // Run on every onInstalled reason (install, update, chrome_update, ...),
   // not just 'install' — see _autoEnableLangDefaultSources()'s own comment
   // for why that gating meant this could never fire for an existing
@@ -2118,13 +2133,13 @@ chrome.runtime.onInstalled.addListener(async () => {
   // cache TTL.
   await _autoEnableLangDefaultSources();
   // Seed default settings
-  const existing = await chrome.storage.local.get([
+  const existing = await EXT.storage.local.get([
     'enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'stats', 'rules',
     'referrerAnonymization', 'collectStats',
     'blockAds', 'blockTrackers', 'cosmeticFiltering', 'blockMalware',
     'installDate', 'totalBlockedAllTime', 'reviewPromptState',
   ]);
-  await chrome.storage.local.set({
+  await EXT.storage.local.set({
     enabled:                existing.enabled                ?? true,
     pausedDomains:          existing.pausedDomains          ?? [],
     allowedDomains:         existing.allowedDomains         ?? [],
@@ -2151,7 +2166,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   await maybeCheckForExtensionUpdate();
 });
 
-chrome.runtime.onStartup.addListener(() => {
+EXT.runtime.onStartup.addListener(() => {
   applyNetworkRules();
   applyPrivacySettings();
   maybeUpdateMalwareLists();
@@ -2180,7 +2195,7 @@ async function buildActiveRulesFromStorage() {
   const {
     enabled, pausedDomains = [], allowedDomains = [], focusMode = false,
     blockAds = true, blockTrackers = true, blockMalware = true,
-  } = await chrome.storage.local.get(
+  } = await EXT.storage.local.get(
     ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'blockAds', 'blockTrackers', 'blockMalware']
   );
 
@@ -2196,7 +2211,7 @@ async function buildActiveRulesFromStorage() {
   const activeRules = [...filteredDefaultRules];
   const adMainFrameActive = blockAds ? [...AD_MAINFRAME_RULES] : [];
   const malwareActive = blockMalware ? [...MALWARE_RULES] : [];
-  const { remoteMalwareDomains, remoteMalwareRules = [] } = await chrome.storage.local.get(
+  const { remoteMalwareDomains, remoteMalwareRules = [] } = await EXT.storage.local.get(
     ['remoteMalwareDomains', 'remoteMalwareRules']
   );
   // Migration: older versions stored full rule objects (one per domain).
@@ -2235,8 +2250,8 @@ async function buildActiveRulesFromStorage() {
   // the PROCEED_BLOCKED_HOST message handler below).
   let sessionAllowedDomains = [];
   try {
-    ({ sessionAllowedDomains = [] } = await chrome.storage.session.get('sessionAllowedDomains'));
-  } catch { /* chrome.storage.session unavailable (old browser) — best-effort only */ }
+    ({ sessionAllowedDomains = [] } = await _sessionStorage.get('sessionAllowedDomains'));
+  } catch { /* storage.session unavailable (old browser) — best-effort only */ }
   const pauseAllowKey = _ruleInputHashes.pausedDomains + '|' + _ruleInputHashes.allowedDomains + '|' + _sessionAllowedDomainsHash;
   let pauseAllowRules;
   if (_pauseAllowRulesMemo.rules && _pauseAllowRulesMemo.key === pauseAllowKey) {
@@ -2295,15 +2310,15 @@ async function _applyNetworkRulesImpl() {
   const { enabled, allRules } = await buildActiveRulesFromStorage();
 
   // Remove all existing dynamic rules
-  const existing = await chrome.declarativeNetRequest.getDynamicRules();
+  const existing = await EXT.declarativeNetRequest.getDynamicRules();
   const removeIds = existing.map(r => r.id);
 
   if (!enabled) {
     // Protection OFF — remove all rules
     if (removeIds.length) {
-      await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: removeIds, addRules: [] });
+      await EXT.declarativeNetRequest.updateDynamicRules({ removeRuleIds: removeIds, addRules: [] });
     }
-    await chrome.storage.local.remove(DNR_RULES_HASH_KEY);
+    await EXT.storage.local.remove(DNR_RULES_HASH_KEY);
     activeStatsRules = [];
     _lastFingerprint = null;
     _lastRuleHashById = null;
@@ -2330,7 +2345,7 @@ async function _applyNetworkRulesImpl() {
   // extra, cheap guard against silent drift (rules cleared by something
   // other than this function since the hash was stored).
   const newHash = _ruleFingerprint();
-  const { [DNR_RULES_HASH_KEY]: storedHash } = await chrome.storage.local.get(DNR_RULES_HASH_KEY);
+  const { [DNR_RULES_HASH_KEY]: storedHash } = await EXT.storage.local.get(DNR_RULES_HASH_KEY);
   if (existing.length === allRules.length && storedHash === newHash) {
     // Same fingerprint as our own last successful run within this SW
     // lifetime (statsRulesInitialized true, _lastFingerprint matches) means
@@ -2353,7 +2368,7 @@ async function _applyNetworkRulesImpl() {
   const { removeRuleIds, addRules, nextHashById } = _computeRuleDiff(allRules, existing);
   if (removeRuleIds.length || addRules.length) {
     try {
-      await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds, addRules });
+      await EXT.declarativeNetRequest.updateDynamicRules({ removeRuleIds, addRules });
     } catch (e) {
       // Chrome validates the WHOLE batch before committing any of it — one
       // malformed rule anywhere (e.g. a third-party ABP list contributing an
@@ -2374,7 +2389,7 @@ async function _applyNetworkRulesImpl() {
     }
   }
   _lastRuleHashById = nextHashById;
-  await chrome.storage.local.set({ [DNR_RULES_HASH_KEY]: newHash });
+  await EXT.storage.local.set({ [DNR_RULES_HASH_KEY]: newHash });
 
   activeStatsRules = allRules.filter(rule => rule.action?.type === 'block');
   _lastFingerprint = newHash;
@@ -2447,7 +2462,7 @@ let _customBlockRulesMemo = { hash: undefined, rules: null };
 async function buildCustomBlockRules() {
   const hash = _ruleInputHashes.rules;
   if (_customBlockRulesMemo.rules && _customBlockRulesMemo.hash === hash) return _customBlockRulesMemo.rules;
-  const { rules = [] } = await chrome.storage.local.get('rules');
+  const { rules = [] } = await EXT.storage.local.get('rules');
   const blockRules = rules.filter(r => r.active && r.action === 'block');
   // Stable id (Phase 3a) keyed on the rule's own type+pattern, not array
   // position — removing one custom rule no longer shifts every other
@@ -2496,7 +2511,7 @@ async function buildFocusRules(focusMode) {
   if (!focusMode) return [];
   const key = focusMode + '|' + _ruleInputHashes.distractionDomains;
   if (_focusRulesMemo.rules && _focusRulesMemo.key === key) return _focusRulesMemo.rules;
-  const { distractionDomains = DISTRACTION_DEFAULTS } = await chrome.storage.local.get('distractionDomains');
+  const { distractionDomains = DISTRACTION_DEFAULTS } = await EXT.storage.local.get('distractionDomains');
   // Stable id (Phase 3a) keyed on the domain itself, not array position.
   const withIds = _assignStableIds(distractionDomains, domain => domain, FOCUS_RULE_ID_START, FOCUS_ID_RANGE);
   const result = withIds.map(({ item: domain, id }) => ({
@@ -2519,7 +2534,7 @@ async function buildFocusRules(focusMode) {
 // via chrome.action.setBadgeText({..., tabId}), which Chrome overlays on
 // top of the global value for that tab only.
 async function updateIcon(enabled) {
-  chrome.action.setIcon({
+  EXT.action.setIcon({
     path: {
       16:  enabled ? 'icons/icon16.png'     : 'icons/icon16_off.png',
       48:  enabled ? 'icons/icon48.png'     : 'icons/icon48_off.png',
@@ -2527,15 +2542,15 @@ async function updateIcon(enabled) {
     },
   });
   if (!enabled) {
-    chrome.action.setBadgeText({ text: 'OFF' });
-    chrome.action.setBadgeBackgroundColor({ color: '#f87171' });
+    EXT.action.setBadgeText({ text: 'OFF' });
+    EXT.action.setBadgeBackgroundColor({ color: '#f87171' });
     return;
   }
   // Clear the global "OFF" value so tabs with no per-tab override go blank
   // (not stuck showing "OFF") the moment protection is re-enabled.
-  chrome.action.setBadgeText({ text: '' });
-  chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
-  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
+  EXT.action.setBadgeText({ text: '' });
+  EXT.action.setBadgeBackgroundColor({ color: '#6366f1' });
+  const [activeTab] = await EXT.tabs.query({ active: true, currentWindow: true }).catch(() => []);
   if (activeTab?.url) updateBadgeForTab(activeTab.id, activeTab.url);
 }
 
@@ -2566,7 +2581,7 @@ function _enqueueStatWrite(fn) {
 }
 
 async function _writeDomainStatDelta(domain, delta) {
-  const { stats = {} } = await chrome.storage.local.get('stats');
+  const { stats = {} } = await EXT.storage.local.get('stats');
   if (!stats[domain]) {
     stats[domain] = { blocked: 0, adsBlocked: 0, cosmeticHidden: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
   }
@@ -2584,12 +2599,12 @@ async function _writeDomainStatDelta(domain, delta) {
     domainKeys.sort((a, b) => (stats[a].totalSeen || 0) - (stats[b].totalSeen || 0));
     for (const k of domainKeys.slice(0, domainKeys.length - 200)) delete stats[k];
   }
-  await chrome.storage.local.set({ stats });
+  await EXT.storage.local.set({ stats });
 }
 
 async function _writeDailyStatDelta(delta) {
   const key = todayKey();
-  const { dailyStats = {}, totalBlockedAllTime = 0 } = await chrome.storage.local.get(['dailyStats', 'totalBlockedAllTime']);
+  const { dailyStats = {}, totalBlockedAllTime = 0 } = await EXT.storage.local.get(['dailyStats', 'totalBlockedAllTime']);
   if (!dailyStats[key]) dailyStats[key] = { blocked: 0, ads: 0, trackers: 0, malware: 0 };
   dailyStats[key].blocked  += delta.blocked  || 0;
   dailyStats[key].ads      += delta.ads      || 0;
@@ -2599,7 +2614,7 @@ async function _writeDailyStatDelta(delta) {
   while (keys.length > 30) { delete dailyStats[keys.shift()]; }
   // Unlike dailyStats (pruned to 30 days), this never resets — it's the
   // review-prompt milestone counter (see popup.js maybeShowReviewPrompt).
-  await chrome.storage.local.set({ dailyStats, totalBlockedAllTime: totalBlockedAllTime + (delta.blocked || 0) });
+  await EXT.storage.local.set({ dailyStats, totalBlockedAllTime: totalBlockedAllTime + (delta.blocked || 0) });
 }
 
 // ── Icon badge count — PER TAB, uBO-style ───────────────────────────
@@ -2623,8 +2638,8 @@ function _setTabBadge(tabId) {
   if (tabId === undefined || tabId < 0) return; // -1 = no real tab (e.g. background fetch)
   if (!_settingsCache.enabled) return; // updateIcon(false) owns the "OFF" badge
   const count = _tabBlockedCounts.get(tabId) || 0;
-  chrome.action.setBadgeText({ text: _formatBadgeCount(count), tabId }).catch(() => {});
-  chrome.action.setBadgeBackgroundColor({ color: '#6366f1', tabId }).catch(() => {});
+  EXT.action.setBadgeText({ text: _formatBadgeCount(count), tabId }).catch(() => {});
+  EXT.action.setBadgeBackgroundColor({ color: '#6366f1', tabId }).catch(() => {});
 }
 function _incrementTabBlocked(tabId, n) {
   if (!n || tabId === undefined || tabId < 0) return;
@@ -2695,12 +2710,12 @@ async function fetchMalwareBlocklists() {
   // same way as siteRulesCacheText — necessary now that REMOTE_MAX_DOMAINS
   // covers the real ~155k-domain combined feed instead of truncating it.
   const compressedDomains = await _compressDomainsForStorage(domains);
-  await chrome.storage.local.set({
+  await EXT.storage.local.set({
     remoteMalwareDomains: compressedDomains,
     malwareListLastUpdate: Date.now(),
     malwareListCount: domains.length,
   });
-  await chrome.storage.local.remove('remoteMalwareRules');
+  await EXT.storage.local.remove('remoteMalwareRules');
 
   // Re-apply all network rules
   await applyNetworkRules();
@@ -2711,7 +2726,7 @@ async function fetchMalwareBlocklists() {
 
 // Check if blocklist needs update (every 24 hours)
 async function maybeUpdateMalwareLists() {
-  const { malwareListLastUpdate = 0 } = await chrome.storage.local.get('malwareListLastUpdate');
+  const { malwareListLastUpdate = 0 } = await EXT.storage.local.get('malwareListLastUpdate');
   const ONE_DAY = 24 * 60 * 60 * 1000;
   if (Date.now() - malwareListLastUpdate > ONE_DAY) {
     await fetchMalwareBlocklists();
@@ -2719,10 +2734,10 @@ async function maybeUpdateMalwareLists() {
 }
 
 // Schedule periodic updates via alarm
-chrome.alarms?.create('malware-list-update', { periodInMinutes: 60 * 24 });
-chrome.alarms?.create(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
-chrome.alarms?.create('extension-update-check', { periodInMinutes: 60 * 24 });
-chrome.alarms?.onAlarm.addListener(async (alarm) => {
+EXT.alarms?.create('malware-list-update', { periodInMinutes: 60 * 24 });
+EXT.alarms?.create(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
+EXT.alarms?.create('extension-update-check', { periodInMinutes: 60 * 24 });
+EXT.alarms?.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'malware-list-update') {
     await fetchMalwareBlocklists();
   }
@@ -2734,7 +2749,7 @@ chrome.alarms?.onAlarm.addListener(async (alarm) => {
   }
   if (alarm.name === 'focus-end') {
     // Auto-disable focus mode when timer expires
-    await chrome.storage.local.set({ focusMode: false, focusEndTime: null });
+    await EXT.storage.local.set({ focusMode: false, focusEndTime: null });
     await applyNetworkRules();
   }
 });
@@ -2759,8 +2774,8 @@ chrome.alarms?.onAlarm.addListener(async (alarm) => {
 // an uncommon case not worth cluttering the common one for.
 const QKV1_MENU_URL_PATTERNS = ['http://*/*', 'https://*/*'];
 try {
-  chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
+  EXT.contextMenus.removeAll(() => {
+    EXT.contextMenus.create({
       id: 'qkv1-pick-element',
       title: 'Pick element to hide…',
       contexts: ['all'],
@@ -2777,13 +2792,13 @@ try {
     // and (if published) a store-listing description update. Element picker
     // stays unconditional — it's the established, lower-risk feature.
     if (DEBUG_LOCAL) {
-      chrome.contextMenus.create({
+      EXT.contextMenus.create({
         id: 'qkv1-scan-globals',
         title: 'Scan page for scripts/variables…',
         contexts: ['all'],
         documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
       });
-      chrome.contextMenus.create({
+      EXT.contextMenus.create({
         id: 'qkv1-edit-rules',
         title: 'Edit rules for this site…',
         contexts: ['all'],
@@ -2792,19 +2807,19 @@ try {
     }
   });
 } catch (e) {}
-chrome.contextMenus?.onClicked.addListener((info, tab) => {
+EXT.contextMenus?.onClicked.addListener((info, tab) => {
   if (!tab?.id) return;
   if (info.menuItemId === 'qkv1-pick-element') {
-    chrome.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_PICKER_MODE' }, { frameId: info.frameId }, () => {
-      void chrome.runtime.lastError; // no listener on this frame yet — ignore
+    EXT.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_PICKER_MODE' }, { frameId: info.frameId }, () => {
+      void EXT.runtime.lastError; // no listener on this frame yet — ignore
     });
   } else if (info.menuItemId === 'qkv1-scan-globals') {
-    chrome.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_SCANNER_MODE' }, { frameId: info.frameId }, () => {
-      void chrome.runtime.lastError;
+    EXT.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_SCANNER_MODE' }, { frameId: info.frameId }, () => {
+      void EXT.runtime.lastError;
     });
   } else if (info.menuItemId === 'qkv1-edit-rules') {
-    chrome.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_RULE_EDITOR_MODE' }, { frameId: info.frameId }, () => {
-      void chrome.runtime.lastError;
+    EXT.tabs.sendMessage(tab.id, { type: 'QKV1_ENTER_RULE_EDITOR_MODE' }, { frameId: info.frameId }, () => {
+      void EXT.runtime.lastError;
     });
   }
 });
@@ -2814,11 +2829,11 @@ chrome.contextMenus?.onClicked.addListener((info, tab) => {
 const REFERRER_RULE_ID = 400000;
 
 async function applyReferrerAnonymization(enabled) {
-  const existing = await chrome.declarativeNetRequest.getDynamicRules();
+  const existing = await EXT.declarativeNetRequest.getDynamicRules();
   const hasRule = existing.some(r => r.id === REFERRER_RULE_ID);
 
   if (enabled && !hasRule) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
+    await EXT.declarativeNetRequest.updateDynamicRules({
       addRules: [{
         id: REFERRER_RULE_ID,
         priority: 1,
@@ -2837,7 +2852,7 @@ async function applyReferrerAnonymization(enabled) {
       }],
     });
   } else if (!enabled && hasRule) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
+    await EXT.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [REFERRER_RULE_ID],
     });
   }
@@ -2854,11 +2869,11 @@ const GPC_DNT_RESOURCE_TYPES = [
 ];
 
 async function applyGpcHeader(enabled) {
-  const existing = await chrome.declarativeNetRequest.getDynamicRules();
+  const existing = await EXT.declarativeNetRequest.getDynamicRules();
   const hasRule = existing.some(r => r.id === GPC_RULE_ID);
 
   if (enabled && !hasRule) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
+    await EXT.declarativeNetRequest.updateDynamicRules({
       addRules: [{
         id: GPC_RULE_ID,
         priority: 1,
@@ -2874,7 +2889,7 @@ async function applyGpcHeader(enabled) {
       }],
     });
   } else if (!enabled && hasRule) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
+    await EXT.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [GPC_RULE_ID],
     });
   }
@@ -2884,11 +2899,11 @@ async function applyGpcHeader(enabled) {
 const DNT_RULE_ID = 400002;
 
 async function applyDntHeader(enabled) {
-  const existing = await chrome.declarativeNetRequest.getDynamicRules();
+  const existing = await EXT.declarativeNetRequest.getDynamicRules();
   const hasRule = existing.some(r => r.id === DNT_RULE_ID);
 
   if (enabled && !hasRule) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
+    await EXT.declarativeNetRequest.updateDynamicRules({
       addRules: [{
         id: DNT_RULE_ID,
         priority: 1,
@@ -2904,7 +2919,7 @@ async function applyDntHeader(enabled) {
       }],
     });
   } else if (!enabled && hasRule) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
+    await EXT.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [DNT_RULE_ID],
     });
   }
@@ -2913,7 +2928,7 @@ async function applyDntHeader(enabled) {
 // Apply saved privacy settings on startup
 async function applyPrivacySettings() {
   const { referrerAnonymization = true, gpcSignal = true, dntHeader = true } =
-    await chrome.storage.local.get(['referrerAnonymization', 'gpcSignal', 'dntHeader']);
+    await EXT.storage.local.get(['referrerAnonymization', 'gpcSignal', 'dntHeader']);
   await applyReferrerAnonymization(referrerAnonymization);
   await applyGpcHeader(gpcSignal);
   await applyDntHeader(dntHeader);
@@ -2944,12 +2959,12 @@ async function setFrameCss(tabId, frameId, slot, css) {
   const prev = _frameCss.get(key);
   if (prev === css) return; // no change — already applied (or already absent)
   if (prev) {
-    try { await chrome.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css: prev }); }
+    try { await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css: prev }); }
     catch (e) { /* frame navigated away mid-flight — fine, nothing to clean up */ }
   }
   if (css) {
     try {
-      await chrome.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css });
+      await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css });
       _frameCss.set(key, css);
     } catch (e) { _frameCss.delete(key); }
   } else {
@@ -2973,12 +2988,12 @@ async function clearAllFrameCss(tabId, frameId) {
   const prefix = `${tabId}:${frameId}:`;
   for (const [key, css] of Array.from(_frameCss.entries())) {
     if (!key.startsWith(prefix)) continue;
-    try { await chrome.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css }); } catch (e) {}
+    try { await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css }); } catch (e) {}
     _frameCss.delete(key);
   }
 }
 
-chrome.tabs.onRemoved.addListener((tabId) => {
+EXT.tabs.onRemoved.addListener((tabId) => {
   const prefix = `${tabId}:`;
   for (const key of _frameCss.keys()) {
     if (key.startsWith(prefix)) _frameCss.delete(key);
@@ -3011,12 +3026,12 @@ const _settingsCache = {
   gpcSignal: true, referrerAnonymization: true,
   pausedDomains: new Set(), allowedDomains: new Set(),
 };
-chrome.storage.local.get([..._SETTINGS_CACHE_SCALAR_KEYS, 'pausedDomains', 'allowedDomains']).then(r => {
+EXT.storage.local.get([..._SETTINGS_CACHE_SCALAR_KEYS, 'pausedDomains', 'allowedDomains']).then(r => {
   Object.assign(_settingsCache, r);
   _settingsCache.pausedDomains = new Set(r.pausedDomains || []);
   _settingsCache.allowedDomains = new Set(r.allowedDomains || []);
 }).catch(() => {});
-chrome.storage.onChanged.addListener((changes, area) => {
+EXT.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
   for (const key of _SETTINGS_CACHE_SCALAR_KEYS) {
     if (changes[key]) _settingsCache[key] = changes[key].newValue;
@@ -3061,7 +3076,7 @@ function _domainListMatches(list, host) {
   for (const d of list) if (_hostPatternMatches(d, host)) return true;
   return false;
 }
-chrome.tabs.onCreated.addListener(async (tab) => {
+EXT.tabs.onCreated.addListener(async (tab) => {
   if (!tab.openerTabId) return;
   if (!_settingsCache.enabled) return;
   // Never close this extension's own pages (dashboard/popup/blocked.html).
@@ -3071,14 +3086,14 @@ chrome.tabs.onCreated.addListener(async (tab) => {
   // site, Chrome can attribute that active tab as this new tab's opener,
   // and without this guard the dashboard/options tab gets misread as "this
   // site just spawned a popup" and closed immediately.
-  const ownPrefix = chrome.runtime.getURL('');
+  const ownPrefix = EXT.runtime.getURL('');
   if ((tab.url && tab.url.startsWith(ownPrefix)) || (tab.pendingUrl && tab.pendingUrl.startsWith(ownPrefix))) return;
   try {
     // Only remaining await before the close call — Chrome doesn't hand us
     // the opener's URL in the onCreated event itself, so there's no way to
     // resolve which site spawned this tab without asking. getParsedRules()
     // below is also in-memory after its first call (module-level cache).
-    const opener = await chrome.tabs.get(tab.openerTabId).catch(() => null);
+    const opener = await EXT.tabs.get(tab.openerTabId).catch(() => null);
     if (!opener || !opener.url) return;
     let openerHost;
     try { openerHost = new URL(opener.url).hostname.toLowerCase(); } catch { return; }
@@ -3090,7 +3105,7 @@ chrome.tabs.onCreated.addListener(async (tab) => {
     const flagOn = !!(flag && flag.length && !['', '0', 'false', 'off'].includes(String(flag[0]).toLowerCase()));
     const globalMatch = _domainListMatches((parsed.global || {}).close_popunder_domains, openerHost);
     if (!flagOn && !globalMatch) return;
-    await chrome.tabs.remove(tab.id).catch(() => {});
+    await EXT.tabs.remove(tab.id).catch(() => {});
     if (_settingsCache.collectStats) {
       _enqueueStatWrite(() => _writeDomainStatDelta(openerHost, { adsBlocked: 1, totalSeen: 1 }));
       updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
@@ -3190,7 +3205,7 @@ async function _getExistingHostPatternsExcludingBlock(marker, endMarker) {
 }
 
 async function _applyElementRules(elementRules) {
-  const { customRulesText = '' } = await chrome.storage.local.get('customRulesText');
+  const { customRulesText = '' } = await EXT.storage.local.get('customRulesText');
   const startIdx = customRulesText.indexOf(ELEMENT_RULES_MARKER);
   const endIdx = customRulesText.indexOf(ELEMENT_RULES_END_MARKER);
   let before, after;
@@ -3211,7 +3226,7 @@ async function _applyElementRules(elementRules) {
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
-  await chrome.storage.local.set({ customRulesText: newText, elementRules });
+  await EXT.storage.local.set({ customRulesText: newText, elementRules });
   await reloadRules();
 }
 
@@ -3267,7 +3282,7 @@ function _buildNoWindowOpenRulesBlock(noWindowOpenRules, existingHostPatterns) {
 }
 
 async function _applyNoWindowOpenRules(noWindowOpenRules) {
-  const { customRulesText = '' } = await chrome.storage.local.get('customRulesText');
+  const { customRulesText = '' } = await EXT.storage.local.get('customRulesText');
   const startIdx = customRulesText.indexOf(NO_WINDOW_OPEN_RULES_MARKER);
   const endIdx = customRulesText.indexOf(NO_WINDOW_OPEN_RULES_END_MARKER);
   let before, after;
@@ -3288,7 +3303,7 @@ async function _applyNoWindowOpenRules(noWindowOpenRules) {
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
-  await chrome.storage.local.set({ customRulesText: newText, noWindowOpenRules });
+  await EXT.storage.local.set({ customRulesText: newText, noWindowOpenRules });
   await reloadRules();
 }
 
@@ -3373,7 +3388,7 @@ function _buildGlobalRulesBlock(globalScopeRules, existingHostPatterns) {
 }
 
 async function _applyGlobalRules(globalScopeRules) {
-  const { customRulesText = '' } = await chrome.storage.local.get('customRulesText');
+  const { customRulesText = '' } = await EXT.storage.local.get('customRulesText');
   const startIdx = customRulesText.indexOf(GLOBAL_RULES_MARKER);
   const endIdx = customRulesText.indexOf(GLOBAL_RULES_END_MARKER);
   let before, after;
@@ -3394,7 +3409,7 @@ async function _applyGlobalRules(globalScopeRules) {
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
-  await chrome.storage.local.set({ customRulesText: newText, globalScopeRules });
+  await EXT.storage.local.set({ customRulesText: newText, globalScopeRules });
   await reloadRules();
 }
 
@@ -3460,7 +3475,7 @@ function _buildSiteRuleTextBlock(siteRuleText, existingHostPatterns) {
 }
 
 async function _applySiteRuleText(siteRuleText) {
-  const { customRulesText = '' } = await chrome.storage.local.get('customRulesText');
+  const { customRulesText = '' } = await EXT.storage.local.get('customRulesText');
   const startIdx = customRulesText.indexOf(SITE_RULE_TEXT_MARKER);
   const endIdx = customRulesText.indexOf(SITE_RULE_TEXT_END_MARKER);
   let before, after;
@@ -3481,7 +3496,7 @@ async function _applySiteRuleText(siteRuleText) {
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
-  await chrome.storage.local.set({ customRulesText: newText, siteRuleText });
+  await EXT.storage.local.set({ customRulesText: newText, siteRuleText });
   await reloadRules();
 }
 
@@ -3492,7 +3507,7 @@ async function _applySiteRuleText(siteRuleText) {
 let _siteConfigGlobalMemo = { parsed: null, gpcSignal: null, referrerAnonymization: null, global: null };
 
 // ── Message handler ───────────────────────────────────────────────
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
     switch (msg.type) {
 
@@ -3518,28 +3533,28 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'TOGGLE': {
-        await chrome.storage.local.set({ enabled: msg.enabled });
+        await EXT.storage.local.set({ enabled: msg.enabled });
         await applyNetworkRules();
         sendResponse({ ok: true });
         break;
       }
 
       case 'PAUSE_DOMAIN': {
-        const { pausedDomains = [] } = await chrome.storage.local.get('pausedDomains');
+        const { pausedDomains = [] } = await EXT.storage.local.get('pausedDomains');
         if (msg.paused && !pausedDomains.includes(msg.domain)) {
           pausedDomains.push(msg.domain);
         } else if (!msg.paused) {
           const idx = pausedDomains.indexOf(msg.domain);
           if (idx !== -1) pausedDomains.splice(idx, 1);
         }
-        await chrome.storage.local.set({ pausedDomains });
+        await EXT.storage.local.set({ pausedDomains });
         await applyNetworkRules();
         // Update badge on the active tab immediately
-        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [activeTab] = await EXT.tabs.query({ active: true, currentWindow: true });
         if (activeTab?.id) {
           if (msg.paused) {
-            chrome.action.setBadgeText({ text: '⏸', tabId: activeTab.id });
-            chrome.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId: activeTab.id });
+            EXT.action.setBadgeText({ text: '⏸', tabId: activeTab.id });
+            EXT.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId: activeTab.id });
           } else {
             _setTabBadge(activeTab.id); // restore this tab's own block count
           }
@@ -3556,7 +3571,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           break;
         }
         const safeSelector = selector.replace(/\|/g, '\\|');
-        const { elementRules = {} } = await chrome.storage.local.get('elementRules');
+        const { elementRules = {} } = await EXT.storage.local.get('elementRules');
         const list = elementRules[host] || [];
         if (!list.includes(safeSelector)) list.push(safeSelector);
         elementRules[host] = list;
@@ -3568,7 +3583,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'REMOVE_ELEMENT_RULE': {
         const host = String(msg.host || '').toLowerCase();
         if (!host) { sendResponse({ ok: false }); break; }
-        const { elementRules = {} } = await chrome.storage.local.get('elementRules');
+        const { elementRules = {} } = await EXT.storage.local.get('elementRules');
         if (msg.selector) {
           const list = (elementRules[host] || []).filter(s => s !== msg.selector);
           if (list.length) elementRules[host] = list;
@@ -3594,7 +3609,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           sendResponse({ ok: false });
           break;
         }
-        const { noWindowOpenRules = {} } = await chrome.storage.local.get('noWindowOpenRules');
+        const { noWindowOpenRules = {} } = await EXT.storage.local.get('noWindowOpenRules');
         const list = noWindowOpenRules[openerHost] || [];
         if (!list.includes(adHost)) list.push(adHost);
         noWindowOpenRules[openerHost] = list;
@@ -3623,7 +3638,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           if (!value || value.length > 500 || /\s/.test(value)) { sendResponse({ ok: false }); break; }
           value = value.replace(/\|/g, '\\|');
         }
-        const { globalScopeRules = {} } = await chrome.storage.local.get('globalScopeRules');
+        const { globalScopeRules = {} } = await EXT.storage.local.get('globalScopeRules');
         const list = globalScopeRules[host] || [];
         const idx = list.findIndex(r => r.chain === chain);
         const entry = { chain, action };
@@ -3638,7 +3653,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'REMOVE_GLOBAL_RULE': {
         const host = String(msg.host || '').toLowerCase();
         if (!host) { sendResponse({ ok: false }); break; }
-        const { globalScopeRules = {} } = await chrome.storage.local.get('globalScopeRules');
+        const { globalScopeRules = {} } = await EXT.storage.local.get('globalScopeRules');
         if (msg.chain) {
           const list = (globalScopeRules[host] || []).filter(r => r.chain !== msg.chain);
           if (list.length) globalScopeRules[host] = list;
@@ -3654,7 +3669,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'GET_SITE_RULE_TEXT': {
         const host = String(msg.host || '').toLowerCase();
         if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
-        const { siteRuleText = {} } = await chrome.storage.local.get('siteRuleText');
+        const { siteRuleText = {} } = await EXT.storage.local.get('siteRuleText');
         // `existingText` is the FULL resolved section for this host — built-in
         // rule/site-rules.txt content, plus anything already added via the
         // element picker / global-scope picker / this same rule editor,
@@ -3685,7 +3700,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
         if (String(msg.text ?? '').length > SITE_RULE_TEXT_MAX_LEN) { sendResponse({ ok: false }); break; }
         const text = _sanitizeSiteRuleText(msg.text);
-        const { siteRuleText = {} } = await chrome.storage.local.get('siteRuleText');
+        const { siteRuleText = {} } = await EXT.storage.local.get('siteRuleText');
         // Saving an empty (or header-only) textarea is the "clear this
         // site's rules" gesture — no separate REMOVE message needed, unlike
         // the other two pickers' per-item add/remove model.
@@ -3696,18 +3711,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'FOCUS_MODE': {
-        await chrome.storage.local.set({ focusMode: msg.enabled });
+        await EXT.storage.local.set({ focusMode: msg.enabled });
         if (msg.enabled) {
           // Set alarm to auto-disable focus when timer expires (even if dashboard is closed)
-          const { focusEndTime } = await chrome.storage.local.get('focusEndTime');
+          const { focusEndTime } = await EXT.storage.local.get('focusEndTime');
           if (focusEndTime) {
             const delayMs = focusEndTime - Date.now();
             if (delayMs > 0) {
-              chrome.alarms.create('focus-end', { when: focusEndTime });
+              EXT.alarms.create('focus-end', { when: focusEndTime });
             }
           }
         } else {
-          chrome.alarms.clear('focus-end');
+          EXT.alarms.clear('focus-end');
         }
         await applyNetworkRules();
         sendResponse({ ok: true });
@@ -3731,17 +3746,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const host = String(msg.host || '').toLowerCase();
         if (!host) { sendResponse({ ok: false }); break; }
         if (msg.permanent) {
-          const { allowedDomains: current = [] } = await chrome.storage.local.get('allowedDomains');
+          const { allowedDomains: current = [] } = await EXT.storage.local.get('allowedDomains');
           if (!current.includes(host)) {
-            await chrome.storage.local.set({ allowedDomains: [...current, host] });
+            await EXT.storage.local.set({ allowedDomains: [...current, host] });
           }
         } else {
           try {
-            const { sessionAllowedDomains: current = [] } = await chrome.storage.session.get('sessionAllowedDomains');
+            const { sessionAllowedDomains: current = [] } = await _sessionStorage.get('sessionAllowedDomains');
             if (!current.includes(host)) {
-              await chrome.storage.session.set({ sessionAllowedDomains: [...current, host] });
+              await _sessionStorage.set({ sessionAllowedDomains: [...current, host] });
             }
-          } catch { /* chrome.storage.session unavailable — proceed will just re-warn next time */ }
+          } catch { /* storage.session unavailable — proceed will just re-warn next time */ }
         }
         await applyNetworkRules();
         sendResponse({ ok: true });
@@ -3785,16 +3800,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // msg: { setting: 'referrerAnonymization' | 'gpcSignal' | 'dntHeader', value: bool }
         const allowed = ['referrerAnonymization', 'gpcSignal', 'dntHeader'];
         if (!allowed.includes(msg.setting)) { sendResponse({ ok: false }); break; }
-        await chrome.storage.local.set({ [msg.setting]: msg.value });
+        await EXT.storage.local.set({ [msg.setting]: msg.value });
         if (msg.setting === 'referrerAnonymization') await applyReferrerAnonymization(msg.value);
         if (msg.setting === 'gpcSignal') await applyGpcHeader(msg.value);
         if (msg.setting === 'dntHeader') await applyDntHeader(msg.value);
         // gpcSignal/referrerAnonymization also gate MAIN-world scriptlets
         // (content/scriptlets.js) via GET_SITE_CONFIG — resync every open
         // tab so it picks up the new flag without a page reload.
-        const tabs = await chrome.tabs.query({});
+        const tabs = await EXT.tabs.query({});
         for (const tab of tabs) {
-          chrome.tabs.sendMessage(tab.id, { type: 'PRIVACY_TOGGLE' }).catch(() => {});
+          EXT.tabs.sendMessage(tab.id, { type: 'PRIVACY_TOGGLE' }).catch(() => {});
         }
         sendResponse({ ok: true });
         break;
@@ -3804,12 +3819,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // msg: { setting: 'blockAds' | 'blockTrackers' | 'cosmeticFiltering' | 'blockMalware', value: bool }
         const allowedKeys = ['blockAds', 'blockTrackers', 'cosmeticFiltering', 'blockMalware'];
         if (!allowedKeys.includes(msg.setting)) { sendResponse({ ok: false }); break; }
-        await chrome.storage.local.set({ [msg.setting]: msg.value });
+        await EXT.storage.local.set({ [msg.setting]: msg.value });
         if (msg.setting === 'cosmeticFiltering') {
           // Notify all tabs to enable/disable cosmetic CSS
-          const tabs = await chrome.tabs.query({});
+          const tabs = await EXT.tabs.query({});
           for (const tab of tabs) {
-            chrome.tabs.sendMessage(tab.id, { type: 'COSMETIC_TOGGLE', enabled: msg.value }).catch(() => {});
+            EXT.tabs.sendMessage(tab.id, { type: 'COSMETIC_TOGGLE', enabled: msg.value }).catch(() => {});
           }
         } else {
           await applyNetworkRules();
@@ -3858,7 +3873,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'COSMETIC_HIDDEN': {
         // Sent by content.js / site-block.js when cosmetic filtering hides ad elements.
-        const { collectStats: collectCH = true } = await chrome.storage.local.get('collectStats');
+        const { collectStats: collectCH = true } = await EXT.storage.local.get('collectStats');
         if (!collectCH) { sendResponse({ ok: true }); break; }
 
         const chDomain = (msg.url ? new URL(msg.url).hostname : null) || '_global';
@@ -3891,7 +3906,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         )];
 
         // Also include user custom block rules (domain + keyword types)
-        const { rules = [] } = await chrome.storage.local.get('rules');
+        const { rules = [] } = await EXT.storage.local.get('rules');
         for (const r of rules) {
           if (!r.active || r.action !== 'block') continue;
           if (r.type === 'domain' && r.pattern)  adPatterns.push(r.pattern);
@@ -3903,22 +3918,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'GET_STATS': {
-        const { stats = {} } = await chrome.storage.local.get('stats');
+        const { stats = {} } = await EXT.storage.local.get('stats');
         sendResponse({ stats });
         break;
       }
 
       case 'GET_RULE_COUNT': {
-        const rules = await chrome.declarativeNetRequest.getDynamicRules();
+        const rules = await EXT.declarativeNetRequest.getDynamicRules();
         sendResponse({ count: rules.length, rules: rules.map(r => r.id) });
         break;
       }
 
       case 'GET_UPDATE_STATUS': {
-        const { updateInfo = {} } = await chrome.storage.local.get('updateInfo');
+        const { updateInfo = {} } = await EXT.storage.local.get('updateInfo');
         sendResponse({
           ok: true,
-          currentVersion: chrome.runtime.getManifest().version,
+          currentVersion: EXT.runtime.getManifest().version,
           latestVersion: updateInfo.latestVersion || '',
           available: !!updateInfo.available,
           lastChecked: updateInfo.lastChecked || 0,
@@ -3931,7 +3946,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const updateInfo = await checkForExtensionUpdate();
         sendResponse({
           ok: true,
-          currentVersion: chrome.runtime.getManifest().version,
+          currentVersion: EXT.runtime.getManifest().version,
           latestVersion: updateInfo.latestVersion || '',
           available: !!updateInfo.available,
           lastChecked: updateInfo.lastChecked || 0,
@@ -4006,7 +4021,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'GET_MALWARE_STATUS': {
         await ensureRuleDefinitionsLoaded();
-        const { malwareListLastUpdate = 0, malwareListCount = 0 } = await chrome.storage.local.get(['malwareListLastUpdate', 'malwareListCount']);
+        const { malwareListLastUpdate = 0, malwareListCount = 0 } = await EXT.storage.local.get(['malwareListLastUpdate', 'malwareListCount']);
         // Grouped rules (block + main_frame redirect) share the same domain
         // list — count unique domains, not per-rule entries.
         const builtinMalwareCount = new Set(
@@ -4021,7 +4036,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // redirected to the warning page — the only way such blocks get counted.
         const host = String(msg.host || '').toLowerCase();
         if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
-        const { collectStats: collectMB = true } = await chrome.storage.local.get('collectStats');
+        const { collectStats: collectMB = true } = await EXT.storage.local.get('collectStats');
         if (!collectMB) { sendResponse({ ok: true }); break; }
         _enqueueStatWrite(() => _writeDomainStatDelta(host, { malwareBlocked: 1, totalSeen: 1 }));
         updateDailyStats({ blocked: 1, ads: 0, trackers: 0, malware: 1 });
@@ -4036,7 +4051,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // the only way such blocks get counted, same as MALWARE_PAGE_BLOCKED.
         const host = String(msg.host || '').toLowerCase();
         if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
-        const { collectStats: collectAB = true } = await chrome.storage.local.get('collectStats');
+        const { collectStats: collectAB = true } = await EXT.storage.local.get('collectStats');
         if (!collectAB) { sendResponse({ ok: true }); break; }
         _enqueueStatWrite(() => _writeDomainStatDelta(host, { adsBlocked: 1, totalSeen: 1 }));
         updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
@@ -4046,9 +4061,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'RESET': {
-        await chrome.storage.local.clear();
-        await chrome.declarativeNetRequest.updateDynamicRules({
-          removeRuleIds: (await chrome.declarativeNetRequest.getDynamicRules()).map(r => r.id),
+        await EXT.storage.local.clear();
+        await EXT.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: (await EXT.declarativeNetRequest.getDynamicRules()).map(r => r.id),
           addRules: [],
         });
         activeStatsRules = [];
@@ -4075,20 +4090,20 @@ function updateBadgeForTab(tabId, url) {
   // of a fresh chrome.storage.local.get() + Array.includes() — this runs on
   // every tab activate/navigation-complete, a genuine per-navigation hot path.
   if (_settingsCache.pausedDomains.has(domain)) {
-    chrome.action.setBadgeText({ text: '⏸', tabId }).catch(() => {});
-    chrome.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId }).catch(() => {});
+    EXT.action.setBadgeText({ text: '⏸', tabId }).catch(() => {});
+    EXT.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId }).catch(() => {});
   } else {
     _setTabBadge(tabId);
   }
 }
 
-chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  const tab = await chrome.tabs.get(tabId).catch(() => null);
+EXT.tabs.onActivated.addListener(async ({ tabId }) => {
+  const tab = await EXT.tabs.get(tabId).catch(() => null);
   if (!tab?.url) return;
   updateBadgeForTab(tabId, tab.url);
 });
 
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+EXT.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   // changeInfo.url is only present when the tab actually navigated to a new
   // URL (not on every status tick) — that's the per-tab block count's reset
   // point, same "new page, new count" behavior as uBO's badge.

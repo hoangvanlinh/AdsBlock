@@ -80,7 +80,7 @@ async function fetchStub(url) {
 }
 
 const sandbox = {
-  console, chrome: chromeStub, fetch: fetchStub,
+  console, chrome: chromeStub, EXT: chromeStub, fetch: fetchStub,
   Promise, Set, Array, Object, RegExp, JSON, Date,
   CompressionStream, DecompressionStream, Response, TextEncoder, TextDecoder, btoa, atob, Uint8Array,
   location: { hostname: 'example.com' },
@@ -117,7 +117,7 @@ function loadSite() {
 // config after the fact. Shares storageData/chromeStub/fetchStub with the
 // main context — those are read fresh on every call, not captured at load.
 const sandboxDebug = {
-  console, chrome: chromeStub, fetch: fetchStub,
+  console, chrome: chromeStub, EXT: chromeStub, fetch: fetchStub,
   Promise, Set, Array, Object, RegExp, JSON, Date,
   CompressionStream, DecompressionStream, Response, TextEncoder, TextDecoder, btoa, atob, Uint8Array,
   location: { hostname: 'example.com' },

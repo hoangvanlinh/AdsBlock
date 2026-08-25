@@ -6,13 +6,13 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "adblock-ads-trackers@gitadblock",
-      "strict_min_version": "142.0",
+      "strict_min_version": "115.0",
       "data_collection_permissions": {
         "required": ["none"]
       }
     },
     "gecko_android": {
-      "strict_min_version": "142.0"
+      "strict_min_version": "115.0"
     }
   },
   "permissions": ["storage", "declarativeNetRequest", "alarms", "scripting", "contextMenus"],
@@ -33,7 +33,7 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "scripts": ["config.js", "scriptlet-alias-map.js", "background.js"],
+    "scripts": ["config.js", "browser-compat.js", "scriptlet-alias-map.js", "background.js"],
     "type": "module"
   },
   "content_scripts": [
@@ -50,21 +50,19 @@
       "matches": [
        "<all_urls>"
       ],
-      "js": ["config.js", "content/site-rules-loader.js", "content/content.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
+      "js": ["config.js", "browser-compat.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
       "run_at": "document_start",
-      "all_frames": true
+      "all_frames": false
     }
   ],
   "web_accessible_resources": [
     {
        "resources": ["rule/site-rules.txt"],
-      "matches": ["<all_urls>"],
-      "use_dynamic_url": true
+      "matches": ["<all_urls>"]
     },
     {
       "resources": ["blocked/blocked.html"],
-      "matches": ["<all_urls>"],
-      "use_dynamic_url": true
+      "matches": ["<all_urls>"]
     }
   ],
   "options_ui": {

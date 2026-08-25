@@ -33,8 +33,8 @@ const countedKey = 'adblock-block-counted:' + host;
 if (host && !sessionStorage.getItem(countedKey)) {
   sessionStorage.setItem(countedKey, '1');
   try {
-    chrome.runtime.sendMessage({ type: isAdPopup ? 'AD_POPUP_PAGE_BLOCKED' : 'MALWARE_PAGE_BLOCKED', host }, () => {
-      void chrome.runtime.lastError; // ignore — counting is best-effort
+    EXT.runtime.sendMessage({ type: isAdPopup ? 'AD_POPUP_PAGE_BLOCKED' : 'MALWARE_PAGE_BLOCKED', host }, () => {
+      void EXT.runtime.lastError; // ignore — counting is best-effort
     });
   } catch { /* extension context gone */ }
 }
@@ -67,11 +67,11 @@ function _saveAutoDeclineIfChecked() {
   if (!host || !document.getElementById('dontWarn')?.checked) return Promise.resolve();
   return new Promise((resolve) => {
     try {
-      chrome.storage.local.get(AUTO_DECLINE_KEY, (res) => {
+      EXT.storage.local.get(AUTO_DECLINE_KEY, (res) => {
         const list = (res && res[AUTO_DECLINE_KEY]) || [];
         if (list.includes(host)) { resolve(); return; }
-        chrome.storage.local.set({ [AUTO_DECLINE_KEY]: [...list, host] }, () => {
-          void chrome.runtime.lastError;
+        EXT.storage.local.set({ [AUTO_DECLINE_KEY]: [...list, host] }, () => {
+          void EXT.runtime.lastError;
           resolve();
         });
       });
@@ -92,8 +92,8 @@ function _saveNoWindowOpenRuleIfChecked() {
   if (!host || !openerHost || !isAdPopup || !document.getElementById('dontWarn')?.checked) return Promise.resolve();
   return new Promise((resolve) => {
     try {
-      chrome.runtime.sendMessage({ type: 'SAVE_NO_WINDOW_OPEN_RULE', openerHost, adHost: host }, () => {
-        void chrome.runtime.lastError;
+      EXT.runtime.sendMessage({ type: 'SAVE_NO_WINDOW_OPEN_RULE', openerHost, adHost: host }, () => {
+        void EXT.runtime.lastError;
         resolve();
       });
     } catch { resolve(); /* extension context gone */ }
@@ -119,7 +119,7 @@ let openerHost = '';
   let canGoBack = history.length > 1;
   let openerTabId;
   try {
-    const tab = await chrome.tabs.getCurrent();
+    const tab = await EXT.tabs.getCurrent();
     if (tab) {
       currentTabId = tab.id;
       openerTabId = tab.openerTabId;
@@ -135,7 +135,7 @@ let openerHost = '';
   // fire for this decline — autoDeclineHosts still fully covers it either way.
   if (isAdPopup && openerTabId !== undefined) {
     try {
-      const openerTab = await chrome.tabs.get(openerTabId);
+      const openerTab = await EXT.tabs.get(openerTabId);
       if (openerTab && openerTab.url) openerHost = new URL(openerTab.url).hostname.toLowerCase();
     } catch { /* opener already gone, or URL unavailable — skip */ }
   }
@@ -153,7 +153,7 @@ let openerHost = '';
     // extension API, not subject to that same-origin-opener restriction,
     // so it reliably closes the tab regardless of how it was opened.
     if (currentTabId !== undefined) {
-      try { await chrome.tabs.remove(currentTabId); return; }
+      try { await EXT.tabs.remove(currentTabId); return; }
       catch { /* fall through to window.close() as a last resort */ }
     }
     window.close();
@@ -165,7 +165,7 @@ let openerHost = '';
   if (host) {
     try {
       const declined = await new Promise((resolve) => {
-        chrome.storage.local.get(AUTO_DECLINE_KEY, (res) => resolve((res && res[AUTO_DECLINE_KEY]) || []));
+        EXT.storage.local.get(AUTO_DECLINE_KEY, (res) => resolve((res && res[AUTO_DECLINE_KEY]) || []));
       });
       if (declined.includes(host)) { await doClose(); return; }
     } catch { /* fall through to the normal interactive flow */ }
@@ -211,8 +211,8 @@ if (!host) {
     proceedBtn.textContent = 'Proceeding…';
     try {
       await new Promise((resolve) => {
-        chrome.runtime.sendMessage({ type: 'PROCEED_BLOCKED_HOST', host, permanent }, () => {
-          void chrome.runtime.lastError; // best-effort — navigate regardless
+        EXT.runtime.sendMessage({ type: 'PROCEED_BLOCKED_HOST', host, permanent }, () => {
+          void EXT.runtime.lastError; // best-effort — navigate regardless
           resolve();
         });
       });

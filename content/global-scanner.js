@@ -145,9 +145,9 @@ function _row(entry, host) {
   function persist(action, value) {
     _applyNow(entry.name, action, value);
     try {
-      chrome.runtime.sendMessage(
+      EXT.runtime.sendMessage(
         { type: 'SAVE_GLOBAL_RULE', host: host, chain: entry.name, action: action, value: value },
-        function () { void chrome.runtime.lastError; }
+        function () { void EXT.runtime.lastError; }
       );
     } catch (e) {}
     row.style.opacity = '.5';
@@ -357,7 +357,7 @@ function _exitScannerMode() {
 }
 
 try {
-  chrome.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
+  EXT.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
     if (msg && msg.type === 'QKV1_ENTER_SCANNER_MODE') {
       _enterScannerMode();
       sendResponse({ ok: true });

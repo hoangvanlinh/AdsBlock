@@ -9,6 +9,7 @@ const vm = require('vm');
 const ROOT = require("path").join(__dirname, "..");
 const rulesText = fs.readFileSync(path.join(ROOT, 'rule/site-rules.txt'), 'utf8');
 const configSrc = fs.readFileSync(path.join(ROOT, 'config.js'), 'utf8');
+const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'browser-compat.js'), 'utf8');
 const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'scriptlet-alias-map.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'background.js'), 'utf8');
 
@@ -232,6 +233,8 @@ const sandbox = {
   importScripts(name) {
     if (name && name.includes('scriptlet-alias-map')) {
       vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 'scriptlet-alias-map.js' });
+    } else if (name && name.includes('browser-compat')) {
+      vm.runInContext(browserCompatSrc, ctx, { filename: 'browser-compat.js' });
     } else {
       vm.runInContext(configSrc, ctx, { filename: 'config.js' });
     }

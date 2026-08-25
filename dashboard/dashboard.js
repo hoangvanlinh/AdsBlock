@@ -140,14 +140,14 @@ function syncProtectionUI(enabled) {
 }
 
 globalToggle?.addEventListener('change', () => {
-  chrome.storage.local.set({ enabled: globalToggle.checked });
+  EXT.storage.local.set({ enabled: globalToggle.checked });
   syncProtectionUI(globalToggle.checked);
-  chrome.runtime.sendMessage({ type: 'TOGGLE', enabled: globalToggle.checked });
+  EXT.runtime.sendMessage({ type: 'TOGGLE', enabled: globalToggle.checked });
 });
 
 /* ── Load overview stats ──────────────────────── */
 function loadOverviewStats() {
-  chrome.storage.local.get(
+  EXT.storage.local.get(
     ['stats', 'enabled', 'referrerAnonymization', 'dailyStats', 'blockAds', 'blockTrackers', 'blockMalware'],
     ({ stats = {}, enabled = true, referrerAnonymization = true, dailyStats = {},
        blockAds = true, blockTrackers = true, blockMalware = true }) => {
@@ -251,7 +251,7 @@ function renderChart() {
   const tooltip = document.getElementById('chartTooltip');
   if (!svg || !labelsEl) return;
 
-  chrome.storage.local.get(['dailyStats', 'stats'], ({ dailyStats = {}, stats = {} }) => {
+  EXT.storage.local.get(['dailyStats', 'stats'], ({ dailyStats = {}, stats = {} }) => {
     // If dailyStats has no data for today, seed today's entry from aggregate stats
     const now = new Date();
     const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -365,7 +365,7 @@ document.querySelectorAll('.kpi-card[data-metric]').forEach(card => {
     document.querySelectorAll('.kpi-card[data-metric]').forEach(c => c.classList.remove('active'));
     card.classList.add('active');
     renderChart();
-    chrome.storage.local.get('stats', ({ stats = {} }) => renderDomainList(stats));
+    EXT.storage.local.get('stats', ({ stats = {} }) => renderDomainList(stats));
   });
 });
 
@@ -424,7 +424,7 @@ function renderDomainList(stats) {
 
 document.getElementById('seeAllDomains')?.addEventListener('click', () => {
   domainListExpanded = !domainListExpanded;
-  chrome.storage.local.get('stats', ({ stats = {} }) => renderDomainList(stats));
+  EXT.storage.local.get('stats', ({ stats = {} }) => renderDomainList(stats));
 });
 
 /* ── Custom Rules page (plain-text editor) ───── */
@@ -451,7 +451,7 @@ const CUSTOM_RULES_DEFAULT = `# Custom rules — same format as site-rules.txt
 `;
 
 function loadCustomRules() {
-  chrome.storage.local.get('customRulesText', ({ customRulesText }) => {
+  EXT.storage.local.get('customRulesText', ({ customRulesText }) => {
     const el = document.getElementById('customRulesEditor');
     if (el) el.value = customRulesText != null ? customRulesText : CUSTOM_RULES_DEFAULT;
   });
@@ -459,8 +459,8 @@ function loadCustomRules() {
 
 document.getElementById('saveCustomRules')?.addEventListener('click', () => {
   const text = document.getElementById('customRulesEditor')?.value || '';
-  chrome.storage.local.set({ customRulesText: text }, () => {
-    chrome.runtime.sendMessage({ type: 'RULES_CHANGED' });
+  EXT.storage.local.set({ customRulesText: text }, () => {
+    EXT.runtime.sendMessage({ type: 'RULES_CHANGED' });
   });
 });
 
@@ -468,8 +468,8 @@ document.getElementById('resetCustomRules')?.addEventListener('click', () => {
   if (!confirm('Clear all custom rules?')) return;
   const el = document.getElementById('customRulesEditor');
   if (el) el.value = CUSTOM_RULES_DEFAULT;
-  chrome.storage.local.set({ customRulesText: '' }, () => {
-    chrome.runtime.sendMessage({ type: 'RULES_CHANGED' });
+  EXT.storage.local.set({ customRulesText: '' }, () => {
+    EXT.runtime.sendMessage({ type: 'RULES_CHANGED' });
   });
 });
 
@@ -477,7 +477,7 @@ document.getElementById('resetCustomRules')?.addEventListener('click', () => {
 let allowedDomains = [];
 
 function loadAllowList() {
-  chrome.storage.local.get('allowedDomains', ({ allowedDomains: stored }) => {
+  EXT.storage.local.get('allowedDomains', ({ allowedDomains: stored }) => {
     allowedDomains = stored || [];
     renderAllowList();
   });
@@ -522,8 +522,8 @@ document.getElementById('saveAllow')?.addEventListener('click', () => {
   if (!val || allowedDomains.includes(val)) return;
   allowedDomains.push(val);
   renderAllowList();
-  chrome.storage.local.set({ allowedDomains });
-  chrome.runtime.sendMessage({ type: 'ALLOWLIST_CHANGED' });
+  EXT.storage.local.set({ allowedDomains });
+  EXT.runtime.sendMessage({ type: 'ALLOWLIST_CHANGED' });
   if (document.getElementById('allowInput')) document.getElementById('allowInput').value = '';
 });
 
@@ -532,13 +532,13 @@ document.getElementById('allowList')?.addEventListener('click', e => {
   if (!btn) return;
   allowedDomains = allowedDomains.filter(d => d !== btn.dataset.domain);
   renderAllowList();
-  chrome.storage.local.set({ allowedDomains });
-  chrome.runtime.sendMessage({ type: 'ALLOWLIST_CHANGED' });
+  EXT.storage.local.set({ allowedDomains });
+  EXT.runtime.sendMessage({ type: 'ALLOWLIST_CHANGED' });
 });
 
 /* ── Element rules page ("hide element" picker) ──── */
 function loadElementRulesList() {
-  chrome.storage.local.get('elementRules', ({ elementRules = {} }) => {
+  EXT.storage.local.get('elementRules', ({ elementRules = {} }) => {
     renderElementRulesList(elementRules);
   });
 }
@@ -594,7 +594,7 @@ document.getElementById('elementRulesList')?.addEventListener('click', e => {
   if (!btn) return;
   const payload = { type: 'REMOVE_ELEMENT_RULE', host: btn.dataset.host };
   if (selBtn) payload.selector = btn.dataset.selector;
-  chrome.runtime.sendMessage(payload, () => { void chrome.runtime.lastError; loadElementRulesList(); });
+  EXT.runtime.sendMessage(payload, () => { void EXT.runtime.lastError; loadElementRulesList(); });
 });
 
 /* ── Global rules page ("scan page for scripts/variables" picker) ──── */
@@ -606,7 +606,7 @@ document.getElementById('elementRulesList')?.addEventListener('click', e => {
 const GLOBAL_RULE_ACTION_COLORS = { block: '#f87171', edit: '#60a5fa', delete: '#fbbf24' };
 
 function loadGlobalRulesList() {
-  chrome.storage.local.get('globalScopeRules', ({ globalScopeRules = {} }) => {
+  EXT.storage.local.get('globalScopeRules', ({ globalScopeRules = {} }) => {
     renderGlobalRulesList(globalScopeRules);
   });
 }
@@ -668,7 +668,7 @@ document.getElementById('globalRulesList')?.addEventListener('click', e => {
   if (!btn) return;
   const payload = { type: 'REMOVE_GLOBAL_RULE', host: btn.dataset.host };
   if (ruleBtn) payload.chain = btn.dataset.chain;
-  chrome.runtime.sendMessage(payload, () => { void chrome.runtime.lastError; loadGlobalRulesList(); });
+  EXT.runtime.sendMessage(payload, () => { void EXT.runtime.lastError; loadGlobalRulesList(); });
 });
 
 /* ── Focus mode page ──────────────────────────── */
@@ -701,7 +701,7 @@ function renderDistractionList() {
 }
 
 function saveDistractionDomains() {
-  chrome.storage.local.set({ distractionDomains });
+  EXT.storage.local.set({ distractionDomains });
 }
 
 function disableFocusMode() {
@@ -712,8 +712,8 @@ function disableFocusMode() {
   if (focusSubEl) focusSubEl.textContent = 'Session paused';
   const toggle = document.getElementById('focusToggle');
   if (toggle) toggle.checked = false;
-  chrome.storage.local.set({ focusMode: false, focusEndTime: null });
-  chrome.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: false });
+  EXT.storage.local.set({ focusMode: false, focusEndTime: null });
+  EXT.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: false });
 }
 
 function startFocusTimer(remaining) {
@@ -732,7 +732,7 @@ function startFocusTimer(remaining) {
 }
 
 // Restore focus state on load
-chrome.storage.local.get(['focusMode', 'focusDuration', 'distractionDomains', 'focusEndTime'], result => {
+EXT.storage.local.get(['focusMode', 'focusDuration', 'distractionDomains', 'focusEndTime'], result => {
   // Restore distraction list
   distractionDomains = result.distractionDomains ?? DISTRACTION_DEFAULTS_DASH;
   renderDistractionList();
@@ -771,8 +771,8 @@ chrome.storage.local.get(['focusMode', 'focusDuration', 'distractionDomains', 'f
 document.getElementById('focusToggle')?.addEventListener('change', e => {
   if (e.target.checked) {
     const endTime = Date.now() + focusDuration * 1000;
-    chrome.storage.local.set({ focusMode: true, focusEndTime: endTime });
-    chrome.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: true });
+    EXT.storage.local.set({ focusMode: true, focusEndTime: endTime });
+    EXT.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: true });
     startFocusTimer(focusDuration);
   } else {
     disableFocusMode();
@@ -785,10 +785,10 @@ function setDuration(min) {
   focusDuration = min * 60;
   focusRemaining = focusDuration;
   updateTimerDisplay();
-  chrome.storage.local.set({ focusDuration: min });
+  EXT.storage.local.set({ focusDuration: min });
   if (focusInterval) {
     const endTime = Date.now() + focusDuration * 1000;
-    chrome.storage.local.set({ focusEndTime: endTime });
+    EXT.storage.local.set({ focusEndTime: endTime });
     startFocusTimer(focusDuration);
   }
 }
@@ -831,8 +831,8 @@ document.getElementById('addDistraction')?.addEventListener('click', () => {
   renderDistractionList();
   saveDistractionDomains();
   // Re-apply focus rules if focus is currently active
-  chrome.storage.local.get('focusMode', ({ focusMode }) => {
-    if (focusMode) chrome.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: true });
+  EXT.storage.local.get('focusMode', ({ focusMode }) => {
+    if (focusMode) EXT.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: true });
   });
 });
 
@@ -844,8 +844,8 @@ document.getElementById('distractionList')?.addEventListener('click', e => {
   renderDistractionList();
   saveDistractionDomains();
   // Re-apply focus rules if focus is currently active
-  chrome.storage.local.get('focusMode', ({ focusMode }) => {
-    if (focusMode) chrome.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: true });
+  EXT.storage.local.get('focusMode', ({ focusMode }) => {
+    if (focusMode) EXT.runtime.sendMessage({ type: 'FOCUS_MODE', enabled: true });
   });
 });
 
@@ -860,7 +860,7 @@ const blockingToggles = [
 
 function loadBlockingSettings() {
   const keys = blockingToggles.map(t => t.key);
-  chrome.storage.local.get(keys, (data) => {
+  EXT.storage.local.get(keys, (data) => {
     for (const { id, key } of blockingToggles) {
       const el = document.getElementById(id);
       if (el) el.checked = data[key] ?? true; // default ON
@@ -870,8 +870,8 @@ function loadBlockingSettings() {
 
 for (const { id, key } of blockingToggles) {
   document.getElementById(id)?.addEventListener('change', (e) => {
-    chrome.storage.local.set({ [key]: e.target.checked });
-    chrome.runtime.sendMessage({ type: 'SET_BLOCKING', setting: key, value: e.target.checked });
+    EXT.storage.local.set({ [key]: e.target.checked });
+    EXT.runtime.sendMessage({ type: 'SET_BLOCKING', setting: key, value: e.target.checked });
   });
 }
 
@@ -883,7 +883,7 @@ const privacyToggles = [
 ];
 
 function loadPrivacySettings() {
-  chrome.storage.local.get(
+  EXT.storage.local.get(
     privacyToggles.map(t => t.key),
     (data) => {
       for (const { id, key } of privacyToggles) {
@@ -897,22 +897,22 @@ function loadPrivacySettings() {
 
 for (const { id, key } of privacyToggles) {
   document.getElementById(id)?.addEventListener('change', (e) => {
-    chrome.runtime.sendMessage({ type: 'SET_PRIVACY', setting: key, value: e.target.checked });
+    EXT.runtime.sendMessage({ type: 'SET_PRIVACY', setting: key, value: e.target.checked });
   });
 }
 
 // Stats collection toggle
 const statsToggle = document.getElementById('statsToggle');
-chrome.storage.local.get('collectStats', ({ collectStats = true }) => {
+EXT.storage.local.get('collectStats', ({ collectStats = true }) => {
   if (statsToggle) statsToggle.checked = collectStats;
 });
 statsToggle?.addEventListener('change', (e) => {
-  chrome.storage.local.set({ collectStats: e.target.checked });
+  EXT.storage.local.set({ collectStats: e.target.checked });
 });
 
 document.getElementById('resetBtn')?.addEventListener('click', () => {
   if (!confirm('Reset all AdBlock data? This cannot be undone.')) return;
-  chrome.storage.local.clear(() => {
+  EXT.storage.local.clear(() => {
     alert('All data cleared. Reloading…');
     location.reload();
   });
@@ -934,8 +934,8 @@ function _renderUpdateStatus(res) {
   const updateRow = document.getElementById('aboutUpdateRow');
   const updateDesc = document.getElementById('aboutUpdateDesc');
   if (!versionDesc) return;
-  const current = res?.currentVersion || chrome.runtime.getManifest().version;
-  if (!res || chrome.runtime.lastError) {
+  const current = res?.currentVersion || EXT.runtime.getManifest().version;
+  if (!res || EXT.runtime.lastError) {
     versionDesc.textContent = `v${current}`;
     return;
   }
@@ -949,35 +949,35 @@ function _renderUpdateStatus(res) {
   }
 }
 function loadUpdateStatus() {
-  chrome.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, _renderUpdateStatus);
+  EXT.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, _renderUpdateStatus);
 }
 document.getElementById('checkUpdateBtn')?.addEventListener('click', (e) => {
   const btn = e.currentTarget;
   btn.disabled = true;
   const original = btn.textContent;
   btn.textContent = 'Checking…';
-  chrome.runtime.sendMessage({ type: 'CHECK_FOR_UPDATE_NOW' }, (res) => {
+  EXT.runtime.sendMessage({ type: 'CHECK_FOR_UPDATE_NOW' }, (res) => {
     _renderUpdateStatus(res);
     btn.disabled = false;
     btn.textContent = original;
   });
 });
 document.getElementById('aboutUpdateLink')?.addEventListener('click', () => {
-  chrome.tabs.create({ url: _detectUpdateStoreUrl() });
+  EXT.tabs.create({ url: _detectUpdateStoreUrl() });
 });
 loadUpdateStatus();
 
 document.getElementById('seedYesterdayBtn')?.addEventListener('click', () => {
   const yd = new Date(); yd.setDate(yd.getDate() - 1);
   const key = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, '0')}-${String(yd.getDate()).padStart(2, '0')}`;
-  chrome.storage.local.get('dailyStats', ({ dailyStats = {} }) => {
+  EXT.storage.local.get('dailyStats', ({ dailyStats = {} }) => {
     dailyStats[key] = {
       blocked:  Math.floor(Math.random() * 300) + 100,
       ads:      Math.floor(Math.random() * 200) + 50,
       trackers: Math.floor(Math.random() * 100) + 20,
       malware:  Math.floor(Math.random() * 10),
     };
-    chrome.storage.local.set({ dailyStats }, () => {
+    EXT.storage.local.set({ dailyStats }, () => {
       alert(`Seeded fake data for ${key}:\n` + JSON.stringify(dailyStats[key], null, 2));
       loadOverviewStats();
     });
@@ -1013,12 +1013,12 @@ loadRulesSourceSettings();
 // Replace the URL with your actual PayPal.me or donate link
 const PAYPAL_DONATE_URL = 'https://www.paypal.me/linhhvtt/5';
 document.getElementById('donateBtnSidebar')?.addEventListener('click', () => {
-  chrome.tabs.create({ url: PAYPAL_DONATE_URL });
+  EXT.tabs.create({ url: PAYPAL_DONATE_URL });
 });
 updateTimerDisplay();
 
 /* ── Live sync from popup / other pages ────────── */
-chrome.storage.onChanged.addListener((changes, area) => {
+EXT.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
 
   // Focus mode toggled from popup
@@ -1028,7 +1028,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (on) {
       if (toggle) toggle.checked = true;
       // Read endTime to resume timer
-      chrome.storage.local.get('focusEndTime', ({ focusEndTime }) => {
+      EXT.storage.local.get('focusEndTime', ({ focusEndTime }) => {
         if (focusEndTime) {
           const remaining = Math.round((focusEndTime - Date.now()) / 1000);
           if (remaining > 0) {
@@ -1090,11 +1090,11 @@ function _exportConvertedRuleSource(url, btn, label) {
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Exporting…';
-  chrome.runtime.sendMessage({ type: 'EXPORT_CONVERTED_RULE_SOURCE', url }, (res) => {
+  EXT.runtime.sendMessage({ type: 'EXPORT_CONVERTED_RULE_SOURCE', url }, (res) => {
     btn.disabled = false;
     btn.textContent = original;
-    if (chrome.runtime.lastError || !res || !res.ok) {
-      alert('Export failed: ' + ((res && res.error) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || 'unknown error'));
+    if (EXT.runtime.lastError || !res || !res.ok) {
+      alert('Export failed: ' + ((res && res.error) || (EXT.runtime.lastError && EXT.runtime.lastError.message) || 'unknown error'));
       return;
     }
     const blob = new Blob([res.text], { type: 'text/plain' });
@@ -1295,7 +1295,7 @@ function renderRulesSources(sources, defaultOverrides, sourceErrors, sourceStats
 }
 
 function loadRulesSourceSettings() {
-  chrome.storage.local.get(
+  EXT.storage.local.get(
     ['ruleSources', 'customRulesUrl', 'localRulesFileName', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides', RULES_CACHE_KEY_TEXT, RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY],
     (data) => {
       let sources = data.ruleSources;
@@ -1314,8 +1314,8 @@ function loadRulesSourceSettings() {
           sources.push({ id: makeSourceId(), type: 'file', name: data.localRulesFileName, text: data[RULES_CACHE_KEY_TEXT] });
         }
         if (sources.length) {
-          chrome.storage.local.set({ ruleSources: sources });
-          chrome.storage.local.remove(['customRulesUrl', 'localRulesFileName']);
+          EXT.storage.local.set({ ruleSources: sources });
+          EXT.storage.local.remove(['customRulesUrl', 'localRulesFileName']);
         }
       }
       let overrides = data.defaultRuleSourceOverrides;
@@ -1329,9 +1329,9 @@ function loadRulesSourceSettings() {
           for (const entry of self.ADBLOCK_CONFIG.RULES_REMOTE_URL) {
             overrides[Array.isArray(entry.url) ? entry.url[0] : entry.url] = false;
           }
-          chrome.storage.local.set({ defaultRuleSourceOverrides: overrides });
+          EXT.storage.local.set({ defaultRuleSourceOverrides: overrides });
         }
-        chrome.storage.local.remove('defaultRuleSourceEnabled');
+        EXT.storage.local.remove('defaultRuleSourceEnabled');
       }
       renderRulesSources(sources || [], overrides, data[RULE_SOURCE_ERRORS_KEY] || {}, data[RULE_SOURCE_STATS_KEY] || {});
     }
@@ -1339,32 +1339,32 @@ function loadRulesSourceSettings() {
 }
 
 function toggleDefaultRuleSource(url, enabled) {
-  chrome.storage.local.get('defaultRuleSourceOverrides', ({ defaultRuleSourceOverrides = {} }) => {
+  EXT.storage.local.get('defaultRuleSourceOverrides', ({ defaultRuleSourceOverrides = {} }) => {
     const updated = { ...defaultRuleSourceOverrides, [url]: enabled };
-    chrome.storage.local.set(
+    EXT.storage.local.set(
       { defaultRuleSourceOverrides: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
-      () => chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {})
+      () => EXT.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {})
     );
   });
 }
 
 function toggleRulesSource(id, enabled) {
-  chrome.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
+  EXT.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
     const updated = ruleSources.map(s => s.id === id ? { ...s, enabled } : s);
-    chrome.storage.local.set(
+    EXT.storage.local.set(
       { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
-      () => chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {})
+      () => EXT.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {})
     );
   });
 }
 
 function removeRulesSource(id) {
-  chrome.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
+  EXT.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
     const updated = ruleSources.filter(s => s.id !== id);
-    chrome.storage.local.set(
+    EXT.storage.local.set(
       { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
       () => {
-        chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
+        EXT.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
         loadRulesSourceSettings();
       }
     );
@@ -1375,13 +1375,13 @@ document.getElementById('addRulesUrl')?.addEventListener('click', () => {
   const input = document.getElementById('rulesUrlInput');
   const url = input?.value.trim();
   if (!url) return;
-  chrome.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
+  EXT.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
     if (ruleSources.some(s => s.type === 'url' && s.url === url)) return;
     const updated = [...ruleSources, { id: makeSourceId(), type: 'url', url }];
-    chrome.storage.local.set(
+    EXT.storage.local.set(
       { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
       () => {
-        chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
+        EXT.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
         if (input) input.value = '';
         loadRulesSourceSettings();
       }
@@ -1396,7 +1396,7 @@ document.getElementById('rulesFileBtn')?.addEventListener('click', () => {
 document.getElementById('rulesFileInput')?.addEventListener('change', (e) => {
   const files = Array.from(e.target.files || []);
   if (!files.length) return;
-  chrome.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
+  EXT.storage.local.get('ruleSources', ({ ruleSources = [] }) => {
     let pending = files.length;
     const newSources = [];
     files.forEach(file => {
@@ -1406,10 +1406,10 @@ document.getElementById('rulesFileInput')?.addEventListener('change', (e) => {
         if (text) newSources.push({ id: makeSourceId(), type: 'file', name: file.name, text });
         if (--pending === 0) {
           const updated = [...ruleSources, ...newSources];
-          chrome.storage.local.set(
+          EXT.storage.local.set(
             { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
             () => {
-              chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
+              EXT.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
               loadRulesSourceSettings();
             }
           );
@@ -1418,10 +1418,10 @@ document.getElementById('rulesFileInput')?.addEventListener('change', (e) => {
       reader.onerror = () => {
         if (--pending === 0 && newSources.length) {
           const updated = [...ruleSources, ...newSources];
-          chrome.storage.local.set(
+          EXT.storage.local.set(
             { ruleSources: updated, [RULES_CACHE_KEY_TEXT]: '', [RULES_CACHE_KEY_TIME]: 0 },
             () => {
-              chrome.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
+              EXT.runtime.sendMessage({ type: 'RULES_CHANGED' }).catch(() => {});
               loadRulesSourceSettings();
             }
           );
