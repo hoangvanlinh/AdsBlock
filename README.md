@@ -111,8 +111,13 @@ Available on Chrome, Firefox, and Edge:
 ./build.sh all false false true    # All targets, no obfuscation, DEBUG_LOCAL=true
 ./build-chrome.sh true true        # Chrome, obfuscated + export source tree
 ```
-# run firefox extension in dev mode
- npx --yes web-ext run --source-dir=build/dist-firefox --firefox=/Applications/Firefox.app/Contents/MacOS/firefox --pref=browser.dom.window.dump.enabled=true --verbose --start-url=https://vnexpress.net
+
+**Run the Firefox build in dev mode:**
+
+```bash
+npx --yes web-ext run --source-dir=build/dist-firefox --firefox=/Applications/Firefox.app/Contents/MacOS/firefox --pref=browser.dom.window.dump.enabled=true --verbose --start-url=https://vnexpress.net
+```
+
 ## Project Structure
 
 ```
