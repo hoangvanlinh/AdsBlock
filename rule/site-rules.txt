@@ -80,11 +80,6 @@ hide_closest = article
 
 [tiktok]
 trusted_edit_response = ..itemList[?.isAd==true], item_list
-labels = sponsored | advertisement | promoted
-selectors = div[data-e2e="recommend-list-item-container"] | div[data-e2e="search_top-item"] | div[data-e2e="video-feed-item"]
-context_selectors = span | a | strong
-attr_keys = aria-label
-hide_closest = div[data-e2e="recommend-list-item-container"] | div[data-e2e="video-feed-item"] | div[data-e2e="search_top-item"]
 
 
 [x]
