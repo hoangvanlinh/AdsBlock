@@ -71,7 +71,10 @@ attr_keys = post-type | recommendation-source | slot | data-promoted | aria-labe
 hide_closest = shreddit-ad-post | shreddit-post | article[data-testid="post-container"] | div[data-testid="post-container"] | div.thing
 
 [instagram]
-labels = sponsored | paidpartnership
+json_prune = require.[].[].[].__bbox.require.[].[].[].__bbox.result.data.xdt_api__v1__feed__timeline__connection.edges.[-].node.ad.ad_id
+json_prune_fetch = data.xdt_api__v1__feed__timeline__connection.edges.[-].node.ad.ad_id
+json_prune_xhr = data.xdt_api__v1__feed__timeline__connection.edges.[-].node.ad.ad_id
+labels = sponsored | paidpartnership | Anzeige | Gesponsert | Geborg | Sponzorováno | Sponsoreret | Χορηγούμενη | Publicidad | Sponsoroitu | Sponsorisé | Bersponsor | Sponsorizzato | 広告 | 광고 | Ditaja | Sponset | Gesponsord | Sponsorowane | Patrocinado | Реклама | Sponsrad | ได้รับการสนับสนุน | May Sponsor | Sponsorlu | 赞助内容 | 贊助 | প্রযোজিত | પ્રાયોજિત | स्पॉन्सर्ड | Sponzorirano | ಪ್ರಾಯೋಜಿತ | സ്‌പോൺസർ ചെയ്‌തത് | पुरस्‍कृत | प्रायोजित | ਪ੍ਰਾਯੋਜਿਤ | මුදල් ගෙවා ප්‍රචාරය කරන ලදි | Sponzorované | விளம்பரதாரர்கள் | స్పాన్సర్ చేసింది | Được tài trợ | Спонсорирано | Commandité | Sponsorizat | Спонзорисано
 context_selectors = header | a[role="link"] | span
 hide_closest = article
 
