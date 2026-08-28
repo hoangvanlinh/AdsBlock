@@ -73,7 +73,18 @@ copy_static_files() {
     cp "$PROJECT_DIR/shared/config.js" "$DEST/shared/"
     cp "$PROJECT_DIR/shared/browser-compat.js" "$DEST/shared/"
     cp "$PROJECT_DIR/shared/scriptlet-alias-map.js" "$DEST/shared/"
+    cp "$PROJECT_DIR/shared/utils.js" "$DEST/shared/"
+    cp "$PROJECT_DIR/shared/i18n.js" "$DEST/shared/"
     cp "$PROJECT_DIR/LICENSE" "$DEST/" 2>/dev/null || true
+
+    # _locales/ (chrome.i18n messages — manifest.json's default_locale +
+    # __MSG_x__ fields resolve against this) — the one deliberate exception
+    # to this function's explicit per-file whitelist: it's inherently a
+    # directory that grows over time as languages are added, and requiring
+    # an edit here per new language file would defeat "add a language = drop
+    # in one messages.json, no code changes."
+    mkdir -p "$DEST/_locales"
+    cp -r "$PROJECT_DIR/_locales/"* "$DEST/_locales/"
 
     mkdir -p "$DEST/icons" "$DEST/content" "$DEST/rule" "$DEST/dashboard" "$DEST/popup" "$DEST/blocked"
 

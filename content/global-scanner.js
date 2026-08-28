@@ -69,19 +69,28 @@ function _applyNow(chain, action, value) {
 // ── Value grammar (mirrors scriptlets.js's _parseVal — presentational
 // only; the real value is parsed again, authoritatively, in MAIN world
 // when the persisted rule is actually applied) ──────────────────────────
+// First 5 labels echo a raw JS keyword/literal (not translatable prose);
+// the rest are real descriptive labels, looked up via EXT.i18n at use time.
 var QUICK_VALUES = [
   ['undefined', 'undefined'],
   ['null', 'null'],
   ['true', 'true'],
   ['false', 'false'],
   ['0', '0'],
-  ['""', 'Empty string'],
-  ['[]', 'Empty array'],
-  ['{}', 'Empty object'],
-  ['noopFunc', 'Empty function (no-op)'],
-  ['trueFunc', 'Function that always returns true'],
-  ['falseFunc', 'Function that always returns false'],
+  ['""', 'scanner_value_emptyString'],
+  ['[]', 'scanner_value_emptyArray'],
+  ['{}', 'scanner_value_emptyObject'],
+  ['noopFunc', 'scanner_value_noopFunc'],
+  ['trueFunc', 'scanner_value_trueFunc'],
+  ['falseFunc', 'scanner_value_falseFunc'],
 ];
+var QUICK_VALUES_I18N_KEYS = {
+  'scanner_value_emptyString': 1, 'scanner_value_emptyArray': 1, 'scanner_value_emptyObject': 1,
+  'scanner_value_noopFunc': 1, 'scanner_value_trueFunc': 1, 'scanner_value_falseFunc': 1,
+};
+function _quickValueLabel(raw) {
+  return QUICK_VALUES_I18N_KEYS[raw] ? EXT.i18n.getMessage(raw) : raw;
+}
 
 // ── UI ──────────────────────────────────────────────────────────────
 function _mkBtn(label, primary) {
@@ -127,9 +136,9 @@ function _row(entry, host) {
   var actions = document.createElement('div');
   actions.className = 'qkv1-scanner-ui';
   actions.style.cssText = 'display:flex;gap:6px;margin-top:6px;';
-  var blockBtn = _mkBtn('Block', false);
-  var editBtn = _mkBtn('Edit', false);
-  var deleteBtn = _mkBtn('Delete', false);
+  var blockBtn = _mkBtn(EXT.i18n.getMessage('scanner_btn_block'), false);
+  var editBtn = _mkBtn(EXT.i18n.getMessage('scanner_btn_edit'), false);
+  var deleteBtn = _mkBtn(EXT.i18n.getMessage('scanner_btn_delete'), false);
   actions.appendChild(blockBtn);
   actions.appendChild(editBtn);
   actions.appendChild(deleteBtn);
@@ -154,7 +163,8 @@ function _row(entry, host) {
     row.style.pointerEvents = 'none';
     var doneLabel = document.createElement('div');
     doneLabel.className = 'qkv1-scanner-ui';
-    doneLabel.textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' applied — saved for this site.';
+    var _appliedKeys = { block: 'scanner_status_blockApplied', edit: 'scanner_status_editApplied', delete: 'scanner_status_deleteApplied' };
+    doneLabel.textContent = EXT.i18n.getMessage(_appliedKeys[action] || 'scanner_status_editApplied');
     doneLabel.style.cssText = 'font:11px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:#34d399;margin-top:6px;';
     row.appendChild(doneLabel);
   }
@@ -164,15 +174,15 @@ function _row(entry, host) {
     expando.style.display = 'block';
     var warn = document.createElement('div');
     warn.className = 'qkv1-scanner-ui';
-    warn.textContent = 'Block prevents ALL future reads of this property — may break page functionality that relies on it. This cannot be undone by refreshing; remove the rule from the dashboard\'s Global Rules page to revert.';
+    warn.textContent = EXT.i18n.getMessage('scanner_block_warning');
     warn.style.cssText = 'font:11px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;color:#fca5a5;' +
       'background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:8px;margin-bottom:6px;';
     expando.appendChild(warn);
     var row2 = document.createElement('div');
     row2.className = 'qkv1-scanner-ui';
     row2.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;';
-    var confirmBtn = _mkBtn('Block anyway', true);
-    var cancelBtn = _mkBtn('Cancel', false);
+    var confirmBtn = _mkBtn(EXT.i18n.getMessage('scanner_btn_blockAnyway'), true);
+    var cancelBtn = _mkBtn(EXT.i18n.getMessage('common_cancel'), false);
     confirmBtn.style.background = '#dc2626';
     confirmBtn.addEventListener('click', function () { persist('block', undefined); });
     cancelBtn.addEventListener('click', closeExpando);
@@ -191,19 +201,19 @@ function _row(entry, host) {
     QUICK_VALUES.forEach(function (pair) {
       var opt = document.createElement('option');
       opt.value = pair[0];
-      opt.textContent = pair[1] + ' (' + pair[0] + ')';
+      opt.textContent = _quickValueLabel(pair[1]) + ' (' + pair[0] + ')';
       select.appendChild(opt);
     });
     var customOpt = document.createElement('option');
     customOpt.value = '__custom__';
-    customOpt.textContent = 'Custom…';
+    customOpt.textContent = EXT.i18n.getMessage('scanner_edit_customOption');
     select.appendChild(customOpt);
     expando.appendChild(select);
 
     var customInput = document.createElement('input');
     customInput.className = 'qkv1-scanner-ui';
     customInput.type = 'text';
-    customInput.placeholder = 'single token, no spaces (e.g. 42, hello, {})';
+    customInput.placeholder = EXT.i18n.getMessage('scanner_edit_customPlaceholder');
     customInput.style.cssText = 'width:100%;box-sizing:border-box;font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;' +
       'background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:4px 6px;margin-bottom:6px;display:none;';
     expando.appendChild(customInput);
@@ -218,9 +228,9 @@ function _row(entry, host) {
       customInput.style.display = isCustom ? 'block' : 'none';
       if (!isCustom) { hint.textContent = ''; return; }
       var v = customInput.value.trim();
-      if (!v) { hint.textContent = 'Type a value with no spaces.'; return; }
-      if (/\s/.test(v)) { hint.textContent = 'No spaces allowed — will be rejected.'; return; }
-      hint.textContent = 'Will be stored as: ' + v;
+      if (!v) { hint.textContent = EXT.i18n.getMessage('scanner_edit_hintEmpty'); return; }
+      if (/\s/.test(v)) { hint.textContent = EXT.i18n.getMessage('scanner_edit_hintNoSpaces'); return; }
+      hint.textContent = EXT.i18n.getMessage('scanner_edit_hintPreview', [v]);
     }
     select.addEventListener('change', syncHint);
     customInput.addEventListener('input', syncHint);
@@ -229,8 +239,8 @@ function _row(entry, host) {
     var row2 = document.createElement('div');
     row2.className = 'qkv1-scanner-ui';
     row2.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;';
-    var saveBtn = _mkBtn('Save', true);
-    var cancelBtn = _mkBtn('Cancel', false);
+    var saveBtn = _mkBtn(EXT.i18n.getMessage('common_save'), true);
+    var cancelBtn = _mkBtn(EXT.i18n.getMessage('common_cancel'), false);
     saveBtn.addEventListener('click', function () {
       var value = select.value === '__custom__' ? customInput.value.trim() : select.value;
       if (!value || /\s/.test(value)) return;
@@ -261,7 +271,7 @@ function _buildPanel(host, results) {
   header.style.cssText = 'padding:12px 14px;border-bottom:1px solid #334155;display:flex;align-items:center;gap:8px;';
   var title = document.createElement('div');
   title.className = 'qkv1-scanner-ui';
-  title.textContent = 'Page globals (' + results.length + ')';
+  title.textContent = EXT.i18n.getMessage('scanner_panel_title', [String(results.length)]);
   title.style.cssText = 'font-weight:700;flex:1;';
   var closeBtn = _mkBtn('✕', false);
   closeBtn.style.cssText += 'padding:4px 8px;';
@@ -276,7 +286,7 @@ function _buildPanel(host, results) {
   var filter = document.createElement('input');
   filter.className = 'qkv1-scanner-ui';
   filter.type = 'text';
-  filter.placeholder = 'Filter by name…';
+  filter.placeholder = EXT.i18n.getMessage('scanner_filter_placeholder');
   filter.style.cssText = 'width:100%;box-sizing:border-box;font:12px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;' +
     'background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:5px 8px;';
   filterWrap.appendChild(filter);
@@ -288,7 +298,7 @@ function _buildPanel(host, results) {
   if (!results.length) {
     var empty = document.createElement('div');
     empty.className = 'qkv1-scanner-ui';
-    empty.textContent = 'No page-added globals found on this page.';
+    empty.textContent = EXT.i18n.getMessage('scanner_empty');
     empty.style.cssText = 'color:#64748b;padding:16px 0;text-align:center;';
     list.appendChild(empty);
   } else {
@@ -308,7 +318,7 @@ function _buildPanel(host, results) {
 
   var footer = document.createElement('div');
   footer.className = 'qkv1-scanner-ui';
-  footer.textContent = 'Only sees var/function-style globals and explicit window.x = assignments — let/const/class declarations are invisible to any page scanner (JS language limitation).';
+  footer.textContent = EXT.i18n.getMessage('scanner_footer_limitation');
   footer.style.cssText = 'padding:10px 14px;border-top:1px solid #334155;font-size:10px;line-height:1.5;color:#64748b;';
   panel.appendChild(footer);
 
@@ -328,7 +338,7 @@ function _showLoading() {
     'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2147483647;' +
     'background:#111827;color:#fff;font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;' +
     'padding:6px 14px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.35);';
-  panel.textContent = 'Scanning page globals — press Esc to cancel';
+  panel.textContent = EXT.i18n.getMessage('scanner_loading');
   document.documentElement.appendChild(panel);
   _panelEl = panel;
 }

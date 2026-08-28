@@ -10,6 +10,16 @@ const ROOT = require("path").join(__dirname, "..");
 const rulesText = fs.readFileSync(path.join(ROOT, 'rule/site-rules.txt'), 'utf8');
 const configSrc = fs.readFileSync(path.join(ROOT, 'shared/config.js'), 'utf8');
 const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'shared/browser-compat.js'), 'utf8');
+// utils.js: background.js's _candidateUILanguages() (which _uiLanguageMatches
+// and _autoEnableLangDefaultSources, both under test below, depend on)
+// delegates to this file's langCandidates() — must actually load it,
+// not just fall through to the generic config.js re-run other unrecognized
+// importScripts() names get below, or every language-matching test here
+// silently sees an empty candidate list. i18n.js itself is deliberately NOT
+// wired in here (falls through to the config.js branch like before): it's
+// not under test in this file, and its EXT.storage.local.get(key, callback)
+// call would hang forever against this harness's Promise-only storage stub.
+const utilsSrc = fs.readFileSync(path.join(ROOT, 'shared/utils.js'), 'utf8');
 const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'shared/scriptlet-alias-map.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'shared/background.js'), 'utf8');
 
@@ -235,6 +245,8 @@ const sandbox = {
       vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 'scriptlet-alias-map.js' });
     } else if (name && name.includes('browser-compat')) {
       vm.runInContext(browserCompatSrc, ctx, { filename: 'browser-compat.js' });
+    } else if (name && name.includes('utils')) {
+      vm.runInContext(utilsSrc, ctx, { filename: 'utils.js' });
     } else {
       vm.runInContext(configSrc, ctx, { filename: 'config.js' });
     }

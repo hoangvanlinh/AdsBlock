@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AdBlock</title>
+  <title data-i18n="popup_pageTitle">AdBlock</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="popup.css" />
 </head>
@@ -28,9 +28,9 @@
             </defs>
           </svg>
         </span>
-        <span class="brand-name">AdBlock — Ads, Trackers</span>
+        <span class="brand-name" data-i18n="popup_brand_name">AdBlock — Ads, Trackers</span>
       </div>
-      <button class="icon-btn" id="openDashboard" title="Dashboard">
+      <button class="icon-btn" id="openDashboard" data-i18n-title="popup_openDashboard_title" title="Dashboard">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -58,12 +58,12 @@
         <!-- ── Review prompt (shown once, after a usage milestone) ── -->
     <div class="review-banner hidden" id="reviewBanner">
       <div class="review-text">
-        <strong>Enjoying AdBlock?</strong>
-        <span>A quick rating helps a lot.</span>
+        <strong data-i18n="popup_review_title">Enjoying AdBlock?</strong>
+        <span data-i18n="popup_review_subtitle">A quick rating helps a lot.</span>
       </div>
       <div class="review-actions">
-        <button class="review-btn primary" id="reviewRateBtn">Rate us</button>
-        <button class="review-btn" id="reviewDismissBtn">No thanks</button>
+        <button class="review-btn primary" id="reviewRateBtn" data-i18n="popup_review_rate">Rate us</button>
+        <button class="review-btn" id="reviewDismissBtn" data-i18n="popup_review_dismiss">No thanks</button>
       </div>
     </div>
 
@@ -78,7 +78,7 @@
         </span>
         <div>
           <p class="stat-value" id="blockedCount">0</p>
-          <p class="stat-key">Blocked</p>
+          <p class="stat-key" data-i18n="popup_stat_blocked">Blocked</p>
         </div>
       </div>
       <div class="stat-card">
@@ -92,7 +92,7 @@
         </span>
         <div>
           <p class="stat-value" id="malwareCount">0</p>
-          <p class="stat-key">Malware</p>
+          <p class="stat-key" data-i18n="popup_stat_malware">Malware</p>
         </div>
       </div>
       <div class="stat-card">
@@ -104,7 +104,7 @@
         </span>
         <div>
           <p class="stat-value" id="speedGain">+0%</p>
-          <p class="stat-key">Speed</p>
+          <p class="stat-key" data-i18n="popup_stat_speed">Speed</p>
         </div>
       </div>
       <div class="stat-card">
@@ -117,7 +117,7 @@
         </span>
         <div>
           <p class="stat-value" id="timeSaved">0m</p>
-          <p class="stat-key">Saved</p>
+          <p class="stat-key" data-i18n="popup_stat_saved">Saved</p>
         </div>
       </div>
     </div>
@@ -128,8 +128,8 @@
         stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/>
       </svg>
-      <span>This site is allowlisted</span>
-      <button class="banner-action" id="removeAllowlist">Remove</button>
+      <span data-i18n="popup_allowlist_banner">This site is allowlisted</span>
+      <button class="banner-action" id="removeAllowlist" data-i18n="common_remove">Remove</button>
     </div>
     <div class="actions">
       <button class="action-btn" id="pauseSite">
@@ -139,7 +139,7 @@
           <line x1="10" y1="15" x2="10" y2="9" />
           <line x1="14" y1="15" x2="14" y2="9" />
         </svg>
-        Pause on site
+        <span data-i18n="popup_action_pause">Pause on site</span>
       </button>
       <button class="action-btn accent" id="focusMode">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -148,7 +148,7 @@
           <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83
             M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
         </svg>
-        Focus mode
+        <span data-i18n="popup_action_focus">Focus mode</span>
       </button>
     </div>
     <!--
@@ -166,7 +166,7 @@
     <!-- ── Privacy bar ── -->
     <div class="privacy-bar">
       <div class="privacy-label">
-        <span>Privacy score</span>
+        <span data-i18n="popup_privacy_scoreLabel">Privacy score</span>
         <span class="privacy-score" id="privacyScore">82</span>
       </div>
       <div class="bar-track">
@@ -191,23 +191,25 @@
             2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2
             2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
         </svg>
-        Settings
+        <span data-i18n="popup_footer_settings">Settings</span>
       </button>
-      <span class="rule-chip" id="ruleChip" title="Network blocking rules currently loaded">… rules</span>
-      <button class="donate-btn" id="donateBtnPopup" title="Support development via PayPal">
+      <span class="rule-chip" id="ruleChip" data-i18n-title="popup_ruleChip_title" title="Network blocking rules currently loaded" data-i18n="popup_ruleChip_loading">… rules</span>
+      <button class="donate-btn" id="donateBtnPopup" data-i18n-title="popup_donate_title" title="Support development via PayPal">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M7.144 19.532l1.049-5.751c.11-.604.691-1.041 1.305-.998 2.006.135 6.787.158 8.002-4.149 1.488-5.2-3.288-7.038-6.5-7.038H6.524a1.3 1.3 0 0 0-1.283 1.085l-2.65 16.826a.58.58 0 0 0 .572.676h3.23a.87.87 0 0 0 .75-.651Z"/>
           <path d="M18.204 8.52c-.08 4.788-4.395 6.168-8.168 5.898a.58.58 0 0 0-.62.501l-.915 5.035a.58.58 0 0 0 .572.676h2.782a1.3 1.3 0 0 0 1.283-1.085l.544-2.987c.11-.603.69-1.04 1.304-.998 2.56.173 5.29-.686 6.37-4.018.87-2.67-.207-4.285-3.152-3.022Z"/>
         </svg>
-        Donate
+        <span data-i18n="popup_donate_label">Donate</span>
       </button>
     </footer>
 
     <!-- Only shown when a newer version is actually available -->
-    <button class="version-chip hidden" id="versionChip" title="AdBlock version"></button>
+    <button class="version-chip hidden" id="versionChip" data-i18n-title="popup_version_title" title="AdBlock version"></button>
   </div>
 
   <script src="../shared/browser-compat.js"></script>
+  <script src="../shared/utils.js"></script>
+  <script src="../shared/i18n.js"></script>
   <script src="../shared/config.js"></script>
   <script src="popup.js"></script>
 </body>

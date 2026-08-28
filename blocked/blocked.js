@@ -18,14 +18,12 @@ const params = new URLSearchParams(location.search);
 // live-reported 2026-08-23.
 const host = (params.get('h') || '').toLowerCase().split(/[/?#]/)[0].split(':')[0];
 const isAdPopup = params.get('t') === 'ad';
-document.getElementById('host').textContent = host || 'unknown site';
+document.getElementById('host').textContent = host || EXT.i18n.getMessage('blocked_host_unknown');
 
 if (isAdPopup) {
   document.getElementById('icon').textContent = '🛑';
-  document.getElementById('title').textContent = 'Popup/new-tab ad blocked';
-  document.getElementById('hint').textContent =
-    'A click on the page you came from tried to open this ad/popup network in a new tab. ' +
-    'You can safely close this tab.';
+  document.getElementById('title').textContent = EXT.i18n.getMessage('blocked_title_adPopup');
+  document.getElementById('hint').textContent = EXT.i18n.getMessage('blocked_hint_adPopup');
 }
 
 // sessionStorage guard: a reload of this page must not count the block twice
@@ -171,7 +169,7 @@ let openerHost = '';
     } catch { /* fall through to the normal interactive flow */ }
   }
 
-  backBtn.textContent = canGoBack ? 'Go back' : 'Close this window';
+  backBtn.textContent = canGoBack ? EXT.i18n.getMessage('blocked_btn_goBack') : EXT.i18n.getMessage('blocked_btn_closeWindow');
   // The "Don't warn me again" checkbox is shared with the Proceed button
   // below, where it means the OPPOSITE thing (permanent allow, not
   // auto-decline) — ticking it while about to click Go back/Close instead
@@ -208,7 +206,7 @@ if (!host) {
   proceedBtn.addEventListener('click', async () => {
     const permanent = !!document.getElementById('dontWarn')?.checked;
     proceedBtn.disabled = true;
-    proceedBtn.textContent = 'Proceeding…';
+    proceedBtn.textContent = EXT.i18n.getMessage('blocked_btn_proceeding');
     try {
       await new Promise((resolve) => {
         EXT.runtime.sendMessage({ type: 'PROCEED_BLOCKED_HOST', host, permanent }, () => {

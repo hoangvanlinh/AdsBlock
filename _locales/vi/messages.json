@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Chặn quảng cáo, trình theo dõi và các tên miền độc hại đã biết, với các tuỳ chỉnh theo từng trang web và công cụ tập trung làm việc."
+  },
+  "blocked_pageTitle": {
+    "message": "Trang bị chặn — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Trang này bị chặn để bảo vệ bạn"
+  },
+  "blocked_title_adPopup": {
+    "message": "Đã chặn popup/tab quảng cáo mới"
+  },
+  "blocked_host_unknown": {
+    "message": "trang không xác định"
+  },
+  "blocked_hint_default": {
+    "message": "Trang này nằm trong danh sách chặn phần mềm độc hại / lừa đảo — có thể cố đánh cắp thông tin của bạn, đào tiền ảo, hoặc cài phần mềm không mong muốn."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Một cú click trên trang bạn vừa vào đã cố mở mạng quảng cáo/popup này trong tab mới. Bạn có thể an toàn đóng tab này."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Không cảnh báo tôi về trang này nữa"
+  },
+  "blocked_btn_goBack": {
+    "message": "Quay lại"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Đóng cửa sổ này"
+  },
+  "blocked_btn_proceed": {
+    "message": "Vẫn tiếp tục"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Đang tiếp tục…"
+  },
+  "common_remove": {
+    "message": "Xoá"
+  },
+  "common_cancel": {
+    "message": "Huỷ"
+  },
+  "menu_pickElement": {
+    "message": "Chọn phần tử để ẩn…"
+  },
+  "menu_scanGlobals": {
+    "message": "Quét trang tìm script/biến…"
+  },
+  "menu_editRules": {
+    "message": "Sửa quy tắc cho trang này…"
+  },
+  "picker_badge_active": {
+    "message": "Đang chọn phần tử để ẩn — nhấn Esc để huỷ"
+  },
+  "picker_btn_hide": {
+    "message": "Ẩn phần tử này"
+  },
+  "picker_btn_broaden": {
+    "message": "Mở rộng"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Chặn Quảng Cáo, Trình Theo Dõi"
+  },
+  "popup_openDashboard_title": {
+    "message": "Bảng điều khiển"
+  },
+  "popup_review_title": {
+    "message": "Bạn thấy AdBlock thế nào?"
+  },
+  "popup_review_subtitle": {
+    "message": "Một đánh giá nhanh sẽ giúp ích rất nhiều."
+  },
+  "popup_review_rate": {
+    "message": "Đánh giá ngay"
+  },
+  "popup_review_dismiss": {
+    "message": "Để sau"
+  },
+  "popup_stat_blocked": {
+    "message": "Đã chặn"
+  },
+  "popup_stat_malware": {
+    "message": "Mã độc"
+  },
+  "popup_stat_speed": {
+    "message": "Tốc độ"
+  },
+  "popup_stat_saved": {
+    "message": "Tiết kiệm"
+  },
+  "popup_allowlist_banner": {
+    "message": "Trang này nằm trong danh sách cho phép"
+  },
+  "popup_action_pause": {
+    "message": "Tạm dừng trên trang này"
+  },
+  "popup_action_focus": {
+    "message": "Chế độ tập trung"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Tạm dừng trên trang này"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Tiếp tục trên trang này"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Điểm riêng tư"
+  },
+  "popup_footer_settings": {
+    "message": "Cài đặt"
+  },
+  "popup_ruleChip_title": {
+    "message": "Số quy tắc chặn mạng đã tải"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… quy tắc"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "quy tắc mạng: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 quy tắc mạng đã tải",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Ủng hộ phát triển qua PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Ủng hộ"
+  },
+  "popup_version_title": {
+    "message": "Phiên bản AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Có bản cập nhật — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Đã có phiên bản mới — nhấn để mở trang cửa hàng"
+  },
+  "popup_domain_unknown": {
+    "message": "Trang không xác định"
+  },
+  "popup_status_site": {
+    "message": "Trang"
+  },
+  "popup_status_protection": {
+    "message": "Bảo vệ"
+  },
+  "popup_status_allowlisted": {
+    "message": "Được cho phép"
+  },
+  "popup_status_on": {
+    "message": "BẬT"
+  },
+  "popup_status_paused": {
+    "message": "Tạm dừng"
+  },
+  "popup_status_off": {
+    "message": "TẮT"
+  },
+  "common_save": {
+    "message": "Lưu"
+  },
+  "common_close": {
+    "message": "Đóng"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Sửa quy tắc — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Nhấn để chèn vào ô nhập"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Tra cứu khoá quy tắc ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Lọc theo khoá…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "THẨM MỸ / SO KHỚP ỨNG VIÊN"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLET (NÂNG CAO)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Quy tắc hiện có cho trang này ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(chưa có quy tắc nào cho trang này — mặc định hoặc tự thêm)"
+  },
+  "ruleEditor_hint": {
+    "message": "Mỗi dòng một quy tắc dạng \"key = value | value2\". Nhấn vào một khoá bên trên để chèn vào. Không dùng tiêu đề [section]. Các quy tắc gõ ở đây sẽ được THÊM VÀO các quy tắc sẵn có của khoá này (xem bên trên) — không thể xoá hay ghi đè quy tắc mặc định, và với các khoá cờ một-giá-trị thì giá trị mặc định thường vẫn được ưu tiên."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Đã lưu — tải lại trang này để thấy quy tắc được áp dụng."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Lưu thất bại — kiểm tra xem có dòng \"[section]\" lạc hay dán nội dung quá lớn không."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS selector bị ẩn vô điều kiện qua stylesheet được chèn vào — không kiểm tra heuristic, chỉ ẩn ngay khi thấy."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS selector cho các phần tử ỨNG VIÊN — chỉ bị ẩn nếu chúng cũng khớp labels/link_patterns bên dưới."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Giống selectors, chỉ áp dụng cho container kiểu feed/timeline."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Giống selectors, chỉ áp dụng cho container kiểu marketplace/mua sắm."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Giống selectors, chỉ áp dụng cho khu vực sidebar/right-rail."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Giống selectors, chỉ áp dụng cho từng container bài viết/post riêng lẻ."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS selector cho các phần tử \"host\", được kiểm tra theo cách giống selectors ở trên."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Các nhãn văn bản (ví dụ: sponsored, promoted) được so khớp với thuộc tính/văn bản ngữ cảnh để xác nhận một ứng viên thực sự là quảng cáo."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Các mẫu chuỗi con được so khớp với link/thuộc tính của chính ứng viên để xác nhận đó là quảng cáo."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Tên thuộc tính HTML được quét để tìm khớp label/link_pattern (mặc định: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Các phần tử con để lấy văn bản phục vụ so khớp label (mặc định: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS selector để đi ngược lên qua .closest() trước khi ẩn ứng viên đã khớp (ẩn cả container, không chỉ riêng nhãn)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Tên class liên tục bị gỡ khỏi <html>/<body> — vô hiệu hoá các lớp phủ chiếm quyền chỉ dựa vào CSS thông qua một class gốc."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Tên thuộc tính CSS liên tục bị xoá khỏi inline style của <html>/<body> — vô hiệu hoá scroll-lock do JS thiết lập, v.v."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Cờ 1/0 — tự động đóng các tab popup/popunder được mở do click trên trang này."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — khoá vĩnh viễn một thuộc tính window về một giá trị cố định (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — báo lỗi khi bất kỳ script nào đọc thuộc tính window này."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — báo lỗi khi bất kỳ script nào ghi vào thuộc tính window này."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — chỉ báo lỗi khi stack trace của script gọi khớp với needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — báo lỗi khi một script có mã nguồn khớp needle đọc target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — chặn hoặc chuyển hướng giả (decoy) các lệnh gọi window.open() khớp pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — chặn các lệnh gọi fetch() khớp tiêu chí."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — chặn các lệnh gọi XMLHttpRequest khớp tiêu chí."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — chặn fetch, có thể trả về sẵn một response giả cố định."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — ngăn một iframe about:blank cùng-origin quay lại truy cập window thật để vượt qua khoá."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — xoá các trường khỏi mọi kết quả JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — xoá các trường khỏi response JSON của fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — xoá các trường khỏi response JSON của XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — cắt bớt một object mà script gán trực tiếp (không qua JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — xoá trường dựa trên JSONPath trong response JSON của fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — xoá trường dựa trên JSONPath trong response dạng XHR JSON-lines."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Xoá các trường khỏi response được mã hoá dạng protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — chỉnh sửa JSONPath (xoá VÀ gán giá trị) trên phần thân request gửi đi."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — chỉnh sửa JSONPath (xoá VÀ gán giá trị) trên phần thân response."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — tìm/thay bằng regex trên phần thân response của fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — tìm/thay bằng regex trên phần thân response của XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — thay thế một đối số truyền vào một hàm."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — thay thế văn bản vô điều kiện trên dữ liệu gửi đi (không giới hạn theo URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — viết lại nội dung một thẻ <script> trước khi nó chạy. sedCount giới hạn số node quy tắc này sẽ từng viết lại (mặc định: không giới hạn)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — cắt bớt các trường khỏi một object được truyền VÀO một lệnh gọi phương thức gốc."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — huỷ hoặc âm thầm bỏ qua một lệnh gọi phương thức gốc khớp một chữ ký (signature)."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — bỏ qua hoặc báo lỗi khi gán giá trị qua accessor setter (ví dụ: Element.prototype.innerHTML) mà giá trị khớp needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — xoá các đoạn quảng cáo khỏi response playlist HLS .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — giả lập thành công cho việc tải script/img/iframe/link thay vì thực hiện request mạng thật."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — xoá thuộc tính HTML khỏi các phần tử khớp."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — xoá nội dung văn bản của một node DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — viết lại nội dung văn bản của một node DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — chặn việc tự động chuyển hướng của <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — thiết lập một cookie."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — xoá các cookie khớp một mẫu tên."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — thiết lập một mục trong localStorage (chỉ cho phép các giá trị literal an toàn, hoặc từ khoá đặc biệt \"remove\" để xoá các khoá khớp)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — viết lại href của một liên kết dựa trên chính văn bản của nó hoặc một thuộc tính khác."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — chặn các lệnh gọi setTimeout() khớp tiêu chí."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — chặn các lệnh gọi setInterval() khớp tiêu chí."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — chặn các lệnh gọi requestAnimationFrame() khớp tiêu chí."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — chặn các lệnh gọi addEventListener() khớp tiêu chí."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — tăng/giảm tốc các lệnh gọi setTimeout() khớp thay vì chặn hẳn."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — tăng/giảm tốc các lệnh gọi setInterval() khớp thay vì chặn hẳn."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — chặn các lệnh gọi eval() có mã nguồn khớp pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Vô hiệu hoá RTCPeerConnection — chặn các thủ thuật popup/theo dõi dựa trên WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Vô hiệu hoá các script phát hiện chặn quảng cáo kiểu BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Gỡ bỏ target=\"_blank\" khỏi các link được click — chặn việc bị ép mở tab mới."
+  },
+  "scanner_value_emptyString": {
+    "message": "Chuỗi rỗng"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Mảng rỗng"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Đối tượng rỗng"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Hàm rỗng (không làm gì)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Hàm luôn trả về true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Hàm luôn trả về false"
+  },
+  "scanner_btn_block": {
+    "message": "Chặn"
+  },
+  "scanner_btn_edit": {
+    "message": "Sửa"
+  },
+  "scanner_btn_delete": {
+    "message": "Xoá"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Đã áp dụng chặn — đã lưu cho trang này."
+  },
+  "scanner_status_editApplied": {
+    "message": "Đã áp dụng sửa — đã lưu cho trang này."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Đã áp dụng xoá — đã lưu cho trang này."
+  },
+  "scanner_block_warning": {
+    "message": "Chặn sẽ ngăn TẤT CẢ các lần đọc thuộc tính này trong tương lai — có thể làm hỏng chức năng của trang phụ thuộc vào nó. Không thể hoàn tác bằng cách tải lại trang; hãy xoá quy tắc ở trang Global Rules của bảng điều khiển để hoàn tác."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Vẫn chặn"
+  },
+  "scanner_edit_customOption": {
+    "message": "Tuỳ chỉnh…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "một token, không dấu cách (ví dụ: 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Nhập một giá trị không có dấu cách."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Không được có dấu cách — sẽ bị từ chối."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Sẽ được lưu là: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Biến toàn cục của trang ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Lọc theo tên…"
+  },
+  "scanner_empty": {
+    "message": "Không tìm thấy biến toàn cục nào do trang thêm vào."
+  },
+  "scanner_footer_limitation": {
+    "message": "Chỉ thấy được các biến toàn cục kiểu var/function và các phép gán window.x = trực tiếp — khai báo let/const/class không thể phát hiện bằng bất kỳ trình quét trang nào (giới hạn của ngôn ngữ JS)."
+  },
+  "scanner_loading": {
+    "message": "Đang quét biến toàn cục của trang — nhấn Esc để huỷ"
+  },
+  "common_add": {
+    "message": "Thêm"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Bảng điều khiển"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Chặn Quảng Cáo, Trình Theo Dõi"
+  },
+  "dashboard_nav_overview": {
+    "message": "Tổng quan"
+  },
+  "dashboard_nav_rules": {
+    "message": "Quy tắc tuỳ chỉnh"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Nguồn quy tắc"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Danh sách cho phép"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Quy tắc phần tử"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Quy tắc toàn cục"
+  },
+  "dashboard_nav_focus": {
+    "message": "Tập trung"
+  },
+  "dashboard_nav_settings": {
+    "message": "Cài đặt"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Bảo vệ BẬT"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Bảo vệ $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Ủng hộ phát triển qua PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Mời tôi ly cà phê ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "BẬT"
+  },
+  "dashboard_toggle_off": {
+    "message": "TẮT"
+  },
+  "dashboard_overview_title": {
+    "message": "Tổng quan"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Bảng điều khiển bảo vệ của bạn"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Tổng đã chặn"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% hôm nay"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Trình theo dõi đã chặn"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% hôm nay"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Mã độc đã chặn"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "mối đe doạ đã chặn"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Không phát hiện mối đe doạ nào"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Băng thông tiết kiệm"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "trung bình mỗi trang"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Thời gian tiết kiệm"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "trong phiên này"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 hôm nay",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— hôm nay"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% so với hôm qua",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 mối đe doạ hôm nay"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 khác",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Yêu cầu bị chặn"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Yêu cầu theo dõi"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Phát hiện mã độc"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7 ngày"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14 ngày"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30 ngày"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "đã chặn"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "trình theo dõi"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "mã độc"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Tên miền bị chặn nhiều nhất"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Tên miền theo dõi nhiều nhất"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Tên miền mã độc nhiều nhất"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Xem tất cả"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Thu gọn"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Xem tất cả ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Chưa có dữ liệu."
+  },
+  "dashboard_privacy_title": {
+    "message": "Điểm riêng tư"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Quảng cáo đã chặn"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Trình theo dõi đã chặn"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Bảo vệ khỏi mã độc"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Ẩn danh referrer"
+  },
+  "dashboard_rules_title": {
+    "message": "Quy tắc tuỳ chỉnh"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Sửa theo định dạng site-rules.txt — cùng cú pháp với file quy tắc chính. Giá trị sẽ được gộp với các quy tắc mặc định."
+  },
+  "dashboard_rules_clear": {
+    "message": "Xoá hết"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Xoá toàn bộ quy tắc tuỳ chỉnh?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Quy tắc tuỳ chỉnh — cùng định dạng với site-rules.txt\n# Giá trị sẽ được GỘP với các quy tắc mặc định (không thay thế).\n#\n# ── Gán một tên miền mới vào một section quy tắc ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← các tên miền phụ được tự động khớp\n#\n# ── Thêm tên miền cần chặn trên toàn cục ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Quy tắc thẩm mỹ riêng cho từng trang ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Danh sách cho phép"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Các trang được bỏ qua toàn bộ chặn"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Thêm trang"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Quy tắc phần tử"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Các phần tử bị ẩn thủ công qua \"Chọn phần tử để ẩn\" — nhóm theo trang"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Chưa có quy tắc nào."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Quy tắc toàn cục"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Các biến toàn cục window bị chặn/sửa/xoá thủ công qua \"Quét trang tìm script/biến\" — nhóm theo trang"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Chưa có quy tắc nào."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "chặn"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "sửa"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "xoá"
+  },
+  "dashboard_focus_title": {
+    "message": "Chế độ tập trung"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Chặn các trang gây xao nhãng theo lịch"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Phiên tập trung"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Phiên đang tạm dừng"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Phiên đang chạy…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Đã hoàn thành phiên!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 phút"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 phút"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 phút"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 phút"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Tuỳ chỉnh"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "phút"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Danh sách trang gây xao nhãng"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Thêm"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Nhập tên miền cần chặn trong lúc tập trung (ví dụ: twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Cài đặt"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Tuỳ chỉnh hành vi của AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Chặn"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Chặn quảng cáo"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Chặn mạng quảng cáo tiêu chuẩn"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Chặn trình theo dõi"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Chặn script phân tích & theo dõi"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Lọc thẩm mỹ"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Ẩn phần khoảng trống quảng cáo còn sót lại bằng CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Chặn mã độc"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Chặn các tên miền mã độc đã biết"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Riêng tư"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Ẩn danh referrer"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Xoá header referrer trên các request khác nguồn"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Kiểm soát quyền riêng tư toàn cầu (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Gửi tín hiệu từ chối GPC (header Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Không theo dõi (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Gửi header request DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Dữ liệu"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Thu thập thống kê"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Thống kê sử dụng chỉ lưu cục bộ (không bao giờ tải lên)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Đặt lại toàn bộ dữ liệu"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Xoá quy tắc, thống kê và cài đặt"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Đặt lại"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Đặt lại toàn bộ dữ liệu AdBlock? Hành động này không thể hoàn tác."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Đã xoá toàn bộ dữ liệu. Đang tải lại…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Giới thiệu"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Phiên bản"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Kiểm tra cập nhật"
+  },
+  "dashboard_settings_checking": {
+    "message": "Đang kiểm tra…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Đã có phiên bản mới"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Xem"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Lần kiểm tra gần nhất: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (thất bại — mất mạng?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Chưa từng kiểm tra"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "Đã có v$1 (bạn đang dùng v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Nguồn quy tắc"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Nơi AdBlock tải quy tắc theo trang"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL quy tắc từ xa"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Gồm nguồn mặc định có sẵn (có thể bật/tắt, không thể xoá) cộng với bất kỳ URL nào bạn thêm — tất cả được gộp lại, mỗi nguồn bật/tắt độc lập."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Thêm URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "File quy tắc cục bộ"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Tải lên file quy tắc .txt — được gộp với các nguồn URL. Hỗ trợ nhiều file."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Thêm file…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Đang xuất…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Xuất thất bại: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "lỗi không xác định"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "Đã chuyển đổi $1, bỏ qua $2 trên tổng $3 quy tắc",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 quy tắc ngoại lệ (không có mô hình huỷ tương ứng ở đây)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 selector thủ tục (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 chỉnh sửa mở rộng kiểu AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 lệnh gọi scriptlet chưa được ánh xạ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 chỉnh sửa quy tắc mạng chưa được hỗ trợ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 đã có sẵn trong site-rules.txt riêng của tiện ích",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 cú pháp không nhận dạng được",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "Đã tải $1/$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "Đã tải $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Xuất"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Tải quy tắc của nguồn này, đã chuyển sang định dạng riêng của tiện ích"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Mặc định"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Nhóm EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Theo ngôn ngữ"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Tuỳ chỉnh (URL của riêng bạn)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Đã tạo dữ liệu giả cho $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Chung"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Ngôn ngữ"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Sẽ tải lại trang này sau khi đổi"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Tự động (theo ngôn ngữ trình duyệt)"
+  }
+}

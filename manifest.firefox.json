@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "AdBlock — Ads, Trackers",
+  "default_locale": "en",
+  "name": "__MSG_extName__",
   "version": "1.0.42",
-  "description": "Block ads, trackers, and known malicious domains with simple site controls and focus tools.",
+  "description": "__MSG_extDescription__",
   "browser_specific_settings": {
     "gecko": {
       "id": "adblock-ads-trackers@gitadblock",
@@ -33,7 +34,7 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "scripts": ["shared/config.js", "shared/browser-compat.js", "shared/scriptlet-alias-map.js", "shared/background.js"],
+    "scripts": ["shared/config.js", "shared/browser-compat.js", "shared/utils.js", "shared/i18n.js", "shared/scriptlet-alias-map.js", "shared/background.js"],
     "type": "module"
   },
   "content_scripts": [
@@ -50,7 +51,7 @@
       "matches": [
        "<all_urls>"
       ],
-      "js": ["shared/config.js", "shared/browser-compat.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
+      "js": ["shared/config.js", "shared/browser-compat.js", "shared/utils.js", "shared/i18n.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
       "run_at": "document_start",
       "all_frames": false
     }

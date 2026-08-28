@@ -13,6 +13,20 @@ if (typeof importScripts === 'function' && !self.ADBLOCK_CONFIG) {
 if (typeof importScripts === 'function' && !self.EXT) {
   importScripts('browser-compat.js');
 }
+// utils.js (repo root shared/, same dual-loading story) — defines
+// langCandidates(), which both _candidateUILanguages() below and
+// i18n.js's own "Auto" resolution build on. Must load before i18n.js.
+if (typeof importScripts === 'function' && !self.langCandidates) {
+  importScripts('utils.js');
+}
+// i18n.js (repo root shared/, same dual-loading story) — installs the
+// manual-language-override EXT.i18n.getMessage() wrapper every
+// getMessage() call in this file already goes through unmodified, and
+// exposes self.EXT_I18N_READY (awaited below before creating context menus,
+// so a non-"auto" Settings choice is reflected in the menu titles too).
+if (typeof importScripts === 'function' && !self.EXT_I18N_READY) {
+  importScripts('i18n.js');
+}
 // scriptlet-alias-map.js (repo root, same place as config.js — both are
 // shared across contexts: background.js here, scripts/convert-uassets.js and
 // scripts/convert-regions.js via `require()` offline, and both get copied to
@@ -842,30 +856,14 @@ function _isDefaultSourceEnabled(entry, overrides, legacyAllDisabled) {
   return entry.enable !== false;
 }
 
-// Every language candidate worth checking against a RULES_REMOTE_URL
-// entry's `lang` — chrome.i18n.getUILanguage() (the browser's CHROME/MENU
-// display language; uBlock Origin's own listMatchesEnvironment() uses only
-// this) plus navigator.language/navigator.languages (the browser's
-// Accept-Language / "preferred languages" list, chrome://settings/languages
-// — a SEPARATE setting from the UI display language). These can genuinely
-// disagree: a browser can display its own menus in English while the user's
-// actual preferred/content language is Vietnamese, which is exactly the
-// case getUILanguage()-only detection misses. chrome.i18n.getUILanguage()
-// works the same way under Firefox's chrome.* alias; navigator exists in
-// the MV3 service worker global too, so no browser/context branch needed.
+// Candidate-gathering itself now lives in shared/utils.js
+// (langCandidates()) — shared with shared/i18n.js's manual-UI-
+// language "Auto" resolution, which needs the exact same
+// getUILanguage()-vs-navigator.language gap closed but from contexts this
+// file never loads into (content scripts, HTML pages). This wrapper just
+// keeps the name every call site below already uses.
 function _candidateUILanguages() {
-  const out = [];
-  try {
-    const ui = EXT.i18n && EXT.i18n.getUILanguage && EXT.i18n.getUILanguage();
-    if (ui) out.push(ui);
-  } catch (e) { /* ignore */ }
-  try {
-    if (typeof navigator !== 'undefined') {
-      if (navigator.language) out.push(navigator.language);
-      if (Array.isArray(navigator.languages)) out.push(...navigator.languages);
-    }
-  } catch (e) { /* ignore */ }
-  return out;
+  try { return langCandidates(); } catch (e) { return []; }
 }
 
 // True if any candidate language matches a RULES_REMOTE_URL entry's `lang`
@@ -2787,11 +2785,14 @@ EXT.alarms?.onAlarm.addListener(async (alarm) => {
 // works if the user has separately opted the extension into file access,
 // an uncommon case not worth cluttering the common one for.
 const QKV1_MENU_URL_PATTERNS = ['http://*/*', 'https://*/*'];
-try {
+// Waits for EXT_I18N_READY (i18n.js) so a non-"auto" Settings language
+// choice is reflected in these titles too, not just the dashboard/popup —
+// falls back to creating immediately if i18n.js somehow didn't load.
+(self.EXT_I18N_READY || Promise.resolve()).then(() => { try {
   EXT.contextMenus.removeAll(() => {
     EXT.contextMenus.create({
       id: 'qkv1-pick-element',
-      title: 'Pick element to hide…',
+      title: EXT.i18n.getMessage('menu_pickElement'),
       contexts: ['all'],
       documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
     }, () => { void EXT.runtime.lastError; });
@@ -2808,19 +2809,19 @@ try {
     if (DEBUG_LOCAL) {
       EXT.contextMenus.create({
         id: 'qkv1-scan-globals',
-        title: 'Scan page for scripts/variables…',
+        title: EXT.i18n.getMessage('menu_scanGlobals'),
         contexts: ['all'],
         documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
       }, () => { void EXT.runtime.lastError; });
       EXT.contextMenus.create({
         id: 'qkv1-edit-rules',
-        title: 'Edit rules for this site…',
+        title: EXT.i18n.getMessage('menu_editRules'),
         contexts: ['all'],
         documentUrlPatterns: QKV1_MENU_URL_PATTERNS,
       }, () => { void EXT.runtime.lastError; });
     }
   });
-} catch (e) {}
+} catch (e) {} });
 EXT.contextMenus?.onClicked.addListener((info, tab) => {
   if (!tab?.id) return;
   if (info.menuItemId === 'qkv1-pick-element') {

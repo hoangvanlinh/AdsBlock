@@ -55,7 +55,7 @@ async function getCurrentDomain() {
 // ── Load data from storage ─────────────────────
 async function loadState() {
   const domain = await getCurrentDomain();
-  domainLabel.textContent = domain || 'Unknown site';
+  domainLabel.textContent = domain || EXT.i18n.getMessage('popup_domain_unknown');
 
   EXT.storage.local.get(
     ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'stats', 'referrerAnonymization'],
@@ -71,7 +71,7 @@ async function loadState() {
 
       // pause button — hide when allowlisted (managed from dashboard)
       pauseSiteBtn.classList.toggle('active', paused);
-      pauseSiteBtn.textContent = paused ? '▶ Resume site' : '⏸ Pause on site';
+      pauseSiteBtn.textContent = paused ? EXT.i18n.getMessage('popup_action_resume_emoji') : EXT.i18n.getMessage('popup_action_pause_emoji');
       pauseSiteBtn.style.display = allowlisted ? 'none' : '';
 
       // allowlist banner
@@ -112,23 +112,29 @@ function formatTime(seconds) {
   return `${Math.round(seconds / 60)}m`;
 }
 
+// Markup always comes from this JS literal, never from a messages.json
+// value — <strong> wraps whichever getMessage() piece is the "state" word,
+// concatenated with the (also translatable) leading label word.
+function _statusHtml(labelKey, stateKey) {
+  return EXT.i18n.getMessage(labelKey) + ' <strong>' + EXT.i18n.getMessage(stateKey) + '</strong>';
+}
 function updateToggleUI(active, paused = false, allowlisted = false) {
   if (allowlisted) {
     document.body.classList.add('off');
     toggleRing.classList.add('off');
-    statusLabel.innerHTML = 'Site <strong>Allowlisted</strong>';
+    statusLabel.innerHTML = _statusHtml('popup_status_site', 'popup_status_allowlisted');
   } else if (active && !paused) {
     document.body.classList.remove('off');
     toggleRing.classList.remove('off');
-    statusLabel.innerHTML = 'Protection <strong>ON</strong>';
+    statusLabel.innerHTML = _statusHtml('popup_status_protection', 'popup_status_on');
   } else if (paused) {
     document.body.classList.add('off');
     toggleRing.classList.add('off');
-    statusLabel.innerHTML = 'Protection <strong>Paused</strong>';
+    statusLabel.innerHTML = _statusHtml('popup_status_protection', 'popup_status_paused');
   } else {
     document.body.classList.add('off');
     toggleRing.classList.add('off');
-    statusLabel.innerHTML = 'Protection <strong>OFF</strong>';
+    statusLabel.innerHTML = _statusHtml('popup_status_protection', 'popup_status_off');
   }
 }
 
@@ -154,7 +160,7 @@ mainToggle.addEventListener('change', async () => {
 
       if (wasPaused) {
         pauseSiteBtn.classList.remove('active');
-        pauseSiteBtn.textContent = '⏸ Pause on site';
+        pauseSiteBtn.textContent = EXT.i18n.getMessage('popup_action_pause_emoji');
         EXT.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: false });
       }
 
@@ -183,11 +189,11 @@ pauseSiteBtn.addEventListener('click', async () => {
     if (pausing) {
       pausedDomains.push(domain);
       pauseSiteBtn.classList.add('active');
-      pauseSiteBtn.textContent = '▶ Resume site';
+      pauseSiteBtn.textContent = EXT.i18n.getMessage('popup_action_resume_emoji');
     } else {
       pausedDomains.splice(idx, 1);
       pauseSiteBtn.classList.remove('active');
-      pauseSiteBtn.textContent = '⏸ Pause on site';
+      pauseSiteBtn.textContent = EXT.i18n.getMessage('popup_action_pause_emoji');
     }
     EXT.storage.local.set({ pausedDomains });
     // Tell background to update declarativeNetRequest rules — WAIT for it
@@ -326,12 +332,12 @@ function refreshRuleCount() {
     const chip = document.getElementById('ruleChip');
     if (!chip) return;
     if (EXT.runtime.lastError || !res) {
-      chip.textContent = 'network rules: ?';
+      chip.textContent = EXT.i18n.getMessage('popup_ruleChip_unknown');
       chip.classList.add('zero');
       return;
     }
     const n = res.count ?? 0;
-    chip.textContent = `${n} network rules loaded`;
+    chip.textContent = EXT.i18n.getMessage('popup_ruleChip_loaded', [String(n)]);
     chip.classList.toggle('zero', n === 0);
   });
 }
@@ -345,8 +351,8 @@ EXT.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, (res) => {
   const chip = document.getElementById('versionChip');
   if (!chip) return;
   if (EXT.runtime.lastError || !res || !res.available || !res.latestVersion) return; // stays hidden
-  chip.textContent = `Update available — v${res.currentVersion} → v${res.latestVersion}`;
-  chip.title = 'A newer version is available — click to open the store listing';
+  chip.textContent = EXT.i18n.getMessage('popup_version_updateAvailable', [String(res.currentVersion), String(res.latestVersion)]);
+  chip.title = EXT.i18n.getMessage('popup_version_updateTitle');
   chip.classList.remove('hidden');
   chip.addEventListener('click', () => {
     EXT.tabs.create({ url: _detectStoreUrl() });

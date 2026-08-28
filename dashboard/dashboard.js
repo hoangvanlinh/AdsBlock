@@ -126,16 +126,17 @@ const globalLabel  = document.getElementById('globalLabel');
 const sidebarBadge = document.getElementById('sidebarBadge');
 
 function syncProtectionUI(enabled) {
-  if (globalLabel) globalLabel.textContent = enabled ? 'ON' : 'OFF';
+  const onOff = enabled ? EXT.i18n.getMessage('dashboard_toggle_on') : EXT.i18n.getMessage('dashboard_toggle_off');
+  if (globalLabel) globalLabel.textContent = onOff;
   globalLabel && (globalLabel.style.color = enabled ? 'var(--green)' : 'var(--red)');
   sidebarBadge && sidebarBadge.classList.toggle('off', !enabled);
-  sidebarBadge && (sidebarBadge.textContent = `Protection ${enabled ? 'ON' : 'OFF'}`);
+  sidebarBadge && (sidebarBadge.textContent = EXT.i18n.getMessage('dashboard_sidebar_protection', [onOff]));
   if (sidebarBadge) {
     const dot = document.createElement('span');
     dot.className = 'badge-dot';
     sidebarBadge.innerHTML = '';
     sidebarBadge.appendChild(dot);
-    sidebarBadge.append(` Protection ${enabled ? 'ON' : 'OFF'}`);
+    sidebarBadge.append(' ' + EXT.i18n.getMessage('dashboard_sidebar_protection', [onOff]));
   }
 }
 
@@ -185,17 +186,17 @@ function loadOverviewStats() {
       setText('kpiMalware',  today.malware.toLocaleString());
 
       function deltaText(todayVal, yesterdayVal) {
-        if (yesterdayVal === 0) return todayVal > 0 ? `+${todayVal} today` : '— today';
+        if (yesterdayVal === 0) return todayVal > 0 ? EXT.i18n.getMessage('dashboard_kpi_deltaPositive', [String(todayVal)]) : EXT.i18n.getMessage('dashboard_kpi_deltaNone');
         const pct = Math.round(((todayVal - yesterdayVal) / yesterdayVal) * 100);
         const sign = pct >= 0 ? '+' : '';
-        return `${sign}${pct}% vs yesterday`;
+        return EXT.i18n.getMessage('dashboard_kpi_deltaPercent', [sign + pct]);
       }
 
       setText('kpiBlockedDelta',  deltaText(today.blocked, yesterday.blocked));
       setText('kpiTrackersDelta', deltaText(today.trackers, yesterday.trackers));
       setText('kpiMalwareDelta',  malware > 0
         ? deltaText(today.malware, yesterday.malware)
-        : '0 threats today');
+        : EXT.i18n.getMessage('dashboard_kpi_zeroThreatsToday'));
 
       // Show which malware domains were blocked (only if today has real malware)
       const malwareDomains = Object.entries(stats)
@@ -204,12 +205,12 @@ function loadOverviewStats() {
       const malwareDetail = document.getElementById('kpiMalwareDetail');
       if (malwareDetail) {
         if (today.malware === 0 || malwareDomains.length === 0) {
-          malwareDetail.textContent = 'No threats detected';
+          malwareDetail.textContent = EXT.i18n.getMessage('dashboard_kpi_noThreatsDetected');
           malwareDetail.title = '';
         } else {
           const top = malwareDomains[0][0];
           const rest = malwareDomains.length - 1;
-          malwareDetail.textContent = rest > 0 ? `${top} +${rest} more` : top;
+          malwareDetail.textContent = rest > 0 ? EXT.i18n.getMessage('dashboard_kpi_malwareMore', [top, String(rest)]) : top;
           malwareDetail.title = malwareDomains.map(([d, s]) => `${d} (${s.malwareBlocked})`).join('\n');
         }
       }
@@ -240,10 +241,19 @@ function formatTime(s) {
 
 /* ── Bar chart ────────────────────────────────── */
 let activeRange = 7;let activeMetric = 'blocked';
+// Message KEYS only, not resolved strings — resolving via EXT.i18n.getMessage()
+// happens at each point of use (below) instead of once here. This object
+// literal evaluates at module-parse time, before shared/i18n.js's async
+// language-override fetch can possibly have resolved; caching the resolved
+// TEXT here would freeze it at whatever chrome.i18n returned at that instant
+// (native/browser-locale) forever, even after a Settings language change —
+// live-caught 2026-08-28: this is exactly why "Blocked requests" stayed
+// English after switching to Vietnamese despite the underlying key/HTML
+// data-i18n tag being correct.
 const METRIC_CONFIG = {
-  blocked:  { chartTitle: 'Blocked requests',   domainTitle: 'Top blocked domains',  dailyKey: 'blocked',  domainKey: 'blocked',        tooltip: 'blocked'  },
-  trackers: { chartTitle: 'Tracker requests',    domainTitle: 'Top tracker domains',  dailyKey: 'trackers', domainKey: 'trackersBlocked', tooltip: 'trackers' },
-  malware:  { chartTitle: 'Malware detections',  domainTitle: 'Top malware domains',  dailyKey: 'malware',  domainKey: 'malwareBlocked',  tooltip: 'malware'  },
+  blocked:  { chartTitleKey: 'dashboard_chart_titleBlocked',  domainTitleKey: 'dashboard_domains_titleBlocked',  dailyKey: 'blocked',  domainKey: 'blocked',        tooltipKey: 'dashboard_chart_tooltipBlocked'  },
+  trackers: { chartTitleKey: 'dashboard_chart_titleTrackers', domainTitleKey: 'dashboard_domains_titleTrackers', dailyKey: 'trackers', domainKey: 'trackersBlocked', tooltipKey: 'dashboard_chart_tooltipTrackers' },
+  malware:  { chartTitleKey: 'dashboard_chart_titleMalware',  domainTitleKey: 'dashboard_domains_titleMalware',  dailyKey: 'malware',  domainKey: 'malwareBlocked',  tooltipKey: 'dashboard_chart_tooltipMalware'  },
 };
 function renderChart() {
   const svg = document.getElementById('chartSvg');
@@ -306,7 +316,7 @@ function renderChart() {
 
     // Update chart title
     const _chartTitleEl = document.getElementById('chartTitle');
-    if (_chartTitleEl) _chartTitleEl.textContent = METRIC_CONFIG[activeMetric].chartTitle;
+    if (_chartTitleEl) _chartTitleEl.textContent = EXT.i18n.getMessage(METRIC_CONFIG[activeMetric].chartTitleKey);
 
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     while (svg.firstChild) svg.removeChild(svg.firstChild);
@@ -349,7 +359,7 @@ function renderChart() {
       const rect = svg.getBoundingClientRect();
       const xPct = (p.x / w) * 100;
       const yPx = (p.y / h) * rect.height;
-      tooltip.textContent = `${p.label}: ${p.value} ${METRIC_CONFIG[activeMetric].tooltip}`;
+      tooltip.textContent = EXT.i18n.getMessage('dashboard_chart_tooltipText', [p.label, String(p.value), EXT.i18n.getMessage(METRIC_CONFIG[activeMetric].tooltipKey)]);
       tooltip.style.display = 'block';
       tooltip.style.left = `${xPct}%`;
       tooltip.style.top = `${yPx}px`;
@@ -387,7 +397,7 @@ function renderDomainList(stats) {
 
   const _dcfg = METRIC_CONFIG[activeMetric];
   const _domTitleEl = document.getElementById('domainListTitle');
-  if (_domTitleEl) _domTitleEl.textContent = _dcfg.domainTitle;
+  if (_domTitleEl) _domTitleEl.textContent = EXT.i18n.getMessage(_dcfg.domainTitleKey);
   const allEntries = Object.entries(stats)
     .map(([domain, s]) => ({ domain, blocked: (s[_dcfg.domainKey] ?? 0) }))
     .sort((a, b) => b.blocked - a.blocked);
@@ -396,12 +406,12 @@ function renderDomainList(stats) {
 
   const btn = document.getElementById('seeAllDomains');
   if (btn) {
-    btn.textContent = domainListExpanded ? 'Show less' : `See all (${allEntries.length})`;
+    btn.textContent = domainListExpanded ? EXT.i18n.getMessage('dashboard_domains_showLess') : EXT.i18n.getMessage('dashboard_domains_seeAllCount', [String(allEntries.length)]);
     btn.style.display = allEntries.length <= 7 ? 'none' : '';
   }
 
   if (!entries.length) {
-    list.innerHTML = '<li style="color:var(--text-4);font-size:12px;padding:8px 0">No data yet.</li>';
+    list.innerHTML = '<li style="color:var(--text-4);font-size:12px;padding:8px 0">' + escHtml(EXT.i18n.getMessage('dashboard_domains_noData')) + '</li>';
     return;
   }
 
@@ -428,27 +438,10 @@ document.getElementById('seeAllDomains')?.addEventListener('click', () => {
 });
 
 /* ── Custom Rules page (plain-text editor) ───── */
-const CUSTOM_RULES_DEFAULT = `# Custom rules — same format as site-rules.txt
-# Values are MERGED with the built-in rules (not replaced).
-#
-# ── Map a new domain to a rule section ──────────────────────────────────
-# [host_patterns]
-# example.com = example          ← subdomains matched automatically
-#
-# ── Add extra domains to block globally ─────────────────────────────────
-# [global]
-# ad_network_patterns = new-ad-network.com
-# tracker_network_patterns = new-tracker.com
-# direct_hide_selectors = .new-ad-class
-# no_window_open_if = /new-ad\.com/ 0 blank
-#
-# ── Per-site cosmetic rules ──────────────────────────────────────────────
-# [example]
-# direct_hide_selectors = .ad-unit | #sidebar-ad
-# no_window_open_if = /.*/ 0 blank
-# labels = sponsored | promoted
-# json_prune_fetch = adData adSlots
-`;
+// Function, not a cached const — see METRIC_CONFIG's comment above for why
+// caching a resolved getMessage() string at module-parse time goes stale
+// across a Settings language change.
+function _customRulesDefault() { return EXT.i18n.getMessage('dashboard_customRules_template'); }
 
 function loadCustomRules() {
   EXT.storage.local.get('customRulesText', ({ customRulesText }) => {
@@ -458,7 +451,7 @@ function loadCustomRules() {
     // auto-generated rule is removed and nothing hand-written remains, which
     // is functionally "no custom rules" same as the key never having been
     // set, so the sample template should show for that case too.
-    if (el) el.value = (customRulesText && customRulesText.trim()) ? customRulesText : CUSTOM_RULES_DEFAULT;
+    if (el) el.value = (customRulesText && customRulesText.trim()) ? customRulesText : _customRulesDefault();
   });
 }
 
@@ -470,9 +463,9 @@ document.getElementById('saveCustomRules')?.addEventListener('click', () => {
 });
 
 document.getElementById('resetCustomRules')?.addEventListener('click', () => {
-  if (!confirm('Clear all custom rules?')) return;
+  if (!confirm(EXT.i18n.getMessage('dashboard_confirm_clearRules'))) return;
   const el = document.getElementById('customRulesEditor');
-  if (el) el.value = CUSTOM_RULES_DEFAULT;
+  if (el) el.value = _customRulesDefault();
   EXT.storage.local.set({ customRulesText: '' }, () => {
     EXT.runtime.sendMessage({ type: 'RULES_CHANGED' });
   });
@@ -567,7 +560,7 @@ function renderElementRulesList(elementRules) {
     header.style.alignItems = 'center';
     const label = document.createElement('span');
     label.className = 'allow-domain';
-    label.textContent = `${host} (${selectors.length})`;
+    label.textContent = EXT.i18n.getMessage('dashboard_elementRules_hostCount', [host, String(selectors.length)]);
     const removeHostBtn = document.createElement('button');
     removeHostBtn.className = 'icon-btn-sm remove-element-host';
     removeHostBtn.dataset.host = host;
@@ -635,7 +628,7 @@ function renderGlobalRulesList(globalScopeRules) {
     header.style.alignItems = 'center';
     const label = document.createElement('span');
     label.className = 'allow-domain';
-    label.textContent = `${host} (${rules.length})`;
+    label.textContent = EXT.i18n.getMessage('dashboard_globalRules_hostCount', [host, String(rules.length)]);
     const removeHostBtn = document.createElement('button');
     removeHostBtn.className = 'icon-btn-sm remove-global-host';
     removeHostBtn.dataset.host = host;
@@ -647,8 +640,9 @@ function renderGlobalRulesList(globalScopeRules) {
       row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2px 0;';
       const left = document.createElement('div');
       left.style.cssText = 'display:flex;align-items:center;gap:6px;min-width:0;';
+      const _actionLabelKeys = { block: 'dashboard_globalRules_actionBlock', edit: 'dashboard_globalRules_actionEdit', delete: 'dashboard_globalRules_actionDelete' };
       const badge = document.createElement('span');
-      badge.textContent = rule.action;
+      badge.textContent = EXT.i18n.getMessage(_actionLabelKeys[rule.action]) || rule.action;
       badge.style.cssText = `font-size:10px;font-weight:600;color:#0f172a;background:${GLOBAL_RULE_ACTION_COLORS[rule.action] || '#94a3b8'};border-radius:4px;padding:1px 6px;flex-shrink:0;`;
       const code = document.createElement('code');
       code.textContent = rule.action === 'edit' ? `${rule.chain} = ${rule.value}` : rule.chain;
@@ -714,7 +708,7 @@ function disableFocusMode() {
   focusInterval = null;
   focusRemaining = focusDuration;
   updateTimerDisplay();
-  if (focusSubEl) focusSubEl.textContent = 'Session paused';
+  if (focusSubEl) focusSubEl.textContent = EXT.i18n.getMessage('dashboard_focus_statusPaused');
   const toggle = document.getElementById('focusToggle');
   if (toggle) toggle.checked = false;
   EXT.storage.local.set({ focusMode: false, focusEndTime: null });
@@ -725,12 +719,12 @@ function startFocusTimer(remaining) {
   clearInterval(focusInterval);
   focusRemaining = remaining;
   updateTimerDisplay();
-  if (focusSubEl) focusSubEl.textContent = 'Session running…';
+  if (focusSubEl) focusSubEl.textContent = EXT.i18n.getMessage('dashboard_focus_statusRunning');
   focusInterval = setInterval(() => {
     focusRemaining--;
     updateTimerDisplay();
     if (focusRemaining <= 0) {
-      if (focusSubEl) focusSubEl.textContent = 'Session complete!';
+      if (focusSubEl) focusSubEl.textContent = EXT.i18n.getMessage('dashboard_focus_statusComplete');
       disableFocusMode();
     }
   }, 1000);
@@ -767,7 +761,7 @@ EXT.storage.local.get(['focusMode', 'focusDuration', 'distractionDomains', 'focu
       startFocusTimer(remaining);
     } else {
       // Timer already expired while page was closed
-      if (focusSubEl) focusSubEl.textContent = 'Session complete!';
+      if (focusSubEl) focusSubEl.textContent = EXT.i18n.getMessage('dashboard_focus_statusComplete');
       disableFocusMode();
     }
   }
@@ -828,7 +822,7 @@ customMinInput?.addEventListener('focus', () => {
 });
 
 document.getElementById('addDistraction')?.addEventListener('click', () => {
-  const d = prompt('Enter domain to block during focus (e.g. twitter.com):');
+  const d = prompt(EXT.i18n.getMessage('dashboard_prompt_addDistraction'));
   if (!d) return;
   const domain = d.trim().toLowerCase();
   if (!domain || distractionDomains.includes(domain)) return;
@@ -906,6 +900,25 @@ for (const { id, key } of privacyToggles) {
   });
 }
 
+// UI language — chrome.i18n has no built-in way to pick a language other
+// than the browser's own; shared/i18n.js's EXT.i18n.getMessage() wrapper
+// reads this same 'uiLanguage' storage key to decide whether to fetch an
+// override locale. Reload after saving so EVERY string on the page (not
+// just the ones this file could re-render on demand) picks up the new
+// language immediately, instead of leaving already-painted text stale
+// until something else happens to re-trigger it.
+const uiLanguageSelect = document.getElementById('uiLanguageSelect');
+EXT.storage.local.get('uiLanguage', ({ uiLanguage = 'auto' }) => {
+  if (uiLanguageSelect) uiLanguageSelect.value = uiLanguage;
+});
+uiLanguageSelect?.addEventListener('change', (e) => {
+  // Drop the localStorage fast-path cache (shared/i18n.js) BEFORE reloading —
+  // otherwise the reload's first paint would briefly show the OLD cached
+  // language again while the new one is (re-)resolved.
+  try { self.i18nClearCache && self.i18nClearCache(); } catch (err) {}
+  EXT.storage.local.set({ uiLanguage: e.target.value }, () => location.reload());
+});
+
 // Stats collection toggle
 const statsToggle = document.getElementById('statsToggle');
 EXT.storage.local.get('collectStats', ({ collectStats = true }) => {
@@ -916,9 +929,9 @@ statsToggle?.addEventListener('change', (e) => {
 });
 
 document.getElementById('resetBtn')?.addEventListener('click', () => {
-  if (!confirm('Reset all AdBlock data? This cannot be undone.')) return;
+  if (!confirm(EXT.i18n.getMessage('dashboard_confirm_resetData'))) return;
   EXT.storage.local.clear(() => {
-    alert('All data cleared. Reloading…');
+    alert(EXT.i18n.getMessage('dashboard_alert_dataCleared'));
     location.reload();
   });
 });
@@ -945,12 +958,12 @@ function _renderUpdateStatus(res) {
     return;
   }
   const checkedText = res.lastChecked
-    ? `Last checked ${new Date(res.lastChecked).toLocaleString()}${res.lastCheckOk === false ? ' (failed — offline?)' : ''}`
-    : 'Never checked yet';
-  versionDesc.textContent = `v${current} · ${checkedText}`;
+    ? EXT.i18n.getMessage('dashboard_settings_lastChecked', [new Date(res.lastChecked).toLocaleString()]) + (res.lastCheckOk === false ? EXT.i18n.getMessage('dashboard_settings_checkFailedSuffix') : '')
+    : EXT.i18n.getMessage('dashboard_settings_neverChecked');
+  versionDesc.textContent = EXT.i18n.getMessage('dashboard_settings_versionLine', [current, checkedText]);
   if (updateRow) updateRow.style.display = res.available ? '' : 'none';
   if (res.available && updateDesc) {
-    updateDesc.textContent = `v${res.latestVersion} is available (you have v${current})`;
+    updateDesc.textContent = EXT.i18n.getMessage('dashboard_settings_updateAvailableDesc', [res.latestVersion, current]);
   }
 }
 function loadUpdateStatus() {
@@ -960,7 +973,7 @@ document.getElementById('checkUpdateBtn')?.addEventListener('click', (e) => {
   const btn = e.currentTarget;
   btn.disabled = true;
   const original = btn.textContent;
-  btn.textContent = 'Checking…';
+  btn.textContent = EXT.i18n.getMessage('dashboard_settings_checking');
   EXT.runtime.sendMessage({ type: 'CHECK_FOR_UPDATE_NOW' }, (res) => {
     _renderUpdateStatus(res);
     btn.disabled = false;
@@ -983,7 +996,7 @@ document.getElementById('seedYesterdayBtn')?.addEventListener('click', () => {
       malware:  Math.floor(Math.random() * 10),
     };
     EXT.storage.local.set({ dailyStats }, () => {
-      alert(`Seeded fake data for ${key}:\n` + JSON.stringify(dailyStats[key], null, 2));
+      alert(EXT.i18n.getMessage('dashboard_debug_seedYesterdayAlert', [key]) + '\n' + JSON.stringify(dailyStats[key], null, 2));
       loadOverviewStats();
     });
   });
@@ -1051,7 +1064,7 @@ EXT.storage.onChanged.addListener((changes, area) => {
       focusInterval = null;
       focusRemaining = focusDuration;
       updateTimerDisplay();
-      if (focusSubEl) focusSubEl.textContent = 'Session paused';
+      if (focusSubEl) focusSubEl.textContent = EXT.i18n.getMessage('dashboard_focus_statusPaused');
       if (toggle) toggle.checked = false;
     }
   }
@@ -1094,12 +1107,12 @@ function _sanitizeExportFileName(name) {
 function _exportConvertedRuleSource(url, btn, label) {
   const original = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Exporting…';
+  btn.textContent = EXT.i18n.getMessage('dashboard_ruleSource_exporting');
   EXT.runtime.sendMessage({ type: 'EXPORT_CONVERTED_RULE_SOURCE', url }, (res) => {
     btn.disabled = false;
     btn.textContent = original;
     if (EXT.runtime.lastError || !res || !res.ok) {
-      alert('Export failed: ' + ((res && res.error) || (EXT.runtime.lastError && EXT.runtime.lastError.message) || 'unknown error'));
+      alert(EXT.i18n.getMessage('dashboard_ruleSource_exportFailed', [(res && res.error) || (EXT.runtime.lastError && EXT.runtime.lastError.message) || EXT.i18n.getMessage('dashboard_ruleSource_unknownError')]));
       return;
     }
     const blob = new Blob([res.text], { type: 'text/plain' });
@@ -1137,15 +1150,15 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stat
     const skipped = stats.total - stats.converted;
     const statSpan = document.createElement('span');
     statSpan.className = 'source-stats' + (skipped ? ' has-skips' : '');
-    statSpan.title = `${stats.converted} converted, ${skipped} skipped of ${stats.total} rules` +
-      (stats.exception ? `\n${stats.exception} exception rules (no cancellation model here)` : '') +
-      (stats.procedural ? `\n${stats.procedural} procedural selectors (:has-text, :xpath, ...)` : '') +
-      (stats.adguardExtended ? `\n${stats.adguardExtended} AdGuard-extended modifiers` : '') +
-      (stats.unmappedScriptlet ? `\n${stats.unmappedScriptlet} unmapped scriptlet calls` : '') +
-      (stats.complexNetwork ? `\n${stats.complexNetwork} unsupported network-rule modifiers` : '') +
-      (stats.dedupSkipped ? `\n${stats.dedupSkipped} already curated by this repo's own site-rules.txt` : '') +
-      (stats.unrecognized ? `\n${stats.unrecognized} unrecognized syntax` : '');
-    statSpan.textContent = skipped ? `${stats.converted}/${stats.total} loaded` : `${stats.total} loaded`;
+    statSpan.title = EXT.i18n.getMessage('dashboard_ruleSource_statsBase', [String(stats.converted), String(skipped), String(stats.total)]) +
+      (stats.exception ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsException', [String(stats.exception)]) : '') +
+      (stats.procedural ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsProcedural', [String(stats.procedural)]) : '') +
+      (stats.adguardExtended ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsAdguardExtended', [String(stats.adguardExtended)]) : '') +
+      (stats.unmappedScriptlet ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsUnmappedScriptlet', [String(stats.unmappedScriptlet)]) : '') +
+      (stats.complexNetwork ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsComplexNetwork', [String(stats.complexNetwork)]) : '') +
+      (stats.dedupSkipped ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsDedupSkipped', [String(stats.dedupSkipped)]) : '') +
+      (stats.unrecognized ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsUnrecognized', [String(stats.unrecognized)]) : '');
+    statSpan.textContent = skipped ? EXT.i18n.getMessage('dashboard_ruleSource_loadedPartial', [String(stats.converted), String(stats.total)]) : EXT.i18n.getMessage('dashboard_ruleSource_loadedFull', [String(stats.total)]);
     row.appendChild(statSpan);
     // Only ever meaningful alongside the stats badge above — RULE_SOURCE_STATS_KEY
     // is set only for a source that WAS detected as ABP-format and actually
@@ -1153,8 +1166,8 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stat
     if (url) {
       const exportBtn = document.createElement('button');
       exportBtn.className = 'btn-ghost btn-sm';
-      exportBtn.textContent = 'Export';
-      exportBtn.title = 'Download this source\'s rules converted to this repo\'s own grammar';
+      exportBtn.textContent = EXT.i18n.getMessage('dashboard_ruleSource_exportBtn');
+      exportBtn.title = EXT.i18n.getMessage('dashboard_ruleSource_exportTitle');
       exportBtn.addEventListener('click', () => _exportConvertedRuleSource(url, exportBtn, label));
       row.appendChild(exportBtn);
     }
@@ -1172,7 +1185,7 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stat
   if (onRemove) {
     const btn = document.createElement('button');
     btn.className = 'btn-ghost btn-sm';
-    btn.textContent = 'Remove';
+    btn.textContent = EXT.i18n.getMessage('common_remove');
     btn.addEventListener('click', onRemove);
     row.appendChild(btn);
   }
@@ -1183,7 +1196,14 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stat
 // field ('default' | 'easylist' | 'language') — grouping them here instead
 // of one flat 44-row list, so enabling many language lists doesn't bury the
 // user's own default/EasyList-family toggles in a wall of checkboxes.
-const _RULE_SOURCE_GROUP_LABELS = { default: 'Default', easylist: 'EasyList family', language: 'By language', custom: 'Custom (your own URLs)' };
+// Keys only — same reason as METRIC_CONFIG above (resolved at use time in
+// _makeSourceGroupSection, not cached here at module-parse time).
+const _RULE_SOURCE_GROUP_LABEL_KEYS = {
+  default: 'dashboard_ruleSource_groupDefault',
+  easylist: 'dashboard_ruleSource_groupEasylist',
+  language: 'dashboard_ruleSource_groupLanguage',
+  custom: 'dashboard_ruleSource_groupCustom',
+};
 const _RULE_SOURCE_GROUP_ORDER = ['default', 'easylist', 'language'];
 // Groups this large collapse behind a <details> (closed unless the user
 // already has one of its entries enabled, so their own active choice is
@@ -1191,7 +1211,7 @@ const _RULE_SOURCE_GROUP_ORDER = ['default', 'easylist', 'language'];
 const _RULE_SOURCE_COLLAPSE_THRESHOLD = 6;
 
 function _makeSourceGroupSection(groupKey, entries, anyEnabled) {
-  const label = _RULE_SOURCE_GROUP_LABELS[groupKey] || groupKey;
+  const label = (_RULE_SOURCE_GROUP_LABEL_KEYS[groupKey] && EXT.i18n.getMessage(_RULE_SOURCE_GROUP_LABEL_KEYS[groupKey])) || groupKey;
   const rows = document.createElement('div');
   rows.className = 'rules-source-list rules-source-group-rows';
   for (const row of entries) rows.appendChild(row);
@@ -1202,7 +1222,7 @@ function _makeSourceGroupSection(groupKey, entries, anyEnabled) {
     details.open = anyEnabled;
     const summary = document.createElement('summary');
     summary.className = 'rules-source-group-summary';
-    summary.textContent = `${label} (${entries.length})`;
+    summary.textContent = EXT.i18n.getMessage('dashboard_ruleSource_groupCount', [label, String(entries.length)]);
     details.appendChild(summary);
     details.appendChild(rows);
     return details;

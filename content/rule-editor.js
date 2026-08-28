@@ -16,72 +16,31 @@ window.__qkv1RuleEditor = true;
 // Grounded in this repo's own doc-comments (content/site-block.js,
 // content/scriptlets.js) — kept here as a flat list rather than fetched
 // live, since it describes the EXTENSION's own rule grammar, not anything
-// page- or site-specific.
+// page- or site-specific. Descriptions live in _locales/en/messages.json as
+// "ruleEditor_ref_<key>" (built from the key name itself — see _refRow),
+// not inline here, so they're translatable per-entry.
 var COSMETIC_KEYS = [
-  ['direct_hide_selectors', 'CSS selectors hidden unconditionally via an injected stylesheet — no heuristic check, just hide on sight.'],
-  ['selectors', 'CSS selectors for CANDIDATE elements — only hidden if they also match labels/link_patterns below.'],
-  ['feed_selectors', 'Same as selectors, scoped to feed/timeline-style containers.'],
-  ['market_selectors', 'Same as selectors, scoped to marketplace/shopping-style containers.'],
-  ['right_rail_selectors', 'Same as selectors, scoped to a sidebar/right-rail area.'],
-  ['post_selectors', 'Same as selectors, scoped to individual post/article containers.'],
-  ['ad_host_selectors', 'CSS selectors for "host" elements, checked the same way as selectors above.'],
-  ['labels', 'Text labels (e.g. sponsored, promoted) matched against attributes/context text to confirm a candidate is really an ad.'],
-  ['link_patterns', 'Substring patterns matched against a candidate’s own links/attributes to confirm it’s an ad.'],
-  ['attr_keys', 'HTML attribute names scanned for label/link_pattern matches (default: aria-label, data-promoted, post-type, …).'],
-  ['context_selectors', 'Child elements to pull text from for label matching (default: header, [role=heading], span, a).'],
-  ['hide_closest', 'CSS selector(s) to walk up to via .closest() before hiding a matched candidate (hide the container, not just the label).'],
-  ['strip_page_classes', 'Class names continuously stripped from <html>/<body> — defeats CSS-only takeover overlays driven by a root class.'],
-  ['strip_inline_styles', 'CSS property names continuously cleared from <html>/<body> inline style — defeats JS-set scroll-lock, etc.'],
-  ['close_popunder_tabs', '1/0 flag — auto-close popup/popunder tabs opened by clicks on this site.'],
+  'direct_hide_selectors', 'selectors', 'feed_selectors', 'market_selectors',
+  'right_rail_selectors', 'post_selectors', 'ad_host_selectors', 'labels',
+  'link_patterns', 'attr_keys', 'context_selectors', 'hide_closest',
+  'strip_page_classes', 'strip_inline_styles', 'close_popunder_tabs',
 ];
 var SCRIPTLET_KEYS_REF = [
-  ['set_constant', '"chain value" — lock a window property permanently to a fixed value (undefined, true, false, noopFunc, …).'],
-  ['abort_on_property_read', 'chain — throw when any script reads this window property.'],
-  ['abort_on_property_write', 'chain — throw when any script writes this window property.'],
-  ['abort_on_stack_trace', '"chain, needle" — throw only when the calling script’s own stack trace matches needle.'],
-  ['abort_current_script', '"target, needle, ctx" — throw when a script whose source matches needle reads target.'],
-  ['no_window_open_if', '"pattern, delayMs, decoy" — block or decoy-redirect window.open() calls matching pattern.'],
-  ['prevent_fetch', 'propsToMatch — block fetch() calls matching criteria.'],
-  ['prevent_xhr', 'propsToMatch — block XMLHttpRequest calls matching criteria.'],
-  ['trusted_prevent_fetch', '"propsToMatch, directive" — block fetch, optionally returning a fixed fake response body.'],
-  ['prevent_dom_bypass', '"methodPath[, targetProp]" — stops a same-origin about:blank iframe from reaching back into the real window to bypass a lock.'],
-  ['json_prune', '"prunePaths, needlePaths" — remove fields from any JSON.parse() result.'],
-  ['json_prune_fetch', '"prunePaths, needlePaths[, propsToMatch]" — remove fields from a fetch() JSON response.'],
-  ['json_prune_xhr', '"prunePaths, needlePaths[, propsToMatch]" — remove fields from an XHR JSON response.'],
-  ['json_prune_on_set', '"chain, prunePaths, needlePaths" — prune an object a script assigns directly (not via JSON.parse).'],
-  ['json_edit', 'jsonq — JSONPath-based field deletions in a fetch() JSON response.'],
-  ['jsonl_edit_xhr', '"jsonq, urlPattern" — JSONPath-based field deletions in an XHR JSON-lines response.'],
-  ['jspb_response_prune', 'Remove fields from a protobuf/jspb-encoded response.'],
-  ['trusted_edit_request', '"jsonq, propsToMatch" — JSONPath edits (deletions AND value assignment) on an outgoing request body.'],
-  ['trusted_edit_response', '"jsonq, propsToMatch" — JSONPath edits (deletions AND value assignment) on a response body.'],
-  ['trusted_replace_fetch_response', '"pattern, replacement, propsToMatch" — regex find/replace on a fetch() response body.'],
-  ['trusted_replace_xhr_response', '"pattern, replacement, propsToMatch" — regex find/replace on an XHR response body.'],
-  ['trusted_replace_argument', '"propChain, argIndex, value" — replace one argument passed to a function.'],
-  ['trusted_replace_outbound_text', '"propChain, pattern, replacement" — unconditional text substitution on outbound data (no URL scoping).'],
-  ['trusted_replace_script_text', '"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement" — rewrite a <script> tag’s text before it runs. sedCount caps how many nodes this rule will ever rewrite (default: unlimited).'],
-  ['trusted_prune_inbound_object', '"propChain, prunePaths, needlePaths" — prune fields from an object passed INTO a native method call.'],
-  ['trusted_suppress_native_method', '"methodPath, signature[, behavior, stack]" — abort or silently no-op a native method call matching a signature.'],
-  ['trusted_suppress_setter', '"propChain, needle[, behavior]" — drop or throw on an accessor setter assignment (e.g. Element.prototype.innerHTML) whose value matches needle.'],
-  ['m3u_prune', '"markers, propsToMatch" — remove ad segments from an HLS .m3u8 playlist response.'],
-  ['prevent_element_src_loading', '"tagName, match" — fake-succeed a script/img/iframe/link load instead of the real network request.'],
-  ['remove_attr', '"attrNames[, selector, behavior]" — remove HTML attributes from matching elements.'],
-  ['remove_node_text', '"nodeName, pattern" — clear a DOM node’s text content.'],
-  ['replace_node_text', '"nodeName, pattern, replacement" — rewrite a DOM node’s text content.'],
-  ['refresh_defuser', 'delay — stop a <meta http-equiv="refresh"> auto-redirect.'],
-  ['set_cookie', '"name, value" — set a cookie.'],
-  ['remove_cookie', 'needle — remove cookies matching a name pattern.'],
-  ['set_local_storage_item', '"key, value" — set a localStorage entry (restricted to safe literal values, or $remove$ to delete matching keys).'],
-  ['href_sanitizer', '"selector, source" — rewrite a link’s href from its own text or another attribute.'],
-  ['prevent_settimeout', 'propsToMatch — block setTimeout() calls matching criteria.'],
-  ['prevent_setinterval', 'propsToMatch — block setInterval() calls matching criteria.'],
-  ['prevent_raf', 'propsToMatch — block requestAnimationFrame() calls matching criteria.'],
-  ['prevent_aeld', 'propsToMatch — block addEventListener() calls matching criteria.'],
-  ['adjust_settimeout', '"needle, delay, boost" — speed up/slow down matching setTimeout() calls instead of blocking them.'],
-  ['adjust_setinterval', '"needle, delay, boost" — speed up/slow down matching setInterval() calls instead of blocking them.'],
-  ['no_eval_if', 'pattern — block eval() calls whose source matches pattern.'],
-  ['no_webrtc', 'Disables RTCPeerConnection — blocks WebRTC-based popup/tracking tricks.'],
-  ['prevent_bab', 'Defuses BlockAdBlock/FuckAdBlock-style anti-adblock detection scripts.'],
-  ['disable_newtab_links', 'Strips target="_blank" from clicked links — blocks forced new-tab redirects.'],
+  'set_constant', 'abort_on_property_read', 'abort_on_property_write',
+  'abort_on_stack_trace', 'abort_current_script', 'no_window_open_if',
+  'prevent_fetch', 'prevent_xhr', 'trusted_prevent_fetch', 'prevent_dom_bypass',
+  'json_prune', 'json_prune_fetch', 'json_prune_xhr', 'json_prune_on_set',
+  'json_edit', 'jsonl_edit_xhr', 'jspb_response_prune', 'trusted_edit_request',
+  'trusted_edit_response', 'trusted_replace_fetch_response',
+  'trusted_replace_xhr_response', 'trusted_replace_argument',
+  'trusted_replace_outbound_text', 'trusted_replace_script_text',
+  'trusted_prune_inbound_object', 'trusted_suppress_native_method',
+  'trusted_suppress_setter', 'm3u_prune', 'prevent_element_src_loading',
+  'remove_attr', 'remove_node_text', 'replace_node_text', 'refresh_defuser',
+  'set_cookie', 'remove_cookie', 'set_local_storage_item', 'href_sanitizer',
+  'prevent_settimeout', 'prevent_setinterval', 'prevent_raf', 'prevent_aeld',
+  'adjust_settimeout', 'adjust_setinterval', 'no_eval_if', 'no_webrtc',
+  'prevent_bab', 'disable_newtab_links',
 ];
 
 function _ownNode(el) {
@@ -102,16 +61,16 @@ function _mkBtn(label, primary) {
   return b;
 }
 
-function _refRow(key, desc) {
+function _refRow(key) {
   var row = document.createElement('div');
   row.className = 'qkv1-editor-ui qkv1-ref-row';
   row.style.cssText = 'padding:4px 0;border-bottom:1px solid #263548;';
   var code = document.createElement('code');
   code.textContent = key;
   code.style.cssText = 'font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:#93c5fd;display:block;cursor:pointer;';
-  code.title = 'Click to insert into the textarea';
+  code.title = EXT.i18n.getMessage('ruleEditor_ref_clickToInsert');
   var desc2 = document.createElement('div');
-  desc2.textContent = desc;
+  desc2.textContent = EXT.i18n.getMessage('ruleEditor_ref_' + key);
   desc2.style.cssText = 'font:11px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:#94a3b8;margin-top:1px;';
   row.appendChild(code);
   row.appendChild(desc2);
@@ -146,7 +105,7 @@ function _buildPanel(host, initialText, existingText) {
   header.style.cssText = 'padding:12px 14px;border-bottom:1px solid #334155;display:flex;align-items:center;gap:8px;';
   var title = document.createElement('div');
   title.className = 'qkv1-editor-ui';
-  title.textContent = 'Edit rules — ' + host;
+  title.textContent = EXT.i18n.getMessage('ruleEditor_panel_title', [host]);
   title.style.cssText = 'font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
   var closeBtn = _mkBtn('✕', false);
   closeBtn.style.cssText += 'padding:4px 8px;';
@@ -169,7 +128,7 @@ function _buildPanel(host, initialText, existingText) {
   refSection.style.cssText = 'border-bottom:1px solid #334155;flex-shrink:0;';
   var refToggle = document.createElement('button');
   refToggle.className = 'qkv1-editor-ui';
-  refToggle.textContent = '▸ Key reference (' + (COSMETIC_KEYS.length + SCRIPTLET_KEYS_REF.length) + ')';
+  refToggle.textContent = '▸ ' + EXT.i18n.getMessage('ruleEditor_ref_toggle', [String(COSMETIC_KEYS.length + SCRIPTLET_KEYS_REF.length)]);
   refToggle.style.cssText = 'width:100%;text-align:left;background:none;border:0;color:#e2e8f0;font:12px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;font-weight:600;padding:8px 14px;cursor:pointer;';
   var refBody = document.createElement('div');
   refBody.className = 'qkv1-editor-ui';
@@ -177,7 +136,7 @@ function _buildPanel(host, initialText, existingText) {
   var refFilter = document.createElement('input');
   refFilter.className = 'qkv1-editor-ui';
   refFilter.type = 'text';
-  refFilter.placeholder = 'Filter keys…';
+  refFilter.placeholder = EXT.i18n.getMessage('ruleEditor_ref_filterPlaceholder');
   refFilter.style.cssText = 'width:100%;box-sizing:border-box;font:12px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;' +
     'background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:5px 8px;margin-bottom:6px;';
   refBody.appendChild(refFilter);
@@ -186,21 +145,21 @@ function _buildPanel(host, initialText, existingText) {
   refList.style.cssText = 'max-height:220px;overflow-y:auto;';
   var cosmeticLabel = document.createElement('div');
   cosmeticLabel.className = 'qkv1-editor-ui';
-  cosmeticLabel.textContent = 'COSMETIC / CANDIDATE MATCHING';
+  cosmeticLabel.textContent = EXT.i18n.getMessage('ruleEditor_ref_cosmeticLabel');
   cosmeticLabel.style.cssText = 'font:10px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:#64748b;font-weight:700;letter-spacing:.4px;margin-top:6px;';
   refList.appendChild(cosmeticLabel);
-  COSMETIC_KEYS.forEach(function (pair) { refList.appendChild(_refRow(pair[0], pair[1])); });
+  COSMETIC_KEYS.forEach(function (key) { refList.appendChild(_refRow(key)); });
   var scriptletLabel = document.createElement('div');
   scriptletLabel.className = 'qkv1-editor-ui';
-  scriptletLabel.textContent = 'SCRIPTLETS (ADVANCED)';
+  scriptletLabel.textContent = EXT.i18n.getMessage('ruleEditor_ref_scriptletLabel');
   scriptletLabel.style.cssText = 'font:10px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:#64748b;font-weight:700;letter-spacing:.4px;margin-top:10px;';
   refList.appendChild(scriptletLabel);
-  SCRIPTLET_KEYS_REF.forEach(function (pair) { refList.appendChild(_refRow(pair[0], pair[1])); });
+  SCRIPTLET_KEYS_REF.forEach(function (key) { refList.appendChild(_refRow(key)); });
   refBody.appendChild(refList);
   refToggle.addEventListener('click', function () {
     var open = refBody.style.display !== 'none';
     refBody.style.display = open ? 'none' : 'block';
-    refToggle.textContent = (open ? '▸' : '▾') + ' Key reference (' + (COSMETIC_KEYS.length + SCRIPTLET_KEYS_REF.length) + ')';
+    refToggle.textContent = (open ? '▸' : '▾') + ' ' + EXT.i18n.getMessage('ruleEditor_ref_toggle', [String(COSMETIC_KEYS.length + SCRIPTLET_KEYS_REF.length)]);
   });
   refFilter.addEventListener('input', function () {
     var q = refFilter.value.trim().toLowerCase();
@@ -227,14 +186,14 @@ function _buildPanel(host, initialText, existingText) {
   var existingKeyCount = existingText ? existingText.split('\n').filter(Boolean).length : 0;
   var existingToggle = document.createElement('button');
   existingToggle.className = 'qkv1-editor-ui';
-  existingToggle.textContent = '▸ Current rules for this site (' + existingKeyCount + ')';
+  existingToggle.textContent = '▸ ' + EXT.i18n.getMessage('ruleEditor_existing_toggle', [String(existingKeyCount)]);
   existingToggle.style.cssText = 'width:100%;text-align:left;background:none;border:0;color:#e2e8f0;font:12px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;font-weight:600;padding:8px 14px;cursor:pointer;';
   var existingBody = document.createElement('div');
   existingBody.className = 'qkv1-editor-ui';
   existingBody.style.cssText = 'display:none;padding:0 14px 10px;';
   var existingPre = document.createElement('pre');
   existingPre.className = 'qkv1-editor-ui';
-  existingPre.textContent = existingText || '(no rules for this site yet — built-in or custom)';
+  existingPre.textContent = existingText || EXT.i18n.getMessage('ruleEditor_existing_empty');
   existingPre.style.cssText = 'margin:0;max-height:180px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;' +
     'font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#cbd5e1;background:#0f172a;' +
     'border:1px solid #334155;border-radius:6px;padding:8px;';
@@ -242,7 +201,7 @@ function _buildPanel(host, initialText, existingText) {
   existingToggle.addEventListener('click', function () {
     var open = existingBody.style.display !== 'none';
     existingBody.style.display = open ? 'none' : 'block';
-    existingToggle.textContent = (open ? '▸' : '▾') + ' Current rules for this site (' + existingKeyCount + ')';
+    existingToggle.textContent = (open ? '▸' : '▾') + ' ' + EXT.i18n.getMessage('ruleEditor_existing_toggle', [String(existingKeyCount)]);
   });
   existingSection.appendChild(existingToggle);
   existingSection.appendChild(existingBody);
@@ -254,9 +213,7 @@ function _buildPanel(host, initialText, existingText) {
   body.style.cssText = 'flex:1;display:flex;flex-direction:column;padding:10px 14px;min-height:0;';
   var hint = document.createElement('div');
   hint.className = 'qkv1-editor-ui';
-  hint.textContent = 'One "key = value | value2" per line. Click a key above to insert it. No [section] headers. ' +
-    'Rules typed here are ADDED to any existing rules for this key (see above) — this cannot remove or override a ' +
-    'built-in rule, and for single-value flag keys the built-in value usually still wins.';
+  hint.textContent = EXT.i18n.getMessage('ruleEditor_hint');
   hint.style.cssText = 'font:10px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:#64748b;margin-bottom:6px;';
   body.appendChild(hint);
   var textarea = document.createElement('textarea');
@@ -277,8 +234,8 @@ function _buildPanel(host, initialText, existingText) {
   var actions = document.createElement('div');
   actions.className = 'qkv1-editor-ui';
   actions.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;margin-top:4px;';
-  var cancelBtn = _mkBtn('Close', false);
-  var saveBtn = _mkBtn('Save', true);
+  var cancelBtn = _mkBtn(EXT.i18n.getMessage('common_close'), false);
+  var saveBtn = _mkBtn(EXT.i18n.getMessage('common_save'), true);
   cancelBtn.addEventListener('click', _exitEditorMode);
   saveBtn.addEventListener('click', function () {
     var text = textarea.value;
@@ -287,10 +244,10 @@ function _buildPanel(host, initialText, existingText) {
       EXT.runtime.sendMessage({ type: 'SAVE_SITE_RULE_TEXT', host: host, text: text }, function (res) {
         void EXT.runtime.lastError;
         if (res && res.ok) {
-          status.textContent = 'Saved — reload this page to see the rules applied.';
+          status.textContent = EXT.i18n.getMessage('ruleEditor_status_saved');
         } else {
           status.style.color = '#f87171';
-          status.textContent = 'Save failed — check for a stray "[section]" line or a huge paste.';
+          status.textContent = EXT.i18n.getMessage('ruleEditor_status_saveFailed');
         }
       });
     } catch (e) {}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Site blocked — AdBlock</title>
+  <title data-i18n="blocked_pageTitle">Site blocked — AdBlock</title>
   <style>
     :root { color-scheme: light dark; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -94,22 +94,24 @@
 <body>
   <div class="card">
     <div class="icon" id="icon">⚠️</div>
-    <h1 id="title">Site blocked for your safety</h1>
-    <div class="host" id="host">unknown site</div>
-    <p class="hint" id="hint">
+    <h1 id="title" data-i18n="blocked_title_default">Site blocked for your safety</h1>
+    <div class="host" id="host" data-i18n="blocked_host_unknown">unknown site</div>
+    <p class="hint" id="hint" data-i18n="blocked_hint_default">
       This site is on a malware / phishing blocklist. It may try to steal your
       information, mine cryptocurrency, or install unwanted software.
     </p>
     <label class="dont-warn" id="dontWarnLabel">
       <input type="checkbox" id="dontWarn">
-      Don't warn me again about this site
+      <span data-i18n="blocked_dontWarn_label">Don't warn me again about this site</span>
     </label>
     <div class="actions">
-      <button id="back" class="secondary">Go back</button>
-      <button id="proceed">Proceed anyway</button>
+      <button id="back" class="secondary" data-i18n="blocked_btn_goBack">Go back</button>
+      <button id="proceed" data-i18n="blocked_btn_proceed">Proceed anyway</button>
     </div>
   </div>
   <script src="../shared/browser-compat.js"></script>
+  <script src="../shared/utils.js"></script>
+  <script src="../shared/i18n.js"></script>
   <script src="blocked.js"></script>
 </body>
 </html>

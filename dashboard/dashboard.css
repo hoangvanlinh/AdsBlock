@@ -255,6 +255,17 @@ body::before {
 }
 .toggle-pill input { display: none; }
 
+.select-input {
+  background: var(--surface-2);
+  border: 1px solid var(--border) !important;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text-1);
+  cursor: pointer;
+}
+.select-input:hover { border-color: var(--border-h) !important; }
+
 .pill-track {
   width: 44px; height: 24px;
   border-radius: 999px;

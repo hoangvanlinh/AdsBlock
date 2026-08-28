@@ -101,7 +101,7 @@ function _ensureBadge() {
   if (_badgeEl) return;
   _badgeEl = document.createElement('div');
   _badgeEl.className = 'qkv1-picker-ui';
-  _badgeEl.textContent = 'Picking element to hide — press Esc to cancel';
+  _badgeEl.textContent = EXT.i18n.getMessage('picker_badge_active');
   _badgeEl.style.cssText =
     'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2147483647;' +
     'background:#111827;color:#fff;font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;' +
@@ -153,9 +153,9 @@ function _showConfirmPanel(el) {
       (primary ? 'background:#2563eb;color:#fff;' : 'background:#334155;color:#e2e8f0;');
     return b;
   }
-  var hideBtn = mkBtn('Hide this element', true);
-  var broadenBtn = mkBtn('Broaden', false);
-  var cancelBtn = mkBtn('Cancel', false);
+  var hideBtn = mkBtn(EXT.i18n.getMessage('picker_btn_hide'), true);
+  var broadenBtn = mkBtn(EXT.i18n.getMessage('picker_btn_broaden'), false);
+  var cancelBtn = mkBtn(EXT.i18n.getMessage('common_cancel'), false);
   hideBtn.addEventListener('click', function () { _confirmHide(el, selector); });
   broadenBtn.addEventListener('click', function () {
     var parent = el.parentElement;
