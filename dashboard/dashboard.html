@@ -29,7 +29,15 @@
     <span class="brand-name" data-i18n="dashboard_brand_name">AdBlock — Ads, Trackers</span>
   </div>
 
-  <nav class="nav">
+  <!-- Phone only (see @media max-width:640px) — opens .nav as a slide-in
+       drawer instead of the old horizontal-scrolling nav strip. -->
+  <button class="nav-toggle" id="navToggle" data-i18n-title="dashboard_nav_toggle_title" title="Menu" aria-expanded="false" aria-controls="mainNav">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <nav class="nav" id="mainNav">
     <a class="nav-item active" data-page="overview" href="#">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
@@ -98,6 +106,9 @@
     </button>
   </div>
 </aside>
+
+<!-- Phone only — dims the page and closes the nav drawer on tap-outside. -->
+<div class="nav-backdrop" id="navBackdrop"></div>
 
 <!-- ───────── MAIN ───────── -->
 <main class="main">

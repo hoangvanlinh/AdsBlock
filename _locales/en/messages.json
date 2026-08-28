@@ -1179,5 +1179,8 @@
   },
   "dashboard_settings_language_auto": {
     "message": "Auto (browser language)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Menu"
   }
 }

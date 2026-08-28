@@ -1177,5 +1177,8 @@
   },
   "dashboard_settings_language_auto": {
     "message": "Tự động (theo ngôn ngữ trình duyệt)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Trình đơn"
   }
 }

@@ -242,11 +242,20 @@ focusModeBtn.addEventListener('click', () => {
 });
 
 // ── Dashboard ──────────────────────────────────
+// Explicit window.close() after opening: on desktop the popup auto-closes
+// once the new options tab takes focus anyway, but on mobile (Firefox for
+// Android) the popup renders as its own overlay that does NOT auto-dismiss
+// just because a background tab opened — it was live-reported to sit on
+// top of the dashboard until the user pressed the phone's back button.
+// Closing explicitly matches the existing pattern already used below for
+// the "pick element" flow (see window.close() after QKV1_ENTER_PICKER_MODE).
 document.getElementById('openDashboard').addEventListener('click', () => {
   EXT.runtime.openOptionsPage();
+  window.close();
 });
 document.getElementById('openSettings').addEventListener('click', () => {
   EXT.runtime.openOptionsPage();
+  window.close();
 });
 
 // ── Donate ─────────────────────────────────────
@@ -254,6 +263,7 @@ document.getElementById('openSettings').addEventListener('click', () => {
 const PAYPAL_DONATE_URL = 'https://www.paypal.me/linhhvtt/5';
 document.getElementById('donateBtnPopup')?.addEventListener('click', () => {
   EXT.tabs.create({ url: PAYPAL_DONATE_URL });
+  window.close();
 });
 
 // ── Review prompt ────────────────────────────────
@@ -301,6 +311,7 @@ document.getElementById('reviewRateBtn')?.addEventListener('click', () => {
   EXT.storage.local.set({ reviewPromptState: 'reviewed' });
   EXT.tabs.create({ url: _detectReviewStoreUrl() });
   document.getElementById('reviewBanner')?.classList.add('hidden');
+  window.close();
 });
 document.getElementById('reviewDismissBtn')?.addEventListener('click', () => {
   EXT.storage.local.set({ reviewPromptState: 'dismissed' });
@@ -370,5 +381,6 @@ EXT.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, (res) => {
   chip.classList.remove('hidden');
   chip.addEventListener('click', () => {
     EXT.tabs.create({ url: _detectStoreUrl() });
+    window.close();
   });
 });

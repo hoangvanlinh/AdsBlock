@@ -109,7 +109,32 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
     item.classList.add('active');
     document.getElementById(`page-${page}`)?.classList.add('active');
+    closeNavDrawer();
   });
+});
+
+// ── Phone nav drawer (see dashboard.css @media max-width:640px) ──
+// No-op harmlessly on desktop: .nav-toggle/.nav-backdrop are display:none
+// there, so open/close only ever change classes nothing is listening to.
+const navToggle   = document.getElementById('navToggle');
+const mainNav     = document.getElementById('mainNav');
+const navBackdrop = document.getElementById('navBackdrop');
+function openNavDrawer() {
+  mainNav?.classList.add('open');
+  navBackdrop?.classList.add('open');
+  navToggle?.setAttribute('aria-expanded', 'true');
+}
+function closeNavDrawer() {
+  mainNav?.classList.remove('open');
+  navBackdrop?.classList.remove('open');
+  navToggle?.setAttribute('aria-expanded', 'false');
+}
+navToggle?.addEventListener('click', () => {
+  mainNav?.classList.contains('open') ? closeNavDrawer() : openNavDrawer();
+});
+navBackdrop?.addEventListener('click', closeNavDrawer);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeNavDrawer();
 });
 
 /* ── Date chip ────────────────────────────────── */

@@ -142,6 +142,22 @@ body::before {
 }
 .nav-item.active svg { stroke: var(--accent-from); }
 
+/* Phone-only nav drawer toggle + backdrop — hidden on desktop, where .nav
+   is always visible inline in the sidebar. See @media (max-width: 640px). */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.nav-toggle:hover { background: var(--surface); color: var(--text-1); }
+
+.nav-backdrop { display: none; }
+
 .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border); }
 
 .donate-btn {
@@ -1067,21 +1083,63 @@ details.rules-source-group[open] summary.rules-source-group-summary::before {
     padding: 8px 10px;
     border-right: none;
     border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 20;
+    /* Must outrank .nav-backdrop's z-index (25, root stacking context) —
+       position:sticky + z-index here makes .sidebar its OWN stacking
+       context, so .nav's z-index:30 is only compared against its OTHER
+       siblings inside .sidebar and can never out-rank a context-root
+       element like .nav-backdrop no matter how high it is set. Without
+       this, the backdrop's semi-transparent black rendered on top of the
+       whole sidebar (topbar + open drawer), reading as a dimmed/"mờ" menu
+       (live-reported 2026-08-29, misdiagnosed once already as the opacity
+       transition instead of this stacking-context trap). */
+    position: sticky; top: 0; z-index: 40;
   }
   .sidebar-brand { margin-bottom: 0; flex-shrink: 0; }
   .brand-name    { display: none; }            /* icon only, to save space */
-  .nav {
-    flex-direction: row;
-    flex: 1;
-    gap: 2px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav-item { white-space: nowrap; padding: 8px 10px; }
   .sidebar-footer { display: none; }           /* hide badge/donate on phone */
+
+  /* Nav becomes a slide-in drawer, opened via .nav-toggle, instead of a
+     horizontally-scrolling strip — the scroll strip was hard to hit
+     accurately with a finger (live-reported 2026-08-29). .sidebar is
+     position:sticky, which (like relative/absolute/fixed) establishes a
+     containing block for absolutely-positioned children, so `top: 100%`
+     anchors the drawer right below the topbar with no hardcoded height. */
+  .nav-toggle { display: flex; }
+  .nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    flex-direction: column;
+    gap: 2px;
+    width: 78%;
+    max-width: 280px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: 0 16px 32px rgba(0,0,0,.4);
+    padding: 8px;
+    z-index: 30;
+    transform: translateX(-100%);
+    pointer-events: none;
+    transition: transform .2s ease;
+  }
+  .nav.open { transform: translateX(0); pointer-events: auto; }
+  .nav-item { white-space: normal; padding: 12px 14px; } /* bigger tap target than the old horizontal strip */
+
+  .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 25;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .nav-backdrop.open { opacity: 1; pointer-events: auto; }
 
   .main { overflow-y: visible; padding: 16px 14px; }
 
