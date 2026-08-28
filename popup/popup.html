@@ -103,7 +103,7 @@
           </svg>
         </span>
         <div>
-          <p class="stat-value" id="speedGain">+0%</p>
+          <p class="stat-value" id="speedGain">—</p>
           <p class="stat-key" data-i18n="popup_stat_speed">Speed</p>
         </div>
       </div>
@@ -116,7 +116,7 @@
           </svg>
         </span>
         <div>
-          <p class="stat-value" id="timeSaved">0m</p>
+          <p class="stat-value" id="timeSaved">0s</p>
           <p class="stat-key" data-i18n="popup_stat_saved">Saved</p>
         </div>
       </div>
@@ -139,7 +139,7 @@
           <line x1="10" y1="15" x2="10" y2="9" />
           <line x1="14" y1="15" x2="14" y2="9" />
         </svg>
-        <span data-i18n="popup_action_pause">Pause on site</span>
+        <span id="pauseSiteLabel" data-i18n="popup_action_pause_emoji">⏸ Pause on site</span>
       </button>
       <button class="action-btn accent" id="focusMode">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -167,10 +167,10 @@
     <div class="privacy-bar">
       <div class="privacy-label">
         <span data-i18n="popup_privacy_scoreLabel">Privacy score</span>
-        <span class="privacy-score" id="privacyScore">82</span>
+        <span class="privacy-score" id="privacyScore" style="color: var(--blue)">63</span>
       </div>
       <div class="bar-track">
-        <div class="bar-fill" id="privacyBar" style="width: 82%"></div>
+        <div class="bar-fill" id="privacyBar" style="width: 63%"></div>
       </div>
     </div>
 

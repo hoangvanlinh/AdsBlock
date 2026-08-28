@@ -98,9 +98,6 @@
   "popup_allowlist_banner": {
     "message": "Trang này nằm trong danh sách cho phép"
   },
-  "popup_action_pause": {
-    "message": "Tạm dừng trên trang này"
-  },
   "popup_action_focus": {
     "message": "Chế độ tập trung"
   },

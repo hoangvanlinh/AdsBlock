@@ -100,9 +100,6 @@
   "popup_allowlist_banner": {
     "message": "This site is allowlisted"
   },
-  "popup_action_pause": {
-    "message": "Pause on site"
-  },
   "popup_action_focus": {
     "message": "Focus mode"
   },

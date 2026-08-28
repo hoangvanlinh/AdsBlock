@@ -11,6 +11,7 @@ const domainLabel  = document.getElementById('domainLabel');
 const privacyBar   = document.getElementById('privacyBar');
 const privacyScore = document.getElementById('privacyScore');
 const pauseSiteBtn = document.getElementById('pauseSite');
+const pauseSiteLabel = document.getElementById('pauseSiteLabel');
 const focusModeBtn = document.getElementById('focusMode');
 
 // ── Privacy score (mirrors background.js calculatePrivacyScore) ──
@@ -71,7 +72,7 @@ async function loadState() {
 
       // pause button — hide when allowlisted (managed from dashboard)
       pauseSiteBtn.classList.toggle('active', paused);
-      pauseSiteBtn.textContent = paused ? EXT.i18n.getMessage('popup_action_resume_emoji') : EXT.i18n.getMessage('popup_action_pause_emoji');
+      pauseSiteLabel.textContent = paused ? EXT.i18n.getMessage('popup_action_resume_emoji') : EXT.i18n.getMessage('popup_action_pause_emoji');
       pauseSiteBtn.style.display = allowlisted ? 'none' : '';
 
       // allowlist banner
@@ -160,7 +161,7 @@ mainToggle.addEventListener('change', async () => {
 
       if (wasPaused) {
         pauseSiteBtn.classList.remove('active');
-        pauseSiteBtn.textContent = EXT.i18n.getMessage('popup_action_pause_emoji');
+        pauseSiteLabel.textContent = EXT.i18n.getMessage('popup_action_pause_emoji');
         EXT.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: false });
       }
 
@@ -189,11 +190,11 @@ pauseSiteBtn.addEventListener('click', async () => {
     if (pausing) {
       pausedDomains.push(domain);
       pauseSiteBtn.classList.add('active');
-      pauseSiteBtn.textContent = EXT.i18n.getMessage('popup_action_resume_emoji');
+      pauseSiteLabel.textContent = EXT.i18n.getMessage('popup_action_resume_emoji');
     } else {
       pausedDomains.splice(idx, 1);
       pauseSiteBtn.classList.remove('active');
-      pauseSiteBtn.textContent = EXT.i18n.getMessage('popup_action_pause_emoji');
+      pauseSiteLabel.textContent = EXT.i18n.getMessage('popup_action_pause_emoji');
     }
     EXT.storage.local.set({ pausedDomains });
     // Tell background to update declarativeNetRequest rules — WAIT for it
@@ -320,6 +321,19 @@ document.getElementById('pickElement')?.addEventListener('click', async () => {
 });
 
 // ── Init ───────────────────────────────────────
+// Paint the optimistic default ("Protection ON" — same assumption the
+// static HTML placeholder encodes) SYNCHRONOUSLY, before loadState()'s
+// async EXT.tabs.query()/storage.get() round-trip resolves — otherwise the
+// raw hardcoded-English HTML placeholder stays visible for that entire
+// round-trip and only THEN gets replaced, which reads as a visible
+// English-then-localized flash whenever the real language is non-English
+// (live-reported 2026-08-28). EXT.i18n.getMessage() here already resolves
+// through shared/i18n.js's synchronous localStorage cache (populated
+// before this script even runs, per that file's script-tag load order) on
+// any repeat popup open, so this paints already-correct on every open but
+// the very first one. loadState() still corrects the state (not just the
+// language) moments later if the real status differs from this guess.
+statusLabel.innerHTML = _statusHtml('popup_status_protection', 'popup_status_on');
 loadState();
 maybeShowReviewPrompt();
 

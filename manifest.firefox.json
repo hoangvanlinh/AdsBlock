@@ -64,6 +64,10 @@
     {
       "resources": ["blocked/blocked.html"],
       "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["_locales/*/messages.json"],
+      "matches": ["<all_urls>"]
     }
   ],
   "options_ui": {
