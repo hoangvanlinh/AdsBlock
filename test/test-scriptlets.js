@@ -292,6 +292,94 @@ function sendRules(rules) {
     Object.keys(documentStub.lastCreatedElement._attrs).length === 0,
     JSON.stringify(documentStub.lastCreatedElement._attrs));
 
+  console.log('\n== 1b. data-sjs guard: sjs_guard is config-driven, supports multiple `|`-separated attr pairs (2026-08-28) ==');
+  {
+    // Minimal <script ATTR> stub — nodeType/tagName are plain properties,
+    // matching how _installSjsGuard's processNode() reads them off a real
+    // element. type intentionally omitted: the guard no longer gates on it.
+    const makeSjsNode = (attrs, text) => {
+      const attrMap = Object.assign({}, attrs);
+      return {
+        nodeType: 1, tagName: 'SCRIPT',
+        hasAttribute(name) { return Object.prototype.hasOwnProperty.call(attrMap, name); },
+        getAttribute(name) { return attrMap[name]; },
+        setAttribute(name, value) { attrMap[name] = String(value); },
+        get textContent() { return this._text; },
+        set textContent(v) { this._text = v; },
+        _text: text,
+      };
+    };
+    // documentStub has no real querySelectorAll — this stub parses the exact
+    // comma-joined `script[ATTR],script[ATTR2],...` shape _sjsSelector()
+    // actually builds, enough to prove multiple configured pairs all reach
+    // that call and are matched simultaneously (real CSS selector-list OR
+    // semantics, which is what a real document.querySelectorAll gives for
+    // free — this stub just has to not contradict that).
+    let sjsNodes = [];
+    documentStub.querySelectorAll = (sel) => {
+      const attrs = sel.split(',').map(s => {
+        const m = /^script\[([^\]]+)\]$/.exec(s.trim());
+        return m ? m[1] : null;
+      }).filter(Boolean);
+      return sjsNodes.filter(n => attrs.some(a => n.hasAttribute(a)));
+    };
+
+    // padding pushes all three past processNode()'s `text.length < 100`
+    // skip-tiny-scripts guard, same as any real BigPipe payload would clear.
+    const padding = 'x'.repeat(100);
+    const nodeOldAttr = makeSjsNode(
+      { 'data-sjs': '', 'data-content-len': '0' },
+      JSON.stringify({ ad: { ad_id: '1' }, keep: 'old', padding })
+    );
+    const nodeNewAttr = makeSjsNode(
+      { 'data-sjsk': '', 'data-content-len-1': '0' },
+      JSON.stringify({ ad: { ad_id: '2' }, keep: 'new', padding })
+    );
+    const nodeUnrelated = makeSjsNode(
+      { 'data-unrelated': '' },
+      JSON.stringify({ ad: { ad_id: '3' }, keep: 'unrelated', padding })
+    );
+    sjsNodes = [nodeOldAttr, nodeNewAttr, nodeUnrelated];
+    // Snapshot the raw strings BEFORE dispatch, and verify against them with
+    // plain string comparisons afterward — NOT via JSON.parse(). The
+    // json_prune rule below also installs a GLOBAL JSON.parse hook
+    // (_installJsonEditProxy, shared with every other JSON.parse on the
+    // page); since this test file's JSON is the exact same object as the
+    // sandbox's (both point at the one real Node.js JSON), calling
+    // JSON.parse() here ourselves to "just inspect" a node's text would
+    // silently run it through that same hook and prune it a second time —
+    // producing a false "pruned" reading even for a node the sjs guard
+    // itself never touched. Comparing raw textContent strings sidesteps
+    // that trap entirely.
+    const origOld = nodeOldAttr.textContent;
+    const origNew = nodeNewAttr.textContent;
+    const origUnrelated = nodeUnrelated.textContent;
+    // Two `|`-separated pairs — a real mid-migration override: keep matching
+    // the old attribute AND a newly-renamed one at the same time. sjs_guard
+    // must be read BEFORE json_prune triggers _installSjsGuard()'s one-shot
+    // initial scan — sending them together in ONE dispatch (as a real
+    // site-rules.txt section would) exercises that ordering for real.
+    sendRules({
+      sjs_guard: ['data-sjs, data-content-len', 'data-sjsk, data-content-len-1'],
+      json_prune: ['ad.ad_id'],
+    });
+    check('pair 1 (data-sjs) node WAS pruned',
+      nodeOldAttr.textContent !== origOld && nodeOldAttr.textContent.indexOf('"ad_id"') === -1,
+      nodeOldAttr.textContent);
+    check('pair 1: its own length-attr (data-content-len) re-synced',
+      nodeOldAttr.getAttribute('data-content-len') === String(nodeOldAttr.textContent.length));
+    check('pair 2 (data-sjsk) node WAS ALSO pruned — both pairs match simultaneously',
+      nodeNewAttr.textContent !== origNew && nodeNewAttr.textContent.indexOf('"ad_id"') === -1,
+      nodeNewAttr.textContent);
+    check('pair 2: its own length-attr (data-content-len-1) re-synced, NOT pair 1\'s',
+      nodeNewAttr.getAttribute('data-content-len-1') === String(nodeNewAttr.textContent.length) &&
+      nodeNewAttr.getAttribute('data-content-len') === undefined);
+    check('unrelated-attribute node was NOT touched (only configured pairs match)',
+      nodeUnrelated.textContent === origUnrelated, nodeUnrelated.textContent);
+
+    delete documentStub.querySelectorAll;
+  }
+
   console.log('\n== 2. json_prune_xhr counts ONLY real prunes ==');
   sendRules({ json_prune_xhr: ['adPlacements adSlots'] });
   const XHR = sandbox.XMLHttpRequest;

@@ -2742,6 +2742,34 @@
   // runs after every later <script> executes, so this always wins the race
   // against whatever later reads the tag) and applies the same
   // _jsonPruneRules/_jsonEditRules directly on the tag's textContent.
+  // _sjsGuardPairs: the marker attribute name and its paired length-tracking
+  // attribute name are config-driven (site-rules.txt `sjs_guard = markerAttr
+  // [, lengthAttr] [| markerAttr2[, lengthAttr2] ...]`), not hardcoded —
+  // Facebook's BigPipe convention is an implementation detail on their end
+  // that could rename either attribute without notice, and a renamed
+  // attribute would silently turn this whole guard into a no-op (the initial
+  // querySelectorAll just finds nothing). Multiple `|`-separated pairs are
+  // supported so a rename can be rolled out mid-migration without losing
+  // coverage of pages still on the old attribute — e.g.
+  // `data-sjs, data-content-len | data-sjsk, data-content-len-1` matches
+  // BOTH. Default matches the currently-observed convention exactly, so
+  // leaving `sjs_guard` unset in site-rules.txt is 100% behavior-identical
+  // to before this existed — only set it if the live convention is ever
+  // confirmed to have changed, via a site-rules.txt edit (including a
+  // remote rule source), no extension rebuild required. Setting it REPLACES
+  // the default outright (not additive) — list `data-sjs` explicitly in the
+  // override too if the old attribute must keep matching alongside a new one.
+  var _sjsGuardPairs = [{ attr: 'data-sjs', lengthAttr: 'data-content-len' }];
+  function _configureSjsGuard(pairs) {
+    if (pairs && pairs.length) _sjsGuardPairs = pairs;
+  }
+  function _sjsSelector() {
+    var parts = [];
+    for (var i = 0; i < _sjsGuardPairs.length; i++) {
+      parts.push('script[' + _sjsGuardPairs[i].attr + ']');
+    }
+    return parts.join(',');
+  }
   var _sjsGuardInstalled = false;
   function _installSjsGuard() {
     if (_sjsGuardInstalled) return;
@@ -2750,7 +2778,11 @@
     const safe = safeSelf();
     const processNode = function (node) {
       if (node.nodeType !== 1 || node.tagName !== 'SCRIPT') return;
-      if (node.type !== 'application/json' || !node.hasAttribute('data-sjs')) return;
+      let pair = null;
+      for (let i = 0; i < _sjsGuardPairs.length; i++) {
+        if (node.hasAttribute(_sjsGuardPairs[i].attr)) { pair = _sjsGuardPairs[i]; break; }
+      }
+      if (!pair) return;
       if (!_scriptletsEnabled) return;
       if (_jsonEditRules.length === 0 && _jsonPruneRules.length === 0) return;
       const text = node.textContent;
@@ -2779,14 +2811,14 @@
       // script often bundles unrelated Haste modules — a stale length
       // fails that check and cascades into unrelated module init errors.
       try {
-        if (node.hasAttribute('data-content-len')) {
-          node.setAttribute('data-content-len', String(textAfter.length));
+        if (pair.lengthAttr && node.hasAttribute(pair.lengthAttr)) {
+          node.setAttribute(pair.lengthAttr, String(textAfter.length));
         }
         _setNodeText(node, textAfter);
       } catch (e) {}
     };
     try {
-      const existing = document.querySelectorAll('script[type="application/json"][data-sjs]');
+      const existing = document.querySelectorAll(_sjsSelector());
       for (let i = 0; i < existing.length; i++) processNode(existing[i]);
       // data-sjs tags are an SSR-only mechanism written by the initial HTML
       // parse — later SPA updates (infinite scroll, etc.) never add more of
@@ -2803,7 +2835,7 @@
         // processNode() alone (tagName check) would silently miss it.
         processNode(node);
         if (node.querySelectorAll) {
-          const nested = node.querySelectorAll('script[type="application/json"][data-sjs]');
+          const nested = node.querySelectorAll(_sjsSelector());
           for (let i = 0; i < nested.length; i++) processNode(nested[i]);
         }
       };
@@ -2816,8 +2848,11 @@
       // characterData mutation whose target IS the Text node, one level
       // below the <script>). Walking up from mut.target catches both.
       const isSjsScript = function (el) {
-        return !!(el && el.nodeType === 1 && el.tagName === 'SCRIPT' &&
-          el.hasAttribute && el.hasAttribute('data-sjs'));
+        if (!(el && el.nodeType === 1 && el.tagName === 'SCRIPT' && el.hasAttribute)) return false;
+        for (let i = 0; i < _sjsGuardPairs.length; i++) {
+          if (el.hasAttribute(_sjsGuardPairs[i].attr)) return true;
+        }
+        return false;
       };
       const mo = new MutationObserver(function (mutList) {
         if (_jsonEditRules.length === 0 && _jsonPruneRules.length === 0) return;
@@ -4203,6 +4238,28 @@
     _editResponseRules.length = 0;
     _fetchM3uRules.length = 0;
     _xhrM3uRules.length = 0;
+    // Must run BEFORE json_prune/json_edit below — those are what actually
+    // call _installSjsGuard(), whose one-time synchronous initial scan reads
+    // _sjsGuardPairs at that moment.
+    // sjs_guard = markerAttr[, lengthAttr] — one entry per pair; multiple
+    // `|`-separated entries (site-rules.txt's own separator, already an
+    // array here) are all matched simultaneously — a mid-migration rename
+    // can list both the old and new attribute. lengthAttr omitted per-entry
+    // falls back to the real BigPipe convention ('data-content-len'), which
+    // very plausibly stays the same even if the marker attribute itself gets
+    // renamed; pass an explicit empty slot ("data-x,") to disable the
+    // length-attr sync for that entry instead.
+    var sjsGuard = rules.sjs_guard || [];
+    if (sjsGuard.length) {
+      var sjsPairs = [];
+      for (var gi = 0; gi < sjsGuard.length; gi++) {
+        if (!sjsGuard[gi]) continue;
+        var gParts = _argsOf(sjsGuard[gi]);
+        if (!gParts[0]) continue;
+        sjsPairs.push({ attr: gParts[0], lengthAttr: gParts.length > 1 ? (gParts[1] || '') : 'data-content-len' });
+      }
+      if (sjsPairs.length) _configureSjsGuard(sjsPairs);
+    }
     var pruneF  = rules.json_prune_fetch          || [];
     var pruneX  = rules.json_prune_xhr            || [];
     var setC    = rules.set_constant              || [];

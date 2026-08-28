@@ -750,7 +750,13 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
   // synthesizes these from chrome.storage (dashboard Privacy toggles), never
   // hand-written in site-rules.txt. See spoofGpcSignal/hideDocumentReferrerJs
   // in scriptlets.js.
-  'gpc_signal','hide_document_referrer'];
+  'gpc_signal','hide_document_referrer',
+  // Wired 2026-08-28: makes the data-sjs SSR guard's marker attribute name
+  // and length-tracking attribute config-driven instead of hardcoded — see
+  // _configureSjsGuard/_installSjsGuard in scriptlets.js. Value format:
+  // "markerAttr[, lengthAttr]" — absent key means "use the current
+  // default", zero behavior change.
+  'sjs_guard'];
 // SCRIPTLET_SAFE_CACHE_KEYS — the ONLY SCRIPTLET_KEYS entries ever written
 // to/replayed from _fastPathDispatchScriptletRules()'s per-host cache.
 // Audited 2026-08-25 key by key against scriptlets.js's actual
@@ -771,7 +777,8 @@ var SCRIPTLET_KEYS=['json_prune_fetch','json_prune_xhr','set_constant','no_windo
 var SCRIPTLET_SAFE_CACHE_KEYS=['json_prune_fetch','json_prune_xhr','json_edit','jsonl_edit_xhr','json_prune',
   'no_window_open_if','trusted_edit_request','trusted_edit_response','trusted_replace_xhr_response',
   'trusted_replace_fetch_response','m3u_prune','set_cookie','set_local_storage_item','refresh_defuser',
-  'no_webrtc','prevent_bab','disable_newtab_links','gpc_signal','hide_document_referrer'];
+  'no_webrtc','prevent_bab','disable_newtab_links','gpc_signal','hide_document_referrer',
+  'sjs_guard'];
 var _SCRIPTLET_SAFE_CACHE_SET={};
 (function(){for(var i=0;i<SCRIPTLET_SAFE_CACHE_KEYS.length;i++)_SCRIPTLET_SAFE_CACHE_SET[SCRIPTLET_SAFE_CACHE_KEYS[i]]=true;})();
 var _scriptletRulesActive=false;

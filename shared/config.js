@@ -34,7 +34,7 @@ self.ADBLOCK_CONFIG = {
     { name: 'EasyPrivacy', url: 'https://easylist.to/easylist/easyprivacy.txt', enable: true, group: "easylist" },
     { name: 'EasyList Cookie List', url: 'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt', enable: false, group: "easylist" },
     { name: 'Fanboy\'s Annoyance List', url: 'https://secure.fanboy.co.nz/fanboy-annoyance.txt', enable: false, group: "easylist" },
-    { name: 'Fanboy\'s Social Blocking List', url: 'https://easylist.to/easylist/fanboy-social.txt', enable: false, group: "easylist" },
+    { name: 'Fanboy\'s Social Blocking List', url: 'https://easylist.to/easylist/fanboy-social.txt', enable: true, group: "easylist" },
     { name: 'AdGuard Base Filter', url: 'https://filters.adtidy.org/extension/ublock/filters/2.txt', enable: false, group: "easylist" },
     { name: 'AdGuard Tracking Protection', url: 'https://filters.adtidy.org/extension/ublock/filters/3.txt', enable: false, group: "easylist" },
     // Supplementary "annoyances" lists (2026-08-25) — pulled from uBlock
