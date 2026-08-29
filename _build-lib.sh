@@ -85,6 +85,11 @@ copy_static_files() {
     # in one messages.json, no code changes."
     mkdir -p "$DEST/_locales"
     cp -r "$PROJECT_DIR/_locales/"* "$DEST/_locales/"
+    # rule-editor.js and global-scanner.js stay English-only for now (request
+    # 2026-08-29) — strip their ruleEditor_*/scanner_* keys from every
+    # non-English locale in THIS BUILD'S OUTPUT only; the source _locales/
+    # files above are untouched, so this is trivially reversible later.
+    node "$PROJECT_DIR/tools/strip-picker-only-locale-keys.js" "$DEST/_locales"
 
     mkdir -p "$DEST/icons" "$DEST/content" "$DEST/rule" "$DEST/dashboard" "$DEST/popup" "$DEST/blocked"
 
