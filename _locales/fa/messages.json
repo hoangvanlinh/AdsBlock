@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "با کنترل‌های ساده سایت و ابزارهای تمرکز، آگهی‌ها، ردیاب‌ها و دامنه‌های مخرب شناخته‌شده را مسدود کنید.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "سایت مسدود شد — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "سایت برای امنیت شما مسدود شد"
+  },
+  "blocked_title_adPopup": {
+    "message": "آگهی بازشو/برگهٔ جدید مسدود شد"
+  },
+  "blocked_host_unknown": {
+    "message": "سایت ناشناس"
+  },
+  "blocked_hint_default": {
+    "message": "این سایت در فهرست مسدودسازی بدافزار/فیشینگ قرار دارد. ممکن است تلاش کند اطلاعات شما را بدزدد، ارزهای دیجیتال استخراج کند یا نرم‌افزار ناخواسته نصب کند."
+  },
+  "blocked_hint_adPopup": {
+    "message": "کلیک در صفحه‌ای که از آن آمدید تلاش کرد این شبکهٔ آگهی/بازشو را در برگهٔ جدیدی باز کند. می‌توانید این برگه را با خیال راحت ببندید."
+  },
+  "blocked_dontWarn_label": {
+    "message": "دربارهٔ این سایت دیگر به من هشدار نده"
+  },
+  "blocked_btn_goBack": {
+    "message": "بازگشت"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "بستن این پنجره"
+  },
+  "blocked_btn_proceed": {
+    "message": "به هر حال ادامه بده"
+  },
+  "blocked_btn_proceeding": {
+    "message": "در حال ادامه…"
+  },
+  "common_remove": {
+    "message": "حذف"
+  },
+  "common_cancel": {
+    "message": "لغو"
+  },
+  "menu_pickElement": {
+    "message": "انتخاب عنصر برای پنهان‌سازی…"
+  },
+  "menu_scanGlobals": {
+    "message": "اسکن صفحه برای اسکریپت‌ها/متغیرها…"
+  },
+  "menu_editRules": {
+    "message": "ویرایش قوانین این سایت…"
+  },
+  "picker_badge_active": {
+    "message": "در حال انتخاب عنصر برای پنهان‌سازی — برای لغو Esc را فشار دهید"
+  },
+  "picker_btn_hide": {
+    "message": "این عنصر را پنهان کن"
+  },
+  "picker_btn_broaden": {
+    "message": "گسترش"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "داشبورد"
+  },
+  "popup_review_title": {
+    "message": "از AdBlock راضی هستید؟"
+  },
+  "popup_review_subtitle": {
+    "message": "یک امتیاز سریع خیلی کمک می‌کند."
+  },
+  "popup_review_rate": {
+    "message": "به ما امتیاز دهید"
+  },
+  "popup_review_dismiss": {
+    "message": "نه ممنون"
+  },
+  "popup_stat_blocked": {
+    "message": "مسدودشده"
+  },
+  "popup_stat_malware": {
+    "message": "بدافزار"
+  },
+  "popup_stat_speed": {
+    "message": "سرعت"
+  },
+  "popup_stat_saved": {
+    "message": "صرفه‌جویی‌شده"
+  },
+  "popup_allowlist_banner": {
+    "message": "این سایت در فهرست مجاز است"
+  },
+  "popup_action_focus": {
+    "message": "حالت تمرکز"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ توقف در این سایت"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ ازسرگیری سایت"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "امتیاز حریم خصوصی"
+  },
+  "popup_footer_settings": {
+    "message": "تنظیمات"
+  },
+  "popup_ruleChip_title": {
+    "message": "قوانین مسدودسازی شبکه که در حال حاضر بارگذاری شده‌اند"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… قانون"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "قوانین شبکه: ؟"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 قانون شبکه بارگذاری شد",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "حمایت از توسعه از طریق PayPal"
+  },
+  "popup_donate_label": {
+    "message": "کمک مالی"
+  },
+  "popup_version_title": {
+    "message": "نسخهٔ AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "به‌روزرسانی موجود است — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "نسخهٔ جدیدتری موجود است — برای باز کردن صفحهٔ فروشگاه کلیک کنید"
+  },
+  "popup_domain_unknown": {
+    "message": "سایت ناشناس"
+  },
+  "popup_status_site": {
+    "message": "سایت"
+  },
+  "popup_status_protection": {
+    "message": "محافظت"
+  },
+  "popup_status_allowlisted": {
+    "message": "مجاز"
+  },
+  "popup_status_on": {
+    "message": "روشن"
+  },
+  "popup_status_paused": {
+    "message": "متوقف‌شده"
+  },
+  "popup_status_off": {
+    "message": "خاموش"
+  },
+  "common_save": {
+    "message": "ذخیره"
+  },
+  "common_close": {
+    "message": "بستن"
+  },
+  "ruleEditor_panel_title": {
+    "message": "ویرایش قوانین — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "برای درج در کادر متن کلیک کنید"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "مرجع کلیدها ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "فیلتر کلیدها…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "تطابق ظاهری / نامزد"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "اسکریپتلت‌ها (پیشرفته)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "قوانین فعلی این سایت ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(هنوز قانونی برای این سایت وجود ندارد — نه داخلی و نه سفارشی)"
+  },
+  "ruleEditor_hint": {
+    "message": "در هر خط یک \"key = value | value2\". برای درج، روی یکی از کلیدهای بالا کلیک کنید. بدون سرتیتر [section]. قوانینی که اینجا تایپ می‌شوند به قوانین موجود برای این کلید افزوده می‌شوند (به بالا نگاه کنید) — این نمی‌تواند قانون داخلی را حذف یا لغو کند و برای کلیدهای پرچمی تک‌مقداری معمولاً مقدار داخلی برنده می‌شود."
+  },
+  "ruleEditor_status_saved": {
+    "message": "ذخیره شد — برای دیدن قوانین اعمال‌شده، این صفحه را دوباره بارگذاری کنید."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "ذخیره ناموفق بود — بررسی کنید که خط \"[section]\" جدا یا چسباندن بسیار بزرگی وجود نداشته باشد."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "گزینشگرهای CSS که بدون شرط از طریق یک برگهٔ سبک تزریق‌شده پنهان می‌شوند — بدون بررسی اکتشافی، فقط با دیده‌شدن پنهان می‌شوند."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "گزینشگرهای CSS برای عناصر نامزد — فقط در صورتی پنهان می‌شوند که با labels/link_patterns زیر هم مطابقت داشته باشند."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "مانند selectors، محدود به ظرف‌های سبک فید/جدول‌زمانی."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "مانند selectors، محدود به ظرف‌های سبک بازار/خرید."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "مانند selectors، محدود به ناحیهٔ نوار کناری/ریل راست."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "مانند selectors، محدود به ظرف‌های تکی پست/مقاله."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "گزینشگرهای CSS برای عناصر \"میزبان\"، به همان روش selectors بالا بررسی می‌شوند."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "برچسب‌های متنی (مانند sponsored, promoted) که با ویژگی‌ها/متن زمینه مطابقت داده می‌شوند تا تأیید شود که یک نامزد واقعاً آگهی است."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "الگوهای زیررشته که با لینک‌ها/ویژگی‌های خود نامزد مطابقت داده می‌شوند تا تأیید شود آگهی است."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "نام ویژگی‌های HTML که برای تطابق label/link_pattern اسکن می‌شوند (پیش‌فرض: aria-label، data-promoted، post-type، …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "عناصر فرزندی که متن از آن‌ها برای تطابق برچسب استخراج می‌شود (پیش‌فرض: header، [role=heading]، span، a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "گزینشگر(های) CSS برای بالارفتن از طریق .closest() پیش از پنهان‌کردن نامزد مطابق (کل ظرف را پنهان می‌کند، نه فقط برچسب را)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "نام کلاس‌هایی که به‌طور مداوم از <html>/<body> حذف می‌شوند — پوشش‌های تصرف فقط‌CSS که با یک کلاس ریشه هدایت می‌شوند را خنثی می‌کند."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "نام ویژگی‌های CSS که به‌طور مداوم از سبک درون‌خطی <html>/<body> پاک می‌شوند — قفل اسکرول تنظیم‌شده توسط JS و غیره را خنثی می‌کند."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "پرچم 1/0 — برگه‌های بازشو/زیربرگه‌ای که با کلیک در این سایت باز می‌شوند را به‌طور خودکار می‌بندد."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — یک ویژگی پنجره را به‌طور دائم روی یک مقدار ثابت قفل می‌کند (undefined، true، false، noopFunc، …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — وقتی هر اسکریپتی این ویژگی پنجره را بخواند، خطا پرتاب می‌کند."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — وقتی هر اسکریپتی در این ویژگی پنجره بنویسد، خطا پرتاب می‌کند."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — فقط وقتی ردیابی پشتهٔ خود اسکریپت فراخوان با needle مطابقت داشته باشد، خطا پرتاب می‌کند."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — وقتی اسکریپتی با منبعی که با needle مطابقت دارد، target را بخواند، خطا پرتاب می‌کند."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — فراخوانی‌های window.open() که با pattern مطابقت دارند را مسدود یا به سمت طعمه هدایت می‌کند."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — فراخوانی‌های fetch() که با معیارها مطابقت دارند را مسدود می‌کند."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — فراخوانی‌های XMLHttpRequest که با معیارها مطابقت دارند را مسدود می‌کند."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetch را مسدود می‌کند و اختیاراً یک بدنهٔ پاسخ جعلی ثابت برمی‌گرداند."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — مانع می‌شود که یک iframe با about:blank با همان مبدأ به پنجرهٔ واقعی دسترسی پیدا کند تا از یک قفل عبور کند."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — فیلدها را از هر نتیجهٔ JSON.parse() حذف می‌کند."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — فیلدها را از یک پاسخ JSON مربوط به fetch() حذف می‌کند."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — فیلدها را از یک پاسخ JSON مربوط به XHR حذف می‌کند."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — شیئی را که یک اسکریپت مستقیماً تخصیص می‌دهد (نه از طریق JSON.parse) هرس می‌کند."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — حذف فیلدهای مبتنی بر JSONPath در یک پاسخ JSON مربوط به fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — حذف فیلدهای مبتنی بر JSONPath در یک پاسخ JSON-lines مربوط به XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "فیلدها را از پاسخی که با protobuf/jspb کدگذاری شده حذف می‌کند."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — ویرایش‌های JSONPath (حذف و تخصیص مقدار) روی بدنهٔ یک درخواست خروجی."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — ویرایش‌های JSONPath (حذف و تخصیص مقدار) روی بدنهٔ یک پاسخ."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — جستجو/جایگزینی با عبارت باقاعده در بدنهٔ پاسخ fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — جستجو/جایگزینی با عبارت باقاعده در بدنهٔ پاسخ XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — یک آرگومان ارسال‌شده به یک تابع را جایگزین می‌کند."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — جایگزینی متن بدون شرط روی داده‌های خروجی (بدون محدودیت URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — متن یک تگ <script> را پیش از اجرا بازنویسی می‌کند. sedCount تعداد گره‌هایی که این قانون هرگز بازنویسی می‌کند را محدود می‌کند (پیش‌فرض: نامحدود)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — فیلدها را از شیئی که به یک فراخوانی متد بومی ارسال می‌شود هرس می‌کند."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — فراخوانی متد بومی که با یک امضا مطابقت دارد را لغو یا به‌طور بی‌صدا نادیده می‌گیرد."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — در یک تخصیص تنظیم‌کنندهٔ دسترسی (مانند Element.prototype.innerHTML) که مقدارش با needle مطابقت دارد، آن را نادیده می‌گیرد یا خطا پرتاب می‌کند."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — بخش‌های آگهی را از پاسخ فهرست پخش HLS با پسوند .m3u8 حذف می‌کند."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — به‌جای درخواست شبکهٔ واقعی، بارگذاری موفق script/img/iframe/link را وانمود می‌کند."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — ویژگی‌های HTML را از عناصر مطابق حذف می‌کند."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — محتوای متنی یک گرهٔ DOM را پاک می‌کند."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — محتوای متنی یک گرهٔ DOM را بازنویسی می‌کند."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — یک تغییرمسیر خودکار از طریق <meta http-equiv=\"refresh\"> را متوقف می‌کند."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — یک کوکی تنظیم می‌کند."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — کوکی‌هایی که با یک الگوی نام مطابقت دارند را حذف می‌کند."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — یک مقدار localStorage تنظیم می‌کند (محدود به مقادیر تحت‌اللفظی امن، یا مقدار ویژهٔ \"remove\" برای حذف کلیدهای مطابق)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — href یک لینک را از متن خودش یا ویژگی دیگری بازنویسی می‌کند."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — فراخوانی‌های setTimeout() که با معیارها مطابقت دارند را مسدود می‌کند."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — فراخوانی‌های setInterval() که با معیارها مطابقت دارند را مسدود می‌کند."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — فراخوانی‌های requestAnimationFrame() که با معیارها مطابقت دارند را مسدود می‌کند."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — فراخوانی‌های addEventListener() که با معیارها مطابقت دارند را مسدود می‌کند."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — به‌جای مسدودکردن، فراخوانی‌های setTimeout() مطابق را سریع‌تر/کندتر می‌کند."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — به‌جای مسدودکردن، فراخوانی‌های setInterval() مطابق را سریع‌تر/کندتر می‌کند."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — فراخوانی‌های eval() که منبعشان با pattern مطابقت دارد را مسدود می‌کند."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnection را غیرفعال می‌کند — ترفندهای بازشو/ردیابی مبتنی بر WebRTC را مسدود می‌کند."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "اسکریپت‌های تشخیص ضدآگهی‌مسدودکن از نوع BlockAdBlock/FuckAdBlock را خنثی می‌کند."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "target=\"_blank\" را از لینک‌های کلیک‌شده حذف می‌کند — تغییرمسیرهای اجباری به برگهٔ جدید را مسدود می‌کند."
+  },
+  "scanner_value_emptyString": {
+    "message": "رشتهٔ خالی"
+  },
+  "scanner_value_emptyArray": {
+    "message": "آرایهٔ خالی"
+  },
+  "scanner_value_emptyObject": {
+    "message": "شیء خالی"
+  },
+  "scanner_value_noopFunc": {
+    "message": "تابع خالی (بدون عملیات)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "تابعی که همیشه true برمی‌گرداند"
+  },
+  "scanner_value_falseFunc": {
+    "message": "تابعی که همیشه false برمی‌گرداند"
+  },
+  "scanner_btn_block": {
+    "message": "مسدود کردن"
+  },
+  "scanner_btn_edit": {
+    "message": "ویرایش"
+  },
+  "scanner_btn_delete": {
+    "message": "حذف"
+  },
+  "scanner_status_blockApplied": {
+    "message": "مسدودسازی اعمال شد — برای این سایت ذخیره شد."
+  },
+  "scanner_status_editApplied": {
+    "message": "ویرایش اعمال شد — برای این سایت ذخیره شد."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "حذف اعمال شد — برای این سایت ذخیره شد."
+  },
+  "scanner_block_warning": {
+    "message": "مسدودسازی از تمام خواندن‌های آیندهٔ این ویژگی جلوگیری می‌کند — ممکن است عملکردی از صفحه که به آن وابسته است را مختل کند. این کار با تازه‌سازی صفحه قابل بازگشت نیست؛ برای بازگردانی، قانون را از صفحهٔ قوانین سراسری داشبورد حذف کنید."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "به هر حال مسدود کن"
+  },
+  "scanner_edit_customOption": {
+    "message": "سفارشی…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "یک نشانه، بدون فاصله (مثلاً 42، hello، {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "مقداری بدون فاصله وارد کنید."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "فاصله مجاز نیست — رد خواهد شد."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "به این صورت ذخیره خواهد شد: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "متغیرهای سراسری صفحه ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "فیلتر بر اساس نام…"
+  },
+  "scanner_empty": {
+    "message": "هیچ متغیر سراسری افزوده‌شده توسط صفحه در این صفحه یافت نشد."
+  },
+  "scanner_footer_limitation": {
+    "message": "فقط متغیرهای سراسری سبک var/function و تخصیص‌های صریح window.x = را می‌بیند — اعلان‌های let/const/class برای هر اسکنر صفحه‌ای نامرئی هستند (محدودیت زبان JS)."
+  },
+  "scanner_loading": {
+    "message": "در حال اسکن متغیرهای سراسری صفحه — برای لغو Esc را فشار دهید"
+  },
+  "common_add": {
+    "message": "افزودن"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — داشبورد"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "نمای کلی"
+  },
+  "dashboard_nav_rules": {
+    "message": "قوانین سفارشی"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "منبع قوانین"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "فهرست مجاز"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "قوانین عناصر"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "قوانین سراسری"
+  },
+  "dashboard_nav_focus": {
+    "message": "تمرکز"
+  },
+  "dashboard_nav_settings": {
+    "message": "تنظیمات"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "محافظت روشن"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "محافظت $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "حمایت از توسعه از طریق PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "یک قهوه برایم بخر ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "روشن"
+  },
+  "dashboard_toggle_off": {
+    "message": "خاموش"
+  },
+  "dashboard_overview_title": {
+    "message": "نمای کلی"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "داشبورد محافظت شما"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "کل مسدودشده"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+۰٪ امروز"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "ردیاب‌های متوقف‌شده"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+۰٪ امروز"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "بدافزار مسدودشده"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "تهدید متوقف‌شده"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "هیچ تهدیدی شناسایی نشد"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "پهنای باند صرفه‌جویی‌شده"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "میانگین در هر صفحه"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "زمان صرفه‌جویی‌شده"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "در این جلسه"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 امروز",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— امروز"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1٪ نسبت به دیروز",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "۰ تهدید امروز"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 و $2 مورد دیگر",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "درخواست‌های مسدودشده"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "درخواست‌های ردیاب"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "شناسایی‌های بدافزار"
+  },
+  "dashboard_chart_range7d": {
+    "message": "۷ روز"
+  },
+  "dashboard_chart_range14d": {
+    "message": "۱۴ روز"
+  },
+  "dashboard_chart_range30d": {
+    "message": "۳۰ روز"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "مسدودشده"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "ردیاب‌ها"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "بدافزار"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "بیشترین دامنه‌های مسدودشده"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "بیشترین دامنه‌های ردیاب"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "بیشترین دامنه‌های بدافزار"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "دیدن همه"
+  },
+  "dashboard_domains_showLess": {
+    "message": "نمایش کمتر"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "دیدن همه ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "هنوز داده‌ای وجود ندارد."
+  },
+  "dashboard_privacy_title": {
+    "message": "امتیاز حریم خصوصی"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "آگهی‌های مسدودشده"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "ردیاب‌های مسدودشده"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "محافظت در برابر بدافزار"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "ناشناس‌سازی ارجاع‌دهنده"
+  },
+  "dashboard_rules_title": {
+    "message": "قوانین سفارشی"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "در قالب site-rules.txt ویرایش کنید — همان نحو فایل اصلی قوانین. مقادیر با قوانین داخلی ادغام می‌شوند."
+  },
+  "dashboard_rules_clear": {
+    "message": "پاک کردن"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "همهٔ قوانین سفارشی پاک شوند؟"
+  },
+  "dashboard_customRules_template": {
+    "message": "# قوانین سفارشی — همان قالب site-rules.txt\n# مقادیر با قوانین داخلی ادغام می‌شوند (جایگزین نمی‌شوند).\n#\n# ── نگاشت یک دامنهٔ جدید به یک بخش قوانین ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← زیردامنه‌ها به‌طور خودکار مطابقت داده می‌شوند\n#\n# ── افزودن دامنه‌های بیشتر برای مسدودسازی سراسری ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── قوانین ظاهری برای هر سایت ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "فهرست مجاز"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "سایت‌هایی که از تمام مسدودسازی‌ها عبور می‌کنند"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ افزودن سایت"
+  },
+  "dashboard_elementRules_title": {
+    "message": "قوانین عناصر"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "عناصری که به‌صورت دستی از طریق \"انتخاب عنصر برای پنهان‌سازی\" پنهان شده‌اند — گروه‌بندی‌شده بر اساس سایت"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "هنوز قانونی وجود ندارد."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "قوانین سراسری"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "متغیرهای سراسری پنجره که به‌صورت دستی از طریق \"اسکن صفحه برای اسکریپت‌ها/متغیرها\" مسدود/ویرایش/حذف شده‌اند — گروه‌بندی‌شده بر اساس سایت"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "هنوز قانونی وجود ندارد."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "مسدودسازی"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "ویرایش"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "حذف"
+  },
+  "dashboard_focus_title": {
+    "message": "حالت تمرکز"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "مسدودسازی سایت‌های مزاحم بر اساس زمان‌بندی"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "جلسهٔ تمرکز"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "جلسه متوقف شد"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "جلسه در حال اجراست…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "جلسه به پایان رسید!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "۲۵ دقیقه"
+  },
+  "dashboard_focus_dur45": {
+    "message": "۴۵ دقیقه"
+  },
+  "dashboard_focus_dur60": {
+    "message": "۶۰ دقیقه"
+  },
+  "dashboard_focus_dur90": {
+    "message": "۹۰ دقیقه"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "سفارشی"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "دقیقه"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "فهرست حواس‌پرتی"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ افزودن"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "دامنه‌ای برای مسدودسازی در طول تمرکز وارد کنید (مثلاً twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "تنظیمات"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "رفتار AdBlock را سفارشی کنید"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "مسدودسازی"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "مسدودسازی آگهی‌ها"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "مسدودسازی استاندارد شبکه‌های تبلیغاتی"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "مسدودسازی ردیاب‌ها"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "مسدودسازی اسکریپت‌های تحلیلی و ردیابی"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "فیلترینگ ظاهری"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "پنهان‌سازی جای‌های خالی باقی‌ماندهٔ آگهی از طریق CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "مسدودسازی بدافزار"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "مسدودسازی دامنه‌های شناخته‌شدهٔ بدافزار"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "حریم خصوصی"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "ناشناس‌سازی ارجاع‌دهنده"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "حذف هدرهای ارجاع‌دهنده در درخواست‌های بین‌مبدأیی"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "کنترل سراسری حریم خصوصی (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "ارسال سیگنال انصراف GPC (هدر Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "هدر عدم ردیابی (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "ارسال هدر درخواست DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "داده‌ها"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "جمع‌آوری آمار"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "آمار استفادهٔ فقط محلی (هرگز آپلود نمی‌شود)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "بازنشانی همهٔ داده‌ها"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "پاک کردن قوانین، آمار و تنظیمات"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "بازنشانی"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "همهٔ داده‌های AdBlock بازنشانی شوند؟ این کار قابل بازگشت نیست."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "همهٔ داده‌ها پاک شدند. در حال بارگذاری مجدد…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "درباره"
+  },
+  "dashboard_settings_version_name": {
+    "message": "نسخه"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "بررسی به‌روزرسانی‌ها"
+  },
+  "dashboard_settings_checking": {
+    "message": "در حال بررسی…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "نسخهٔ جدیدتری موجود است"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "مشاهده"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "آخرین بررسی $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (ناموفق — آفلاین هستید؟)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "هنوز بررسی نشده"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 موجود است (شما v$2 دارید)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "منبع قوانین"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock قوانین سایت خود را از کجا دریافت می‌کند"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "نشانی‌های اینترنتی قوانین از راه دور"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "شامل پیش‌فرض داخلی (قابل تغییر، غیرقابل حذف) به‌علاوهٔ هر نشانی که اضافه کنید — همه ادغام‌شده، هر کدام به‌طور مستقل روشن/خاموش می‌شود."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "افزودن نشانی"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "فایل‌های قوانین محلی"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "فایل‌های قوانین .txt را آپلود کنید — با منابع نشانی ادغام می‌شوند. چند فایل پشتیبانی می‌شود."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "افزودن فایل…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "در حال برون‌بری…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "برون‌بری ناموفق بود: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "خطای ناشناخته"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 تبدیل شد، $2 از $3 قانون رد شد",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 قانون استثنا (اینجا مدل لغوی وجود ندارد)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 گزینشگر رویه‌ای (:has-text، :xpath، ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 تغییردهندهٔ گسترش‌یافتهٔ AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 فراخوانی اسکریپتلت نگاشت‌نشده",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 تغییردهندهٔ قانون شبکهٔ پشتیبانی‌نشده",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 مورد از پیش در site-rules.txt خود این افزونه گردآوری شده",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 نحو ناشناخته",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 بارگذاری شد",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 بارگذاری شد",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "برون‌بری"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "دانلود قوانین این منبع تبدیل‌شده به نحو خود این افزونه"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "پیش‌فرض"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "خانوادهٔ EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "بر اساس زبان"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "سفارشی (نشانی‌های خودتان)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "داده‌های ساختگی برای $1 ایجاد شد:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "عمومی"
+  },
+  "dashboard_settings_language_name": {
+    "message": "زبان"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "پس از تغییر، این صفحه را دوباره راه‌اندازی می‌کند"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "خودکار (زبان مرورگر)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "منو"
+  }
+}

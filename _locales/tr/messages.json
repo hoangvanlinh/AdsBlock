@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Basit site kontrolleri ve odaklanma araçlarıyla reklamları, izleyicileri ve bilinen kötü amaçlı alan adlarını engelleyin."
+  },
+  "blocked_pageTitle": {
+    "message": "Site engellendi — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Güvenliğiniz için site engellendi"
+  },
+  "blocked_title_adPopup": {
+    "message": "Pop-up/yeni sekme reklamı engellendi"
+  },
+  "blocked_host_unknown": {
+    "message": "bilinmeyen site"
+  },
+  "blocked_hint_default": {
+    "message": "Bu site bir kötü amaçlı yazılım / kimlik avı kara listesinde. Bilgilerinizi çalmaya, kripto para madenciliği yapmaya veya istenmeyen yazılım yüklemeye çalışabilir."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Geldiğiniz sayfadaki bir tıklama, bu reklam/pop-up ağını yeni bir sekmede açmaya çalıştı. Bu sekmeyi güvenle kapatabilirsiniz."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Bu site hakkında beni bir daha uyarma"
+  },
+  "blocked_btn_goBack": {
+    "message": "Geri dön"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Bu pencereyi kapat"
+  },
+  "blocked_btn_proceed": {
+    "message": "Yine de devam et"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Devam ediliyor…"
+  },
+  "common_remove": {
+    "message": "Kaldır"
+  },
+  "common_cancel": {
+    "message": "İptal"
+  },
+  "menu_pickElement": {
+    "message": "Gizlenecek öğeyi seç…"
+  },
+  "menu_scanGlobals": {
+    "message": "Sayfayı komut dosyaları/değişkenler için tara…"
+  },
+  "menu_editRules": {
+    "message": "Bu site için kuralları düzenle…"
+  },
+  "picker_badge_active": {
+    "message": "Gizlenecek öğe seçiliyor — iptal için Esc'e basın"
+  },
+  "picker_btn_hide": {
+    "message": "Bu öğeyi gizle"
+  },
+  "picker_btn_broaden": {
+    "message": "Genişlet"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Reklamlar, İzleyiciler"
+  },
+  "popup_openDashboard_title": {
+    "message": "Panel"
+  },
+  "popup_review_title": {
+    "message": "AdBlock'tan memnun musunuz?"
+  },
+  "popup_review_subtitle": {
+    "message": "Hızlı bir değerlendirme çok yardımcı olur."
+  },
+  "popup_review_rate": {
+    "message": "Bizi değerlendirin"
+  },
+  "popup_review_dismiss": {
+    "message": "Hayır, teşekkürler"
+  },
+  "popup_stat_blocked": {
+    "message": "Engellendi"
+  },
+  "popup_stat_malware": {
+    "message": "Kötü amaçlı yazılım"
+  },
+  "popup_stat_speed": {
+    "message": "Hız"
+  },
+  "popup_stat_saved": {
+    "message": "Tasarruf"
+  },
+  "popup_allowlist_banner": {
+    "message": "Bu site izin listesinde"
+  },
+  "popup_action_focus": {
+    "message": "Odaklanma modu"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Sitede duraklat"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Siteyi sürdür"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Gizlilik puanı"
+  },
+  "popup_footer_settings": {
+    "message": "Ayarlar"
+  },
+  "popup_ruleChip_title": {
+    "message": "Şu anda yüklü ağ engelleme kuralları"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… kural"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "ağ kuralları: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 ağ kuralı yüklendi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "PayPal ile geliştirmeyi destekleyin"
+  },
+  "popup_donate_label": {
+    "message": "Bağış yap"
+  },
+  "popup_version_title": {
+    "message": "AdBlock sürümü"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Güncelleme mevcut — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Daha yeni bir sürüm mevcut — mağaza sayfasını açmak için tıklayın"
+  },
+  "popup_domain_unknown": {
+    "message": "Bilinmeyen site"
+  },
+  "popup_status_site": {
+    "message": "Site"
+  },
+  "popup_status_protection": {
+    "message": "Koruma"
+  },
+  "popup_status_allowlisted": {
+    "message": "İzin listesinde"
+  },
+  "popup_status_on": {
+    "message": "AÇIK"
+  },
+  "popup_status_paused": {
+    "message": "Duraklatıldı"
+  },
+  "popup_status_off": {
+    "message": "KAPALI"
+  },
+  "common_save": {
+    "message": "Kaydet"
+  },
+  "common_close": {
+    "message": "Kapat"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Kuralları düzenle — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Metin alanına eklemek için tıklayın"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Anahtar referansı ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Anahtarları filtrele…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOZMETİK / ADAY EŞLEŞTİRME"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLET (GELİŞMİŞ)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Bu site için mevcut kurallar ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(bu site için henüz kural yok — yerleşik veya özel)"
+  },
+  "ruleEditor_hint": {
+    "message": "Her satıra bir \"key = value | value2\" yazın. Eklemek için yukarıdaki bir anahtara tıklayın. [section] başlığı kullanılmaz. Burada yazılan kurallar bu anahtar için mevcut kurallara EKLENİR (yukarıya bakın) — yerleşik bir kuralı kaldıramaz veya geçersiz kılamaz ve tek değerli bayrak anahtarlarında genellikle yerleşik değer yine de kazanır."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Kaydedildi — kuralların uygulandığını görmek için bu sayfayı yeniden yükleyin."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Kaydetme başarısız — başıboş bir \"[section]\" satırı veya çok büyük bir yapıştırma olup olmadığını kontrol edin."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "Eklenen bir stil sayfası aracılığıyla koşulsuz olarak gizlenen CSS seçicileri — sezgisel kontrol yok, görülür görülmez gizlenir."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "ADAY öğeler için CSS seçicileri — yalnızca aşağıdaki labels/link_patterns ile de eşleşirlerse gizlenirler."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "selectors ile aynı, feed/zaman akışı tarzı konteynerlerle sınırlı."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "selectors ile aynı, pazar yeri/alışveriş tarzı konteynerlerle sınırlı."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "selectors ile aynı, bir kenar çubuğu/sağ şerit alanıyla sınırlı."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "selectors ile aynı, tekil gönderi/makale konteynerleriyle sınırlı."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "\"host\" öğeleri için CSS seçicileri, yukarıdaki selectors ile aynı şekilde kontrol edilir."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Bir adayın gerçekten reklam olduğunu doğrulamak için özniteliklerle/bağlam metniyle eşleştirilen metin etiketleri (örn. sponsored, promoted)."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Bir adayın kendi bağlantılarıyla/özellikleriyle eşleştirilen ve reklam olduğunu doğrulayan alt dize kalıpları."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "label/link_pattern eşleşmeleri için taranan HTML öznitelik adları (varsayılan: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Etiket eşleştirme için metnin alınacağı alt öğeler (varsayılan: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "Eşleşen bir adayı gizlemeden önce .closest() ile yukarı doğru gidilecek CSS seçici(ler)i (yalnızca etiketi değil, konteyneri gizler)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "<html>/<body> üzerinden sürekli kaldırılan sınıf adları — kök sınıf tarafından yönetilen yalnızca-CSS ele geçirme kaplamalarını etkisiz kılar."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "<html>/<body> satır içi stilinden sürekli temizlenen CSS özellik adları — JS tarafından ayarlanan kaydırma kilidi vb. durumları etkisiz kılar."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 bayrağı — bu sitedeki tıklamalarla açılan pop-up/popunder sekmelerini otomatik kapatır."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — bir window özelliğini kalıcı olarak sabit bir değere kilitler (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — herhangi bir komut dosyası bu window özelliğini okuduğunda hata fırlatır."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — herhangi bir komut dosyası bu window özelliğine yazdığında hata fırlatır."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — yalnızca çağıran komut dosyasının kendi yığın izlemesi needle ile eşleştiğinde hata fırlatır."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — kaynağı needle ile eşleşen bir komut dosyası target'ı okuduğunda hata fırlatır."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — pattern ile eşleşen window.open() çağrılarını engeller veya sahte bir adrese yönlendirir."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — kriterlerle eşleşen fetch() çağrılarını engeller."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — kriterlerle eşleşen XMLHttpRequest çağrılarını engeller."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetch'i engeller, isteğe bağlı olarak sabit sahte bir yanıt gövdesi döndürür."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — aynı kökenden bir about:blank iframe'in bir kilidi aşmak için gerçek window'a geri erişmesini engeller."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — herhangi bir JSON.parse() sonucundan alanları kaldırır."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — bir fetch() JSON yanıtından alanları kaldırır."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — bir XHR JSON yanıtından alanları kaldırır."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — bir komut dosyasının doğrudan atadığı bir nesneyi (JSON.parse() üzerinden değil) kırpar."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — bir fetch() JSON yanıtında JSONPath tabanlı alan silmeleri."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — bir XHR JSON-lines yanıtında JSONPath tabanlı alan silmeleri."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Bir protobuf/jspb kodlu yanıttan alanları kaldırır."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — giden bir istek gövdesi üzerinde JSONPath düzenlemeleri (hem silme HEM değer atama)."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — bir yanıt gövdesi üzerinde JSONPath düzenlemeleri (hem silme HEM değer atama)."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — bir fetch() yanıt gövdesinde regex bul/değiştir."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — bir XHR yanıt gövdesinde regex bul/değiştir."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — bir fonksiyona geçirilen bir argümanı değiştirir."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — giden veride koşulsuz metin değişimi (URL sınırlaması yok)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — bir <script> etiketinin metnini çalışmadan önce yeniden yazar. sedCount bu kuralın yeniden yazacağı düğüm sayısını sınırlar (varsayılan: sınırsız)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — bir yerel yöntem çağrısına GİRDİ olarak geçirilen bir nesneden alanları kırpar."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — bir imza (signature) ile eşleşen bir yerel yöntem çağrısını iptal eder veya sessizce hiçbir şey yapmaz."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — değeri needle ile eşleşen bir erişimci (accessor) setter atamasını (örn. Element.prototype.innerHTML) yok sayar veya hata fırlatır."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — bir HLS .m3u8 oynatma listesi yanıtından reklam segmentlerini kaldırır."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — gerçek ağ isteği yerine bir script/img/iframe/link yüklemesini sahte olarak başarılı gösterir."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — eşleşen öğelerden HTML özniteliklerini kaldırır."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — bir DOM düğümünün metin içeriğini temizler."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — bir DOM düğümünün metin içeriğini yeniden yazar."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — bir <meta http-equiv=\"refresh\"> otomatik yönlendirmesini durdurur."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — bir çerez ayarlar."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — bir ad kalıbıyla eşleşen çerezleri kaldırır."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — bir localStorage girdisi ayarlar (yalnızca güvenli sabit değerlerle veya eşleşen anahtarları silmek için özel \"remove\" değeriyle sınırlıdır)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — bir bağlantının href'ini kendi metninden veya başka bir öznitelikten yeniden yazar."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — kriterlerle eşleşen setTimeout() çağrılarını engeller."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — kriterlerle eşleşen setInterval() çağrılarını engeller."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — kriterlerle eşleşen requestAnimationFrame() çağrılarını engeller."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — kriterlerle eşleşen addEventListener() çağrılarını engeller."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — eşleşen setTimeout() çağrılarını engellemek yerine hızlandırır/yavaşlatır."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — eşleşen setInterval() çağrılarını engellemek yerine hızlandırır/yavaşlatır."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — kaynağı pattern ile eşleşen eval() çağrılarını engeller."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnection'ı devre dışı bırakır — WebRTC tabanlı pop-up/izleme hilelerini engeller."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "BlockAdBlock/FuckAdBlock tarzı reklam engelleyici karşıtı tespit komut dosyalarını etkisiz kılar."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Tıklanan bağlantılardan target=\"_blank\"'i kaldırır — zorla yeni sekme açılmasını engeller."
+  },
+  "scanner_value_emptyString": {
+    "message": "Boş dize"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Boş dizi"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Boş nesne"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Boş fonksiyon (hiçbir şey yapmaz)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Her zaman true döndüren fonksiyon"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Her zaman false döndüren fonksiyon"
+  },
+  "scanner_btn_block": {
+    "message": "Engelle"
+  },
+  "scanner_btn_edit": {
+    "message": "Düzenle"
+  },
+  "scanner_btn_delete": {
+    "message": "Sil"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Engelleme uygulandı — bu site için kaydedildi."
+  },
+  "scanner_status_editApplied": {
+    "message": "Düzenleme uygulandı — bu site için kaydedildi."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Silme uygulandı — bu site için kaydedildi."
+  },
+  "scanner_block_warning": {
+    "message": "Engelleme, bu özelliğin gelecekteki TÜM okumalarını önler — buna dayanan sayfa işlevselliğini bozabilir. Sayfayı yenileyerek geri alınamaz; geri almak için panonun Global Rules sayfasından kuralı kaldırın."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Yine de engelle"
+  },
+  "scanner_edit_customOption": {
+    "message": "Özel…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "boşluksuz tek bir belirteç (örn. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Boşluk içermeyen bir değer girin."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Boşluğa izin verilmez — reddedilecektir."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Şu şekilde saklanacak: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Sayfa genel değişkenleri ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Ada göre filtrele…"
+  },
+  "scanner_empty": {
+    "message": "Bu sayfada sayfa tarafından eklenmiş genel değişken bulunamadı."
+  },
+  "scanner_footer_limitation": {
+    "message": "Yalnızca var/function tarzı genel değişkenleri ve açık window.x = atamalarını görür — let/const/class bildirimleri herhangi bir sayfa tarayıcısı için görünmezdir (JS dili sınırlaması)."
+  },
+  "scanner_loading": {
+    "message": "Sayfa genel değişkenleri taranıyor — iptal için Esc'e basın"
+  },
+  "common_add": {
+    "message": "Ekle"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Panel"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Reklamlar, İzleyiciler"
+  },
+  "dashboard_nav_overview": {
+    "message": "Genel Bakış"
+  },
+  "dashboard_nav_rules": {
+    "message": "Özel Kurallar"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Kural Kaynağı"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "İzin Listesi"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Öğe Kuralları"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Genel Kurallar"
+  },
+  "dashboard_nav_focus": {
+    "message": "Odaklan"
+  },
+  "dashboard_nav_settings": {
+    "message": "Ayarlar"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Koruma AÇIK"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Koruma $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "PayPal ile geliştirmeyi destekleyin"
+  },
+  "dashboard_donate_label": {
+    "message": "Bana bir kahve ısmarla ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "AÇIK"
+  },
+  "dashboard_toggle_off": {
+    "message": "KAPALI"
+  },
+  "dashboard_overview_title": {
+    "message": "Genel Bakış"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Koruma panonuz"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Toplam Engellenen"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "bugün +%0"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Durdurulan İzleyici"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "bugün +%0"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Engellenen Kötü Amaçlı Yazılım"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "tehdit durduruldu"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Tehdit tespit edilmedi"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Tasarruf Edilen Bant Genişliği"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "sayfa başına ortalama"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Tasarruf Edilen Süre"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "bu oturumda"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "bugün +$1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— bugün"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "düne göre %$1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "bugün 0 tehdit"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1, +$2 daha",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Engellenen istekler"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "İzleyici istekleri"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Kötü amaçlı yazılım tespitleri"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7g"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14g"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30g"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "engellendi"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "izleyici"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "kötü amaçlı yazılım"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "En çok engellenen alan adları"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "En çok izleyici alan adları"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "En çok kötü amaçlı yazılım alan adları"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Tümünü gör"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Daha az göster"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Tümünü gör ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Henüz veri yok."
+  },
+  "dashboard_privacy_title": {
+    "message": "Gizlilik puanı"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Engellenen reklamlar"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Engellenen izleyiciler"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Kötü amaçlı yazılım koruması"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Yönlendiren anonimleştirme"
+  },
+  "dashboard_rules_title": {
+    "message": "Özel Kurallar"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "site-rules.txt biçiminde düzenleyin — ana kural dosyasıyla aynı sözdizimi. Değerler yerleşik kurallarla birleştirilir."
+  },
+  "dashboard_rules_clear": {
+    "message": "Temizle"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Tüm özel kurallar temizlensin mi?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Özel kurallar — site-rules.txt ile aynı biçim\n# Değerler yerleşik kurallarla BİRLEŞTİRİLİR (değiştirilmez).\n#\n# ── Yeni bir alan adını bir kural bölümüne eşleyin ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← alt alan adları otomatik olarak eşleşir\n#\n# ── Genel olarak engellenecek ekstra alan adları ekleyin ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Siteye özel kozmetik kurallar ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "İzin Listesi"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Tüm engellemeyi atlayan siteler"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Site ekle"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Öğe kuralları"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "\"Gizlenecek öğeyi seç\" ile elle gizlenen öğeler — siteye göre gruplanmış"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Henüz kural yok."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Genel kurallar"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "\"Sayfayı komut dosyaları/değişkenler için tara\" ile elle engellenen/düzenlenen/silinen window genel değişkenleri — siteye göre gruplanmış"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Henüz kural yok."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "engelle"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "düzenle"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "sil"
+  },
+  "dashboard_focus_title": {
+    "message": "Odaklanma modu"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Dikkat dağıtıcı siteleri bir zamanlamaya göre engelleyin"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Odaklanma oturumu"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Oturum duraklatıldı"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Oturum çalışıyor…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Oturum tamamlandı!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25dk"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45dk"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60dk"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90dk"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Özel"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "dk"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Dikkat dağıtıcı liste"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Ekle"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Odaklanma sırasında engellenecek alan adını girin (örn. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Ayarlar"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlock davranışını özelleştirin"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Engelleme"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Reklamları engelle"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standart reklam ağı engelleme"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "İzleyicileri engelle"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Analiz ve izleme komut dosyalarını engelle"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kozmetik filtreleme"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Kalan reklam yer tutucularını CSS ile gizle"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Kötü amaçlı yazılımları engelle"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Bilinen kötü amaçlı yazılım alan adlarını engelle"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Gizlilik"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Yönlendiren anonimleştirme"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Kaynaklar arası isteklerde yönlendiren başlıklarını kaldır"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Küresel Gizlilik Kontrolü"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC vazgeçme sinyalini gönder (Sec-GPC başlığı + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "İzleme Yok (DNT) başlığı"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1 istek başlığını gönder"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Veri"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "İstatistik topla"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Yalnızca yerel kullanım istatistikleri (asla yüklenmez)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Tüm verileri sıfırla"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Kuralları, istatistikleri ve ayarları temizle"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Sıfırla"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Tüm AdBlock verileri sıfırlansın mı? Bu işlem geri alınamaz."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Tüm veriler temizlendi. Yeniden yükleniyor…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Hakkında"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Sürüm"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Güncellemeleri kontrol et"
+  },
+  "dashboard_settings_checking": {
+    "message": "Kontrol ediliyor…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Daha yeni bir sürüm mevcut"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Görüntüle"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Son kontrol: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (başarısız — çevrimdışı mısınız?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Henüz kontrol edilmedi"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 mevcut (şu an v$2 kullanıyorsunuz)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Kural Kaynağı"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock'un site kurallarını getirdiği yer"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Uzak kural URL'leri"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Yerleşik varsayılanı (açılıp kapatılabilir, kaldırılamaz) ve eklediğiniz tüm URL'leri içerir — hepsi birleştirilir, her biri bağımsız olarak açılıp kapatılabilir."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL ekle"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Yerel kural dosyaları"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txt kural dosyaları yükleyin — URL kaynaklarıyla birleştirilir. Birden fazla dosya desteklenir."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Dosya ekle…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Dışa aktarılıyor…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Dışa aktarma başarısız: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "bilinmeyen hata"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$3 kuraldan $1 dönüştürüldü, $2 atlandı",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 istisna kuralı (burada iptal modeli yok)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 yordamsal seçici (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 AdGuard uzantılı değiştirici",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 eşlenmemiş scriptlet çağrısı",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 desteklenmeyen ağ kuralı değiştiricisi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 bu deponun kendi site-rules.txt dosyasında zaten var",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 tanınmayan sözdizimi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 yüklendi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 yüklendi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Dışa Aktar"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Bu kaynağın kurallarını bu deponun kendi grameriyle dönüştürülmüş olarak indirin"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Varsayılan"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList ailesi"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Dile göre"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Özel (kendi URL'leriniz)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "$1 için sahte veri oluşturuldu:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Genel"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Dil"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Değiştirdikten sonra bu sayfayı yeniden başlatır"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Otomatik (tarayıcı dili)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Menü"
+  }
+}

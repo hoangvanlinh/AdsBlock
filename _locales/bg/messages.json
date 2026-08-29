@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Блокирайте реклами, тракери и известни злонамерени домейни с прости настройки за сайтове и инструменти за концентрация.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Сайтът е блокиран — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Сайтът е блокиран за вашата безопасност"
+  },
+  "blocked_title_adPopup": {
+    "message": "Изскачаща реклама/нов раздел е блокиран(а)"
+  },
+  "blocked_host_unknown": {
+    "message": "неизвестен сайт"
+  },
+  "blocked_hint_default": {
+    "message": "Този сайт е в списък за блокиране на злонамерен софтуер/фишинг. Може да се опита да открадне информацията ви, да добива криптовалута или да инсталира нежелан софтуер."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Клик на страницата, от която дойдохте, се опита да отвори тази рекламна/изскачаща мрежа в нов раздел. Можете спокойно да затворите този раздел."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Не ме предупреждавай отново за този сайт"
+  },
+  "blocked_btn_goBack": {
+    "message": "Назад"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Затвори този прозорец"
+  },
+  "blocked_btn_proceed": {
+    "message": "Продължи все пак"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Продължаване…"
+  },
+  "common_remove": {
+    "message": "Премахни"
+  },
+  "common_cancel": {
+    "message": "Отказ"
+  },
+  "menu_pickElement": {
+    "message": "Избери елемент за скриване…"
+  },
+  "menu_scanGlobals": {
+    "message": "Сканирай страницата за скриптове/променливи…"
+  },
+  "menu_editRules": {
+    "message": "Редактирай правилата за този сайт…"
+  },
+  "picker_badge_active": {
+    "message": "Избиране на елемент за скриване — натиснете Esc за отказ"
+  },
+  "picker_btn_hide": {
+    "message": "Скрий този елемент"
+  },
+  "picker_btn_broaden": {
+    "message": "Разшири"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Табло"
+  },
+  "popup_review_title": {
+    "message": "Харесва ли ви AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Бърза оценка помага много."
+  },
+  "popup_review_rate": {
+    "message": "Оценете ни"
+  },
+  "popup_review_dismiss": {
+    "message": "Не, благодаря"
+  },
+  "popup_stat_blocked": {
+    "message": "Блокирани"
+  },
+  "popup_stat_malware": {
+    "message": "Злонамерен софтуер"
+  },
+  "popup_stat_speed": {
+    "message": "Скорост"
+  },
+  "popup_stat_saved": {
+    "message": "Спестено"
+  },
+  "popup_allowlist_banner": {
+    "message": "Този сайт е в списъка с разрешени"
+  },
+  "popup_action_focus": {
+    "message": "Режим на концентрация"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Пауза за сайта"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Възобнови сайта"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Оценка на поверителността"
+  },
+  "popup_footer_settings": {
+    "message": "Настройки"
+  },
+  "popup_ruleChip_title": {
+    "message": "Правила за мрежово блокиране, заредени в момента"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… правила"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "мрежови правила: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 мрежови правила заредени",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Подкрепете разработката чрез PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Дарете"
+  },
+  "popup_version_title": {
+    "message": "Версия на AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Налична е актуализация — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Налична е по-нова версия — кликнете, за да отворите страницата в магазина"
+  },
+  "popup_domain_unknown": {
+    "message": "Неизвестен сайт"
+  },
+  "popup_status_site": {
+    "message": "Сайт"
+  },
+  "popup_status_protection": {
+    "message": "Защита"
+  },
+  "popup_status_allowlisted": {
+    "message": "Разрешен"
+  },
+  "popup_status_on": {
+    "message": "ВКЛЮЧЕНА"
+  },
+  "popup_status_paused": {
+    "message": "На пауза"
+  },
+  "popup_status_off": {
+    "message": "ИЗКЛЮЧЕНА"
+  },
+  "common_save": {
+    "message": "Запази"
+  },
+  "common_close": {
+    "message": "Затвори"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Редактиране на правила — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Кликнете, за да вмъкнете в текстовото поле"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Справочник с ключове ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Филтриране на ключове…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "КОЗМЕТИЧНО / КАНДИДАТ СЪВПАДЕНИЕ"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "СКРИПТЛЕТИ (РАЗШИРЕНО)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Текущи правила за този сайт ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(все още няма правила за този сайт — вградени или собствени)"
+  },
+  "ruleEditor_hint": {
+    "message": "Един ред \"key = value | value2\". Кликнете върху ключ по-горе, за да го вмъкнете. Без заглавия [section]. Правилата тук се ДОБАВЯТ към съществуващите правила за този ключ (вижте по-горе) — това не може да премахне или замени вградено правило, а за флагови ключове с една стойност вграденото обикновено печели."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Запазено — презаредете тази страница, за да видите приложените правила."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Запазването се провали — проверете за случаен ред \"[section]\" или огромно поставяне."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS селектори, скривани безусловно чрез вграден стилов лист — без евристична проверка, просто скриване при видимост."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS селектори за КАНДИДАТ елементи — скриват се само ако съвпадат и с labels/link_patterns по-долу."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Същото като selectors, ограничено до контейнери от тип feed/timeline."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Същото като selectors, ограничено до контейнери от тип пазар/пазаруване."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Същото като selectors, ограничено до странична лента/дясна колона."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Същото като selectors, ограничено до отделни публикации/статии."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS селектори за \"хост\" елементи, проверявани по същия начин като selectors по-горе."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Текстови етикети (напр. sponsored, promoted), съпоставяни с атрибути/контекстен текст за потвърждение, че кандидатът наистина е реклама."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Подниз шаблони, съпоставяни с връзките/атрибутите на самия кандидат за потвърждение, че е реклама."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Имена на HTML атрибути, сканирани за съвпадения на label/link_pattern (по подразбиране: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Дъщерни елементи, от които се извлича текст за съвпадение на етикети (по подразбиране: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS селектор(и) за изкачване чрез .closest() преди скриване на съвпаднал кандидат (скрива контейнера, не само етикета)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Имена на класове, непрекъснато премахвани от <html>/<body> — обезврежда наслагвания само с CSS, управлявани от коренен клас."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Имена на CSS свойства, непрекъснато изчиствани от вградения стил на <html>/<body> — обезврежда заключване на превъртане, зададено чрез JS, и др."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Флаг 1/0 — автоматично затваряне на изскачащи/скрити раздели, отворени от кликове на този сайт."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — заключва свойство на прозореца трайно към фиксирана стойност (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — хвърля грешка, когато скрипт прочете това свойство на прозореца."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — хвърля грешка, когато скрипт запише в това свойство на прозореца."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — хвърля грешка само когато трасето на извикващия скрипт съвпада с needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — хвърля грешка, когато скрипт с източник, съвпадащ с needle, прочете target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — блокира или пренасочва с примамка извикванията на window.open(), съвпадащи с pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — блокира извиквания на fetch(), съвпадащи с критериите."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — блокира извиквания на XMLHttpRequest, съвпадащи с критериите."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — блокира fetch, като по избор връща фиксирано фалшиво тяло на отговора."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — спира about:blank iframe от същия произход да достига обратно до истинския прозорец, за да заобиколи заключване."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — премахва полета от резултата на всяко JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — премахва полета от JSON отговор на fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — премахва полета от JSON отговор на XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — изчиства обект, присвоен директно от скрипт (не чрез JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — изтривания на полета чрез JSONPath в JSON отговор на fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — изтривания на полета чрез JSONPath в JSON-lines отговор на XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Премахва полета от отговор, кодиран с protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath редакции (изтривания И присвояване на стойности) на изходящо тяло на заявка."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath редакции (изтривания И присвояване на стойности) на тяло на отговор."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — намиране/заместване с regex в тялото на отговор на fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — намиране/заместване с regex в тялото на отговор на XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — заменя един аргумент, подаден на функция."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — безусловна текстова замяна на изходящи данни (без ограничение по URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — пренаписва текста на таг <script> преди изпълнението му. sedCount ограничава колко възела ще бъдат пренаписани (по подразбиране: без ограничение)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — изчиства полета от обект, подаден КЪМ извикване на нативен метод."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — прекратява или тихо игнорира извикване на нативен метод, съвпадащ със сигнатура."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — отхвърля или хвърля грешка при присвояване чрез setter (напр. Element.prototype.innerHTML), чиято стойност съвпада с needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — премахва рекламни сегменти от отговор с HLS плейлиста .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — симулира успешно зареждане на script/img/iframe/link вместо реалната мрежова заявка."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — премахва HTML атрибути от съвпадащи елементи."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — изчиства текстовото съдържание на DOM възел."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — пренаписва текстовото съдържание на DOM възел."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — спира автоматично пренасочване чрез <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — задава бисквитка."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — премахва бисквитки, съвпадащи с шаблон за име."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — задава запис в localStorage (ограничено до безопасни буквални стойности или специалната стойност \"remove\" за изтриване на съвпадащи ключове)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — пренаписва href на връзка от собствения ѝ текст или друг атрибут."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — блокира извиквания на setTimeout(), съвпадащи с критериите."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — блокира извиквания на setInterval(), съвпадащи с критериите."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — блокира извиквания на requestAnimationFrame(), съвпадащи с критериите."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — блокира извиквания на addEventListener(), съвпадащи с критериите."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — ускорява/забавя съвпадащи извиквания на setTimeout() вместо да ги блокира."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — ускорява/забавя съвпадащи извиквания на setInterval() вместо да ги блокира."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — блокира извиквания на eval(), чийто източник съвпада с pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Деактивира RTCPeerConnection — блокира трикове с изскачащи прозорци/проследяване, базирани на WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Обезврежда скриптове за откриване на ad-block от типа BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Премахва target=\"_blank\" от кликнати връзки — блокира принудителни пренасочвания в нов раздел."
+  },
+  "scanner_value_emptyString": {
+    "message": "Празен низ"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Празен масив"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Празен обект"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Празна функция (без действие)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Функция, връщаща винаги true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Функция, връщаща винаги false"
+  },
+  "scanner_btn_block": {
+    "message": "Блокирай"
+  },
+  "scanner_btn_edit": {
+    "message": "Редактирай"
+  },
+  "scanner_btn_delete": {
+    "message": "Изтрий"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Блокирането е приложено — запазено за този сайт."
+  },
+  "scanner_status_editApplied": {
+    "message": "Редакцията е приложена — запазена за този сайт."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Изтриването е приложено — запазено за този сайт."
+  },
+  "scanner_block_warning": {
+    "message": "Блокирането предотвратява ВСИЧКИ бъдещи четения на това свойство — може да наруши функционалност на страницата, която разчита на него. Това не може да бъде отменено с презареждане; премахнете правилото от страница „Общи правила“ в таблото, за да върнете назад."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Блокирай въпреки това"
+  },
+  "scanner_edit_customOption": {
+    "message": "Персонализирано…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "единичен токен, без интервали (напр. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Въведете стойност без интервали."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Интервали не са позволени — ще бъде отхвърлено."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Ще бъде запазено като: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Глобални променливи на страницата ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Филтриране по име…"
+  },
+  "scanner_empty": {
+    "message": "Не са намерени добавени от страницата глобални променливи на тази страница."
+  },
+  "scanner_footer_limitation": {
+    "message": "Вижда само глобални променливи от тип var/function и изрични присвоявания window.x = — декларации с let/const/class са невидими за всеки скенер на страницата (ограничение на JS)."
+  },
+  "scanner_loading": {
+    "message": "Сканиране на глобални променливи на страницата — натиснете Esc за отказ"
+  },
+  "common_add": {
+    "message": "Добави"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Табло"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Общ преглед"
+  },
+  "dashboard_nav_rules": {
+    "message": "Собствени правила"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Източник на правила"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Списък с разрешени"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Правила за елементи"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Общи правила"
+  },
+  "dashboard_nav_focus": {
+    "message": "Концентрация"
+  },
+  "dashboard_nav_settings": {
+    "message": "Настройки"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Защита ВКЛЮЧЕНА"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Защита $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Подкрепете разработката чрез PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Почерпете ме с кафе ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ВКЛЮЧЕНА"
+  },
+  "dashboard_toggle_off": {
+    "message": "ИЗКЛЮЧЕНА"
+  },
+  "dashboard_overview_title": {
+    "message": "Общ преглед"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Вашето табло за защита"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Общо блокирани"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% днес"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Спрени тракери"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% днес"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Блокиран злонамерен софтуер"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "спрени заплахи"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Не са открити заплахи"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Спестен трафик"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "средно на страница"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Спестено време"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "в тази сесия"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 днес",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— днес"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% спрямо вчера",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 заплахи днес"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 и още $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Блокирани заявки"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Заявки от тракери"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Засичания на злонамерен софтуер"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7д"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14д"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30д"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "блокирани"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "тракери"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "злонамерен софтуер"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Най-блокирани домейни"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Най-много тракери домейни"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Най-много злонамерен софтуер домейни"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Виж всички"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Покажи по-малко"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Виж всички ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Все още няма данни."
+  },
+  "dashboard_privacy_title": {
+    "message": "Оценка на поверителността"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Блокирани реклами"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Блокирани тракери"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Защита от злонамерен софтуер"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Анонимизиране на referrer"
+  },
+  "dashboard_rules_title": {
+    "message": "Собствени правила"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Редактиране в формат site-rules.txt — същият синтаксис като основния файл с правила. Стойностите се сливат с вградените правила."
+  },
+  "dashboard_rules_clear": {
+    "message": "Изчисти"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Изчистване на всички собствени правила?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Собствени правила — същия формат като site-rules.txt\n# Стойностите се СЛИВАТ с вградените правила (не ги заменят).\n#\n# ── Свързване на нов домейн с раздел с правила ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← поддомейните се съпоставят автоматично\n#\n# ── Добавяне на допълнителни домейни за глобално блокиране ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Козметични правила за отделен сайт ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Списък с разрешени"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Сайтове, заобикалящи цялото блокиране"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Добави сайт"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Правила за елементи"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Елементи, скрити ръчно чрез „Избери елемент за скриване“ — групирани по сайт"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Все още няма правила."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Общи правила"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Глобални променливи, блокирани/редактирани/изтрити ръчно чрез „Сканирай страницата за скриптове/променливи“ — групирани по сайт"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Все още няма правила."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "блокирай"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "редактирай"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "изтрий"
+  },
+  "dashboard_focus_title": {
+    "message": "Режим на концентрация"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Блокиране на разсейващи сайтове по график"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Сесия на концентрация"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Сесията е на пауза"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Сесията върви…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Сесията приключи!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25м"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45м"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60м"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90м"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Персонализирано"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "мин"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Списък с разсейващи сайтове"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Добави"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Въведете домейн за блокиране по време на концентрация (напр. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Настройки"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Персонализирайте поведението на AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Блокиране"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Блокиране на реклами"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Стандартно блокиране на рекламни мрежи"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Блокиране на тракери"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Блокиране на скриптове за анализ и проследяване"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Козметично филтриране"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Скриване на оставащи рекламни места чрез CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Блокиране на злонамерен софтуер"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Блокиране на известни домейни със злонамерен софтуер"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Поверителност"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Анонимизиране на referrer"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Премахване на referrer заглавия при заявки към други домейни"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Глобален контрол на поверителността (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Изпраща сигнала за отказ GPC (заглавие Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Заглавие „Не проследявай“ (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Изпраща заглавието на заявката DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Данни"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Събиране на статистика"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Статистика за употреба само на местно ниво (никога не се качва)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Нулиране на всички данни"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Изчистване на правила, статистика и настройки"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Нулирай"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Нулиране на всички данни на AdBlock? Това не може да бъде отменено."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Всички данни са изчистени. Презареждане…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Относно"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Версия"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Проверка за актуализации"
+  },
+  "dashboard_settings_checking": {
+    "message": "Проверка…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Налична е по-нова версия"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Виж"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Последна проверка $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (неуспешно — може би сте офлайн?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Все още не е проверявано"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 е налична (вие имате v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Източник на правила"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Откъде AdBlock взима правилата си за сайтове"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Отдалечени URL адреси с правила"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Включва вградения по подразбиране (превключваем, не се премахва) плюс всички добавени от вас URL адреси — всички слети, всеки независимо включен/изключен."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Добави URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Локални файлове с правила"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Качете .txt файлове с правила — слети с URL източниците. Поддържат се множество файлове."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Добави файл…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Експортиране…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Експортирането се провали: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "неизвестна грешка"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 преобразувани, $2 пропуснати от $3 правила",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 правила за изключение (тук няма модел за отмяна)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 процедурни селектори (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 разширени AdGuard модификатори",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 несъпоставени извиквания на скриптлети",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 неподдържани модификатори на мрежови правила",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 вече включени в собствения site-rules.txt на това разширение",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 непозната синтаксис",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "заредени $1/$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "заредени $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Експортирай"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Изтегляне на правилата на този източник, преобразувани в собствения синтаксис на разширението"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "По подразбиране"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Семейство EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "По език"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Собствени (вашите URL адреси)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Заредени фиктивни данни за $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Общи"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Език"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Презарежда тази страница след промяна"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Автоматично (език на браузъра)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Меню"
+  }
+}

@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Блокує рекламу, трекери та відомі шкідливі домени за допомогою простих налаштувань для сайтів та інструментів фокусування."
+  },
+  "blocked_pageTitle": {
+    "message": "Сайт заблоковано — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Сайт заблоковано для вашої безпеки"
+  },
+  "blocked_title_adPopup": {
+    "message": "Спливаюче вікно/рекламу в новій вкладці заблоковано"
+  },
+  "blocked_host_unknown": {
+    "message": "невідомий сайт"
+  },
+  "blocked_hint_default": {
+    "message": "Цей сайт перебуває у списку шкідливих/фішингових сайтів. Він може намагатися викрасти ваші дані, майнити криптовалюту або встановити небажане програмне забезпечення."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Клік на сторінці, з якої ви прийшли, намагався відкрити цю рекламну/спливаючу мережу в новій вкладці. Цю вкладку можна безпечно закрити."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Більше не попереджати про цей сайт"
+  },
+  "blocked_btn_goBack": {
+    "message": "Назад"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Закрити це вікно"
+  },
+  "blocked_btn_proceed": {
+    "message": "Все одно продовжити"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Продовження…"
+  },
+  "common_remove": {
+    "message": "Видалити"
+  },
+  "common_cancel": {
+    "message": "Скасувати"
+  },
+  "menu_pickElement": {
+    "message": "Вибрати елемент для приховування…"
+  },
+  "menu_scanGlobals": {
+    "message": "Сканувати сторінку на скрипти/змінні…"
+  },
+  "menu_editRules": {
+    "message": "Редагувати правила для цього сайту…"
+  },
+  "picker_badge_active": {
+    "message": "Вибір елемента для приховування — натисніть Esc, щоб скасувати"
+  },
+  "picker_btn_hide": {
+    "message": "Приховати цей елемент"
+  },
+  "picker_btn_broaden": {
+    "message": "Розширити"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Реклама, Трекери"
+  },
+  "popup_openDashboard_title": {
+    "message": "Панель керування"
+  },
+  "popup_review_title": {
+    "message": "Подобається AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Швидка оцінка дуже допоможе."
+  },
+  "popup_review_rate": {
+    "message": "Оцінити"
+  },
+  "popup_review_dismiss": {
+    "message": "Ні, дякую"
+  },
+  "popup_stat_blocked": {
+    "message": "Заблоковано"
+  },
+  "popup_stat_malware": {
+    "message": "Шкідливе ПЗ"
+  },
+  "popup_stat_speed": {
+    "message": "Швидкість"
+  },
+  "popup_stat_saved": {
+    "message": "Заощаджено"
+  },
+  "popup_allowlist_banner": {
+    "message": "Цей сайт у білому списку"
+  },
+  "popup_action_focus": {
+    "message": "Режим фокусування"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Призупинити на сайті"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Відновити на сайті"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Оцінка приватності"
+  },
+  "popup_footer_settings": {
+    "message": "Налаштування"
+  },
+  "popup_ruleChip_title": {
+    "message": "Наразі завантажені правила блокування мережі"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… правил"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "мережевих правил: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 мережевих правил завантажено",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Підтримати розробку через PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Підтримати"
+  },
+  "popup_version_title": {
+    "message": "Версія AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Доступне оновлення — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Доступна нова версія — натисніть, щоб відкрити сторінку магазину"
+  },
+  "popup_domain_unknown": {
+    "message": "Невідомий сайт"
+  },
+  "popup_status_site": {
+    "message": "Сайт"
+  },
+  "popup_status_protection": {
+    "message": "Захист"
+  },
+  "popup_status_allowlisted": {
+    "message": "У білому списку"
+  },
+  "popup_status_on": {
+    "message": "УВІМК"
+  },
+  "popup_status_paused": {
+    "message": "Призупинено"
+  },
+  "popup_status_off": {
+    "message": "ВИМК"
+  },
+  "common_save": {
+    "message": "Зберегти"
+  },
+  "common_close": {
+    "message": "Закрити"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Редагувати правила — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Натисніть, щоб вставити в текстове поле"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Довідник ключів ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Фільтрувати ключі…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "КОСМЕТИЧНІ / ПІДБІР КАНДИДАТІВ"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "СКРИПТЛЕТИ (ДОДАТКОВО)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Поточні правила для цього сайту ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(поки немає правил для цього сайту — ні вбудованих, ні власних)"
+  },
+  "ruleEditor_hint": {
+    "message": "По одному рядку \"key = value | value2\". Натисніть на ключ вище, щоб вставити його. Без заголовків [section]. Правила, введені тут, ДОДАЮТЬСЯ до вже наявних правил цього ключа (див. вище) — це не може видалити чи перевизначити вбудоване правило, а для ключів-прапорців з одним значенням вбудоване значення зазвичай усе одно має перевагу."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Збережено — перезавантажте цю сторінку, щоб побачити застосовані правила."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Помилка збереження — перевірте, чи немає зайвого рядка \"[section]\" або надто великого вставленого тексту."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS-селектори, які приховуються безумовно через вбудований stylesheet — без евристичної перевірки, просто приховати одразу."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS-селектори для КАНДИДАТІВ-елементів — приховуються лише якщо вони також відповідають labels/link_patterns нижче."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Те саме, що selectors, але обмежено контейнерами у стилі стрічки/таймлайну."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Те саме, що selectors, але обмежено контейнерами у стилі маркетплейсу/магазину."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Те саме, що selectors, але обмежено бічною панеллю/right-rail."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Те саме, що selectors, але обмежено окремими контейнерами поста/статті."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS-селектори для елементів-\"host\", перевіряються так само, як selectors вище."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Текстові мітки (наприклад, sponsored, promoted), що зіставляються з атрибутами/контекстним текстом для підтвердження, що кандидат справді реклама."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Підрядкові шаблони, що зіставляються з посиланнями/атрибутами самого кандидата для підтвердження, що це реклама."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Назви HTML-атрибутів, які скануються на збіги label/link_pattern (за замовчуванням: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Дочірні елементи, з яких береться текст для зіставлення label (за замовчуванням: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS-селектор(и) для підйому вгору через .closest() перед приховуванням знайденого кандидата (приховати контейнер, а не лише мітку)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Назви класів, які постійно видаляються з <html>/<body> — знешкоджує оверлеї захоплення сторінки на чистому CSS через кореневий клас."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Назви CSS-властивостей, які постійно очищуються з інлайн-стилю <html>/<body> — знешкоджує блокування прокрутки, встановлене через JS, тощо."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Прапорець 1/0 — автоматично закривати вкладки popup/popunder, відкриті кліками на цьому сайті."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — постійно фіксує властивість window на одному значенні (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — викликати помилку, коли будь-який скрипт читає цю властивість window."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — викликати помилку, коли будь-який скрипт записує цю властивість window."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — викликати помилку лише коли стек викликів скрипта відповідає needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — викликати помилку, коли скрипт із джерелом, що відповідає needle, читає target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — блокує або підмінює виклики window.open(), що відповідають pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — блокує виклики fetch(), що відповідають критеріям."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — блокує виклики XMLHttpRequest, що відповідають критеріям."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — блокує fetch, за бажанням повертаючи фіксоване фейкове тіло відповіді."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — не дає iframe about:blank того самого походження дістатися до справжнього window для обходу блокування."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — видаляє поля з будь-якого результату JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — видаляє поля з JSON-відповіді fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — видаляє поля з JSON-відповіді XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — обрізає об'єкт, який скрипт присвоює напряму (не через JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — видалення полів на основі JSONPath у JSON-відповіді fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — видалення полів на основі JSONPath у відповіді XHR у форматі JSON-lines."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Видаляє поля з відповіді, закодованої у форматі protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — редагування JSONPath (видалення ТА присвоєння значень) у тілі вихідного запиту."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — редагування JSONPath (видалення ТА присвоєння значень) у тілі відповіді."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — пошук/заміна за регулярним виразом у тілі відповіді fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — пошук/заміна за регулярним виразом у тілі відповіді XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — замінює один аргумент, переданий функції."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — безумовна заміна тексту у вихідних даних (без прив'язки до URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — переписує текст тега <script> перед його виконанням. sedCount обмежує кількість вузлів, які це правило коли-небудь перепише (за замовчуванням: без обмежень)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — обрізає поля з об'єкта, переданого У виклик нативного методу."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — скасовує або тихо ігнорує виклик нативного методу, що відповідає сигнатурі."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — відкидає або кидає помилку на присвоєння через сеттер-аксесор (наприклад, Element.prototype.innerHTML), значення якого відповідає needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — видаляє рекламні сегменти з відповіді плейлиста HLS .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — імітує успішне завантаження script/img/iframe/link замість справжнього мережевого запиту."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — видаляє HTML-атрибути з елементів, що відповідають умові."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — очищує текстовий вміст DOM-вузла."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — переписує текстовий вміст DOM-вузла."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — зупиняє автоматичне перенаправлення через <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — встановлює cookie."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — видаляє cookie, що відповідають шаблону назви."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — встановлює запис у localStorage (обмежено безпечними літеральними значеннями або спеціальним ключовим словом \"remove\" для видалення відповідних ключів)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — переписує href посилання на основі його власного тексту або іншого атрибута."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — блокує виклики setTimeout(), що відповідають критеріям."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — блокує виклики setInterval(), що відповідають критеріям."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — блокує виклики requestAnimationFrame(), що відповідають критеріям."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — блокує виклики addEventListener(), що відповідають критеріям."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — прискорює/уповільнює відповідні виклики setTimeout() замість їх блокування."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — прискорює/уповільнює відповідні виклики setInterval() замість їх блокування."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — блокує виклики eval(), джерело яких відповідає pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Вимикає RTCPeerConnection — блокує трюки зі спливаючими вікнами/трекінгом на основі WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Знешкоджує скрипти виявлення блокувальників реклами на кшталт BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Видаляє target=\"_blank\" з клікнутих посилань — блокує примусові переходи в нову вкладку."
+  },
+  "scanner_value_emptyString": {
+    "message": "Порожній рядок"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Порожній масив"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Порожній об'єкт"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Порожня функція (без дії)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Функція, що завжди повертає true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Функція, що завжди повертає false"
+  },
+  "scanner_btn_block": {
+    "message": "Блокувати"
+  },
+  "scanner_btn_edit": {
+    "message": "Редагувати"
+  },
+  "scanner_btn_delete": {
+    "message": "Видалити"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Блокування застосовано — збережено для цього сайту."
+  },
+  "scanner_status_editApplied": {
+    "message": "Редагування застосовано — збережено для цього сайту."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Видалення застосовано — збережено для цього сайту."
+  },
+  "scanner_block_warning": {
+    "message": "Блокування унеможливлює УСІ майбутні читання цієї властивості — це може порушити функціональність сторінки, яка на неї покладається. Це не можна скасувати перезавантаженням сторінки; видаліть правило на сторінці Global Rules панелі керування, щоб повернути назад."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Все одно заблокувати"
+  },
+  "scanner_edit_customOption": {
+    "message": "Власне…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "одне значення, без пробілів (наприклад: 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Введіть значення без пробілів."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Пробіли неприпустимі — буде відхилено."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Буде збережено як: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Глобальні змінні сторінки ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Фільтрувати за назвою…"
+  },
+  "scanner_empty": {
+    "message": "На цій сторінці не знайдено доданих нею глобальних змінних."
+  },
+  "scanner_footer_limitation": {
+    "message": "Бачить лише глобальні змінні у стилі var/function та явні присвоєння window.x = … — оголошення let/const/class невидимі для будь-якого сканера сторінки (обмеження мови JS)."
+  },
+  "scanner_loading": {
+    "message": "Сканування глобальних змінних сторінки — натисніть Esc, щоб скасувати"
+  },
+  "common_add": {
+    "message": "Додати"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Панель керування"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Реклама, Трекери"
+  },
+  "dashboard_nav_overview": {
+    "message": "Огляд"
+  },
+  "dashboard_nav_rules": {
+    "message": "Власні правила"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Джерело правил"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Білий список"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Правила елементів"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Глобальні правила"
+  },
+  "dashboard_nav_focus": {
+    "message": "Фокус"
+  },
+  "dashboard_nav_settings": {
+    "message": "Налаштування"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Захист УВІМК"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Захист $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Підтримати розробку через PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Пригостити мене кавою ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "УВІМК"
+  },
+  "dashboard_toggle_off": {
+    "message": "ВИМК"
+  },
+  "dashboard_overview_title": {
+    "message": "Огляд"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Ваша панель захисту"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Всього заблоковано"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% сьогодні"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Трекерів зупинено"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% сьогодні"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Шкідливе ПЗ заблоковано"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "загроз зупинено"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Загроз не виявлено"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Заощаджено трафіку"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "в середньому на сторінку"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Заощаджено часу"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "за цю сесію"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 сьогодні",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— сьогодні"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% порівняно з учора",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 загроз сьогодні"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 ще +$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Заблоковані запити"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Запити трекерів"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Виявлення шкідливого ПЗ"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7д"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14д"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30д"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "заблоковано"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "трекерів"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "шкідливого ПЗ"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Топ заблокованих доменів"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Топ доменів-трекерів"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Топ доменів зі шкідливим ПЗ"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Показати всі"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Показати менше"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Показати всі ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Поки немає даних."
+  },
+  "dashboard_privacy_title": {
+    "message": "Оцінка приватності"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Реклами заблоковано"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Трекерів заблоковано"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Захист від шкідливого ПЗ"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Анонімізація referrer"
+  },
+  "dashboard_rules_title": {
+    "message": "Власні правила"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Редагуйте у форматі site-rules.txt — той самий синтаксис, що й в основному файлі правил. Значення об'єднуються з вбудованими правилами."
+  },
+  "dashboard_rules_clear": {
+    "message": "Очистити"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Очистити всі власні правила?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Власні правила — той самий формат, що й site-rules.txt\n# Значення ОБ'ЄДНУЮТЬСЯ із вбудованими правилами (не замінюють їх).\n#\n# ── Прив'язати новий домен до секції правил ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← субдомени зіставляються автоматично\n#\n# ── Додати домени для глобального блокування ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Косметичні правила для окремого сайту ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Білий список"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Сайти, що обходять усе блокування"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Додати сайт"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Правила елементів"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Елементи, приховані вручну через \"Вибрати елемент для приховування\" — згруповано за сайтом"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Поки немає правил."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Глобальні правила"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Глобальні змінні window, заблоковані/відредаговані/видалені вручну через \"Сканувати сторінку на скрипти/змінні\" — згруповано за сайтом"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Поки немає правил."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "блокувати"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "редагувати"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "видалити"
+  },
+  "dashboard_focus_title": {
+    "message": "Режим фокусування"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Блокувати сайти, що відволікають, за розкладом"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Сесія фокусування"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Сесію призупинено"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Сесія триває…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Сесію завершено!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 хв"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 хв"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 хв"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 хв"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Власний"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "хв"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Список відволікань"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Додати"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Введіть домен для блокування під час фокусування (наприклад, twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Налаштування"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Налаштуйте поведінку AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Блокування"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Блокувати рекламу"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Стандартне блокування рекламних мереж"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Блокувати трекери"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Блокувати скрипти аналітики та трекінгу"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Косметичне фільтрування"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Приховувати залишкові рекламні заглушки за допомогою CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Блокувати шкідливе ПЗ"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Блокувати відомі домени зі шкідливим ПЗ"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Приватність"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Анонімізація referrer"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Видаляти заголовки referrer у міждоменних запитах"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Глобальний контроль приватності (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Надсилати сигнал відмови GPC (заголовок Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Заголовок Do Not Track"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Надсилати заголовок запиту DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Дані"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Збирати статистику"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Статистика використання лише локально (ніколи не завантажується)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Скинути всі дані"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Очистити правила, статистику та налаштування"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Скинути"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Скинути всі дані AdBlock? Це неможливо скасувати."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Усі дані очищено. Перезавантаження…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Про додаток"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Версія"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Перевірити оновлення"
+  },
+  "dashboard_settings_checking": {
+    "message": "Перевірка…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Доступна новіша версія"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Переглянути"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Востаннє перевірено $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (помилка — немає з'єднання?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Ще не перевірялося"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "Доступна v$1 (у вас v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Джерело правил"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Звідки AdBlock завантажує правила для сайтів"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL-адреси віддалених правил"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Включає вбудоване джерело за замовчуванням (можна вмикати/вимикати, не можна видалити) плюс будь-які додані вами URL-адреси — усі об'єднані, кожна вмикається/вимикається окремо."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Додати URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Локальні файли правил"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Завантажте файли правил .txt — об'єднуються з джерелами URL. Підтримується кілька файлів."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Додати файл…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Експортування…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Помилка експорту: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "невідома помилка"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "Перетворено $1, пропущено $2 із $3 правил",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 правил-винятків (тут немає відповідної моделі скасування)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 процедурних селекторів (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 розширених модифікаторів AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 незіставлених викликів скриптлетів",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 непідтримуваних модифікаторів мережевих правил",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 вже є у власному site-rules.txt цього репозиторію",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 нерозпізнаного синтаксису",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "Завантажено $1/$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "Завантажено $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Експорт"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Завантажити правила цього джерела, перетворені у власну граматику цього репозиторію"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "За замовчуванням"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Родина EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "За мовою"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Власні (ваші URL-адреси)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Створено тестові дані для $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Загальні"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Мова"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Перезавантажить цю сторінку після зміни"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Автоматично (мова браузера)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Меню"
+  }
+}

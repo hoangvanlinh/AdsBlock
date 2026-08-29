@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "احجب الإعلانات وأدوات التتبع والنطاقات الضارة المعروفة باستخدام إعدادات موقع بسيطة وأدوات تركيز.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "تم حظر الموقع — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "تم حظر هذا الموقع لسلامتك"
+  },
+  "blocked_title_adPopup": {
+    "message": "تم حظر إعلان منبثق/علامة تبويب جديدة"
+  },
+  "blocked_host_unknown": {
+    "message": "موقع غير معروف"
+  },
+  "blocked_hint_default": {
+    "message": "هذا الموقع مدرج في قائمة حظر البرمجيات الخبيثة/التصيد الاحتيالي — قد يحاول سرقة معلوماتك، أو تعدين العملات الرقمية، أو تثبيت برامج غير مرغوب فيها."
+  },
+  "blocked_hint_adPopup": {
+    "message": "حاول النقر على الصفحة التي أتيت منها فتح شبكة الإعلان/النافذة المنبثقة هذه في علامة تبويب جديدة. يمكنك إغلاق علامة التبويب هذه بأمان."
+  },
+  "blocked_dontWarn_label": {
+    "message": "لا تحذرني مرة أخرى بشأن هذا الموقع"
+  },
+  "blocked_btn_goBack": {
+    "message": "العودة"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "إغلاق هذه النافذة"
+  },
+  "blocked_btn_proceed": {
+    "message": "المتابعة على أي حال"
+  },
+  "blocked_btn_proceeding": {
+    "message": "جارٍ المتابعة…"
+  },
+  "common_remove": {
+    "message": "إزالة"
+  },
+  "common_cancel": {
+    "message": "إلغاء"
+  },
+  "menu_pickElement": {
+    "message": "اختيار عنصر لإخفائه…"
+  },
+  "menu_scanGlobals": {
+    "message": "فحص الصفحة بحثًا عن السكربتات/المتغيرات…"
+  },
+  "menu_editRules": {
+    "message": "تعديل قواعد هذا الموقع…"
+  },
+  "picker_badge_active": {
+    "message": "جارٍ اختيار عنصر لإخفائه — اضغط Esc للإلغاء"
+  },
+  "picker_btn_hide": {
+    "message": "إخفاء هذا العنصر"
+  },
+  "picker_btn_broaden": {
+    "message": "توسيع"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "لوحة التحكم"
+  },
+  "popup_review_title": {
+    "message": "هل يعجبك AdBlock؟"
+  },
+  "popup_review_subtitle": {
+    "message": "تقييم سريع يساعد كثيرًا."
+  },
+  "popup_review_rate": {
+    "message": "قيّمنا"
+  },
+  "popup_review_dismiss": {
+    "message": "لا شكرًا"
+  },
+  "popup_stat_blocked": {
+    "message": "محظور"
+  },
+  "popup_stat_malware": {
+    "message": "برمجيات خبيثة"
+  },
+  "popup_stat_speed": {
+    "message": "السرعة"
+  },
+  "popup_stat_saved": {
+    "message": "موفَّر"
+  },
+  "popup_allowlist_banner": {
+    "message": "هذا الموقع ضمن قائمة السماح"
+  },
+  "popup_action_focus": {
+    "message": "وضع التركيز"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ إيقاف مؤقت لهذا الموقع"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ استئناف الموقع"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "درجة الخصوصية"
+  },
+  "popup_footer_settings": {
+    "message": "الإعدادات"
+  },
+  "popup_ruleChip_title": {
+    "message": "قواعد حظر الشبكة المحمّلة حاليًا"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… قواعد"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "قواعد الشبكة: ؟"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "تم تحميل $1 قاعدة شبكة",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "دعم التطوير عبر PayPal"
+  },
+  "popup_donate_label": {
+    "message": "تبرّع"
+  },
+  "popup_version_title": {
+    "message": "إصدار AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "يتوفر تحديث — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "يتوفر إصدار أحدث — انقر لفتح صفحة المتجر"
+  },
+  "popup_domain_unknown": {
+    "message": "موقع غير معروف"
+  },
+  "popup_status_site": {
+    "message": "الموقع"
+  },
+  "popup_status_protection": {
+    "message": "الحماية"
+  },
+  "popup_status_allowlisted": {
+    "message": "مسموح به"
+  },
+  "popup_status_on": {
+    "message": "مفعّلة"
+  },
+  "popup_status_paused": {
+    "message": "متوقفة مؤقتًا"
+  },
+  "popup_status_off": {
+    "message": "معطّلة"
+  },
+  "common_save": {
+    "message": "حفظ"
+  },
+  "common_close": {
+    "message": "إغلاق"
+  },
+  "ruleEditor_panel_title": {
+    "message": "تعديل القواعد — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "انقر للإدراج في مربع النص"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "مرجع المفاتيح ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "تصفية المفاتيح…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "التطابق التجميلي / المرشّح"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "سكربتليتس (متقدّم)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "القواعد الحالية لهذا الموقع ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(لا توجد قواعد لهذا الموقع بعد — مدمجة أو مخصّصة)"
+  },
+  "ruleEditor_hint": {
+    "message": "سطر واحد بصيغة \"key = value | value2\". انقر على مفتاح أعلاه لإدراجه. لا رؤوس أقسام [section]. القواعد المكتوبة هنا تُضاف إلى أي قواعد موجودة لهذا المفتاح (انظر أعلاه) — لا يمكن أن تحذف أو تتجاوز قاعدة مدمجة، وبالنسبة لمفاتيح العلَم ذات القيمة الواحدة، تفوز القيمة المدمجة عادةً."
+  },
+  "ruleEditor_status_saved": {
+    "message": "تم الحفظ — أعد تحميل هذه الصفحة لرؤية القواعد مُطبَّقة."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "فشل الحفظ — تحقق من وجود سطر \"[section]\" شارد أو لصق ضخم."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "محددات CSS يتم إخفاؤها دون شرط عبر ورقة أنماط مُدرَجة — بلا فحص استدلالي، مجرد إخفاء عند الرؤية."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "محددات CSS للعناصر المرشّحة — تُخفى فقط إذا طابقت labels/link_patterns أدناه أيضًا."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "مثل selectors، مخصّصة لحاويات من نوع feed/timeline."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "مثل selectors، مخصّصة لحاويات من نوع سوق/تسوق."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "مثل selectors، مخصّصة لمنطقة الشريط الجانبي/الرف الأيمن."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "مثل selectors، مخصّصة لحاويات المنشور/المقال الفردية."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "محددات CSS لعناصر \"المضيف\"، تُفحص بنفس طريقة selectors أعلاه."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "تسميات نصية (مثل sponsored, promoted) تُطابَق مع السمات/نص السياق للتأكد أن المرشح إعلان فعلًا."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "أنماط جزئية تُطابَق مع روابط/سمات المرشح نفسه للتأكد أنه إعلان."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "أسماء سمات HTML التي يتم فحصها لمطابقات label/link_pattern (الافتراضي: aria-label، data-promoted، post-type، …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "العناصر الفرعية التي يُستخرج منها النص لمطابقة التسميات (الافتراضي: header، [role=heading]، span، a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "محدد(ات) CSS للصعود إليها عبر .closest() قبل إخفاء المرشح المطابق (إخفاء الحاوية، وليس التسمية فقط)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "أسماء أصناف تُزال باستمرار من <html>/<body> — تُبطل طبقات الاستحواذ القائمة على CSS فقط والمدفوعة بصنف جذري."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "أسماء خصائص CSS تُمسح باستمرار من نمط <html>/<body> المضمّن — تُبطل قفل التمرير المضبوط عبر JS، إلخ."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "علَم 1/0 — إغلاق تلقائي لعلامات التبويب المنبثقة/الخلفية التي تُفتح بنقرات على هذا الموقع."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — قفل خاصية نافذة بشكل دائم على قيمة ثابتة (undefined، true، false، noopFunc، …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — إلقاء استثناء عندما يقرأ أي سكربت هذه الخاصية."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — إلقاء استثناء عندما يكتب أي سكربت في هذه الخاصية."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — إلقاء استثناء فقط عندما يطابق تتبع المكدس الخاص بالسكربت المستدعي needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — إلقاء استثناء عندما يقرأ سكربت مصدره يطابق needle خاصية target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — حظر أو إعادة توجيه وهمية لاستدعاءات window.open() المطابقة لـ pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — حظر استدعاءات fetch() المطابقة للمعايير."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — حظر استدعاءات XMLHttpRequest المطابقة للمعايير."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — حظر fetch، مع إمكانية إعادة نص استجابة وهمي ثابت."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — يمنع إطار about:blank من نفس المصدر من الوصول إلى النافذة الحقيقية لتجاوز قفل."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — إزالة حقول من أي نتيجة JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — إزالة حقول من استجابة JSON لطلب fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — إزالة حقول من استجابة JSON لطلب XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — تشذيب كائن يعيّنه سكربت مباشرة (ليس عبر JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — حذف حقول باستخدام JSONPath في استجابة JSON لطلب fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — حذف حقول باستخدام JSONPath في استجابة JSON-lines لطلب XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "إزالة حقول من استجابة مُرمَّزة بصيغة protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — تعديلات JSONPath (حذف وتعيين قيم) على نص طلب صادر."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — تعديلات JSONPath (حذف وتعيين قيم) على نص استجابة."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — بحث/استبدال بالتعابير النمطية في نص استجابة fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — بحث/استبدال بالتعابير النمطية في نص استجابة XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — استبدال وسيط واحد يُمرَّر إلى دالة."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — استبدال نصي غير مشروط على البيانات الصادرة (بلا تحديد نطاق URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — إعادة كتابة نص وسم <script> قبل تشغيله. يحدّ sedCount عدد العُقد التي ستُعاد كتابتها (الافتراضي: بلا حد)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — تشذيب حقول من كائن يُمرَّر إلى استدعاء دالة أصلية."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — إلغاء أو تعطيل صامت لاستدعاء دالة أصلية يطابق توقيعًا معينًا."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — إسقاط أو إلقاء استثناء عند تعيين قيمة عبر setter (مثل Element.prototype.innerHTML) تطابق needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — إزالة مقاطع إعلانية من استجابة قائمة تشغيل HLS بصيغة m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — تزييف نجاح تحميل script/img/iframe/link بدل طلب الشبكة الفعلي."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — إزالة سمات HTML من العناصر المطابقة."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — مسح المحتوى النصي لعقدة DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — إعادة كتابة المحتوى النصي لعقدة DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — إيقاف إعادة توجيه تلقائية عبر <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — تعيين ملف تعريف ارتباط."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — إزالة ملفات تعريف الارتباط المطابقة لنمط اسم."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — تعيين عنصر localStorage (مقيَّد بقيم حرفية آمنة، أو القيمة الخاصة \"remove\" لحذف المفاتيح المطابقة)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — إعادة كتابة href لرابط من نصه الخاص أو سمة أخرى."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — حظر استدعاءات setTimeout() المطابقة للمعايير."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — حظر استدعاءات setInterval() المطابقة للمعايير."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — حظر استدعاءات requestAnimationFrame() المطابقة للمعايير."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — حظر استدعاءات addEventListener() المطابقة للمعايير."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — تسريع/إبطاء استدعاءات setTimeout() المطابقة بدلًا من حظرها."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — تسريع/إبطاء استدعاءات setInterval() المطابقة بدلًا من حظرها."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — حظر استدعاءات eval() التي يطابق مصدرها pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "تعطيل RTCPeerConnection — يحظر حيل المنبثقات/التتبع القائمة على WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "تعطيل سكربتات كشف مانعات الإعلانات من نوع BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "إزالة target=\"_blank\" من الروابط المنقورة — يحظر إعادة التوجيه القسري لعلامة تبويب جديدة."
+  },
+  "scanner_value_emptyString": {
+    "message": "سلسلة نصية فارغة"
+  },
+  "scanner_value_emptyArray": {
+    "message": "مصفوفة فارغة"
+  },
+  "scanner_value_emptyObject": {
+    "message": "كائن فارغ"
+  },
+  "scanner_value_noopFunc": {
+    "message": "دالة فارغة (بلا تأثير)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "دالة تُعيد true دائمًا"
+  },
+  "scanner_value_falseFunc": {
+    "message": "دالة تُعيد false دائمًا"
+  },
+  "scanner_btn_block": {
+    "message": "حظر"
+  },
+  "scanner_btn_edit": {
+    "message": "تعديل"
+  },
+  "scanner_btn_delete": {
+    "message": "حذف"
+  },
+  "scanner_status_blockApplied": {
+    "message": "تم تطبيق الحظر — تم الحفظ لهذا الموقع."
+  },
+  "scanner_status_editApplied": {
+    "message": "تم تطبيق التعديل — تم الحفظ لهذا الموقع."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "تم تطبيق الحذف — تم الحفظ لهذا الموقع."
+  },
+  "scanner_block_warning": {
+    "message": "يمنع الحظر جميع القراءات المستقبلية لهذه الخاصية — قد يعطّل وظائف الصفحة التي تعتمد عليها. لا يمكن التراجع عن هذا بإعادة التحميل؛ أزل القاعدة من صفحة القواعد العامة في لوحة التحكم للتراجع."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "حظر على أي حال"
+  },
+  "scanner_edit_customOption": {
+    "message": "مخصص…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "رمز واحد، بلا مسافات (مثل 42، hello، {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "اكتب قيمة بلا مسافات."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "المسافات غير مسموح بها — سيتم الرفض."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "سيتم التخزين كـ: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "متغيرات الصفحة العامة ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "تصفية حسب الاسم…"
+  },
+  "scanner_empty": {
+    "message": "لم يُعثر على متغيرات عامة أضافتها الصفحة في هذه الصفحة."
+  },
+  "scanner_footer_limitation": {
+    "message": "يرى فقط المتغيرات العامة من نوع var/function والتعيينات الصريحة window.x = — تصريحات let/const/class غير مرئية لأي فاحص صفحة (قيد لغة JS)."
+  },
+  "scanner_loading": {
+    "message": "جارٍ فحص متغيرات الصفحة العامة — اضغط Esc للإلغاء"
+  },
+  "common_add": {
+    "message": "إضافة"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — لوحة التحكم"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "نظرة عامة"
+  },
+  "dashboard_nav_rules": {
+    "message": "القواعد المخصصة"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "مصدر القواعد"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "قائمة السماح"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "قواعد العناصر"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "القواعد العامة"
+  },
+  "dashboard_nav_focus": {
+    "message": "التركيز"
+  },
+  "dashboard_nav_settings": {
+    "message": "الإعدادات"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "الحماية مفعّلة"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "الحماية $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "دعم التطوير عبر PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "اشترِ لي قهوة ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "مفعّلة"
+  },
+  "dashboard_toggle_off": {
+    "message": "معطّلة"
+  },
+  "dashboard_overview_title": {
+    "message": "نظرة عامة"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "لوحة حمايتك"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "إجمالي المحظور"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% اليوم"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "أدوات التتبع الموقوفة"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% اليوم"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "البرمجيات الخبيثة المحظورة"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "تهديدات موقوفة"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "لم تُكتشف أي تهديدات"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "النطاق الترددي الموفَّر"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "متوسط لكل صفحة"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "الوقت الموفَّر"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "في هذه الجلسة"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 اليوم",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— اليوم"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% مقارنةً بالأمس",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 تهديدات اليوم"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 و$2 أخرى",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "الطلبات المحظورة"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "طلبات التتبع"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "اكتشافات البرمجيات الخبيثة"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7 أيام"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14 يومًا"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30 يومًا"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "محظور"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "أدوات تتبع"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "برمجيات خبيثة"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "أكثر النطاقات المحظورة"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "أكثر نطاقات التتبع"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "أكثر نطاقات البرمجيات الخبيثة"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "عرض الكل"
+  },
+  "dashboard_domains_showLess": {
+    "message": "عرض أقل"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "عرض الكل ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "لا توجد بيانات بعد."
+  },
+  "dashboard_privacy_title": {
+    "message": "درجة الخصوصية"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "إعلانات محظورة"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "أدوات تتبع محظورة"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "الحماية من البرمجيات الخبيثة"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "إخفاء هوية المُحيل"
+  },
+  "dashboard_rules_title": {
+    "message": "القواعد المخصصة"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "التعديل بصيغة site-rules.txt — نفس صيغة ملف القواعد الرئيسي. تُدمج القيم مع القواعد المدمجة."
+  },
+  "dashboard_rules_clear": {
+    "message": "مسح"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "مسح كل القواعد المخصصة؟"
+  },
+  "dashboard_customRules_template": {
+    "message": "# قواعد مخصصة — بنفس صيغة site-rules.txt\n# تُدمج القيم مع القواعد المدمجة (لا تحل محلها).\n#\n# ── ربط نطاق جديد بقسم قواعد ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← تُطابَق النطاقات الفرعية تلقائيًا\n#\n# ── إضافة نطاقات إضافية للحظر عالميًا ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── قواعد تجميلية لكل موقع ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "قائمة السماح"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "المواقع التي تتجاوز كل الحظر"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ إضافة موقع"
+  },
+  "dashboard_elementRules_title": {
+    "message": "قواعد العناصر"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "عناصر أُخفيت يدويًا عبر \"اختيار عنصر لإخفائه\" — مجمّعة حسب الموقع"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "لا توجد قواعد بعد."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "القواعد العامة"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "متغيرات نافذة تم حظرها/تعديلها/حذفها يدويًا عبر \"فحص الصفحة بحثًا عن السكربتات/المتغيرات\" — مجمّعة حسب الموقع"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "لا توجد قواعد بعد."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "حظر"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "تعديل"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "حذف"
+  },
+  "dashboard_focus_title": {
+    "message": "وضع التركيز"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "حظر المواقع المشتتة وفق جدول زمني"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "جلسة التركيز"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "الجلسة متوقفة مؤقتًا"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "الجلسة قيد التشغيل…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "اكتملت الجلسة!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 د"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 د"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 د"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 د"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "مخصص"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "دقيقة"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "قائمة مواقع التشتيت"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ إضافة"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "أدخل النطاق المراد حظره أثناء التركيز (مثال: twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "الإعدادات"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "تخصيص سلوك AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "الحظر"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "حظر الإعلانات"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "حظر قياسي لشبكات الإعلانات"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "حظر أدوات التتبع"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "حظر سكربتات التحليلات والتتبع"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "التصفية التجميلية"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "إخفاء العناصر النائبة المتبقية للإعلانات عبر CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "حظر البرمجيات الخبيثة"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "حظر نطاقات البرمجيات الخبيثة المعروفة"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "الخصوصية"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "إخفاء هوية المُحيل"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "إزالة ترويسات referrer في الطلبات عبر النطاقات"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "التحكم العالمي بالخصوصية (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "إرسال إشارة عدم المشاركة GPC (ترويسة Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "ترويسة عدم التتبع (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "إرسال ترويسة الطلب DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "البيانات"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "جمع الإحصاءات"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "إحصاءات استخدام محلية فقط (لا تُرفع أبدًا)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "إعادة تعيين كل البيانات"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "مسح القواعد والإحصاءات والإعدادات"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "إعادة تعيين"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "إعادة تعيين كل بيانات AdBlock؟ لا يمكن التراجع عن هذا."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "تم مسح جميع البيانات. جارٍ إعادة التحميل…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "حول"
+  },
+  "dashboard_settings_version_name": {
+    "message": "الإصدار"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "التحقق من التحديثات"
+  },
+  "dashboard_settings_checking": {
+    "message": "جارٍ التحقق…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "يتوفر إصدار أحدث"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "عرض"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "آخر تحقق $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (فشل — هل أنت غير متصل؟)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "لم يتم التحقق بعد"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "يتوفر v$1 (لديك v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "مصدر القواعد"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "من أين يجلب AdBlock قواعد المواقع الخاصة به"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "روابط القواعد البعيدة"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "يشمل الافتراضي المدمج (قابل للتبديل، غير قابل للإزالة) بالإضافة إلى أي روابط تضيفها — جميعها مدمجة، كل منها قابل للتفعيل/التعطيل بشكل مستقل."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "إضافة رابط"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "ملفات قواعد محلية"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "رفع ملفات قواعد .txt — تُدمج مع مصادر الروابط. تُدعم ملفات متعددة."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "إضافة ملف…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "جارٍ التصدير…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "فشل التصدير: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "خطأ غير معروف"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "تم تحويل $1، تخطي $2 من أصل $3 قاعدة",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 قاعدة استثناء (لا يوجد نموذج إلغاء هنا)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 محددات إجرائية (:has-text، :xpath، ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 مُعدِّلات AdGuard الموسّعة",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 استدعاءات سكربتليت غير مُطابَقة",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 مُعدِّلات قواعد شبكة غير مدعومة",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 مُدرَجة مسبقًا في ملف site-rules.txt الخاص بهذه الإضافة",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 صياغة غير معروفة",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "تم تحميل $1/$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "تم تحميل $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "تصدير"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "تنزيل قواعد هذا المصدر محوّلة إلى صيغة هذه الإضافة"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "افتراضي"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "عائلة EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "حسب اللغة"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "مخصص (روابطك الخاصة)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "تمت تهيئة بيانات وهمية لـ $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "عام"
+  },
+  "dashboard_settings_language_name": {
+    "message": "اللغة"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "يعيد تحميل هذه الصفحة بعد التغيير"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "تلقائي (لغة المتصفح)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "القائمة"
+  }
+}

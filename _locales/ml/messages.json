@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "ലളിതമായ സൈറ്റ് നിയന്ത്രണങ്ങളും ഫോക്കസ് ടൂളുകളും ഉപയോഗിച്ച് പരസ്യങ്ങളും ട്രാക്കറുകളും അറിയപ്പെടുന്ന ദോഷകരമായ ഡൊമെയ്‌നുകളും തടയുക.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "സൈറ്റ് തടഞ്ഞു — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "നിങ്ങളുടെ സുരക്ഷയ്ക്കായി സൈറ്റ് തടഞ്ഞു"
+  },
+  "blocked_title_adPopup": {
+    "message": "പോപ്പപ്പ്/പുതിയ ടാബ് പരസ്യം തടഞ്ഞു"
+  },
+  "blocked_host_unknown": {
+    "message": "അജ്ഞാത സൈറ്റ്"
+  },
+  "blocked_hint_default": {
+    "message": "ഈ സൈറ്റ് മാൽവെയർ/ഫിഷിംഗ് ബ്ലോക്ക്‌ലിസ്റ്റിലാണ്. ഇത് നിങ്ങളുടെ വിവരങ്ങൾ മോഷ്ടിക്കാനോ ക്രിപ്റ്റോകറൻസി മൈൻ ചെയ്യാനോ അനാവശ്യ സോഫ്റ്റ്‌വെയർ ഇൻസ്റ്റാൾ ചെയ്യാനോ ശ്രമിച്ചേക്കാം."
+  },
+  "blocked_hint_adPopup": {
+    "message": "നിങ്ങൾ വന്ന പേജിലെ ഒരു ക്ലിക്ക് ഈ പരസ്യ/പോപ്പപ്പ് നെറ്റ്‌വർക്ക് പുതിയ ടാബിൽ തുറക്കാൻ ശ്രമിച്ചു. ഈ ടാബ് നിങ്ങൾക്ക് സുരക്ഷിതമായി അടയ്ക്കാം."
+  },
+  "blocked_dontWarn_label": {
+    "message": "ഈ സൈറ്റിനെക്കുറിച്ച് എന്നെ വീണ്ടും മുന്നറിയിപ്പ് നൽകരുത്"
+  },
+  "blocked_btn_goBack": {
+    "message": "തിരികെ പോകുക"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "ഈ വിൻഡോ അടയ്ക്കുക"
+  },
+  "blocked_btn_proceed": {
+    "message": "എന്തായാലും തുടരുക"
+  },
+  "blocked_btn_proceeding": {
+    "message": "തുടരുന്നു…"
+  },
+  "common_remove": {
+    "message": "നീക്കം ചെയ്യുക"
+  },
+  "common_cancel": {
+    "message": "റദ്ദാക്കുക"
+  },
+  "menu_pickElement": {
+    "message": "മറയ്ക്കാൻ എലിമെന്റ് തിരഞ്ഞെടുക്കുക…"
+  },
+  "menu_scanGlobals": {
+    "message": "സ്ക്രിപ്റ്റുകൾ/വേരിയബിളുകൾക്കായി പേജ് സ്കാൻ ചെയ്യുക…"
+  },
+  "menu_editRules": {
+    "message": "ഈ സൈറ്റിനുള്ള നിയമങ്ങൾ എഡിറ്റ് ചെയ്യുക…"
+  },
+  "picker_badge_active": {
+    "message": "മറയ്ക്കാൻ എലിമെന്റ് തിരഞ്ഞെടുക്കുന്നു — റദ്ദാക്കാൻ Esc അമർത്തുക"
+  },
+  "picker_btn_hide": {
+    "message": "ഈ എലിമെന്റ് മറയ്ക്കുക"
+  },
+  "picker_btn_broaden": {
+    "message": "വിശാലമാക്കുക"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "ഡാഷ്‌ബോർഡ്"
+  },
+  "popup_review_title": {
+    "message": "AdBlock ഇഷ്ടപ്പെട്ടോ?"
+  },
+  "popup_review_subtitle": {
+    "message": "ഒരു പെട്ടെന്നുള്ള റേറ്റിംഗ് വളരെയധികം സഹായിക്കുന്നു."
+  },
+  "popup_review_rate": {
+    "message": "ഞങ്ങളെ റേറ്റ് ചെയ്യുക"
+  },
+  "popup_review_dismiss": {
+    "message": "വേണ്ട നന്ദി"
+  },
+  "popup_stat_blocked": {
+    "message": "തടഞ്ഞു"
+  },
+  "popup_stat_malware": {
+    "message": "മാൽവെയർ"
+  },
+  "popup_stat_speed": {
+    "message": "വേഗത"
+  },
+  "popup_stat_saved": {
+    "message": "ലാഭിച്ചു"
+  },
+  "popup_allowlist_banner": {
+    "message": "ഈ സൈറ്റ് അനുവദനീയ പട്ടികയിലാണ്"
+  },
+  "popup_action_focus": {
+    "message": "ഫോക്കസ് മോഡ്"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ ഈ സൈറ്റിൽ താൽക്കാലികമായി നിർത്തുക"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ സൈറ്റ് പുനരാരംഭിക്കുക"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "സ്വകാര്യതാ സ്കോർ"
+  },
+  "popup_footer_settings": {
+    "message": "സെറ്റിംഗ്‌സ്"
+  },
+  "popup_ruleChip_title": {
+    "message": "നിലവിൽ ലോഡ് ചെയ്ത നെറ്റ്‌വർക്ക് ബ്ലോക്കിംഗ് നിയമങ്ങൾ"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… നിയമങ്ങൾ"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "നെറ്റ്‌വർക്ക് നിയമങ്ങൾ: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 നെറ്റ്‌വർക്ക് നിയമങ്ങൾ ലോഡ് ചെയ്തു",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "PayPal വഴി വികസനത്തെ പിന്തുണയ്ക്കുക"
+  },
+  "popup_donate_label": {
+    "message": "സംഭാവന ചെയ്യുക"
+  },
+  "popup_version_title": {
+    "message": "AdBlock പതിപ്പ്"
+  },
+  "popup_version_updateAvailable": {
+    "message": "അപ്‌ഡേറ്റ് ലഭ്യമാണ് — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "പുതിയ പതിപ്പ് ലഭ്യമാണ് — സ്റ്റോർ പേജ് തുറക്കാൻ ക്ലിക്ക് ചെയ്യുക"
+  },
+  "popup_domain_unknown": {
+    "message": "അജ്ഞാത സൈറ്റ്"
+  },
+  "popup_status_site": {
+    "message": "സൈറ്റ്"
+  },
+  "popup_status_protection": {
+    "message": "സംരക്ഷണം"
+  },
+  "popup_status_allowlisted": {
+    "message": "അനുവദിച്ചു"
+  },
+  "popup_status_on": {
+    "message": "ഓൺ"
+  },
+  "popup_status_paused": {
+    "message": "താൽക്കാലികമായി നിർത്തി"
+  },
+  "popup_status_off": {
+    "message": "ഓഫ്"
+  },
+  "common_save": {
+    "message": "സേവ് ചെയ്യുക"
+  },
+  "common_close": {
+    "message": "അടയ്ക്കുക"
+  },
+  "ruleEditor_panel_title": {
+    "message": "നിയമങ്ങൾ എഡിറ്റ് ചെയ്യുക — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "ടെക്സ്റ്റ്ബോക്സിൽ ചേർക്കാൻ ക്ലിക്ക് ചെയ്യുക"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "കീ റഫറൻസ് ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "കീകൾ ഫിൽട്ടർ ചെയ്യുക…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "കോസ്‌മെറ്റിക് / സ്ഥാനാർത്ഥി പൊരുത്തം"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "സ്ക്രിപ്റ്റ്‌ലെറ്റുകൾ (വിപുലമായത്)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "ഈ സൈറ്റിനുള്ള നിലവിലെ നിയമങ്ങൾ ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(ഈ സൈറ്റിന് ഇതുവരെ നിയമങ്ങളൊന്നുമില്ല — ബിൽറ്റ്-ഇൻ അല്ലെങ്കിൽ കസ്റ്റം ഒന്നുമില്ല)"
+  },
+  "ruleEditor_hint": {
+    "message": "ഓരോ വരിയിലും ഒരു \"key = value | value2\". ചേർക്കാൻ മുകളിലുള്ള ഒരു കീയിൽ ക്ലിക്ക് ചെയ്യുക. [section] ഹെഡറുകളില്ല. ഇവിടെ ടൈപ്പ് ചെയ്ത നിയമങ്ങൾ ഈ കീയ്ക്കുള്ള നിലവിലുള്ള നിയമങ്ങളിലേക്ക് ചേർക്കപ്പെടുന്നു (മുകളിൽ കാണുക) — ഇതിന് ബിൽറ്റ്-ഇൻ നിയമം നീക്കം ചെയ്യാനോ അസാധുവാക്കാനോ കഴിയില്ല, ഒറ്റ-മൂല്യ ഫ്ലാഗ് കീകൾക്ക് സാധാരണയായി ബിൽറ്റ്-ഇൻ മൂല്യം ജയിക്കും."
+  },
+  "ruleEditor_status_saved": {
+    "message": "സേവ് ചെയ്തു — പ്രയോഗിച്ച നിയമങ്ങൾ കാണാൻ ഈ പേജ് വീണ്ടും ലോഡ് ചെയ്യുക."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "സേവ് ചെയ്യുന്നത് പരാജയപ്പെട്ടു — ഒറ്റപ്പെട്ട \"[section]\" വരി അല്ലെങ്കിൽ വലിയ പേസ്റ്റ് പരിശോധിക്കുക."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "ഇൻജെക്റ്റ് ചെയ്ത സ്റ്റൈൽഷീറ്റ് വഴി നിരുപാധികം മറയ്ക്കുന്ന CSS സെലക്ടറുകൾ — ഹ്യൂറിസ്റ്റിക് പരിശോധനയില്ല, കണ്ടാൽ ഉടൻ മറയ്ക്കുന്നു."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "സ്ഥാനാർത്ഥി എലിമെന്റുകൾക്കുള്ള CSS സെലക്ടറുകൾ — താഴെയുള്ള labels/link_patterns കൂടി പൊരുത്തപ്പെട്ടാൽ മാത്രമേ മറയ്ക്കപ്പെടൂ."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "selectors പോലെ തന്നെ, ഫീഡ്/ടൈംലൈൻ-ശൈലി കണ്ടെയ്നറുകളിലേക്ക് പരിമിതപ്പെടുത്തിയത്."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "selectors പോലെ തന്നെ, മാർക്കറ്റ്‌പ്ലേസ്/ഷോപ്പിംഗ്-ശൈലി കണ്ടെയ്നറുകളിലേക്ക് പരിമിതപ്പെടുത്തിയത്."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "selectors പോലെ തന്നെ, സൈഡ്‌ബാർ/വലത് റെയിൽ പ്രദേശത്തേക്ക് പരിമിതപ്പെടുത്തിയത്."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "selectors പോലെ തന്നെ, വ്യക്തിഗത പോസ്റ്റ്/ലേഖന കണ്ടെയ്നറുകളിലേക്ക് പരിമിതപ്പെടുത്തിയത്."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "\"ഹോസ്റ്റ്\" എലിമെന്റുകൾക്കുള്ള CSS സെലക്ടറുകൾ, മുകളിലുള്ള selectors പോലെ തന്നെ പരിശോധിക്കുന്നു."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "ഒരു സ്ഥാനാർത്ഥി യഥാർത്ഥത്തിൽ പരസ്യമാണെന്ന് സ്ഥിരീകരിക്കാൻ ആട്രിബ്യൂട്ടുകൾ/സന്ദർഭ ടെക്സ്റ്റുമായി പൊരുത്തപ്പെടുത്തുന്ന ടെക്സ്റ്റ് ലേബലുകൾ (ഉദാ. sponsored, promoted)."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "ഇത് പരസ്യമാണെന്ന് സ്ഥിരീകരിക്കാൻ സ്ഥാനാർത്ഥിയുടെ സ്വന്തം ലിങ്കുകൾ/ആട്രിബ്യൂട്ടുകളുമായി പൊരുത്തപ്പെടുത്തുന്ന സബ്‌സ്ട്രിംഗ് പാറ്റേണുകൾ."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "label/link_pattern പൊരുത്തങ്ങൾക്കായി സ്കാൻ ചെയ്ത HTML ആട്രിബ്യൂട്ട് പേരുകൾ (ഡിഫോൾട്ട്: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "ലേബൽ പൊരുത്തപ്പെടുത്തലിനായി ടെക്സ്റ്റ് വലിച്ചെടുക്കുന്ന ചൈൽഡ് എലിമെന്റുകൾ (ഡിഫോൾട്ട്: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "പൊരുത്തപ്പെട്ട സ്ഥാനാർത്ഥിയെ മറയ്ക്കുന്നതിന് മുമ്പ് .closest() വഴി മുകളിലേക്ക് നടക്കാനുള്ള CSS സെലക്ടർ(കൾ) (ലേബൽ മാത്രമല്ല, കണ്ടെയ്നറും മറയ്ക്കുന്നു)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "<html>/<body> ൽ നിന്ന് തുടർച്ചയായി നീക്കം ചെയ്യപ്പെടുന്ന ക്ലാസ് പേരുകൾ — റൂട്ട് ക്ലാസ് നയിക്കുന്ന CSS-മാത്ര ടേക്ക്‌ഓവർ ഓവർലേകളെ പരാജയപ്പെടുത്തുന്നു."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "<html>/<body> ഇൻലൈൻ സ്റ്റൈലിൽ നിന്ന് തുടർച്ചയായി മായ്ക്കപ്പെടുന്ന CSS പ്രോപ്പർട്ടി പേരുകൾ — JS-സെറ്റ് സ്ക്രോൾ-ലോക്ക് മുതലായവയെ പരാജയപ്പെടുത്തുന്നു."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 ഫ്ലാഗ് — ഈ സൈറ്റിലെ ക്ലിക്കുകൾ വഴി തുറക്കുന്ന പോപ്പപ്പ്/പോപ്പ്‌അണ്ടർ ടാബുകൾ സ്വയമേവ അടയ്ക്കുന്നു."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — ഒരു വിൻഡോ പ്രോപ്പർട്ടിയെ സ്ഥിരമായി ഒരു നിശ്ചിത മൂല്യത്തിലേക്ക് ലോക്ക് ചെയ്യുന്നു (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — ഏതെങ്കിലും സ്ക്രിപ്റ്റ് ഈ വിൻഡോ പ്രോപ്പർട്ടി വായിക്കുമ്പോൾ പിശക് എറിയുന്നു."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — ഏതെങ്കിലും സ്ക്രിപ്റ്റ് ഈ വിൻഡോ പ്രോപ്പർട്ടിയിൽ എഴുതുമ്പോൾ പിശക് എറിയുന്നു."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — വിളിക്കുന്ന സ്ക്രിപ്റ്റിന്റെ സ്വന്തം സ്റ്റാക്ക് ട്രെയ്സ് needle-മായി പൊരുത്തപ്പെടുമ്പോൾ മാത്രം പിശക് എറിയുന്നു."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — needle-മായി പൊരുത്തപ്പെടുന്ന ഉറവിടമുള്ള ഒരു സ്ക്രിപ്റ്റ് target വായിക്കുമ്പോൾ പിശക് എറിയുന്നു."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — pattern-മായി പൊരുത്തപ്പെടുന്ന window.open() കോളുകൾ തടയുകയോ ഡിക്കോയിലേക്ക് റീഡയറക്ട് ചെയ്യുകയോ ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — മാനദണ്ഡങ്ങളുമായി പൊരുത്തപ്പെടുന്ന fetch() കോളുകൾ തടയുന്നു."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — മാനദണ്ഡങ്ങളുമായി പൊരുത്തപ്പെടുന്ന XMLHttpRequest കോളുകൾ തടയുന്നു."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetch തടയുന്നു, ഓപ്ഷണലായി ഒരു നിശ്ചിത വ്യാജ പ്രതികരണ ബോഡി തിരികെ നൽകുന്നു."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — ഒരു ലോക്ക് മറികടക്കാൻ ഒരേ-ഉത്ഭവ about:blank iframe യഥാർത്ഥ വിൻഡോയിലേക്ക് തിരികെ എത്തുന്നത് തടയുന്നു."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — ഏതൊരു JSON.parse() ഫലത്തിൽ നിന്നും ഫീൽഡുകൾ നീക്കം ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — ഒരു fetch() JSON പ്രതികരണത്തിൽ നിന്ന് ഫീൽഡുകൾ നീക്കം ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — ഒരു XHR JSON പ്രതികരണത്തിൽ നിന്ന് ഫീൽഡുകൾ നീക്കം ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — ഒരു സ്ക്രിപ്റ്റ് നേരിട്ട് നിയോഗിക്കുന്ന ഒരു ഒബ്ജക്റ്റിനെ വെട്ടിച്ചുരുക്കുന്നു (JSON.parse വഴിയല്ല)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — ഒരു fetch() JSON പ്രതികരണത്തിൽ JSONPath അടിസ്ഥാനമാക്കിയുള്ള ഫീൽഡ് ഇല്ലാതാക്കലുകൾ."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — ഒരു XHR JSON-lines പ്രതികരണത്തിൽ JSONPath അടിസ്ഥാനമാക്കിയുള്ള ഫീൽഡ് ഇല്ലാതാക്കലുകൾ."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "protobuf/jspb-എൻകോഡ് ചെയ്ത ഒരു പ്രതികരണത്തിൽ നിന്ന് ഫീൽഡുകൾ നീക്കം ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — പുറത്തേക്ക് പോകുന്ന റിക്വസ്റ്റ് ബോഡിയിൽ JSONPath എഡിറ്റുകൾ (ഇല്ലാതാക്കലും മൂല്യ നിയോഗവും)."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — ഒരു പ്രതികരണ ബോഡിയിൽ JSONPath എഡിറ്റുകൾ (ഇല്ലാതാക്കലും മൂല്യ നിയോഗവും)."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — ഒരു fetch() പ്രതികരണ ബോഡിയിൽ regex തിരയൽ/മാറ്റിസ്ഥാപിക്കൽ."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — ഒരു XHR പ്രതികരണ ബോഡിയിൽ regex തിരയൽ/മാറ്റിസ്ഥാപിക്കൽ."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — ഒരു ഫംഗ്ഷനിലേക്ക് കൈമാറിയ ഒരു ആർഗ്യുമെന്റ് മാറ്റിസ്ഥാപിക്കുന്നു."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — പുറത്തേക്ക് പോകുന്ന ഡാറ്റയിൽ നിരുപാധികമായ ടെക്സ്റ്റ് മാറ്റിസ്ഥാപിക്കൽ (URL സ്കോപ്പിംഗ് ഇല്ല)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — പ്രവർത്തിക്കുന്നതിന് മുമ്പ് ഒരു <script> ടാഗിന്റെ ടെക്സ്റ്റ് വീണ്ടും എഴുതുന്നു. ഈ നിയമം എത്ര നോഡുകൾ ഒരിക്കലും വീണ്ടും എഴുതുമെന്ന് sedCount പരിമിതപ്പെടുത്തുന്നു (ഡിഫോൾട്ട്: അപരിമിതം)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — ഒരു നേറ്റീവ് മെത്തേഡ് കോളിലേക്ക് കൈമാറിയ ഒരു ഒബ്ജക്റ്റിൽ നിന്ന് ഫീൽഡുകൾ വെട്ടിച്ചുരുക്കുന്നു."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — ഒരു സിഗ്നേച്ചറുമായി പൊരുത്തപ്പെടുന്ന ഒരു നേറ്റീവ് മെത്തേഡ് കോൾ നിർത്തുകയോ നിശബ്ദമായി അവഗണിക്കുകയോ ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — needle-മായി പൊരുത്തപ്പെടുന്ന മൂല്യമുള്ള ഒരു ആക്സസർ സെറ്റർ നിയോഗത്തിൽ (ഉദാ. Element.prototype.innerHTML) ഉപേക്ഷിക്കുകയോ പിശക് എറിയുകയോ ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — ഒരു HLS .m3u8 പ്ലേലിസ്റ്റ് പ്രതികരണത്തിൽ നിന്ന് പരസ്യ സെഗ്‌മെന്റുകൾ നീക്കം ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — യഥാർത്ഥ നെറ്റ്‌വർക്ക് അഭ്യർത്ഥനയ്ക്ക് പകരം script/img/iframe/link ലോഡ് വിജയിച്ചതായി നടിക്കുന്നു."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — പൊരുത്തപ്പെടുന്ന എലിമെന്റുകളിൽ നിന്ന് HTML ആട്രിബ്യൂട്ടുകൾ നീക്കം ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — ഒരു DOM നോഡിന്റെ ടെക്സ്റ്റ് ഉള്ളടക്കം മായ്ക്കുന്നു."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — ഒരു DOM നോഡിന്റെ ടെക്സ്റ്റ് ഉള്ളടക്കം വീണ്ടും എഴുതുന്നു."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — <meta http-equiv=\"refresh\"> വഴിയുള്ള ഒരു ഓട്ടോമാറ്റിക് റീഡയറക്ട് നിർത്തുന്നു."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — ഒരു കുക്കി സെറ്റ് ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — ഒരു പേര് പാറ്റേണുമായി പൊരുത്തപ്പെടുന്ന കുക്കികൾ നീക്കം ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — ഒരു localStorage എൻട്രി സെറ്റ് ചെയ്യുന്നു (സുരക്ഷിതമായ അക്ഷരാർത്ഥ മൂല്യങ്ങളിലേക്ക് പരിമിതപ്പെടുത്തിയിരിക്കുന്നു, അല്ലെങ്കിൽ പൊരുത്തപ്പെടുന്ന കീകൾ ഇല്ലാതാക്കാൻ പ്രത്യേക \"remove\" മൂല്യം)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — ഒരു ലിങ്കിന്റെ href അതിന്റെ സ്വന്തം ടെക്സ്റ്റിൽ നിന്നോ മറ്റൊരു ആട്രിബ്യൂട്ടിൽ നിന്നോ വീണ്ടും എഴുതുന്നു."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — മാനദണ്ഡങ്ങളുമായി പൊരുത്തപ്പെടുന്ന setTimeout() കോളുകൾ തടയുന്നു."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — മാനദണ്ഡങ്ങളുമായി പൊരുത്തപ്പെടുന്ന setInterval() കോളുകൾ തടയുന്നു."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — മാനദണ്ഡങ്ങളുമായി പൊരുത്തപ്പെടുന്ന requestAnimationFrame() കോളുകൾ തടയുന്നു."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — മാനദണ്ഡങ്ങളുമായി പൊരുത്തപ്പെടുന്ന addEventListener() കോളുകൾ തടയുന്നു."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — തടയുന്നതിനുപകരം പൊരുത്തപ്പെടുന്ന setTimeout() കോളുകൾ വേഗത്തിലാക്കുകയോ മന്ദഗതിയിലാക്കുകയോ ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — തടയുന്നതിനുപകരം പൊരുത്തപ്പെടുന്ന setInterval() കോളുകൾ വേഗത്തിലാക്കുകയോ മന്ദഗതിയിലാക്കുകയോ ചെയ്യുന്നു."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — ഉറവിടം pattern-മായി പൊരുത്തപ്പെടുന്ന eval() കോളുകൾ തടയുന്നു."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnection പ്രവർത്തനരഹിതമാക്കുന്നു — WebRTC അടിസ്ഥാനമാക്കിയുള്ള പോപ്പപ്പ്/ട്രാക്കിംഗ് തന്ത്രങ്ങൾ തടയുന്നു."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "BlockAdBlock/FuckAdBlock ശൈലിയിലുള്ള ആന്റി-ആഡ്ബ്ലോക്ക് കണ്ടെത്തൽ സ്ക്രിപ്റ്റുകളെ നിർവീര്യമാക്കുന്നു."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "ക്ലിക്ക് ചെയ്ത ലിങ്കുകളിൽ നിന്ന് target=\"_blank\" നീക്കം ചെയ്യുന്നു — നിർബന്ധിത പുതിയ-ടാബ് റീഡയറക്ടുകൾ തടയുന്നു."
+  },
+  "scanner_value_emptyString": {
+    "message": "ശൂന്യമായ സ്ട്രിംഗ്"
+  },
+  "scanner_value_emptyArray": {
+    "message": "ശൂന്യമായ അറേ"
+  },
+  "scanner_value_emptyObject": {
+    "message": "ശൂന്യമായ ഒബ്ജക്റ്റ്"
+  },
+  "scanner_value_noopFunc": {
+    "message": "ശൂന്യമായ ഫംഗ്ഷൻ (പ്രവർത്തനമില്ല)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "എപ്പോഴും true തിരികെ നൽകുന്ന ഫംഗ്ഷൻ"
+  },
+  "scanner_value_falseFunc": {
+    "message": "എപ്പോഴും false തിരികെ നൽകുന്ന ഫംഗ്ഷൻ"
+  },
+  "scanner_btn_block": {
+    "message": "തടയുക"
+  },
+  "scanner_btn_edit": {
+    "message": "എഡിറ്റ് ചെയ്യുക"
+  },
+  "scanner_btn_delete": {
+    "message": "ഇല്ലാതാക്കുക"
+  },
+  "scanner_status_blockApplied": {
+    "message": "തടയൽ പ്രയോഗിച്ചു — ഈ സൈറ്റിനായി സേവ് ചെയ്തു."
+  },
+  "scanner_status_editApplied": {
+    "message": "എഡിറ്റ് പ്രയോഗിച്ചു — ഈ സൈറ്റിനായി സേവ് ചെയ്തു."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "ഇല്ലാതാക്കൽ പ്രയോഗിച്ചു — ഈ സൈറ്റിനായി സേവ് ചെയ്തു."
+  },
+  "scanner_block_warning": {
+    "message": "തടയൽ ഈ പ്രോപ്പർട്ടിയുടെ എല്ലാ ഭാവി വായനകളും തടയുന്നു — ഇതിനെ ആശ്രയിക്കുന്ന പേജ് പ്രവർത്തനക്ഷമത തകർത്തേക്കാം. റിഫ്രഷ് ചെയ്ത് ഇത് പഴയപടിയാക്കാൻ കഴിയില്ല; തിരികെ കൊണ്ടുവരാൻ ഡാഷ്‌ബോർഡിന്റെ ഗ്ലോബൽ റൂൾസ് പേജിൽ നിന്ന് നിയമം നീക്കം ചെയ്യുക."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "എന്തായാലും തടയുക"
+  },
+  "scanner_edit_customOption": {
+    "message": "കസ്റ്റം…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "ഒറ്റ ടോക്കൺ, സ്പേസുകളില്ല (ഉദാ. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "സ്പേസുകളില്ലാതെ ഒരു മൂല്യം ടൈപ്പ് ചെയ്യുക."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "സ്പേസുകൾ അനുവദനീയമല്ല — നിരസിക്കപ്പെടും."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "ഇങ്ങനെ സേവ് ചെയ്യപ്പെടും: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "പേജ് ഗ്ലോബലുകൾ ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "പേര് പ്രകാരം ഫിൽട്ടർ ചെയ്യുക…"
+  },
+  "scanner_empty": {
+    "message": "ഈ പേജിൽ പേജ്-ചേർത്ത ഗ്ലോബലുകളൊന്നും കണ്ടെത്തിയില്ല."
+  },
+  "scanner_footer_limitation": {
+    "message": "var/function-ശൈലി ഗ്ലോബലുകളും വ്യക്തമായ window.x = നിയോഗങ്ങളും മാത്രമേ കാണൂ — let/const/class പ്രഖ്യാപനങ്ങൾ ഏതൊരു പേജ് സ്കാനറിനും അദൃശ്യമാണ് (JS ഭാഷാ പരിമിതി)."
+  },
+  "scanner_loading": {
+    "message": "പേജ് ഗ്ലോബലുകൾ സ്കാൻ ചെയ്യുന്നു — റദ്ദാക്കാൻ Esc അമർത്തുക"
+  },
+  "common_add": {
+    "message": "ചേർക്കുക"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — ഡാഷ്‌ബോർഡ്"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "അവലോകനം"
+  },
+  "dashboard_nav_rules": {
+    "message": "കസ്റ്റം നിയമങ്ങൾ"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "നിയമ ഉറവിടം"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "അനുവദനീയ പട്ടിക"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "എലിമെന്റ് നിയമങ്ങൾ"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "ഗ്ലോബൽ നിയമങ്ങൾ"
+  },
+  "dashboard_nav_focus": {
+    "message": "ഫോക്കസ്"
+  },
+  "dashboard_nav_settings": {
+    "message": "സെറ്റിംഗ്‌സ്"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "സംരക്ഷണം ഓൺ"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "സംരക്ഷണം $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "PayPal വഴി വികസനത്തെ പിന്തുണയ്ക്കുക"
+  },
+  "dashboard_donate_label": {
+    "message": "എനിക്കൊരു കാപ്പി വാങ്ങിത്തരൂ ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ഓൺ"
+  },
+  "dashboard_toggle_off": {
+    "message": "ഓഫ്"
+  },
+  "dashboard_overview_title": {
+    "message": "അവലോകനം"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "നിങ്ങളുടെ സംരക്ഷണ ഡാഷ്‌ബോർഡ്"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "ആകെ തടഞ്ഞു"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% ഇന്ന്"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "നിർത്തിയ ട്രാക്കറുകൾ"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% ഇന്ന്"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "തടഞ്ഞ മാൽവെയർ"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "നിർത്തിയ ഭീഷണികൾ"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "ഭീഷണികളൊന്നും കണ്ടെത്തിയില്ല"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "ലാഭിച്ച ബാൻഡ്‌വിഡ്ത്ത്"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "ഓരോ പേജിനും ശരാശരി"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "ലാഭിച്ച സമയം"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "ഈ സെഷനിൽ"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 ഇന്ന്",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— ഇന്ന്"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "ഇന്നലെയുമായി താരതമ്യപ്പെടുത്തുമ്പോൾ $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "ഇന്ന് 0 ഭീഷണികൾ"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 കൂടുതൽ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "തടഞ്ഞ അഭ്യർത്ഥനകൾ"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "ട്രാക്കർ അഭ്യർത്ഥനകൾ"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "മാൽവെയർ കണ്ടെത്തലുകൾ"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7ദി"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14ദി"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30ദി"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "തടഞ്ഞു"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "ട്രാക്കറുകൾ"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "മാൽവെയർ"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "ഏറ്റവും കൂടുതൽ തടഞ്ഞ ഡൊമെയ്‌നുകൾ"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "ഏറ്റവും കൂടുതൽ ട്രാക്കർ ഡൊമെയ്‌നുകൾ"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "ഏറ്റവും കൂടുതൽ മാൽവെയർ ഡൊമെയ്‌നുകൾ"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "എല്ലാം കാണുക"
+  },
+  "dashboard_domains_showLess": {
+    "message": "കുറച്ച് കാണിക്കുക"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "എല്ലാം കാണുക ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "ഇതുവരെ ഡാറ്റയില്ല."
+  },
+  "dashboard_privacy_title": {
+    "message": "സ്വകാര്യതാ സ്കോർ"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "തടഞ്ഞ പരസ്യങ്ങൾ"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "തടഞ്ഞ ട്രാക്കറുകൾ"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "മാൽവെയർ സംരക്ഷണം"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "റഫററർ അജ്ഞാതവൽക്കരണം"
+  },
+  "dashboard_rules_title": {
+    "message": "കസ്റ്റം നിയമങ്ങൾ"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "site-rules.txt ഫോർമാറ്റിൽ എഡിറ്റ് ചെയ്യുക — പ്രധാന നിയമ ഫയലിന്റെ അതേ വാക്യഘടന. മൂല്യങ്ങൾ ബിൽറ്റ്-ഇൻ നിയമങ്ങളുമായി ലയിപ്പിക്കുന്നു."
+  },
+  "dashboard_rules_clear": {
+    "message": "മായ്ക്കുക"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "എല്ലാ കസ്റ്റം നിയമങ്ങളും മായ്ക്കണോ?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# കസ്റ്റം നിയമങ്ങൾ — site-rules.txt പോലെ തന്നെയുള്ള ഫോർമാറ്റ്\n# മൂല്യങ്ങൾ ബിൽറ്റ്-ഇൻ നിയമങ്ങളുമായി ലയിപ്പിക്കുന്നു (മാറ്റിസ്ഥാപിക്കുന്നില്ല).\n#\n# ── ഒരു പുതിയ ഡൊമെയ്ൻ ഒരു നിയമ വിഭാഗത്തിലേക്ക് മാപ്പ് ചെയ്യുക ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← സബ്‌ഡൊമെയ്‌നുകൾ സ്വയമേവ പൊരുത്തപ്പെടുന്നു\n#\n# ── ആഗോളമായി തടയാൻ അധിക ഡൊമെയ്‌നുകൾ ചേർക്കുക ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── ഓരോ സൈറ്റിനുമുള്ള കോസ്‌മെറ്റിക് നിയമങ്ങൾ ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "അനുവദനീയ പട്ടിക"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "എല്ലാ തടയലും മറികടക്കുന്ന സൈറ്റുകൾ"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ സൈറ്റ് ചേർക്കുക"
+  },
+  "dashboard_elementRules_title": {
+    "message": "എലിമെന്റ് നിയമങ്ങൾ"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "\"മറയ്ക്കാൻ എലിമെന്റ് തിരഞ്ഞെടുക്കുക\" വഴി കൈകൊണ്ട് മറച്ച എലിമെന്റുകൾ — സൈറ്റ് പ്രകാരം ഗ്രൂപ്പുചെയ്‌തിരിക്കുന്നു"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "ഇതുവരെ നിയമങ്ങളൊന്നുമില്ല."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "ഗ്ലോബൽ നിയമങ്ങൾ"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "\"സ്ക്രിപ്റ്റുകൾ/വേരിയബിളുകൾക്കായി പേജ് സ്കാൻ ചെയ്യുക\" വഴി കൈകൊണ്ട് തടഞ്ഞ/എഡിറ്റ് ചെയ്ത/ഇല്ലാതാക്കിയ ഗ്ലോബൽ വിൻഡോ വേരിയബിളുകൾ — സൈറ്റ് പ്രകാരം ഗ്രൂപ്പുചെയ്‌തിരിക്കുന്നു"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "ഇതുവരെ നിയമങ്ങളൊന്നുമില്ല."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "തടയുക"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "എഡിറ്റ് ചെയ്യുക"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "ഇല്ലാതാക്കുക"
+  },
+  "dashboard_focus_title": {
+    "message": "ഫോക്കസ് മോഡ്"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "ഷെഡ്യൂൾ പ്രകാരം ശ്രദ്ധ തിരിക്കുന്ന സൈറ്റുകൾ തടയുക"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "ഫോക്കസ് സെഷൻ"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "സെഷൻ താൽക്കാലികമായി നിർത്തി"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "സെഷൻ പ്രവർത്തിക്കുന്നു…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "സെഷൻ പൂർത്തിയായി!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25മി"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45മി"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60മി"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90മി"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "കസ്റ്റം"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "മിനിറ്റ്"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "ശ്രദ്ധ വ്യതിചലന പട്ടിക"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ ചേർക്കുക"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "ഫോക്കസ് സമയത്ത് തടയാൻ ഡൊമെയ്ൻ നൽകുക (ഉദാ. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "സെറ്റിംഗ്‌സ്"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlock പെരുമാറ്റം ഇഷ്ടാനുസൃതമാക്കുക"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "തടയൽ"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "പരസ്യങ്ങൾ തടയുക"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "സ്റ്റാൻഡേർഡ് പരസ്യ നെറ്റ്‌വർക്ക് തടയൽ"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "ട്രാക്കറുകൾ തടയുക"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "അനലിറ്റിക്‌സ്, ട്രാക്കിംഗ് സ്ക്രിപ്റ്റുകൾ തടയുക"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "കോസ്‌മെറ്റിക് ഫിൽട്ടറിംഗ്"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "CSS വഴി ശേഷിക്കുന്ന പരസ്യ പ്ലേസ്‌ഹോൾഡറുകൾ മറയ്ക്കുക"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "മാൽവെയർ തടയുക"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "അറിയപ്പെടുന്ന മാൽവെയർ ഡൊമെയ്‌നുകൾ തടയുക"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "സ്വകാര്യത"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "റഫററർ അജ്ഞാതവൽക്കരണം"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "ക്രോസ്-ഒറിജിൻ അഭ്യർത്ഥനകളിൽ റഫററർ ഹെഡറുകൾ നീക്കം ചെയ്യുക"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "ഗ്ലോബൽ പ്രൈവസി കൺട്രോൾ (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC ഒപ്റ്റ്-ഔട്ട് സിഗ്നൽ അയയ്ക്കുക (Sec-GPC ഹെഡർ + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "ഡു നോട്ട് ട്രാക്ക് ഹെഡർ (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1 അഭ്യർത്ഥന ഹെഡർ അയയ്ക്കുക"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "ഡാറ്റ"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "സ്ഥിതിവിവരക്കണക്കുകൾ ശേഖരിക്കുക"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "പ്രാദേശിക ഉപയോഗ സ്ഥിതിവിവരക്കണക്കുകൾ മാത്രം (ഒരിക്കലും അപ്‌ലോഡ് ചെയ്യില്ല)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "എല്ലാ ഡാറ്റയും റീസെറ്റ് ചെയ്യുക"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "നിയമങ്ങൾ, സ്ഥിതിവിവരക്കണക്കുകൾ, സെറ്റിംഗ്‌സ് എന്നിവ മായ്ക്കുക"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "റീസെറ്റ് ചെയ്യുക"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "എല്ലാ AdBlock ഡാറ്റയും റീസെറ്റ് ചെയ്യണോ? ഇത് പഴയപടിയാക്കാൻ കഴിയില്ല."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "എല്ലാ ഡാറ്റയും മായ്ച്ചു. വീണ്ടും ലോഡ് ചെയ്യുന്നു…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "കുറിച്ച്"
+  },
+  "dashboard_settings_version_name": {
+    "message": "പതിപ്പ്"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "അപ്‌ഡേറ്റുകൾ പരിശോധിക്കുക"
+  },
+  "dashboard_settings_checking": {
+    "message": "പരിശോധിക്കുന്നു…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "പുതിയ പതിപ്പ് ലഭ്യമാണ്"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "കാണുക"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "അവസാനം പരിശോധിച്ചത് $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (പരാജയപ്പെട്ടു — നിങ്ങൾ ഓഫ്‌ലൈനാണോ?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "ഇതുവരെ പരിശോധിച്ചിട്ടില്ല"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 ലഭ്യമാണ് (നിങ്ങൾക്ക് v$2 ഉണ്ട്)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "നിയമ ഉറവിടം"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock അതിന്റെ സൈറ്റ് നിയമങ്ങൾ എവിടെ നിന്ന് നേടുന്നു"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "വിദൂര നിയമ URL-കൾ"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "ബിൽറ്റ്-ഇൻ ഡിഫോൾട്ട് (ടോഗിൾ ചെയ്യാവുന്നത്, നീക്കം ചെയ്യാനാവില്ല) കൂടാതെ നിങ്ങൾ ചേർക്കുന്ന ഏതെങ്കിലും URL-കൾ ഉൾപ്പെടുന്നു — എല്ലാം ലയിപ്പിച്ചു, ഓരോന്നും സ്വതന്ത്രമായി ഓൺ/ഓഫ്."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL ചേർക്കുക"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "പ്രാദേശിക നിയമ ഫയലുകൾ"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txt നിയമ ഫയലുകൾ അപ്‌ലോഡ് ചെയ്യുക — URL ഉറവിടങ്ങളുമായി ലയിപ്പിക്കുന്നു. ഒന്നിലധികം ഫയലുകൾ പിന്തുണയ്ക്കുന്നു."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "ഫയൽ ചേർക്കുക…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "എക്‌സ്‌പോർട്ട് ചെയ്യുന്നു…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "എക്‌സ്‌പോർട്ട് പരാജയപ്പെട്ടു: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "അജ്ഞാത പിശക്"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$3 നിയമങ്ങളിൽ $1 പരിവർത്തനം ചെയ്തു, $2 ഒഴിവാക്കി",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 ഒഴിവാക്കൽ നിയമങ്ങൾ (ഇവിടെ റദ്ദാക്കൽ മോഡലില്ല)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 പ്രൊസീജറൽ സെലക്ടറുകൾ (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 വിപുലീകൃത AdGuard മോഡിഫയറുകൾ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 മാപ്പ് ചെയ്യാത്ത സ്ക്രിപ്റ്റ്‌ലെറ്റ് കോളുകൾ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 പിന്തുണയ്ക്കാത്ത നെറ്റ്‌വർക്ക്-നിയമ മോഡിഫയറുകൾ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 ഇതിനകം ഈ എക്സ്റ്റൻഷന്റെ സ്വന്തം site-rules.txt-ൽ ക്യൂറേറ്റ് ചെയ്തിട്ടുണ്ട്",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 തിരിച്ചറിയാത്ത വാക്യഘടന",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 ലോഡ് ചെയ്തു",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 ലോഡ് ചെയ്തു",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "എക്‌സ്‌പോർട്ട് ചെയ്യുക"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "ഈ എക്സ്റ്റൻഷന്റെ സ്വന്തം വാക്യഘടനയിലേക്ക് പരിവർത്തനം ചെയ്ത ഈ ഉറവിടത്തിന്റെ നിയമങ്ങൾ ഡൗൺലോഡ് ചെയ്യുക"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "ഡിഫോൾട്ട്"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList കുടുംബം"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "ഭാഷ പ്രകാരം"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "കസ്റ്റം (നിങ്ങളുടെ സ്വന്തം URL-കൾ)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "$1-നായി വ്യാജ ഡാറ്റ സീഡ് ചെയ്തു:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "പൊതുവായത്"
+  },
+  "dashboard_settings_language_name": {
+    "message": "ഭാഷ"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "മാറ്റിയ ശേഷം ഈ പേജ് വീണ്ടും ആരംഭിക്കുന്നു"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "സ്വയമേവ (ബ്രൗസർ ഭാഷ)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "മെനു"
+  }
+}

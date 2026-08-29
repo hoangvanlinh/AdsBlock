@@ -126,8 +126,6 @@
     var parts = _strSplit.call(chain, '.');
     var leaf  = parts.pop();
 
-    // Matches uBlock Origin's real set-constant.js trapProp (verified
-    // against gorhill/uBlock master, 2026-08-10): a permanent,
     // configurable:false get/set accessor on the leaf — NOT the
     // downgrade-to-plain-after-set variant this used to have. That variant
     // was added on a theory that the accessor itself was a YouTube-wall
@@ -219,7 +217,6 @@
     var leaf  = parts.pop();
 
     // Permanent configurable:false accessor, same as setConstant's lock()
-    // — see that function's comment for why (matches uBlock Origin's own
     // set-constant.js; an earlier "downgrade to plain after first set"
     // variant here was dropped since it only pruned the FIRST assignment,
     // and the accessor-as-fingerprint theory it was defending against

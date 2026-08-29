@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Αποκλείστε διαφημίσεις, ιχνηλάτες και γνωστούς κακόβουλους τομείς με απλούς ελέγχους ιστότοπου και εργαλεία συγκέντρωσης.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Ο ιστότοπος αποκλείστηκε — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Ο ιστότοπος αποκλείστηκε για την ασφάλειά σας"
+  },
+  "blocked_title_adPopup": {
+    "message": "Αναδυόμενη διαφήμιση/νέα καρτέλα αποκλείστηκε"
+  },
+  "blocked_host_unknown": {
+    "message": "άγνωστος ιστότοπος"
+  },
+  "blocked_hint_default": {
+    "message": "Αυτός ο ιστότοπος βρίσκεται σε λίστα αποκλεισμού κακόβουλου λογισμικού/phishing. Μπορεί να προσπαθήσει να κλέψει τις πληροφορίες σας, να εξορύξει κρυπτονόμισμα ή να εγκαταστήσει ανεπιθύμητο λογισμικό."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Ένα κλικ στη σελίδα από την οποία ήρθατε προσπάθησε να ανοίξει αυτό το δίκτυο διαφημίσεων/αναδυόμενων παραθύρων σε νέα καρτέλα. Μπορείτε να κλείσετε με ασφάλεια αυτήν την καρτέλα."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Να μην με προειδοποιήσεις ξανά για αυτόν τον ιστότοπο"
+  },
+  "blocked_btn_goBack": {
+    "message": "Επιστροφή"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Κλείσιμο αυτού του παραθύρου"
+  },
+  "blocked_btn_proceed": {
+    "message": "Συνέχεια ούτως ή άλλως"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Γίνεται συνέχεια…"
+  },
+  "common_remove": {
+    "message": "Αφαίρεση"
+  },
+  "common_cancel": {
+    "message": "Ακύρωση"
+  },
+  "menu_pickElement": {
+    "message": "Επιλογή στοιχείου προς απόκρυψη…"
+  },
+  "menu_scanGlobals": {
+    "message": "Σάρωση σελίδας για scripts/μεταβλητές…"
+  },
+  "menu_editRules": {
+    "message": "Επεξεργασία κανόνων για αυτόν τον ιστότοπο…"
+  },
+  "picker_badge_active": {
+    "message": "Επιλογή στοιχείου προς απόκρυψη — πατήστε Esc για ακύρωση"
+  },
+  "picker_btn_hide": {
+    "message": "Απόκρυψη αυτού του στοιχείου"
+  },
+  "picker_btn_broaden": {
+    "message": "Διεύρυνση"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Πίνακας ελέγχου"
+  },
+  "popup_review_title": {
+    "message": "Σας αρέσει το AdBlock;"
+  },
+  "popup_review_subtitle": {
+    "message": "Μια γρήγορη αξιολόγηση βοηθάει πολύ."
+  },
+  "popup_review_rate": {
+    "message": "Αξιολογήστε μας"
+  },
+  "popup_review_dismiss": {
+    "message": "Όχι ευχαριστώ"
+  },
+  "popup_stat_blocked": {
+    "message": "Αποκλείστηκαν"
+  },
+  "popup_stat_malware": {
+    "message": "Κακόβουλο λογισμικό"
+  },
+  "popup_stat_speed": {
+    "message": "Ταχύτητα"
+  },
+  "popup_stat_saved": {
+    "message": "Εξοικονομήθηκαν"
+  },
+  "popup_allowlist_banner": {
+    "message": "Αυτός ο ιστότοπος βρίσκεται στη λίστα επιτρεπόμενων"
+  },
+  "popup_action_focus": {
+    "message": "Λειτουργία συγκέντρωσης"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Παύση για τον ιστότοπο"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Συνέχιση ιστότοπου"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Βαθμολογία απορρήτου"
+  },
+  "popup_footer_settings": {
+    "message": "Ρυθμίσεις"
+  },
+  "popup_ruleChip_title": {
+    "message": "Κανόνες αποκλεισμού δικτύου που είναι φορτωμένοι αυτήν τη στιγμή"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… κανόνες"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "κανόνες δικτύου: ;"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "Φορτώθηκαν $1 κανόνες δικτύου",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Υποστηρίξτε την ανάπτυξη μέσω PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Δωρεά"
+  },
+  "popup_version_title": {
+    "message": "Έκδοση AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Διαθέσιμη ενημέρωση — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Διαθέσιμη νεότερη έκδοση — κάντε κλικ για άνοιγμα της καταχώρισης στο κατάστημα"
+  },
+  "popup_domain_unknown": {
+    "message": "Άγνωστος ιστότοπος"
+  },
+  "popup_status_site": {
+    "message": "Ιστότοπος"
+  },
+  "popup_status_protection": {
+    "message": "Προστασία"
+  },
+  "popup_status_allowlisted": {
+    "message": "Επιτρέπεται"
+  },
+  "popup_status_on": {
+    "message": "ΕΝΕΡΓΗ"
+  },
+  "popup_status_paused": {
+    "message": "Σε παύση"
+  },
+  "popup_status_off": {
+    "message": "ΑΝΕΝΕΡΓΗ"
+  },
+  "common_save": {
+    "message": "Αποθήκευση"
+  },
+  "common_close": {
+    "message": "Κλείσιμο"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Επεξεργασία κανόνων — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Κλικ για εισαγωγή στο πλαίσιο κειμένου"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Αναφορά κλειδιών ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Φιλτράρισμα κλειδιών…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "ΑΙΣΘΗΤΙΚΗ / ΥΠΟΨΗΦΙΑ ΑΝΤΙΣΤΟΙΧΙΣΗ"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLETS (ΓΙΑ ΠΡΟΧΩΡΗΜΕΝΟΥΣ)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Τρέχοντες κανόνες για αυτόν τον ιστότοπο ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(δεν υπάρχουν ακόμα κανόνες για αυτόν τον ιστότοπο — ούτε ενσωματωμένοι ούτε προσαρμοσμένοι)"
+  },
+  "ruleEditor_hint": {
+    "message": "Ένα \"key = value | value2\" ανά γραμμή. Κάντε κλικ σε ένα κλειδί παραπάνω για να το εισαγάγετε. Χωρίς κεφαλίδες [section]. Οι κανόνες που πληκτρολογούνται εδώ ΠΡΟΣΤΙΘΕΝΤΑΙ σε τυχόν υπάρχοντες κανόνες για αυτό το κλειδί (δείτε παραπάνω) — αυτό δεν μπορεί να αφαιρέσει ή να παρακάμψει έναν ενσωματωμένο κανόνα, και για κλειδιά σημαίας μίας τιμής, η ενσωματωμένη τιμή συνήθως κερδίζει."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Αποθηκεύτηκε — ανανεώστε αυτήν τη σελίδα για να δείτε τους εφαρμοσμένους κανόνες."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Η αποθήκευση απέτυχε — ελέγξτε για μια μεμονωμένη γραμμή \"[section]\" ή τεράστια επικόλληση."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "Επιλογείς CSS που αποκρύπτονται άνευ όρων μέσω ενός εισαγόμενου φύλλου στιλ — χωρίς ευρετικό έλεγχο, απλή απόκρυψη με την πρώτη ματιά."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "Επιλογείς CSS για ΥΠΟΨΗΦΙΑ στοιχεία — αποκρύπτονται μόνο αν ταιριάζουν και με τα labels/link_patterns παρακάτω."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Όπως το selectors, περιορισμένο σε δοχεία τύπου feed/χρονολογίου."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Όπως το selectors, περιορισμένο σε δοχεία τύπου αγοράς/αγορών."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Όπως το selectors, περιορισμένο σε περιοχή πλαϊνής στήλης/δεξιάς ράγας."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Όπως το selectors, περιορισμένο σε μεμονωμένα δοχεία ανάρτησης/άρθρου."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "Επιλογείς CSS για στοιχεία \"οικοδεσπότη\", ελεγχόμενα με τον ίδιο τρόπο όπως το selectors παραπάνω."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Ετικέτες κειμένου (π.χ. sponsored, promoted) που αντιστοιχίζονται με χαρακτηριστικά/κείμενο πλαισίου για επιβεβαίωση ότι ένας υποψήφιος είναι πράγματι διαφήμιση."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Μοτίβα υποσυμβολοσειράς που αντιστοιχίζονται με τους δικούς του συνδέσμους/χαρακτηριστικά ενός υποψηφίου για επιβεβαίωση ότι είναι διαφήμιση."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Ονόματα χαρακτηριστικών HTML που σαρώνονται για αντιστοιχίες label/link_pattern (προεπιλογή: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Θυγατρικά στοιχεία από τα οποία αντλείται κείμενο για αντιστοίχιση ετικετών (προεπιλογή: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "Επιλογέας(είς) CSS για ανάβαση μέσω .closest() πριν από την απόκρυψη ενός αντιστοιχισμένου υποψηφίου (αποκρύπτει το δοχείο, όχι μόνο την ετικέτα)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Ονόματα κλάσεων που αφαιρούνται συνεχώς από τα <html>/<body> — νικά επικαλύψεις κατάληψης μόνο CSS που καθοδηγούνται από μια ριζική κλάση."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Ονόματα ιδιοτήτων CSS που εκκαθαρίζονται συνεχώς από το ενσωματωμένο στιλ των <html>/<body> — νικά κλείδωμα κύλισης που ορίζεται από JS κ.λπ."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Σημαία 1/0 — κλείνει αυτόματα καρτέλες αναδυόμενων/popunder που ανοίγονται από κλικ σε αυτόν τον ιστότοπο."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — κλειδώνει μόνιμα μια ιδιότητα παραθύρου σε μια σταθερή τιμή (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — προκαλεί σφάλμα όταν οποιοδήποτε script διαβάζει αυτήν την ιδιότητα παραθύρου."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — προκαλεί σφάλμα όταν οποιοδήποτε script γράφει σε αυτήν την ιδιότητα παραθύρου."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — προκαλεί σφάλμα μόνο όταν η δική του ανίχνευση στοίβας του καλούντος script ταιριάζει με το needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — προκαλεί σφάλμα όταν ένα script με πηγή που ταιριάζει με το needle διαβάζει το target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — αποκλείει ή ανακατευθύνει με δόλωμα κλήσεις window.open() που ταιριάζουν με το pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — αποκλείει κλήσεις fetch() που ταιριάζουν με τα κριτήρια."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — αποκλείει κλήσεις XMLHttpRequest που ταιριάζουν με τα κριτήρια."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — αποκλείει το fetch, επιστρέφοντας προαιρετικά ένα σταθερό ψεύτικο σώμα απόκρισης."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — εμποδίζει ένα iframe about:blank ίδιας προέλευσης να φτάσει πίσω στο πραγματικό παράθυρο για να παρακάμψει ένα κλείδωμα."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — αφαιρεί πεδία από οποιοδήποτε αποτέλεσμα JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — αφαιρεί πεδία από μια απόκριση JSON του fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — αφαιρεί πεδία από μια απόκριση JSON του XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — κλαδεύει ένα αντικείμενο που ένα script εκχωρεί απευθείας (όχι μέσω JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — διαγραφές πεδίων βασισμένες σε JSONPath σε μια απόκριση JSON του fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — διαγραφές πεδίων βασισμένες σε JSONPath σε μια απόκριση JSON-lines του XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Αφαιρεί πεδία από μια απόκριση κωδικοποιημένη σε protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — επεξεργασίες JSONPath (διαγραφές ΚΑΙ εκχώρηση τιμών) σε ένα εξερχόμενο σώμα αιτήματος."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — επεξεργασίες JSONPath (διαγραφές ΚΑΙ εκχώρηση τιμών) σε ένα σώμα απόκρισης."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — αναζήτηση/αντικατάσταση με regex σε ένα σώμα απόκρισης fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — αναζήτηση/αντικατάσταση με regex σε ένα σώμα απόκρισης XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — αντικαθιστά ένα όρισμα που περνάει σε μια συνάρτηση."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — άνευ όρων αντικατάσταση κειμένου σε εξερχόμενα δεδομένα (χωρίς περιορισμό URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — ξαναγράφει το κείμενο μιας ετικέτας <script> πριν εκτελεστεί. Το sedCount περιορίζει πόσους κόμβους θα ξαναγράψει ποτέ αυτός ο κανόνας (προεπιλογή: απεριόριστο)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — κλαδεύει πεδία από ένα αντικείμενο που περνάει ΜΕΣΑ σε μια κλήση εγγενούς μεθόδου."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — ματαιώνει ή αγνοεί σιωπηλά μια κλήση εγγενούς μεθόδου που ταιριάζει με μια υπογραφή."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — απορρίπτει ή προκαλεί σφάλμα σε μια εκχώρηση setter προσπελαστή (π.χ. Element.prototype.innerHTML) της οποίας η τιμή ταιριάζει με το needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — αφαιρεί διαφημιστικά τμήματα από μια απόκριση λίστας αναπαραγωγής HLS .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — προσποιείται επιτυχή φόρτωση script/img/iframe/link αντί για το πραγματικό αίτημα δικτύου."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — αφαιρεί χαρακτηριστικά HTML από αντιστοιχισμένα στοιχεία."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — εκκαθαρίζει το περιεχόμενο κειμένου ενός κόμβου DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — ξαναγράφει το περιεχόμενο κειμένου ενός κόμβου DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — σταματά μια αυτόματη ανακατεύθυνση μέσω <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — ορίζει ένα cookie."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — αφαιρεί cookies που ταιριάζουν με ένα μοτίβο ονόματος."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — ορίζει μια καταχώριση localStorage (περιορισμένη σε ασφαλείς κυριολεκτικές τιμές, ή την ειδική τιμή \"remove\" για διαγραφή αντιστοιχισμένων κλειδιών)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — ξαναγράφει το href ενός συνδέσμου από το δικό του κείμενο ή άλλο χαρακτηριστικό."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — αποκλείει κλήσεις setTimeout() που ταιριάζουν με τα κριτήρια."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — αποκλείει κλήσεις setInterval() που ταιριάζουν με τα κριτήρια."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — αποκλείει κλήσεις requestAnimationFrame() που ταιριάζουν με τα κριτήρια."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — αποκλείει κλήσεις addEventListener() που ταιριάζουν με τα κριτήρια."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — επιταχύνει/επιβραδύνει αντιστοιχισμένες κλήσεις setTimeout() αντί να τις αποκλείει."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — επιταχύνει/επιβραδύνει αντιστοιχισμένες κλήσεις setInterval() αντί να τις αποκλείει."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — αποκλείει κλήσεις eval() των οποίων η πηγή ταιριάζει με το pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Απενεργοποιεί το RTCPeerConnection — αποκλείει κόλπα αναδυόμενων/παρακολούθησης βασισμένα σε WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Εξουδετερώνει scripts ανίχνευσης anti-adblock τύπου BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Αφαιρεί το target=\"_blank\" από συνδέσμους στους οποίους γίνεται κλικ — αποκλείει εξαναγκασμένες ανακατευθύνσεις σε νέα καρτέλα."
+  },
+  "scanner_value_emptyString": {
+    "message": "Κενή συμβολοσειρά"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Κενός πίνακας"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Κενό αντικείμενο"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Κενή συνάρτηση (χωρίς λειτουργία)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Συνάρτηση που πάντα επιστρέφει true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Συνάρτηση που πάντα επιστρέφει false"
+  },
+  "scanner_btn_block": {
+    "message": "Αποκλεισμός"
+  },
+  "scanner_btn_edit": {
+    "message": "Επεξεργασία"
+  },
+  "scanner_btn_delete": {
+    "message": "Διαγραφή"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Ο αποκλεισμός εφαρμόστηκε — αποθηκεύτηκε για αυτόν τον ιστότοπο."
+  },
+  "scanner_status_editApplied": {
+    "message": "Η επεξεργασία εφαρμόστηκε — αποθηκεύτηκε για αυτόν τον ιστότοπο."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Η διαγραφή εφαρμόστηκε — αποθηκεύτηκε για αυτόν τον ιστότοπο."
+  },
+  "scanner_block_warning": {
+    "message": "Ο αποκλεισμός αποτρέπει ΟΛΕΣ τις μελλοντικές αναγνώσεις αυτής της ιδιότητας — ενδέχεται να διακόψει λειτουργικότητα σελίδας που βασίζεται σε αυτήν. Αυτό δεν μπορεί να αναιρεθεί με ανανέωση· αφαιρέστε τον κανόνα από τη σελίδα Καθολικών κανόνων του πίνακα ελέγχου για επαναφορά."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Αποκλεισμός ούτως ή άλλως"
+  },
+  "scanner_edit_customOption": {
+    "message": "Προσαρμοσμένο…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "ένα διακριτικό, χωρίς κενά (π.χ. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Πληκτρολογήστε μια τιμή χωρίς κενά."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Δεν επιτρέπονται κενά — θα απορριφθεί."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Θα αποθηκευτεί ως: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Καθολικές μεταβλητές σελίδας ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Φιλτράρισμα κατά όνομα…"
+  },
+  "scanner_empty": {
+    "message": "Δεν βρέθηκαν καθολικές μεταβλητές που προστέθηκαν από τη σελίδα σε αυτήν τη σελίδα."
+  },
+  "scanner_footer_limitation": {
+    "message": "Βλέπει μόνο καθολικές μεταβλητές τύπου var/function και ρητές εκχωρήσεις window.x = — δηλώσεις let/const/class είναι αόρατες σε οποιονδήποτε σαρωτή σελίδας (περιορισμός γλώσσας JS)."
+  },
+  "scanner_loading": {
+    "message": "Σάρωση καθολικών μεταβλητών σελίδας — πατήστε Esc για ακύρωση"
+  },
+  "common_add": {
+    "message": "Προσθήκη"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Πίνακας ελέγχου"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Επισκόπηση"
+  },
+  "dashboard_nav_rules": {
+    "message": "Προσαρμοσμένοι κανόνες"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Πηγή κανόνων"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Λίστα επιτρεπόμενων"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Κανόνες στοιχείων"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Καθολικοί κανόνες"
+  },
+  "dashboard_nav_focus": {
+    "message": "Συγκέντρωση"
+  },
+  "dashboard_nav_settings": {
+    "message": "Ρυθμίσεις"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Προστασία ΕΝΕΡΓΗ"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Προστασία $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Υποστηρίξτε την ανάπτυξη μέσω PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Κεράστε με έναν καφέ ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ΕΝΕΡΓΗ"
+  },
+  "dashboard_toggle_off": {
+    "message": "ΑΝΕΝΕΡΓΗ"
+  },
+  "dashboard_overview_title": {
+    "message": "Επισκόπηση"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Ο πίνακας ελέγχου προστασίας σας"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Σύνολο αποκλεισμένων"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% σήμερα"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Σταματημένοι ιχνηλάτες"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% σήμερα"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Αποκλεισμένο κακόβουλο λογισμικό"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "σταματημένες απειλές"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Δεν εντοπίστηκαν απειλές"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Εξοικονομημένο εύρος ζώνης"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "μέσος όρος ανά σελίδα"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Εξοικονομημένος χρόνος"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "σε αυτήν τη συνεδρία"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 σήμερα",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— σήμερα"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% σε σχέση με χθες",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 απειλές σήμερα"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 ακόμα",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Αποκλεισμένα αιτήματα"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Αιτήματα ιχνηλατών"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Ανιχνεύσεις κακόβουλου λογισμικού"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7η"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14η"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30η"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "αποκλεισμένα"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "ιχνηλάτες"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "κακόβουλο λογισμικό"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Τομείς με τους περισσότερους αποκλεισμούς"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Τομείς με τους περισσότερους ιχνηλάτες"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Τομείς με το περισσότερο κακόβουλο λογισμικό"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Προβολή όλων"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Λιγότερα"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Προβολή όλων ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Δεν υπάρχουν ακόμα δεδομένα."
+  },
+  "dashboard_privacy_title": {
+    "message": "Βαθμολογία απορρήτου"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Αποκλεισμένες διαφημίσεις"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Αποκλεισμένοι ιχνηλάτες"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Προστασία από κακόβουλο λογισμικό"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Ανωνυμοποίηση παραπομπέα"
+  },
+  "dashboard_rules_title": {
+    "message": "Προσαρμοσμένοι κανόνες"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Επεξεργασία σε μορφή site-rules.txt — ίδια σύνταξη με το κύριο αρχείο κανόνων. Οι τιμές συγχωνεύονται με τους ενσωματωμένους κανόνες."
+  },
+  "dashboard_rules_clear": {
+    "message": "Εκκαθάριση"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Εκκαθάριση όλων των προσαρμοσμένων κανόνων;"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Προσαρμοσμένοι κανόνες — ίδια μορφή με το site-rules.txt\n# Οι τιμές ΣΥΓΧΩΝΕΥΟΝΤΑΙ με τους ενσωματωμένους κανόνες (δεν τους αντικαθιστούν).\n#\n# ── Αντιστοίχιση νέου τομέα σε ενότητα κανόνων ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← οι υποτομείς αντιστοιχίζονται αυτόματα\n#\n# ── Προσθήκη επιπλέον τομέων για καθολικό αποκλεισμό ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Αισθητικοί κανόνες ανά ιστότοπο ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Λίστα επιτρεπόμενων"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Ιστότοποι που παρακάμπτουν κάθε αποκλεισμό"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Προσθήκη ιστότοπου"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Κανόνες στοιχείων"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Στοιχεία που αποκρύφτηκαν χειροκίνητα μέσω \"Επιλογή στοιχείου προς απόκρυψη\" — ομαδοποιημένα ανά ιστότοπο"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Δεν υπάρχουν ακόμα κανόνες."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Καθολικοί κανόνες"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Καθολικές μεταβλητές παραθύρου που αποκλείστηκαν/επεξεργάστηκαν/διαγράφηκαν χειροκίνητα μέσω \"Σάρωση σελίδας για scripts/μεταβλητές\" — ομαδοποιημένα ανά ιστότοπο"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Δεν υπάρχουν ακόμα κανόνες."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "αποκλεισμός"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "επεξεργασία"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "διαγραφή"
+  },
+  "dashboard_focus_title": {
+    "message": "Λειτουργία συγκέντρωσης"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Αποκλεισμός ιστότοπων που αποσπούν την προσοχή βάσει προγράμματος"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Συνεδρία συγκέντρωσης"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Η συνεδρία σε παύση"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Η συνεδρία εκτελείται…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Η συνεδρία ολοκληρώθηκε!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25λ"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45λ"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60λ"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90λ"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Προσαρμοσμένο"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "λεπτά"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Λίστα περισπασμών"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Προσθήκη"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Εισαγάγετε τομέα προς αποκλεισμό κατά τη συγκέντρωση (π.χ. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Ρυθμίσεις"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Προσαρμόστε τη συμπεριφορά του AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Αποκλεισμός"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Αποκλεισμός διαφημίσεων"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Τυπικός αποκλεισμός δικτύων διαφημίσεων"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Αποκλεισμός ιχνηλατών"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Αποκλεισμός scripts ανάλυσης και παρακολούθησης"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Αισθητικό φιλτράρισμα"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Απόκρυψη εναπομεινάντων placeholder διαφημίσεων μέσω CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Αποκλεισμός κακόβουλου λογισμικού"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Αποκλεισμός γνωστών τομέων κακόβουλου λογισμικού"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Απόρρητο"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Ανωνυμοποίηση παραπομπέα"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Αφαίρεση κεφαλίδων παραπομπέα σε αιτήματα μεταξύ τομέων"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Καθολικός Έλεγχος Απορρήτου (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Αποστολή σήματος εξαίρεσης GPC (κεφαλίδα Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Κεφαλίδα Μη Παρακολούθησης (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Αποστολή κεφαλίδας αιτήματος DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Δεδομένα"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Συλλογή στατιστικών"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Στατιστικά χρήσης μόνο τοπικά (δεν μεταφορτώνονται ποτέ)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Επαναφορά όλων των δεδομένων"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Εκκαθάριση κανόνων, στατιστικών και ρυθμίσεων"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Επαναφορά"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Επαναφορά όλων των δεδομένων του AdBlock; Αυτό δεν μπορεί να αναιρεθεί."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Όλα τα δεδομένα εκκαθαρίστηκαν. Γίνεται επαναφόρτωση…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Σχετικά"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Έκδοση"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Έλεγχος για ενημερώσεις"
+  },
+  "dashboard_settings_checking": {
+    "message": "Γίνεται έλεγχος…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Διαθέσιμη νεότερη έκδοση"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Προβολή"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Τελευταίος έλεγχος $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (απέτυχε — είστε εκτός σύνδεσης;)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Δεν έχει ελεγχθεί ακόμα"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "Η v$1 είναι διαθέσιμη (έχετε την v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Πηγή κανόνων"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Από πού λαμβάνει το AdBlock τους κανόνες ιστότοπών του"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL απομακρυσμένων κανόνων"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Περιλαμβάνει το ενσωματωμένο προεπιλεγμένο (εναλλάξιμο, δεν αφαιρείται) συν όποια URL προσθέσετε — όλα συγχωνευμένα, το καθένα ενεργοποιείται/απενεργοποιείται ανεξάρτητα."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Προσθήκη URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Τοπικά αρχεία κανόνων"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Μεταφόρτωση αρχείων κανόνων .txt — συγχωνεύονται με πηγές URL. Υποστηρίζονται πολλαπλά αρχεία."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Προσθήκη αρχείου…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Γίνεται εξαγωγή…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Η εξαγωγή απέτυχε: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "άγνωστο σφάλμα"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 μετατράπηκαν, $2 παραλείφθηκαν από $3 κανόνες",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 κανόνες εξαίρεσης (δεν υπάρχει μοντέλο ακύρωσης εδώ)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 διαδικαστικοί επιλογείς (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 εκτεταμένοι τροποποιητές AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 μη αντιστοιχισμένες κλήσεις scriptlet",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 μη υποστηριζόμενοι τροποποιητές κανόνων δικτύου",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 ήδη επιμελημένοι στο δικό αυτής της επέκτασης site-rules.txt",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 μη αναγνωρισμένη σύνταξη",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "φορτώθηκαν $1/$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "φορτώθηκαν $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Εξαγωγή"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Λήψη των κανόνων αυτής της πηγής μετατρεμμένων στη δική σύνταξη αυτής της επέκτασης"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Προεπιλογή"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Οικογένεια EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Κατά γλώσσα"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Προσαρμοσμένο (τα δικά σας URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Δημιουργήθηκαν εικονικά δεδομένα για $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Γενικά"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Γλώσσα"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Επανεκκινεί αυτήν τη σελίδα μετά την αλλαγή"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Αυτόματα (γλώσσα προγράμματος περιήγησης)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Μενού"
+  }
+}

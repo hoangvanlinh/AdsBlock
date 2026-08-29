@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Bloqueie anúncios, rastreadores e domínios maliciosos conhecidos com opções simples por site e ferramentas de foco."
+  },
+  "blocked_pageTitle": {
+    "message": "Site bloqueado — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Site bloqueado para a sua segurança"
+  },
+  "blocked_title_adPopup": {
+    "message": "Anúncio de pop-up/nova aba bloqueado"
+  },
+  "blocked_host_unknown": {
+    "message": "site desconhecido"
+  },
+  "blocked_hint_default": {
+    "message": "Este site está numa lista de bloqueio de malware/phishing. Pode tentar roubar as suas informações, minerar criptomoeda ou instalar software indesejado."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Um clique na página de onde veio tentou abrir esta rede de anúncios/pop-up numa nova aba. Pode fechar esta aba com segurança."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Não avisar novamente sobre este site"
+  },
+  "blocked_btn_goBack": {
+    "message": "Voltar"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Fechar esta janela"
+  },
+  "blocked_btn_proceed": {
+    "message": "Continuar mesmo assim"
+  },
+  "blocked_btn_proceeding": {
+    "message": "A continuar…"
+  },
+  "common_remove": {
+    "message": "Remover"
+  },
+  "common_cancel": {
+    "message": "Cancelar"
+  },
+  "menu_pickElement": {
+    "message": "Selecionar elemento a ocultar…"
+  },
+  "menu_scanGlobals": {
+    "message": "Procurar scripts/variáveis na página…"
+  },
+  "menu_editRules": {
+    "message": "Editar regras deste site…"
+  },
+  "picker_badge_active": {
+    "message": "A selecionar elemento a ocultar — prima Esc para cancelar"
+  },
+  "picker_btn_hide": {
+    "message": "Ocultar este elemento"
+  },
+  "picker_btn_broaden": {
+    "message": "Ampliar"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Anúncios, Rastreadores"
+  },
+  "popup_openDashboard_title": {
+    "message": "Painel"
+  },
+  "popup_review_title": {
+    "message": "Gosta do AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Uma avaliação rápida ajuda muito."
+  },
+  "popup_review_rate": {
+    "message": "Avaliar"
+  },
+  "popup_review_dismiss": {
+    "message": "Não, obrigado"
+  },
+  "popup_stat_blocked": {
+    "message": "Bloqueados"
+  },
+  "popup_stat_malware": {
+    "message": "Malware"
+  },
+  "popup_stat_speed": {
+    "message": "Velocidade"
+  },
+  "popup_stat_saved": {
+    "message": "Poupado"
+  },
+  "popup_allowlist_banner": {
+    "message": "Este site está na lista de permissões"
+  },
+  "popup_action_focus": {
+    "message": "Modo de foco"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Pausar neste site"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Retomar neste site"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Pontuação de privacidade"
+  },
+  "popup_footer_settings": {
+    "message": "Configurações"
+  },
+  "popup_ruleChip_title": {
+    "message": "Regras de bloqueio de rede atualmente carregadas"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… regras"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "regras de rede: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 regras de rede carregadas",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Apoie o desenvolvimento via PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Doar"
+  },
+  "popup_version_title": {
+    "message": "Versão do AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Atualização disponível — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Está disponível uma versão mais recente — clique para abrir a página da loja"
+  },
+  "popup_domain_unknown": {
+    "message": "Site desconhecido"
+  },
+  "popup_status_site": {
+    "message": "Site"
+  },
+  "popup_status_protection": {
+    "message": "Proteção"
+  },
+  "popup_status_allowlisted": {
+    "message": "Na lista de permissões"
+  },
+  "popup_status_on": {
+    "message": "ATIVADO"
+  },
+  "popup_status_paused": {
+    "message": "Em pausa"
+  },
+  "popup_status_off": {
+    "message": "DESATIVADO"
+  },
+  "common_save": {
+    "message": "Guardar"
+  },
+  "common_close": {
+    "message": "Fechar"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Editar regras — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Clique para inserir na área de texto"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Referência de chaves ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtrar chaves…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "COSMÉTICO / CORRESPONDÊNCIA DE CANDIDATOS"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLETS (AVANÇADO)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Regras atuais para este site ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(ainda sem regras para este site — predefinidas ou personalizadas)"
+  },
+  "ruleEditor_hint": {
+    "message": "Uma linha por \"chave = valor | valor2\". Clique numa chave acima para a inserir. Sem cabeçalhos [section]. As regras escritas aqui são ADICIONADAS a quaisquer regras existentes para esta chave (ver acima) — isto não pode remover nem substituir uma regra predefinida, e para chaves de sinalizador de valor único o valor predefinido geralmente continua a prevalecer."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Guardado — recarregue esta página para ver as regras aplicadas."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Falha ao guardar — verifique se há uma linha \"[section]\" perdida ou uma colagem enorme."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "Seletores CSS ocultados incondicionalmente através de uma folha de estilos injetada — sem verificação heurística, apenas oculta à vista."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "Seletores CSS para elementos CANDIDATOS — só são ocultados se também corresponderem a labels/link_patterns abaixo."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Igual a selectors, restrito a contentores do tipo feed/timeline."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Igual a selectors, restrito a contentores do tipo marketplace/loja."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Igual a selectors, restrito a uma área de barra lateral/right-rail."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Igual a selectors, restrito a contentores individuais de publicação/artigo."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "Seletores CSS para elementos \"host\", verificados da mesma forma que selectors acima."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Rótulos de texto (ex.: sponsored, promoted) comparados com atributos/texto de contexto para confirmar que um candidato é mesmo um anúncio."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Padrões de subcadeia comparados com os próprios links/atributos de um candidato para confirmar que é um anúncio."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Nomes de atributos HTML pesquisados para correspondências de label/link_pattern (padrão: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Elementos filho de onde extrair texto para a correspondência de labels (padrão: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "Seletor(es) CSS a percorrer via .closest() antes de ocultar um candidato correspondido (oculta o contentor, não apenas o rótulo)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Nomes de classes removidos continuamente de <html>/<body> — anula sobreposições de bloqueio feitas só em CSS através de uma classe raiz."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Nomes de propriedades CSS limpos continuamente do estilo inline de <html>/<body> — anula bloqueios de scroll definidos por JS, etc."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Sinalizador 1/0 — fecha automaticamente as abas de pop-up/popunder abertas por cliques neste site."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — fixa permanentemente uma propriedade window num valor fixo (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — lança um erro quando qualquer script lê esta propriedade window."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — lança um erro quando qualquer script escreve nesta propriedade window."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — lança um erro apenas quando o stack trace do próprio script chamador corresponde a needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — lança um erro quando um script cuja origem corresponde a needle lê target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — bloqueia ou redireciona com um chamariz (decoy) as chamadas a window.open() que correspondam a pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — bloqueia chamadas a fetch() que correspondam aos critérios."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — bloqueia chamadas a XMLHttpRequest que correspondam aos critérios."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — bloqueia fetch, devolvendo opcionalmente um corpo de resposta falso fixo."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — impede que um iframe about:blank da mesma origem aceda de volta à janela real para contornar um bloqueio."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — remove campos de qualquer resultado de JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — remove campos de uma resposta JSON de fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — remove campos de uma resposta JSON de XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — remove campos de um objeto atribuído diretamente por um script (não via JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — eliminações de campos baseadas em JSONPath numa resposta JSON de fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — eliminações de campos baseadas em JSONPath numa resposta XHR JSON-lines."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Remove campos de uma resposta codificada em protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — edições JSONPath (eliminações E atribuição de valores) no corpo de um pedido de saída."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — edições JSONPath (eliminações E atribuição de valores) no corpo de uma resposta."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — localizar/substituir com regex no corpo de uma resposta de fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — localizar/substituir com regex no corpo de uma resposta de XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — substitui um argumento passado a uma função."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — substituição de texto incondicional em dados de saída (sem restrição por URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — reescreve o texto de uma tag <script> antes de esta ser executada. sedCount limita quantos nós esta regra alguma vez reescreverá (padrão: ilimitado)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — remove campos de um objeto passado PARA uma chamada de método nativo."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — aborta ou ignora silenciosamente uma chamada de método nativo que corresponda a uma assinatura."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — descarta ou lança um erro numa atribuição via setter de acessor (ex.: Element.prototype.innerHTML) cujo valor corresponda a needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — remove segmentos de anúncios de uma resposta de playlist HLS .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — simula sucesso no carregamento de um script/img/iframe/link em vez do pedido de rede real."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — remove atributos HTML de elementos correspondentes."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — limpa o conteúdo de texto de um nó DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — reescreve o conteúdo de texto de um nó DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — impede um redirecionamento automático de <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — define um cookie."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — remove cookies que correspondam a um padrão de nome."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — define uma entrada em localStorage (restrito a valores literais seguros, ou o valor especial \"remove\" para eliminar chaves correspondentes)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — reescreve o href de um link a partir do seu próprio texto ou de outro atributo."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — bloqueia chamadas a setTimeout() que correspondam aos critérios."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — bloqueia chamadas a setInterval() que correspondam aos critérios."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — bloqueia chamadas a requestAnimationFrame() que correspondam aos critérios."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — bloqueia chamadas a addEventListener() que correspondam aos critérios."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — acelera/desacelera chamadas a setTimeout() correspondentes em vez de as bloquear."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — acelera/desacelera chamadas a setInterval() correspondentes em vez de as bloquear."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — bloqueia chamadas a eval() cuja origem corresponda a pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Desativa RTCPeerConnection — bloqueia truques de pop-up/rastreamento baseados em WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Neutraliza scripts de deteção anti-adblock do tipo BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Remove target=\"_blank\" de links clicados — bloqueia redirecionamentos forçados para nova aba."
+  },
+  "scanner_value_emptyString": {
+    "message": "Cadeia de texto vazia"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Array vazio"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Objeto vazio"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Função vazia (sem efeito)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Função que retorna sempre true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Função que retorna sempre false"
+  },
+  "scanner_btn_block": {
+    "message": "Bloquear"
+  },
+  "scanner_btn_edit": {
+    "message": "Editar"
+  },
+  "scanner_btn_delete": {
+    "message": "Eliminar"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Bloqueio aplicado — guardado para este site."
+  },
+  "scanner_status_editApplied": {
+    "message": "Edição aplicada — guardada para este site."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Eliminação aplicada — guardada para este site."
+  },
+  "scanner_block_warning": {
+    "message": "Bloquear impede TODAS as leituras futuras desta propriedade — pode quebrar funcionalidades da página que dependam dela. Isto não pode ser desfeito ao atualizar a página; remova a regra na página Regras Globais do painel para reverter."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Bloquear mesmo assim"
+  },
+  "scanner_edit_customOption": {
+    "message": "Personalizado…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "um único token, sem espaços (ex.: 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Digite um valor sem espaços."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Não são permitidos espaços — será rejeitado."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Será guardado como: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Variáveis globais da página ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtrar por nome…"
+  },
+  "scanner_empty": {
+    "message": "Não foram encontradas variáveis globais adicionadas pela página."
+  },
+  "scanner_footer_limitation": {
+    "message": "Só deteta variáveis globais do tipo var/function e atribuições explícitas window.x = — declarações let/const/class são invisíveis a qualquer scanner de página (limitação da linguagem JS)."
+  },
+  "scanner_loading": {
+    "message": "A procurar variáveis globais da página — prima Esc para cancelar"
+  },
+  "common_add": {
+    "message": "Adicionar"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Painel"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Anúncios, Rastreadores"
+  },
+  "dashboard_nav_overview": {
+    "message": "Visão geral"
+  },
+  "dashboard_nav_rules": {
+    "message": "Regras personalizadas"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Fonte de regras"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Lista de permissões"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Regras de elementos"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Regras globais"
+  },
+  "dashboard_nav_focus": {
+    "message": "Foco"
+  },
+  "dashboard_nav_settings": {
+    "message": "Configurações"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Proteção ATIVADA"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Proteção $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Apoie o desenvolvimento via PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Ofereça-me um café ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ATIVADO"
+  },
+  "dashboard_toggle_off": {
+    "message": "DESATIVADO"
+  },
+  "dashboard_overview_title": {
+    "message": "Visão geral"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "O seu painel de proteção"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Total bloqueado"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% hoje"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Rastreadores bloqueados"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% hoje"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Malware bloqueado"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "ameaças bloqueadas"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Nenhuma ameaça detetada"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Largura de banda poupada"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "média por página"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Tempo poupado"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "nesta sessão"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 hoje",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— hoje"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% em relação a ontem",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 ameaças hoje"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 mais",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Pedidos bloqueados"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Pedidos de rastreadores"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Deteções de malware"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7d"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14d"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30d"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "bloqueados"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "rastreadores"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "malware"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Domínios mais bloqueados"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Domínios de rastreadores mais frequentes"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Domínios de malware mais frequentes"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Ver todos"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Mostrar menos"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Ver todos ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Ainda sem dados."
+  },
+  "dashboard_privacy_title": {
+    "message": "Pontuação de privacidade"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Anúncios bloqueados"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Rastreadores bloqueados"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Proteção contra malware"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Anonimização do referrer"
+  },
+  "dashboard_rules_title": {
+    "message": "Regras personalizadas"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Edite no formato site-rules.txt — a mesma sintaxe do ficheiro de regras principal. Os valores são combinados com as regras predefinidas."
+  },
+  "dashboard_rules_clear": {
+    "message": "Limpar"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Limpar todas as regras personalizadas?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Regras personalizadas — mesmo formato do site-rules.txt\n# Os valores são COMBINADOS com as regras predefinidas (não as substituem).\n#\n# ── Associar um novo domínio a uma secção de regras ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← subdomínios correspondidos automaticamente\n#\n# ── Adicionar domínios extra a bloquear globalmente ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Regras cosméticas por site ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Lista de permissões"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Sites que ignoram todo o bloqueio"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Adicionar site"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Regras de elementos"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elementos ocultados manualmente através de \"Selecionar elemento a ocultar\" — agrupados por site"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Ainda sem regras."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Regras globais"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Variáveis globais window bloqueadas/editadas/eliminadas manualmente através de \"Procurar scripts/variáveis na página\" — agrupadas por site"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Ainda sem regras."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "bloquear"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "editar"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "eliminar"
+  },
+  "dashboard_focus_title": {
+    "message": "Modo de foco"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Bloqueie sites de distração com um horário"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Sessão de foco"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Sessão em pausa"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Sessão em curso…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Sessão concluída!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 min"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 min"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 min"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 min"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Personalizado"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Lista de distrações"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Adicionar"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Introduza o domínio a bloquear durante o foco (ex.: twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Configurações"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Personalize o comportamento do AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Bloqueio"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Bloquear anúncios"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Bloqueio padrão de redes de anúncios"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Bloquear rastreadores"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Bloqueia scripts de análise e rastreamento"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Filtragem cosmética"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Oculta espaços de anúncios remanescentes via CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Bloquear malware"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Bloqueia domínios de malware conhecidos"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Privacidade"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Anonimização do referrer"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Remove os cabeçalhos referrer em pedidos entre origens"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Controlo Global de Privacidade"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Envia o sinal de recusa GPC (cabeçalho Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Cabeçalho Não Rastrear"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Envia o cabeçalho de pedido DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Dados"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Recolher estatísticas"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Estatísticas de utilização apenas locais (nunca enviadas)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Redefinir todos os dados"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Elimina regras, estatísticas e configurações"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Redefinir"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Redefinir todos os dados do AdBlock? Esta ação não pode ser desfeita."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Todos os dados foram eliminados. A recarregar…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Sobre"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versão"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Verificar atualizações"
+  },
+  "dashboard_settings_checking": {
+    "message": "A verificar…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Está disponível uma versão mais recente"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Ver"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Última verificação: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (falhou — offline?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Ainda não verificado"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "Está disponível a v$1 (tem a v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Fonte de regras"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "De onde o AdBlock obtém as suas regras de sites"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URLs de regras remotas"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Inclui a predefinição nativa (pode ser ativada/desativada, mas não removida) mais quaisquer URLs que adicionar — todas combinadas, cada uma ativada/desativada de forma independente."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Adicionar URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Ficheiros de regras locais"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Carregue ficheiros de regras .txt — combinados com as fontes de URL. Suporta vários ficheiros."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Adicionar ficheiro…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "A exportar…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Falha ao exportar: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "erro desconhecido"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 convertidas, $2 ignoradas de um total de $3 regras",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 regras de exceção (sem modelo de cancelamento aqui)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 seletores processuais (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 modificadores estendidos do AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 chamadas de scriptlet não mapeadas",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 modificadores de regras de rede não suportados",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 já incluídas no site-rules.txt próprio deste repositório",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 sintaxe não reconhecida",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 carregadas",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 carregadas",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Exportar"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Transferir as regras desta fonte convertidas para a sintaxe própria deste repositório"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Predefinição"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Família EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Por idioma"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Personalizado (os seus próprios URLs)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Dados fictícios criados para $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Geral"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Idioma"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Recarrega esta página depois de alterar"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automático (idioma do navegador)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Menu"
+  }
+}

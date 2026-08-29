@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Bloqueja anuncis, rastrejadors i dominis maliciosos coneguts amb controls de lloc senzills i eines de concentració.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Lloc bloquejat — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Lloc bloquejat per a la teva seguretat"
+  },
+  "blocked_title_adPopup": {
+    "message": "S'ha bloquejat un anunci emergent/pestanya nova"
+  },
+  "blocked_host_unknown": {
+    "message": "lloc desconegut"
+  },
+  "blocked_hint_default": {
+    "message": "Aquest lloc és a la llista de bloqueig de programari maliciós/pesca. Podria intentar robar la teva informació, minar criptomoneda o instal·lar programari no desitjat."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Un clic a la pàgina d'origen ha intentat obrir aquesta xarxa d'anuncis/emergents en una pestanya nova. Pots tancar aquesta pestanya amb seguretat."
+  },
+  "blocked_dontWarn_label": {
+    "message": "No tornis a avisar-me sobre aquest lloc"
+  },
+  "blocked_btn_goBack": {
+    "message": "Torna enrere"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Tanca aquesta finestra"
+  },
+  "blocked_btn_proceed": {
+    "message": "Continua igualment"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Continuant…"
+  },
+  "common_remove": {
+    "message": "Elimina"
+  },
+  "common_cancel": {
+    "message": "Cancel·la"
+  },
+  "menu_pickElement": {
+    "message": "Tria un element per amagar…"
+  },
+  "menu_scanGlobals": {
+    "message": "Escaneja la pàgina a la recerca d'scripts/variables…"
+  },
+  "menu_editRules": {
+    "message": "Edita les regles d'aquest lloc…"
+  },
+  "picker_badge_active": {
+    "message": "Triant un element per amagar — prem Esc per cancel·lar"
+  },
+  "picker_btn_hide": {
+    "message": "Amaga aquest element"
+  },
+  "picker_btn_broaden": {
+    "message": "Amplia"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Tauler"
+  },
+  "popup_review_title": {
+    "message": "T'agrada AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Una valoració ràpida ajuda molt."
+  },
+  "popup_review_rate": {
+    "message": "Valora'ns"
+  },
+  "popup_review_dismiss": {
+    "message": "No, gràcies"
+  },
+  "popup_stat_blocked": {
+    "message": "Bloquejats"
+  },
+  "popup_stat_malware": {
+    "message": "Programari maliciós"
+  },
+  "popup_stat_speed": {
+    "message": "Velocitat"
+  },
+  "popup_stat_saved": {
+    "message": "Estalviat"
+  },
+  "popup_allowlist_banner": {
+    "message": "Aquest lloc és a la llista d'exclusió"
+  },
+  "popup_action_focus": {
+    "message": "Mode concentració"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Pausa en aquest lloc"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Reprèn el lloc"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Puntuació de privadesa"
+  },
+  "popup_footer_settings": {
+    "message": "Configuració"
+  },
+  "popup_ruleChip_title": {
+    "message": "Regles de bloqueig de xarxa carregades actualment"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… regles"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "regles de xarxa: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 regles de xarxa carregades",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Dona suport al desenvolupament via PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Fes una donació"
+  },
+  "popup_version_title": {
+    "message": "Versió d'AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Actualització disponible — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Hi ha una versió més nova disponible — fes clic per obrir la fitxa de la botiga"
+  },
+  "popup_domain_unknown": {
+    "message": "Lloc desconegut"
+  },
+  "popup_status_site": {
+    "message": "Lloc"
+  },
+  "popup_status_protection": {
+    "message": "Protecció"
+  },
+  "popup_status_allowlisted": {
+    "message": "A la llista d'exclusió"
+  },
+  "popup_status_on": {
+    "message": "ACTIVADA"
+  },
+  "popup_status_paused": {
+    "message": "En pausa"
+  },
+  "popup_status_off": {
+    "message": "DESACTIVADA"
+  },
+  "common_save": {
+    "message": "Desa"
+  },
+  "common_close": {
+    "message": "Tanca"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Edita les regles — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Fes clic per inserir a l'àrea de text"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Referència de claus ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtra claus…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "COINCIDÈNCIA COSMÈTICA / CANDIDATA"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLETS (AVANÇAT)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Regles actuals per a aquest lloc ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(encara no hi ha regles per a aquest lloc — integrades o personalitzades)"
+  },
+  "ruleEditor_hint": {
+    "message": "Una \"key = value | value2\" per línia. Fes clic en una clau de dalt per inserir-la. Sense capçaleres [section]. Les regles escrites aquí s'AFEGEIXEN a qualsevol regla existent per a aquesta clau (vegeu a dalt) — això no pot eliminar ni substituir una regla integrada, i per a claus d'indicador d'un sol valor, el valor integrat sol guanyar."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Desat — torna a carregar aquesta pàgina per veure les regles aplicades."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "S'ha produït un error en desar — comprova si hi ha una línia \"[section]\" solta o un enganxament enorme."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "Selectors CSS amagats incondicionalment mitjançant un full d'estil injectat — sense comprovació heurística, simplement s'amaguen en veure's."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "Selectors CSS per a elements CANDIDATS — només s'amaguen si també coincideixen amb labels/link_patterns de sota."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Igual que selectors, limitat a contenidors d'estil feed/línia de temps."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Igual que selectors, limitat a contenidors d'estil mercat/compres."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Igual que selectors, limitat a una zona de barra lateral/columna dreta."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Igual que selectors, limitat a contenidors individuals de publicació/article."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "Selectors CSS per a elements \"amfitrió\", comprovats de la mateixa manera que selectors de dalt."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Etiquetes de text (p. ex. sponsored, promoted) comparades amb atributs/text de context per confirmar que un candidat és realment un anunci."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Patrons de subcadena comparats amb els propis enllaços/atributs d'un candidat per confirmar que és un anunci."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Noms d'atributs HTML escanejats per coincidències de label/link_pattern (per defecte: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Elements fills dels quals extreure text per a la coincidència d'etiquetes (per defecte: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "Selector(s) CSS per pujar mitjançant .closest() abans d'amagar un candidat coincident (amaga el contenidor, no només l'etiqueta)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Noms de classe eliminats contínuament de <html>/<body> — derrota les superposicions de presa de control només amb CSS impulsades per una classe arrel."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Noms de propietats CSS esborrats contínuament de l'estil en línia de <html>/<body> — derrota el bloqueig de desplaçament establert per JS, etc."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Indicador 1/0 — tanca automàticament pestanyes emergents/sota-finestra obertes per clics en aquest lloc."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — bloqueja permanentment una propietat de finestra a un valor fix (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — llança un error quan qualsevol script llegeix aquesta propietat de finestra."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — llança un error quan qualsevol script escriu aquesta propietat de finestra."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — llança un error només quan la traça de pila del propi script que crida coincideix amb needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — llança un error quan un script amb origen que coincideix amb needle llegeix target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — bloqueja o redirigeix amb esquer les crides a window.open() que coincideixin amb pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — bloqueja crides a fetch() que coincideixin amb els criteris."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — bloqueja crides a XMLHttpRequest que coincideixin amb els criteris."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — bloqueja fetch, retornant opcionalment un cos de resposta fals fix."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — evita que un iframe about:blank del mateix origen torni a la finestra real per evitar un bloqueig."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — elimina camps de qualsevol resultat de JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — elimina camps d'una resposta JSON de fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — elimina camps d'una resposta JSON d'XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — retalla un objecte que un script assigna directament (no via JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — eliminacions de camps basades en JSONPath en una resposta JSON de fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — eliminacions de camps basades en JSONPath en una resposta JSON-lines d'XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Elimina camps d'una resposta codificada en protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — edicions JSONPath (eliminacions I assignació de valors) en un cos de sol·licitud sortint."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — edicions JSONPath (eliminacions I assignació de valors) en un cos de resposta."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — cerca/substitueix amb regex en un cos de resposta de fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — cerca/substitueix amb regex en un cos de resposta d'XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — substitueix un argument passat a una funció."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — substitució de text incondicional en dades sortints (sense àmbit d'URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — reescriu el text d'una etiqueta <script> abans que s'executi. sedCount limita quants nodes reescriurà mai aquesta regla (per defecte: il·limitat)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — retalla camps d'un objecte passat A una crida de mètode natiu."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — avorta o desactiva silenciosament una crida de mètode natiu que coincideixi amb una signatura."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — descarta o llança un error en una assignació de setter accessor (p. ex. Element.prototype.innerHTML) el valor de la qual coincideixi amb needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — elimina segments d'anuncis d'una resposta de llista de reproducció HLS .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — simula l'èxit d'una càrrega de script/img/iframe/link en lloc de la sol·licitud de xarxa real."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — elimina atributs HTML d'elements coincidents."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — esborra el contingut de text d'un node del DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — reescriu el contingut de text d'un node del DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — atura una redirecció automàtica de <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — estableix una galeta."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — elimina galetes que coincideixin amb un patró de nom."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — estableix una entrada de localStorage (restringit a valors literals segurs, o el sentinella especial \"remove\" per eliminar claus coincidents)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — reescriu l'href d'un enllaç a partir del seu propi text o un altre atribut."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — bloqueja crides a setTimeout() que coincideixin amb els criteris."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — bloqueja crides a setInterval() que coincideixin amb els criteris."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — bloqueja crides a requestAnimationFrame() que coincideixin amb els criteris."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — bloqueja crides a addEventListener() que coincideixin amb els criteris."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — accelera/alenteix crides coincidents a setTimeout() en lloc de bloquejar-les."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — accelera/alenteix crides coincidents a setInterval() en lloc de bloquejar-les."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — bloqueja crides a eval() l'origen de les quals coincideixi amb pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Desactiva RTCPeerConnection — bloqueja trucs de finestres emergents/seguiment basats en WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Desactiva scripts de detecció anti-bloquejador d'anuncis del tipus BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Elimina target=\"_blank\" dels enllaços clicats — bloqueja redireccions forçades a pestanya nova."
+  },
+  "scanner_value_emptyString": {
+    "message": "Cadena buida"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Matriu buida"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Objecte buit"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Funció buida (sense operació)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funció que sempre retorna true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funció que sempre retorna false"
+  },
+  "scanner_btn_block": {
+    "message": "Bloqueja"
+  },
+  "scanner_btn_edit": {
+    "message": "Edita"
+  },
+  "scanner_btn_delete": {
+    "message": "Suprimeix"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Bloqueig aplicat — desat per a aquest lloc."
+  },
+  "scanner_status_editApplied": {
+    "message": "Edició aplicada — desada per a aquest lloc."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Supressió aplicada — desada per a aquest lloc."
+  },
+  "scanner_block_warning": {
+    "message": "El bloqueig evita TOTES les lectures futures d'aquesta propietat — pot trencar la funcionalitat de la pàgina que en depèn. Això no es pot desfer refrescant; elimina la regla des de la pàgina Regles globals del tauler per revertir-ho."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Bloqueja igualment"
+  },
+  "scanner_edit_customOption": {
+    "message": "Personalitzat…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "un sol testimoni, sense espais (p. ex. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Escriu un valor sense espais."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "No es permeten espais — serà rebutjat."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Es desarà com: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Variables globals de la pàgina ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtra per nom…"
+  },
+  "scanner_empty": {
+    "message": "No s'han trobat variables globals afegides per la pàgina en aquesta pàgina."
+  },
+  "scanner_footer_limitation": {
+    "message": "Només veu variables globals d'estil var/function i assignacions explícites window.x = — les declaracions let/const/class són invisibles per a qualsevol escàner de pàgina (limitació del llenguatge JS)."
+  },
+  "scanner_loading": {
+    "message": "Escanejant variables globals de la pàgina — prem Esc per cancel·lar"
+  },
+  "common_add": {
+    "message": "Afegeix"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Tauler"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Resum"
+  },
+  "dashboard_nav_rules": {
+    "message": "Regles personalitzades"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Font de regles"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Llista d'exclusió"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Regles d'elements"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Regles globals"
+  },
+  "dashboard_nav_focus": {
+    "message": "Concentració"
+  },
+  "dashboard_nav_settings": {
+    "message": "Configuració"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Protecció ACTIVADA"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Protecció $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Dona suport al desenvolupament via PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Convida'm a un cafè ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ACTIVADA"
+  },
+  "dashboard_toggle_off": {
+    "message": "DESACTIVADA"
+  },
+  "dashboard_overview_title": {
+    "message": "Resum"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "El teu tauler de protecció"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Total bloquejats"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% avui"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Rastrejadors aturats"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% avui"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Programari maliciós bloquejat"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "amenaces aturades"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "No s'han detectat amenaces"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Amplada de banda estalviada"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "mitjana per pàgina"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Temps estalviat"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "en aquesta sessió"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 avui",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— avui"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% respecte a ahir",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 amenaces avui"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 més",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Sol·licituds bloquejades"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Sol·licituds de rastrejadors"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Deteccions de programari maliciós"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7d"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14d"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30d"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "bloquejats"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "rastrejadors"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "programari maliciós"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Dominis més bloquejats"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Dominis amb més rastrejadors"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Dominis amb més programari maliciós"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Veure-ho tot"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Mostra menys"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Veure-ho tot ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Encara no hi ha dades."
+  },
+  "dashboard_privacy_title": {
+    "message": "Puntuació de privadesa"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Anuncis bloquejats"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Rastrejadors bloquejats"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Protecció contra programari maliciós"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Anonimització del referent"
+  },
+  "dashboard_rules_title": {
+    "message": "Regles personalitzades"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Edita en format site-rules.txt — mateixa sintaxi que el fitxer de regles principal. Els valors es fusionen amb les regles integrades."
+  },
+  "dashboard_rules_clear": {
+    "message": "Neteja"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Vols netejar totes les regles personalitzades?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Regles personalitzades — mateix format que site-rules.txt\n# Els valors es FUSIONEN amb les regles integrades (no les substitueixen).\n#\n# ── Assigna un domini nou a una secció de regles ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← els subdominis es coincideixen automàticament\n#\n# ── Afegeix dominis addicionals per bloquejar globalment ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Regles cosmètiques per lloc ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Llista d'exclusió"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Llocs que eviten tot el bloqueig"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Afegeix lloc"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Regles d'elements"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elements amagats manualment mitjançant \"Tria un element per amagar\" — agrupats per lloc"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Encara no hi ha regles."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Regles globals"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Variables globals de finestra bloquejades/editades/suprimides manualment mitjançant \"Escaneja la pàgina a la recerca d'scripts/variables\" — agrupades per lloc"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Encara no hi ha regles."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "bloqueja"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "edita"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "suprimeix"
+  },
+  "dashboard_focus_title": {
+    "message": "Mode concentració"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Bloqueja llocs que distreuen segons un horari"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Sessió de concentració"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Sessió en pausa"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Sessió en curs…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Sessió completada!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25m"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45m"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60m"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90m"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Personalitzat"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Llista de distraccions"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Afegeix"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Introdueix el domini a bloquejar durant la concentració (p. ex. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Configuració"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Personalitza el comportament d'AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Bloqueig"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Bloqueja anuncis"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Bloqueig estàndard de xarxes d'anuncis"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Bloqueja rastrejadors"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Bloqueja scripts d'anàlisi i seguiment"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Filtratge cosmètic"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Amaga espais reservats d'anuncis restants mitjançant CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Bloqueja programari maliciós"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Bloqueja dominis coneguts de programari maliciós"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Privadesa"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Anonimització del referent"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Elimina les capçaleres de referent en sol·licituds d'origen creuat"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Control global de privadesa (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Envia el senyal d'exclusió GPC (capçalera Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Capçalera No em rastregis (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Envia la capçalera de sol·licitud DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Dades"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Recull estadístiques"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Estadístiques d'ús només locals (mai es pugen)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Restableix totes les dades"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Neteja regles, estadístiques i configuració"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Restableix"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Vols restablir totes les dades d'AdBlock? Això no es pot desfer."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Totes les dades s'han netejat. Tornant a carregar…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Quant a"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versió"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Comprova si hi ha actualitzacions"
+  },
+  "dashboard_settings_checking": {
+    "message": "Comprovant…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Hi ha una versió més nova disponible"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Mostra"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Última comprovació $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (ha fallat — sense connexió?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Encara no s'ha comprovat"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 està disponible (tens v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Font de regles"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "D'on obté AdBlock les seves regles de lloc"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL de regles remotes"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Inclou el predeterminat integrat (commutable, no eliminable) més qualsevol URL que afegeixis — tots fusionats, cadascun activable/desactivable independentment."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Afegeix URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Fitxers de regles locals"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Puja fitxers de regles .txt — es fusionen amb les fonts d'URL. S'admeten diversos fitxers."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Afegeix fitxer…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Exportant…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "L'exportació ha fallat: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "error desconegut"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 convertides, $2 omeses de $3 regles",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 regles d'excepció (no hi ha model de cancel·lació aquí)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 selectors procedimentals (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 modificadors ampliats d'AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 crides a scriptlets sense assignar",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 modificadors de regla de xarxa no admesos",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 ja incloses al propi site-rules.txt d'aquesta extensió",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 sintaxi no reconeguda",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 carregades",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 carregades",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Exporta"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Descarrega les regles d'aquesta font convertides a la sintaxi pròpia d'aquesta extensió"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Predeterminat"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Família EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Per idioma"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Personalitzat (les teves pròpies URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Dades fictícies inicialitzades per a $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "General"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Idioma"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Reinicia aquesta pàgina després de canviar-lo"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automàtic (idioma del navegador)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Menú"
+  }
+}

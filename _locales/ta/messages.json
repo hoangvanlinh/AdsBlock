@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "எளிய தள கட்டுப்பாடுகள் மற்றும் கவனம் கருவிகளுடன் விளம்பரங்கள், டிராக்கர்கள் மற்றும் அறியப்பட்ட தீங்கு விளைவிக்கும் டொமைன்களைத் தடுக்கவும்.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "தளம் தடுக்கப்பட்டது — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "உங்கள் பாதுகாப்பிற்காக தளம் தடுக்கப்பட்டது"
+  },
+  "blocked_title_adPopup": {
+    "message": "பாப்அப்/புதிய தாவல் விளம்பரம் தடுக்கப்பட்டது"
+  },
+  "blocked_host_unknown": {
+    "message": "அறியப்படாத தளம்"
+  },
+  "blocked_hint_default": {
+    "message": "இந்த தளம் மால்வேர்/ஃபிஷிங் தடைப் பட்டியலில் உள்ளது. இது உங்கள் தகவலைத் திருட, கிரிப்டோகரன்சியை மைன் செய்ய அல்லது தேவையற்ற மென்பொருளை நிறுவ முயற்சிக்கலாம்."
+  },
+  "blocked_hint_adPopup": {
+    "message": "நீங்கள் வந்த பக்கத்தில் ஒரு கிளிக் இந்த விளம்பர/பாப்அப் நெட்வொர்க்கை புதிய தாவலில் திறக்க முயற்சித்தது. இந்த தாவலை நீங்கள் பாதுகாப்பாக மூடலாம்."
+  },
+  "blocked_dontWarn_label": {
+    "message": "இந்த தளத்தைப் பற்றி மீண்டும் எனக்கு எச்சரிக்க வேண்டாம்"
+  },
+  "blocked_btn_goBack": {
+    "message": "திரும்பிச் செல்"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "இந்த சாளரத்தை மூடு"
+  },
+  "blocked_btn_proceed": {
+    "message": "எப்படியும் தொடரவும்"
+  },
+  "blocked_btn_proceeding": {
+    "message": "தொடர்கிறது…"
+  },
+  "common_remove": {
+    "message": "அகற்று"
+  },
+  "common_cancel": {
+    "message": "ரத்துசெய்"
+  },
+  "menu_pickElement": {
+    "message": "மறைக்க வேண்டிய உறுப்பைத் தேர்ந்தெடுக்கவும்…"
+  },
+  "menu_scanGlobals": {
+    "message": "ஸ்கிரிப்ட்கள்/மாறிகளுக்காக பக்கத்தை ஸ்கேன் செய்யவும்…"
+  },
+  "menu_editRules": {
+    "message": "இந்த தளத்திற்கான விதிகளைத் திருத்தவும்…"
+  },
+  "picker_badge_active": {
+    "message": "மறைக்க வேண்டிய உறுப்பைத் தேர்ந்தெடுக்கிறது — ரத்துசெய்ய Esc அழுத்தவும்"
+  },
+  "picker_btn_hide": {
+    "message": "இந்த உறுப்பை மறை"
+  },
+  "picker_btn_broaden": {
+    "message": "விரிவாக்கு"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "டாஷ்போர்டு"
+  },
+  "popup_review_title": {
+    "message": "AdBlock பிடித்திருக்கிறதா?"
+  },
+  "popup_review_subtitle": {
+    "message": "விரைவான மதிப்பீடு மிகவும் உதவுகிறது."
+  },
+  "popup_review_rate": {
+    "message": "எங்களை மதிப்பிடுங்கள்"
+  },
+  "popup_review_dismiss": {
+    "message": "வேண்டாம் நன்றி"
+  },
+  "popup_stat_blocked": {
+    "message": "தடுக்கப்பட்டது"
+  },
+  "popup_stat_malware": {
+    "message": "மால்வேர்"
+  },
+  "popup_stat_speed": {
+    "message": "வேகம்"
+  },
+  "popup_stat_saved": {
+    "message": "சேமிக்கப்பட்டது"
+  },
+  "popup_allowlist_banner": {
+    "message": "இந்த தளம் அனுமதிப் பட்டியலில் உள்ளது"
+  },
+  "popup_action_focus": {
+    "message": "கவனம் பயன்முறை"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ இந்த தளத்தில் இடைநிறுத்து"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ தளத்தை மீண்டும் தொடங்கு"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "தனியுரிமை மதிப்பெண்"
+  },
+  "popup_footer_settings": {
+    "message": "அமைப்புகள்"
+  },
+  "popup_ruleChip_title": {
+    "message": "தற்போது ஏற்றப்பட்ட நெட்வொர்க் தடுப்பு விதிகள்"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… விதிகள்"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "நெட்வொர்க் விதிகள்: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 நெட்வொர்க் விதிகள் ஏற்றப்பட்டன",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "PayPal மூலம் மேம்பாட்டை ஆதரிக்கவும்"
+  },
+  "popup_donate_label": {
+    "message": "நன்கொடை"
+  },
+  "popup_version_title": {
+    "message": "AdBlock பதிப்பு"
+  },
+  "popup_version_updateAvailable": {
+    "message": "புதுப்பிப்பு கிடைக்கிறது — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "புதிய பதிப்பு கிடைக்கிறது — ஸ்டோர் பக்கத்தைத் திறக்க கிளிக் செய்யவும்"
+  },
+  "popup_domain_unknown": {
+    "message": "அறியப்படாத தளம்"
+  },
+  "popup_status_site": {
+    "message": "தளம்"
+  },
+  "popup_status_protection": {
+    "message": "பாதுகாப்பு"
+  },
+  "popup_status_allowlisted": {
+    "message": "அனுமதிக்கப்பட்டது"
+  },
+  "popup_status_on": {
+    "message": "ஆன்"
+  },
+  "popup_status_paused": {
+    "message": "இடைநிறுத்தப்பட்டது"
+  },
+  "popup_status_off": {
+    "message": "ஆஃப்"
+  },
+  "common_save": {
+    "message": "சேமி"
+  },
+  "common_close": {
+    "message": "மூடு"
+  },
+  "ruleEditor_panel_title": {
+    "message": "விதிகளைத் திருத்து — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "உரைப்பெட்டியில் செருக கிளிக் செய்யவும்"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "விசை குறிப்பு ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "விசைகளை வடிகட்டு…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "அலங்கார / வேட்பாளர் பொருத்தம்"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "ஸ்கிரிப்ட்லெட்கள் (மேம்பட்டது)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "இந்த தளத்திற்கான தற்போதைய விதிகள் ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(இந்த தளத்திற்கு இன்னும் விதிகள் இல்லை — உள்ளமைக்கப்பட்ட அல்லது தனிப்பயன் எதுவும் இல்லை)"
+  },
+  "ruleEditor_hint": {
+    "message": "வரிக்கு ஒரு \"key = value | value2\". சேர்க்க மேலே உள்ள விசையைக் கிளிக் செய்யவும். [section] தலைப்புகள் இல்லை. இங்கே தட்டச்சு செய்யப்பட்ட விதிகள் இந்த விசைக்கான தற்போதைய விதிகளுடன் சேர்க்கப்படும் (மேலே பார்க்கவும்) — இது ஒரு உள்ளமைக்கப்பட்ட விதியை அகற்றவோ மேலெழுதவோ முடியாது, மேலும் ஒற்றை-மதிப்பு கொடி விசைகளுக்கு பொதுவாக உள்ளமைக்கப்பட்ட மதிப்பே வெல்லும்."
+  },
+  "ruleEditor_status_saved": {
+    "message": "சேமிக்கப்பட்டது — பயன்படுத்தப்பட்ட விதிகளைக் காண இந்தப் பக்கத்தை மீண்டும் ஏற்றவும்."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "சேமிப்பு தோல்வியடைந்தது — ஒரு தனிமையான \"[section]\" வரி அல்லது பெரிய ஒட்டுதல் உள்ளதா எனச் சரிபார்க்கவும்."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "ஒரு செருகப்பட்ட ஸ்டைல்ஷீட் மூலம் நிபந்தனையின்றி மறைக்கப்படும் CSS தேர்வுகள் — ஹியூரிஸ்டிக் சரிபார்ப்பு இல்லை, தெரிந்தவுடன் மறைக்கவும்."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "வேட்பாளர் உறுப்புகளுக்கான CSS தேர்வுகள் — கீழே உள்ள labels/link_patterns உடனும் பொருந்தினால் மட்டுமே மறைக்கப்படும்."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "selectors போன்றது, ஃபீட்/காலவரிசை பாணி கொள்கலன்களுக்கு மட்டுப்படுத்தப்பட்டது."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "selectors போன்றது, சந்தை/ஷாப்பிங் பாணி கொள்கலன்களுக்கு மட்டுப்படுத்தப்பட்டது."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "selectors போன்றது, பக்கப்பட்டி/வலது ரெயில் பகுதிக்கு மட்டுப்படுத்தப்பட்டது."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "selectors போன்றது, தனிப்பட்ட இடுகை/கட்டுரை கொள்கலன்களுக்கு மட்டுப்படுத்தப்பட்டது."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "\"ஹோஸ்ட்\" உறுப்புகளுக்கான CSS தேர்வுகள், மேலே உள்ள selectors போலவே சரிபார்க்கப்படுகின்றன."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "ஒரு வேட்பாளர் உண்மையில் விளம்பரம் என்பதை உறுதிப்படுத்த பண்புக்கூறுகள்/சூழல் உரையுடன் பொருத்தப்படும் உரை லேபிள்கள் (எ.கா. sponsored, promoted)."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "அது விளம்பரம் என்பதை உறுதிப்படுத்த வேட்பாளரின் சொந்த இணைப்புகள்/பண்புக்கூறுகளுடன் பொருத்தப்படும் துணை-சரம் வடிவங்கள்."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "label/link_pattern பொருத்தங்களுக்காக ஸ்கேன் செய்யப்படும் HTML பண்புக்கூறு பெயர்கள் (இயல்புநிலை: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "லேபிள் பொருத்தத்திற்காக உரை பிரித்தெடுக்கப்படும் குழந்தை உறுப்புகள் (இயல்புநிலை: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "பொருந்தும் வேட்பாளரை மறைப்பதற்கு முன் .closest() வழியாக மேலே செல்வதற்கான CSS தேர்வு(கள்) (லேபிளை மட்டுமல்ல, கொள்கலனை மறைக்கிறது)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "<html>/<body> இலிருந்து தொடர்ந்து அகற்றப்படும் வகுப்பு பெயர்கள் — ரூட் வகுப்பால் இயக்கப்படும் CSS-மட்டும் கையகப்படுத்தல் ஓவர்லேகளை தோற்கடிக்கிறது."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "<html>/<body> இன்லைன் பாணியிலிருந்து தொடர்ந்து அழிக்கப்படும் CSS பண்புக்கூறு பெயர்கள் — JS-அமைக்கப்பட்ட ஸ்க்ரோல்-லாக் போன்றவற்றை தோற்கடிக்கிறது."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 கொடி — இந்த தளத்தில் கிளிக்குகளால் திறக்கப்படும் பாப்அப்/பாப்அண்டர் தாவல்களை தானாக மூடுகிறது."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — ஒரு சாளர பண்புக்கூறை நிரந்தரமாக ஒரு நிலையான மதிப்புக்கு பூட்டுகிறது (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — எந்த ஸ்கிரிப்டும் இந்த சாளர பண்புக்கூறைப் படிக்கும் போது பிழையை எறிகிறது."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — எந்த ஸ்கிரிப்டும் இந்த சாளர பண்புக்கூறில் எழுதும் போது பிழையை எறிகிறது."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — அழைக்கும் ஸ்கிரிப்டின் சொந்த ஸ்டேக் ட்ரேஸ் needle உடன் பொருந்தும் போது மட்டுமே பிழையை எறிகிறது."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — needle உடன் பொருந்தும் மூலத்துடன் கூடிய ஸ்கிரிப்ட் target ஐப் படிக்கும் போது பிழையை எறிகிறது."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — pattern உடன் பொருந்தும் window.open() அழைப்புகளைத் தடுக்கிறது அல்லது வலைப்பொறிக்கு திசைதிருப்புகிறது."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — அளவுகோல்களுடன் பொருந்தும் fetch() அழைப்புகளைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — அளவுகோல்களுடன் பொருந்தும் XMLHttpRequest அழைப்புகளைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetch ஐத் தடுக்கிறது, விருப்பமாக ஒரு நிலையான போலி பதில் உடலைத் திருப்பி அளிக்கிறது."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — ஒரு பூட்டைத் தவிர்க்க அதே-தோற்ற about:blank iframe மீண்டும் உண்மையான சாளரத்தை அடைவதைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — எந்த JSON.parse() முடிவிலிருந்தும் புலங்களை அகற்றுகிறது."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — fetch() JSON பதிலிலிருந்து புலங்களை அகற்றுகிறது."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — XHR JSON பதிலிலிருந்து புலங்களை அகற்றுகிறது."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — ஒரு ஸ்கிரிப்ட் நேரடியாக ஒதுக்கும் ஒரு ஆப்ஜெக்டை (JSON.parse வழியாக அல்ல) கத்தரிக்கிறது."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — ஒரு fetch() JSON பதிலில் JSONPath-அடிப்படையிலான புல நீக்கங்கள்."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — ஒரு XHR JSON-lines பதிலில் JSONPath-அடிப்படையிலான புல நீக்கங்கள்."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "protobuf/jspb-குறியாக்கம் செய்யப்பட்ட பதிலிலிருந்து புலங்களை அகற்றுகிறது."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — வெளிச்செல்லும் கோரிக்கை உடலில் JSONPath திருத்தங்கள் (நீக்கம் மற்றும் மதிப்பு ஒதுக்கீடு இரண்டும்)."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — ஒரு பதில் உடலில் JSONPath திருத்தங்கள் (நீக்கம் மற்றும் மதிப்பு ஒதுக்கீடு இரண்டும்)."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — ஒரு fetch() பதில் உடலில் regex தேடல்/மாற்றீடு."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — ஒரு XHR பதில் உடலில் regex தேடல்/மாற்றீடு."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — ஒரு செயல்பாட்டிற்கு அனுப்பப்படும் ஒரு வாதத்தை மாற்றுகிறது."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — வெளிச்செல்லும் தரவில் நிபந்தனையற்ற உரை மாற்றீடு (URL நோக்கம் இல்லை)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — இயங்குவதற்கு முன் ஒரு <script> குறிச்சொல்லின் உரையை மீண்டும் எழுதுகிறது. sedCount இந்த விதி எப்போதும் மீண்டும் எழுதும் முனைகளின் எண்ணிக்கையை வரம்பிடுகிறது (இயல்புநிலை: வரம்பற்றது)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — ஒரு நேட்டிவ் முறை அழைப்பிற்குள் அனுப்பப்படும் ஒரு ஆப்ஜெக்டிலிருந்து புலங்களை கத்தரிக்கிறது."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — ஒரு கையொப்பத்துடன் பொருந்தும் நேட்டிவ் முறை அழைப்பை நிறுத்துகிறது அல்லது அமைதியாக புறக்கணிக்கிறது."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — மதிப்பு needle உடன் பொருந்தும் ஒரு அணுகல் செட்டர் ஒதுக்கீட்டில் (எ.கா. Element.prototype.innerHTML) கைவிடுகிறது அல்லது பிழையை எறிகிறது."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — ஒரு HLS .m3u8 பிளேலிஸ்ட் பதிலிலிருந்து விளம்பர பிரிவுகளை அகற்றுகிறது."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — உண்மையான நெட்வொர்க் கோரிக்கைக்கு பதிலாக script/img/iframe/link ஏற்றம் வெற்றியடைந்ததாக பாசாங்கு செய்கிறது."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — பொருந்தும் உறுப்புகளிலிருந்து HTML பண்புக்கூறுகளை அகற்றுகிறது."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — ஒரு DOM முனையின் உரை உள்ளடக்கத்தை அழிக்கிறது."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — ஒரு DOM முனையின் உரை உள்ளடக்கத்தை மீண்டும் எழுதுகிறது."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — <meta http-equiv=\"refresh\"> வழியாக தானியங்கு திசைதிருப்புதலை நிறுத்துகிறது."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — ஒரு குக்கியை அமைக்கிறது."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — பெயர் வடிவத்துடன் பொருந்தும் குக்கீகளை அகற்றுகிறது."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — ஒரு localStorage உள்ளீட்டை அமைக்கிறது (பாதுகாப்பான நேரடி மதிப்புகளுக்கு மட்டுப்படுத்தப்பட்டது, அல்லது பொருந்தும் விசைகளை நீக்க சிறப்பு \"remove\" மதிப்பு)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — ஒரு இணைப்பின் href ஐ அதன் சொந்த உரையிலிருந்து அல்லது மற்றொரு பண்புக்கூறிலிருந்து மீண்டும் எழுதுகிறது."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — அளவுகோல்களுடன் பொருந்தும் setTimeout() அழைப்புகளைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — அளவுகோல்களுடன் பொருந்தும் setInterval() அழைப்புகளைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — அளவுகோல்களுடன் பொருந்தும் requestAnimationFrame() அழைப்புகளைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — அளவுகோல்களுடன் பொருந்தும் addEventListener() அழைப்புகளைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — தடுப்பதற்குப் பதிலாக பொருந்தும் setTimeout() அழைப்புகளை வேகப்படுத்துகிறது/மெதுவாக்குகிறது."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — தடுப்பதற்குப் பதிலாக பொருந்தும் setInterval() அழைப்புகளை வேகப்படுத்துகிறது/மெதுவாக்குகிறது."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — மூலம் pattern உடன் பொருந்தும் eval() அழைப்புகளைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnection ஐ முடக்குகிறது — WebRTC-அடிப்படையிலான பாப்அப்/கண்காணிப்பு தந்திரங்களைத் தடுக்கிறது."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "BlockAdBlock/FuckAdBlock பாணி விளம்பர-தடுப்பு எதிர்ப்பு கண்டறிதல் ஸ்கிரிப்ட்களை செயலிழக்கச் செய்கிறது."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "கிளிக் செய்யப்பட்ட இணைப்புகளிலிருந்து target=\"_blank\" ஐ அகற்றுகிறது — கட்டாய புதிய-தாவல் திசைதிருப்புதல்களைத் தடுக்கிறது."
+  },
+  "scanner_value_emptyString": {
+    "message": "காலி சரம்"
+  },
+  "scanner_value_emptyArray": {
+    "message": "காலி அணி"
+  },
+  "scanner_value_emptyObject": {
+    "message": "காலி ஆப்ஜெக்ட்"
+  },
+  "scanner_value_noopFunc": {
+    "message": "காலி செயல்பாடு (செயல் இல்லை)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "எப்போதும் true ஐ திருப்பும் செயல்பாடு"
+  },
+  "scanner_value_falseFunc": {
+    "message": "எப்போதும் false ஐ திருப்பும் செயல்பாடு"
+  },
+  "scanner_btn_block": {
+    "message": "தடு"
+  },
+  "scanner_btn_edit": {
+    "message": "திருத்து"
+  },
+  "scanner_btn_delete": {
+    "message": "நீக்கு"
+  },
+  "scanner_status_blockApplied": {
+    "message": "தடுப்பு பயன்படுத்தப்பட்டது — இந்த தளத்திற்கு சேமிக்கப்பட்டது."
+  },
+  "scanner_status_editApplied": {
+    "message": "திருத்தம் பயன்படுத்தப்பட்டது — இந்த தளத்திற்கு சேமிக்கப்பட்டது."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "நீக்கம் பயன்படுத்தப்பட்டது — இந்த தளத்திற்கு சேமிக்கப்பட்டது."
+  },
+  "scanner_block_warning": {
+    "message": "இந்த பண்புக்கூறின் எதிர்கால அனைத்து படிப்புகளையும் தடுப்பு தடுக்கிறது — அதை நம்பியிருக்கும் பக்க செயல்பாட்டை உடைக்கலாம். புதுப்பிப்பதன் மூலம் இதை மாற்ற முடியாது; திரும்பப் பெற டாஷ்போர்டின் குளோபல் விதிகள் பக்கத்திலிருந்து விதியை அகற்றவும்."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "எப்படியும் தடு"
+  },
+  "scanner_edit_customOption": {
+    "message": "தனிப்பயன்…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "ஒற்றை டோக்கன், இடைவெளிகள் இல்லை (எ.கா. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "இடைவெளிகள் இல்லாமல் ஒரு மதிப்பை தட்டச்சு செய்யவும்."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "இடைவெளிகள் அனுமதிக்கப்படவில்லை — நிராகரிக்கப்படும்."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "இவ்வாறு சேமிக்கப்படும்: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "பக்க குளோபல்கள் ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "பெயர் மூலம் வடிகட்டு…"
+  },
+  "scanner_empty": {
+    "message": "இந்தப் பக்கத்தில் பக்கம்-சேர்க்கப்பட்ட குளோபல்கள் எதுவும் கிடைக்கவில்லை."
+  },
+  "scanner_footer_limitation": {
+    "message": "var/function-பாணி குளோபல்கள் மற்றும் வெளிப்படையான window.x = ஒதுக்கீடுகளை மட்டுமே பார்க்கிறது — let/const/class அறிவிப்புகள் எந்த பக்க ஸ்கேனருக்கும் தெரியாதவை (JS மொழி வரம்பு)."
+  },
+  "scanner_loading": {
+    "message": "பக்க குளோபல்களை ஸ்கேன் செய்கிறது — ரத்துசெய்ய Esc அழுத்தவும்"
+  },
+  "common_add": {
+    "message": "சேர்"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — டாஷ்போர்டு"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "கண்ணோட்டம்"
+  },
+  "dashboard_nav_rules": {
+    "message": "தனிப்பயன் விதிகள்"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "விதி மூலம்"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "அனுமதிப் பட்டியல்"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "உறுப்பு விதிகள்"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "குளோபல் விதிகள்"
+  },
+  "dashboard_nav_focus": {
+    "message": "கவனம்"
+  },
+  "dashboard_nav_settings": {
+    "message": "அமைப்புகள்"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "பாதுகாப்பு ஆன்"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "பாதுகாப்பு $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "PayPal மூலம் மேம்பாட்டை ஆதரிக்கவும்"
+  },
+  "dashboard_donate_label": {
+    "message": "எனக்கு காபி வாங்கிக் கொடுங்கள் ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ஆன்"
+  },
+  "dashboard_toggle_off": {
+    "message": "ஆஃப்"
+  },
+  "dashboard_overview_title": {
+    "message": "கண்ணோட்டம்"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "உங்கள் பாதுகாப்பு டாஷ்போர்டு"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "மொத்தம் தடுக்கப்பட்டது"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% இன்று"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "நிறுத்தப்பட்ட டிராக்கர்கள்"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% இன்று"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "தடுக்கப்பட்ட மால்வேர்"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "நிறுத்தப்பட்ட அச்சுறுத்தல்கள்"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "அச்சுறுத்தல்கள் எதுவும் கண்டறியப்படவில்லை"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "சேமிக்கப்பட்ட பேண்ட்வித்"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "ஒரு பக்கத்திற்கு சராசரி"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "சேமிக்கப்பட்ட நேரம்"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "இந்த அமர்வில்"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 இன்று",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— இன்று"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "நேற்றுடன் ஒப்பிடுகையில் $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "இன்று 0 அச்சுறுத்தல்கள்"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 மேலும்",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "தடுக்கப்பட்ட கோரிக்கைகள்"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "டிராக்கர் கோரிக்கைகள்"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "மால்வேர் கண்டறிதல்கள்"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7நா"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14நா"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30நா"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "தடுக்கப்பட்டது"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "டிராக்கர்கள்"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "மால்வேர்"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "அதிகம் தடுக்கப்பட்ட டொமைன்கள்"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "அதிக டிராக்கர் டொமைன்கள்"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "அதிக மால்வேர் டொமைன்கள்"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "அனைத்தையும் காண்க"
+  },
+  "dashboard_domains_showLess": {
+    "message": "குறைவாகக் காட்டு"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "அனைத்தையும் காண்க ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "இன்னும் தரவு இல்லை."
+  },
+  "dashboard_privacy_title": {
+    "message": "தனியுரிமை மதிப்பெண்"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "தடுக்கப்பட்ட விளம்பரங்கள்"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "தடுக்கப்பட்ட டிராக்கர்கள்"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "மால்வேர் பாதுகாப்பு"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "ரெஃபரர் அநாமதேயமாக்கல்"
+  },
+  "dashboard_rules_title": {
+    "message": "தனிப்பயன் விதிகள்"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "site-rules.txt வடிவத்தில் திருத்தவும் — முக்கிய விதி கோப்பைப் போன்ற தொடரியல். மதிப்புகள் உள்ளமைக்கப்பட்ட விதிகளுடன் இணைக்கப்படும்."
+  },
+  "dashboard_rules_clear": {
+    "message": "அழி"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "அனைத்து தனிப்பயன் விதிகளையும் அழிக்கவா?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# தனிப்பயன் விதிகள் — site-rules.txt போன்ற வடிவம்\n# மதிப்புகள் உள்ளமைக்கப்பட்ட விதிகளுடன் இணைக்கப்படும் (மாற்றப்படாது).\n#\n# ── புதிய டொமைனை ஒரு விதி பிரிவுடன் மேப் செய்யவும் ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← துணை டொமைன்கள் தானாக பொருத்தப்படும்\n#\n# ── உலகளாவிய தடுப்புக்கு கூடுதல் டொமைன்களைச் சேர்க்கவும் ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── தளத்திற்கான அலங்கார விதிகள் ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "அனுமதிப் பட்டியல்"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "அனைத்து தடுப்பையும் தவிர்க்கும் தளங்கள்"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ தளத்தைச் சேர்"
+  },
+  "dashboard_elementRules_title": {
+    "message": "உறுப்பு விதிகள்"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "\"மறைக்க வேண்டிய உறுப்பைத் தேர்ந்தெடுக்கவும்\" மூலம் கைமுறையாக மறைக்கப்பட்ட உறுப்புகள் — தளம் வாரியாக குழுவாக்கப்பட்டது"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "இன்னும் விதிகள் இல்லை."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "குளோபல் விதிகள்"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "\"ஸ்கிரிப்ட்கள்/மாறிகளுக்காக பக்கத்தை ஸ்கேன் செய்யவும்\" மூலம் கைமுறையாக தடுக்கப்பட்ட/திருத்தப்பட்ட/நீக்கப்பட்ட குளோபல் சாளர மாறிகள் — தளம் வாரியாக குழுவாக்கப்பட்டது"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "இன்னும் விதிகள் இல்லை."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "தடு"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "திருத்து"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "நீக்கு"
+  },
+  "dashboard_focus_title": {
+    "message": "கவனம் பயன்முறை"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "அட்டவணையின்படி கவனச்சிதறல் தளங்களைத் தடுக்கவும்"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "கவனம் அமர்வு"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "அமர்வு இடைநிறுத்தப்பட்டது"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "அமர்வு இயங்குகிறது…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "அமர்வு முடிந்தது!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25நி"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45நி"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60நி"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90நி"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "தனிப்பயன்"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "நிமி"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "கவனச்சிதறல் பட்டியல்"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ சேர்"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "கவனத்தின் போது தடுக்க வேண்டிய டொமைனை உள்ளிடவும் (எ.கா. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "அமைப்புகள்"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlock நடத்தையைத் தனிப்பயனாக்கவும்"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "தடுப்பு"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "விளம்பரங்களைத் தடு"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "நிலையான விளம்பர நெட்வொர்க் தடுப்பு"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "டிராக்கர்களைத் தடு"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "பகுப்பாய்வு மற்றும் கண்காணிப்பு ஸ்கிரிப்ட்களைத் தடு"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "அலங்கார வடிகட்டுதல்"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "CSS மூலம் மீதமுள்ள விளம்பர இடத்தாங்கிகளை மறை"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "மால்வேரைத் தடு"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "அறியப்பட்ட மால்வேர் டொமைன்களைத் தடு"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "தனியுரிமை"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "ரெஃபரர் அநாமதேயமாக்கல்"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "குறுக்கு-தோற்ற கோரிக்கைகளில் ரெஃபரர் தலைப்புகளை அகற்று"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "குளோபல் தனியுரிமை கட்டுப்பாடு (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC ஆப்ட்-அவுட் சிக்னலை அனுப்பு (Sec-GPC தலைப்பு + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "டூ நாட் டிராக் தலைப்பு (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1 கோரிக்கை தலைப்பை அனுப்பு"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "தரவு"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "புள்ளிவிவரங்களை சேகரி"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "உள்ளூர்-மட்டும் பயன்பாட்டு புள்ளிவிவரங்கள் (ஒருபோதும் பதிவேற்றப்படாது)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "அனைத்து தரவையும் மீட்டமை"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "விதிகள், புள்ளிவிவரங்கள் மற்றும் அமைப்புகளை அழி"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "மீட்டமை"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "அனைத்து AdBlock தரவையும் மீட்டமைக்கவா? இதை மாற்ற முடியாது."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "அனைத்து தரவும் அழிக்கப்பட்டது. மீண்டும் ஏற்றுகிறது…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "பற்றி"
+  },
+  "dashboard_settings_version_name": {
+    "message": "பதிப்பு"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "புதுப்பிப்புகளைச் சரிபார்"
+  },
+  "dashboard_settings_checking": {
+    "message": "சரிபார்க்கிறது…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "புதிய பதிப்பு கிடைக்கிறது"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "காண்க"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "கடைசியாக சரிபார்க்கப்பட்டது $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (தோல்வியடைந்தது — நீங்கள் ஆஃப்லைனில் இருக்கிறீர்களா?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "இன்னும் சரிபார்க்கப்படவில்லை"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 கிடைக்கிறது (உங்களிடம் v$2 உள்ளது)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "விதி மூலம்"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock அதன் தள விதிகளை எங்கிருந்து பெறுகிறது"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "தொலை விதி URLகள்"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "உள்ளமைக்கப்பட்ட இயல்புநிலையை (மாற்றக்கூடியது, அகற்ற முடியாதது) மற்றும் நீங்கள் சேர்க்கும் எந்த URLகளையும் உள்ளடக்கியது — அனைத்தும் இணைக்கப்பட்டது, ஒவ்வொன்றும் தனித்தனியாக ஆன்/ஆஃப்."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL சேர்"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "உள்ளூர் விதி கோப்புகள்"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txt விதி கோப்புகளைப் பதிவேற்றவும் — URL மூலங்களுடன் இணைக்கப்படும். பல கோப்புகள் ஆதரிக்கப்படுகின்றன."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "கோப்பைச் சேர்…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "ஏற்றுமதி செய்கிறது…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "ஏற்றுமதி தோல்வியடைந்தது: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "அறியப்படாத பிழை"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$3 விதிகளில் $1 மாற்றப்பட்டது, $2 தவிர்க்கப்பட்டது",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 விதிவிலக்கு விதிகள் (இங்கே ரத்து மாதிரி இல்லை)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 நடைமுறை தேர்வுகள் (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 விரிவாக்கப்பட்ட AdGuard மாற்றிகள்",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 மேப் செய்யப்படாத ஸ்கிரிப்ட்லெட் அழைப்புகள்",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 ஆதரிக்கப்படாத நெட்வொர்க்-விதி மாற்றிகள்",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 ஏற்கனவே இந்த நீட்டிப்பின் சொந்த site-rules.txt இல் தொகுக்கப்பட்டுள்ளது",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 அடையாளம் தெரியாத தொடரியல்",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 ஏற்றப்பட்டது",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 ஏற்றப்பட்டது",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "ஏற்றுமதி"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "இந்த நீட்டிப்பின் சொந்த தொடரியலுக்கு மாற்றப்பட்ட இந்த மூலத்தின் விதிகளைப் பதிவிறக்கவும்"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "இயல்புநிலை"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList குடும்பம்"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "மொழி வாரியாக"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "தனிப்பயன் (உங்கள் சொந்த URLகள்)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "$1 க்கான போலி தரவு விதைக்கப்பட்டது:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "பொது"
+  },
+  "dashboard_settings_language_name": {
+    "message": "மொழி"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "மாற்றியபிறகு இந்தப் பக்கத்தை மீண்டும் தொடங்குகிறது"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "தானியங்கு (உலாவி மொழி)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "மெனு"
+  }
+}

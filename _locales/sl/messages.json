@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Blokirajte oglase, sledilnike in znane zlonamerne domene s preprostim nadzorom strani in orodji za osredotočenost."
+  },
+  "blocked_pageTitle": {
+    "message": "Stran blokirana — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Stran blokirana zaradi vaše varnosti"
+  },
+  "blocked_title_adPopup": {
+    "message": "Pojavni oglas/oglas v novem zavihku blokiran"
+  },
+  "blocked_host_unknown": {
+    "message": "neznana stran"
+  },
+  "blocked_hint_default": {
+    "message": "Ta stran je na seznamu zlonamerne programske opreme/lažnega predstavljanja. Lahko poskuša ukrasti vaše podatke, rudariti kriptovalute ali namestiti neželeno programsko opremo."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Klik na strani, s katere prihajate, je poskusil odpreti to oglasno/pojavno omrežje v novem zavihku. Ta zavihek lahko varno zaprete."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Ne opozori me več za to stran"
+  },
+  "blocked_btn_goBack": {
+    "message": "Pojdi nazaj"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Zapri to okno"
+  },
+  "blocked_btn_proceed": {
+    "message": "Vseeno nadaljuj"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Nadaljevanje…"
+  },
+  "common_remove": {
+    "message": "Odstrani"
+  },
+  "common_cancel": {
+    "message": "Prekliči"
+  },
+  "menu_pickElement": {
+    "message": "Izberi element za skritje…"
+  },
+  "menu_scanGlobals": {
+    "message": "Preišči stran za skripte/spremenljivke…"
+  },
+  "menu_editRules": {
+    "message": "Uredi pravila za to stran…"
+  },
+  "picker_badge_active": {
+    "message": "Izbiranje elementa za skritje — pritisnite Esc za preklic"
+  },
+  "picker_btn_hide": {
+    "message": "Skrij ta element"
+  },
+  "picker_btn_broaden": {
+    "message": "Razširi"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Nadzorna plošča"
+  },
+  "popup_review_title": {
+    "message": "Vam je AdBlock všeč?"
+  },
+  "popup_review_subtitle": {
+    "message": "Hitra ocena zelo pomaga."
+  },
+  "popup_review_rate": {
+    "message": "Ocenite nas"
+  },
+  "popup_review_dismiss": {
+    "message": "Ne, hvala"
+  },
+  "popup_stat_blocked": {
+    "message": "Blokirano"
+  },
+  "popup_stat_malware": {
+    "message": "Zlonamerna programska oprema"
+  },
+  "popup_stat_speed": {
+    "message": "Hitrost"
+  },
+  "popup_stat_saved": {
+    "message": "Prihranjeno"
+  },
+  "popup_allowlist_banner": {
+    "message": "Ta stran je na seznamu dovoljenih"
+  },
+  "popup_action_focus": {
+    "message": "Način osredotočenosti"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Zaustavi na strani"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Nadaljuj stran"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Ocena zasebnosti"
+  },
+  "popup_footer_settings": {
+    "message": "Nastavitve"
+  },
+  "popup_ruleChip_title": {
+    "message": "Trenutno naložena pravila za blokiranje omrežja"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… pravila"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "omrežna pravila: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "Naloženih $1 omrežnih pravil",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Podprite razvoj prek PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Doniraj"
+  },
+  "popup_version_title": {
+    "message": "Različica AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Na voljo je posodobitev — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Na voljo je novejša različica — kliknite za odprtje strani v trgovini"
+  },
+  "popup_domain_unknown": {
+    "message": "Neznana stran"
+  },
+  "popup_status_site": {
+    "message": "Stran"
+  },
+  "popup_status_protection": {
+    "message": "Zaščita"
+  },
+  "popup_status_allowlisted": {
+    "message": "Na seznamu dovoljenih"
+  },
+  "popup_status_on": {
+    "message": "VKLOPLJENO"
+  },
+  "popup_status_paused": {
+    "message": "Zaustavljeno"
+  },
+  "popup_status_off": {
+    "message": "IZKLOPLJENO"
+  },
+  "common_save": {
+    "message": "Shrani"
+  },
+  "common_close": {
+    "message": "Zapri"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Uredi pravila — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Kliknite za vstavitev v besedilno polje"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Referenca ključev ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtriraj ključe…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOZMETIČNO / UJEMANJE KANDIDATOV"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SKRIPTLETI (NAPREDNO)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Trenutna pravila za to stran ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(za to stran še ni pravil — vgrajenih ali lastnih)"
+  },
+  "ruleEditor_hint": {
+    "message": "Ena vrstica na pravilo v obliki \"key = value | value2\". Kliknite ključ zgoraj, da ga vstavite. Brez glav [section]. Tukaj vnesena pravila se DODAJO obstoječim pravilom za ta ključ (glejte zgoraj) — to ne more odstraniti ali preglasiti vgrajenega pravila, pri enovrednostnih zastavičnih ključih pa običajno še vedno prevlada vgrajena vrednost."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Shranjeno — znova naložite to stran, da se pravila uveljavijo."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Shranjevanje ni uspelo — preverite, ali ni osamljene vrstice \"[section]\" ali prevelikega lepljenja besedila."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "Izbirniki CSS, ki so brezpogojno skriti prek vstavljenega slogovnega lista (stylesheet) — brez hevrističnega preverjanja, samo takojšnje skrivanje."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "Izbirniki CSS za KANDIDATE elementov — skriti so le, če se ujemajo tudi z labels/link_patterns spodaj."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Enako kot selectors, omejeno na vsebnike v slogu vira/časovnice (feed/timeline)."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Enako kot selectors, omejeno na vsebnike v slogu tržnice/nakupovanja."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Enako kot selectors, omejeno na območje stranske vrstice (sidebar/right-rail)."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Enako kot selectors, omejeno na posamezne vsebnike objav/člankov."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "Izbirniki CSS za \"gostiteljske\" (host) elemente, preverjeni na enak način kot selectors zgoraj."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Besedilne oznake (npr. sponsored, promoted), ki se ujemajo z atributi/kontekstnim besedilom za potrditev, da je kandidat res oglas."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Vzorci podnizov, ki se ujemajo s povezavami/atributi samega kandidata za potrditev, da gre za oglas."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Imena HTML atributov, preiskana za ujemanja label/link_pattern (privzeto: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Podrejeni elementi, iz katerih se pridobi besedilo za ujemanje oznak (privzeto: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "Izbirnik(i) CSS, po katerih se sprehodite navzgor prek .closest(), preden skrijete ujemajočega kandidata (skrijte vsebnik, ne le oznake)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Imena razredov, ki se neprestano odstranjujejo iz <html>/<body> — onemogoča prekrivne elemente (overlay), ki delujejo le na osnovi razreda korenskega elementa prek CSS."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Imena lastnosti CSS, ki se neprestano brišejo iz vgrajenega (inline) sloga <html>/<body> — onemogoča z JS nastavljeno zaklepanje pomikanja (scroll-lock) ipd."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Zastavica 1/0 — samodejno zapre pojavne/podložne (popup/popunder) zavihke, ki jih odprejo kliki na tej strani."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — trajno zaklene lastnost window na fiksno vrednost (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — vrže napako, ko kateri koli skript prebere to lastnost window."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — vrže napako, ko kateri koli skript zapiše to lastnost window."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — vrže napako le, kadar se sled klicnega skripta (stack trace) ujema z needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — vrže napako, kadar skript, katerega vir se ujema z needle, prebere target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — blokira ali preusmeri (decoy) klice window.open(), ki se ujemajo s pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — blokira klice fetch(), ki se ujemajo z merili."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — blokira klice XMLHttpRequest, ki se ujemajo z merili."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — blokira fetch, po želji z vrnitvijo fiksnega lažnega telesa odgovora."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — prepreči istoizvornemu (same-origin) okvirju about:blank, da bi segel nazaj v pravo okno za obhod zaklepa."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — odstrani polja iz katerega koli rezultata JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — odstrani polja iz JSON odgovora klica fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — odstrani polja iz JSON odgovora XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — obreže objekt, ki ga skript neposredno dodeli (ne prek JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — brisanja polj na osnovi JSONPath v JSON odgovoru klica fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — brisanja polj na osnovi JSONPath v vrstičnem (JSON-lines) odgovoru XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Odstrani polja iz odgovora, kodiranega v protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — urejanja JSONPath (brisanja IN dodeljevanje vrednosti) v telesu odhodne zahteve."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — urejanja JSONPath (brisanja IN dodeljevanje vrednosti) v telesu odgovora."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — iskanje/zamenjava z regularnim izrazom v telesu odgovora klica fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — iskanje/zamenjava z regularnim izrazom v telesu odgovora XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — zamenja en argument, posredovan funkciji."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — brezpogojna zamenjava besedila v odhodnih podatkih (brez omejitve na URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — prepiše besedilo oznake <script>, preden se izvede. sedCount omeji, koliko vozlišč lahko to pravilo kdaj koli prepiše (privzeto: neomejeno)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — obreže polja iz objekta, posredovanega V klic izvorne (native) metode."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — prekine ali tiho onemogoči klic izvorne (native) metode, ki se ujema s signaturo."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — zavrže ali vrže napako pri dodelitvi prek dostopnega nastavljalnika (accessor setter, npr. Element.prototype.innerHTML), katere vrednost se ujema z needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — odstrani oglasne segmente iz odgovora s seznamom predvajanja HLS .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — lažno uspešno izvede nalaganje script/img/iframe/link namesto pravega omrežnega zahtevka."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — odstrani atribute HTML iz ujemajočih elementov."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — počisti besedilno vsebino vozlišča DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — prepiše besedilno vsebino vozlišča DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — ustavi samodejno preusmeritev prek <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — nastavi piškotek."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — odstrani piškotke, ki se ujemajo z vzorcem imena."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — nastavi vnos localStorage (omejeno na varne dobesedne vrednosti ali posebno vrednost \"remove\" za brisanje ujemajočih ključev)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — prepiše href povezave iz njenega lastnega besedila ali drugega atributa."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — blokira klice setTimeout(), ki se ujemajo z merili."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — blokira klice setInterval(), ki se ujemajo z merili."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — blokira klice requestAnimationFrame(), ki se ujemajo z merili."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — blokira klice addEventListener(), ki se ujemajo z merili."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — pospeši/upočasni ujemajoče klice setTimeout(), namesto da bi jih blokiral."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — pospeši/upočasni ujemajoče klice setInterval(), namesto da bi jih blokiral."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — blokira klice eval(), katerih vir se ujema s pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Onemogoči RTCPeerConnection — blokira trike s pojavnimi okni/sledenjem, ki temeljijo na WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Onesposobi skripte za zaznavanje adblockerjev v slogu BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Odstrani target=\"_blank\" iz kliknjenih povezav — blokira prisilne preusmeritve v nov zavihek."
+  },
+  "scanner_value_emptyString": {
+    "message": "Prazen niz"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Prazno polje"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Prazen objekt"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Prazna funkcija (brez učinka)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funkcija, ki vedno vrne true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funkcija, ki vedno vrne false"
+  },
+  "scanner_btn_block": {
+    "message": "Blokiraj"
+  },
+  "scanner_btn_edit": {
+    "message": "Uredi"
+  },
+  "scanner_btn_delete": {
+    "message": "Izbriši"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Blokiranje uveljavljeno — shranjeno za to stran."
+  },
+  "scanner_status_editApplied": {
+    "message": "Urejanje uveljavljeno — shranjeno za to stran."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Brisanje uveljavljeno — shranjeno za to stran."
+  },
+  "scanner_block_warning": {
+    "message": "Blokiranje prepreči VSA prihodnja branja te lastnosti — lahko pokvari delovanje strani, ki se nanjo zanaša. Tega ni mogoče razveljaviti z osvežitvijo; za razveljavitev odstranite pravilo na strani Global Rules v nadzorni plošči."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Vseeno blokiraj"
+  },
+  "scanner_edit_customOption": {
+    "message": "Po meri…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "en žeton, brez presledkov (npr. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Vnesite vrednost brez presledkov."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Presledki niso dovoljeni — bodo zavrnjeni."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Shranjeno bo kot: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Globalne spremenljivke strani ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtriraj po imenu…"
+  },
+  "scanner_empty": {
+    "message": "Na tej strani ni najdenih globalnih spremenljivk, dodanih s strani."
+  },
+  "scanner_footer_limitation": {
+    "message": "Vidi samo globalne spremenljivke v slogu var/function in izrecne dodelitve window.x = — deklaracije let/const/class so za vsak skener strani nevidne (omejitev jezika JS)."
+  },
+  "scanner_loading": {
+    "message": "Preiskovanje globalnih spremenljivk strani — pritisnite Esc za preklic"
+  },
+  "common_add": {
+    "message": "Dodaj"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Nadzorna plošča"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Pregled"
+  },
+  "dashboard_nav_rules": {
+    "message": "Lastna pravila"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Vir pravil"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Seznam dovoljenih"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Pravila elementov"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Globalna pravila"
+  },
+  "dashboard_nav_focus": {
+    "message": "Osredotočenost"
+  },
+  "dashboard_nav_settings": {
+    "message": "Nastavitve"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Zaščita VKLOPLJENA"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Zaščita $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Podprite razvoj prek PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Plačaj mi kavo ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "VKLOPLJENO"
+  },
+  "dashboard_toggle_off": {
+    "message": "IZKLOPLJENO"
+  },
+  "dashboard_overview_title": {
+    "message": "Pregled"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Vaša nadzorna plošča zaščite"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Skupaj blokirano"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0 % danes"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Ustavljeni sledilniki"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0 % danes"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Blokirana zlonamerna programska oprema"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "ustavljenih groženj"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Ni zaznanih groženj"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Prihranjena pasovna širina"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "povp. na stran"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Prihranjen čas"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "v tej seji"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 danes",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— danes"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1 % v primerjavi z včeraj",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 groženj danes"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 več",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Blokirane zahteve"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Zahteve sledilnikov"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Zaznave zlonamerne programske opreme"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7 dni"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14 dni"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30 dni"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "blokirano"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "sledilniki"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "zlonamerna programska oprema"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Največ blokiranih domen"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Največ domen s sledilniki"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Največ domen z zlonamerno programsko opremo"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Prikaži vse"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Prikaži manj"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Prikaži vse ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Še ni podatkov."
+  },
+  "dashboard_privacy_title": {
+    "message": "Ocena zasebnosti"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Blokirani oglasi"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Blokirani sledilniki"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Zaščita pred zlonamerno programsko opremo"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Anonimizacija napotitelja (referrer)"
+  },
+  "dashboard_rules_title": {
+    "message": "Lastna pravila"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Urejajte v obliki site-rules.txt — enaka skladnja kot glavna datoteka pravil. Vrednosti se združijo z vgrajenimi pravili."
+  },
+  "dashboard_rules_clear": {
+    "message": "Počisti"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Počistim vsa lastna pravila?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Lastna pravila — enaka oblika kot site-rules.txt\n# Vrednosti se ZDRUŽIJO z vgrajenimi pravili (se ne zamenjajo).\n#\n# ── Preslikava nove domene v odsek pravil ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← poddomene se ujemajo samodejno\n#\n# ── Dodajanje dodatnih domen za globalno blokiranje ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Kozmetična pravila za posamezno stran ──────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Seznam dovoljenih"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Strani, ki zaobidejo vse blokiranje"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Dodaj stran"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Pravila elementov"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elementi, ročno skriti prek \"Izberi element za skritje\" — razvrščeni po straneh"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Še ni pravil."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Globalna pravila"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Globalne spremenljivke window, ročno blokirane/urejene/izbrisane prek \"Preišči stran za skripte/spremenljivke\" — razvrščene po straneh"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Še ni pravil."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "blokiraj"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "uredi"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "izbriši"
+  },
+  "dashboard_focus_title": {
+    "message": "Način osredotočenosti"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Blokiraj moteče strani po urniku"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Seja osredotočenosti"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Seja zaustavljena"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Seja se izvaja…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Seja zaključena!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 min"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 min"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 min"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 min"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Po meri"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Seznam motečih strani"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Dodaj"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Vnesite domeno za blokiranje med osredotočenostjo (npr. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Nastavitve"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Prilagodite delovanje AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Blokiranje"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Blokiraj oglase"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standardno blokiranje oglasnih omrežij"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Blokiraj sledilnike"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Blokiraj analitične in sledilne skripte"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kozmetično filtriranje"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Skrij preostale oglasne nadomestke prek CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Blokiraj zlonamerno programsko opremo"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Blokiraj znane domene z zlonamerno programsko opremo"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Zasebnost"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Anonimizacija napotitelja (referrer)"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Odstrani glave napotitelja pri zahtevah med različnimi izvori"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Global Privacy Control"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Pošlje signal za izklop GPC (glava Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Glava Do Not Track"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Pošlje zahtevkovno glavo DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Podatki"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Zbiraj statistiko"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Samo lokalna statistika uporabe (nikoli ni poslana)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Ponastavi vse podatke"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Počisti pravila, statistiko in nastavitve"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Ponastavi"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Ponastavim vse podatke AdBlock? Tega ni mogoče razveljaviti."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Vsi podatki počiščeni. Ponovno nalaganje…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "O programu"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Različica"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Preveri posodobitve"
+  },
+  "dashboard_settings_checking": {
+    "message": "Preverjanje…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Na voljo je novejša različica"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Prikaži"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Nazadnje preverjeno $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (neuspešno — brez povezave?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Še ni bilo preverjeno"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "Na voljo je v$1 (imate v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Vir pravil"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Od kod AdBlock pridobiva pravila za strani"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL-ji oddaljenih pravil"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Vključuje vgrajeni privzeti vir (možnost preklopa, ni mogoče odstraniti) ter poljubne URL-je, ki jih dodate — vsi so združeni, vsak posebej vklopljen/izklopljen."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Dodaj URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Lokalne datoteke s pravili"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Naložite datoteke s pravili .txt — združijo se z viri URL. Podprtih je več datotek."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Dodaj datoteko…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Izvažanje…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Izvoz ni uspel: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "neznana napaka"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 pretvorjenih, $2 preskočenih od $3 pravil",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 izjemnih pravil (tukaj ni modela za preklic)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 proceduralnih izbirnikov (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 razširjenih modifikatorjev AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 nepreslikanih klicev skriptletov",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 nepodprtih modifikatorjev omrežnih pravil",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 že vključenih v lastno datoteko site-rules.txt tega repozitorija",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 neprepoznane skladnje",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 naloženih",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 naloženih",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Izvozi"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Prenesite pravila tega vira, pretvorjena v lastno skladnjo tega repozitorija"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Privzeto"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Družina EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Po jeziku"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Po meri (lastni URL-ji)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Vsejani lažni podatki za $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Splošno"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Jezik"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Po spremembi znova zažene to stran"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Samodejno (jezik brskalnika)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Meni"
+  }
+}

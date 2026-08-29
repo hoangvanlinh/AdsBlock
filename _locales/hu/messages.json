@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Blokkolja a hirdetéseket, nyomkövetőket és ismert rosszindulatú domaineket egyszerű webhelyvezérlőkkel és koncentrációs eszközökkel.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Webhely letiltva — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "A webhely letiltva a biztonsága érdekében"
+  },
+  "blocked_title_adPopup": {
+    "message": "Előugró hirdetés/új lap letiltva"
+  },
+  "blocked_host_unknown": {
+    "message": "ismeretlen webhely"
+  },
+  "blocked_hint_default": {
+    "message": "Ez a webhely rosszindulatú/adathalász feketelistán szerepel. Megpróbálhatja ellopni az adatait, kriptovalutát bányászni vagy nem kívánt szoftvert telepíteni."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Egy kattintás azon az oldalon, ahonnan érkezett, megpróbálta megnyitni ezt a hirdetési/előugró hálózatot egy új lapon. Ezt a lapot biztonságosan bezárhatja."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Ne figyelmeztessen újra erről a webhelyről"
+  },
+  "blocked_btn_goBack": {
+    "message": "Vissza"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Ablak bezárása"
+  },
+  "blocked_btn_proceed": {
+    "message": "Folytatás mindenképp"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Folytatás…"
+  },
+  "common_remove": {
+    "message": "Eltávolítás"
+  },
+  "common_cancel": {
+    "message": "Mégse"
+  },
+  "menu_pickElement": {
+    "message": "Elrejtendő elem kiválasztása…"
+  },
+  "menu_scanGlobals": {
+    "message": "Oldal átvizsgálása szkriptek/változók keresésére…"
+  },
+  "menu_editRules": {
+    "message": "Szabályok szerkesztése ehhez a webhelyhez…"
+  },
+  "picker_badge_active": {
+    "message": "Elrejtendő elem kiválasztása — Esc a megszakításhoz"
+  },
+  "picker_btn_hide": {
+    "message": "Elem elrejtése"
+  },
+  "picker_btn_broaden": {
+    "message": "Kiterjesztés"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Vezérlőpult"
+  },
+  "popup_review_title": {
+    "message": "Tetszik az AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Egy gyors értékelés sokat segít."
+  },
+  "popup_review_rate": {
+    "message": "Értékeljen minket"
+  },
+  "popup_review_dismiss": {
+    "message": "Nem, köszönöm"
+  },
+  "popup_stat_blocked": {
+    "message": "Blokkolva"
+  },
+  "popup_stat_malware": {
+    "message": "Kártevő"
+  },
+  "popup_stat_speed": {
+    "message": "Sebesség"
+  },
+  "popup_stat_saved": {
+    "message": "Megtakarítva"
+  },
+  "popup_allowlist_banner": {
+    "message": "Ez a webhely az engedélyezési listán van"
+  },
+  "popup_action_focus": {
+    "message": "Koncentrációs mód"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Szüneteltetés a webhelyen"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Webhely folytatása"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Adatvédelmi pontszám"
+  },
+  "popup_footer_settings": {
+    "message": "Beállítások"
+  },
+  "popup_ruleChip_title": {
+    "message": "Jelenleg betöltött hálózati blokkolási szabályok"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… szabály"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "hálózati szabályok: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 hálózati szabály betöltve",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Támogassa a fejlesztést PayPalon keresztül"
+  },
+  "popup_donate_label": {
+    "message": "Adományozás"
+  },
+  "popup_version_title": {
+    "message": "AdBlock verzió"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Frissítés elérhető — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Újabb verzió érhető el — kattintson az áruházi oldal megnyitásához"
+  },
+  "popup_domain_unknown": {
+    "message": "Ismeretlen webhely"
+  },
+  "popup_status_site": {
+    "message": "Webhely"
+  },
+  "popup_status_protection": {
+    "message": "Védelem"
+  },
+  "popup_status_allowlisted": {
+    "message": "Engedélyezve"
+  },
+  "popup_status_on": {
+    "message": "BE"
+  },
+  "popup_status_paused": {
+    "message": "Szüneteltetve"
+  },
+  "popup_status_off": {
+    "message": "KI"
+  },
+  "common_save": {
+    "message": "Mentés"
+  },
+  "common_close": {
+    "message": "Bezárás"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Szabályok szerkesztése — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Kattintson a szövegmezőbe való beszúráshoz"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Kulcsreferencia ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Kulcsok szűrése…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOZMETIKAI / JELÖLT EGYEZÉS"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SZKRIPTLETEK (HALADÓ)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Jelenlegi szabályok ehhez a webhelyhez ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(még nincs szabály ehhez a webhelyhez — sem beépített, sem egyéni)"
+  },
+  "ruleEditor_hint": {
+    "message": "Soronként egy \"key = value | value2\". Kattintson egy fenti kulcsra a beszúráshoz. Nincs [section] fejléc. Az itt beírt szabályok HOZZÁADÓDNAK ehhez a kulcshoz tartozó meglévő szabályokhoz (lásd fent) — ez nem távolíthat el vagy írhat felül egy beépített szabályt, és egyértékű jelzőkulcsok esetén a beépített érték általában nyer."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Mentve — töltse be újra ezt az oldalt az alkalmazott szabályok megtekintéséhez."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "A mentés sikertelen — ellenőrizze, nincs-e önálló \"[section]\" sor vagy hatalmas beillesztés."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS-szelektorok, amelyeket feltétel nélkül elrejt egy beszúrt stíluslap — nincs heurisztikus ellenőrzés, egyszerűen elrejti, ha látja."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS-szelektorok JELÖLT elemekhez — csak akkor rejti el, ha a lenti labels/link_patterns is illeszkedik."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Ugyanaz, mint a selectors, feed/idővonal-stílusú konténerekre korlátozva."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Ugyanaz, mint a selectors, piactér/vásárlás-stílusú konténerekre korlátozva."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Ugyanaz, mint a selectors, oldalsáv/jobb oldali sáv területére korlátozva."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Ugyanaz, mint a selectors, egyéni bejegyzés/cikk konténerekre korlátozva."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS-szelektorok \"gazda\" elemekhez, ugyanúgy ellenőrizve, mint a fenti selectors."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Szöveges címkék (pl. sponsored, promoted), amelyeket attribútumokkal/kontextusszöveggel vetnek össze annak megerősítésére, hogy a jelölt valóban hirdetés."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Alsztring-minták, amelyeket a jelölt saját linkjeivel/attribútumaival vetnek össze annak megerősítésére, hogy hirdetés."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "HTML attribútumnevek, amelyeket label/link_pattern egyezésekre vizsgálnak (alapértelmezett: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Gyermekelemek, amelyekből a címkeegyezéshez szöveget húznak ki (alapértelmezett: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS-szelektor(ok) a .closest() segítségével történő felfelé lépéshez, mielőtt elrejtené az illeszkedő jelöltet (a konténert rejti el, nem csak a címkét)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Osztálynevek, amelyeket folyamatosan eltávolítanak a <html>/<body> elemekből — legyőzi a gyökérosztály által vezérelt, csak CSS-alapú átvételi rétegeket."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "CSS-tulajdonságnevek, amelyeket folyamatosan törölnek a <html>/<body> beágyazott stílusából — legyőzi a JS által beállított görgetési zárolást stb."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 jelző — automatikusan bezárja az ezen a webhelyen történő kattintás által megnyitott előugró/rejtett lapokat."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — véglegesen egy rögzített értékre zárol egy ablaktulajdonságot (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — hibát dob, ha bármely szkript beolvassa ezt az ablaktulajdonságot."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — hibát dob, ha bármely szkript ír ebbe az ablaktulajdonságba."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — csak akkor dob hibát, ha a hívó szkript saját veremkövetése egyezik a needle-lel."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — hibát dob, ha egy needle-lel egyező forrású szkript beolvassa a target-et."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — blokkolja vagy csali-átirányítja a pattern-nel egyező window.open() hívásokat."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — blokkolja a kritériumoknak megfelelő fetch() hívásokat."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — blokkolja a kritériumoknak megfelelő XMLHttpRequest hívásokat."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — blokkolja a fetch-et, opcionálisan egy rögzített hamis válasz törzset ad vissza."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — megakadályozza, hogy egy azonos eredetű about:blank iframe visszaérjen a valódi ablakhoz egy zárolás megkerüléséhez."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — mezőket távolít el bármely JSON.parse() eredményből."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — mezőket távolít el egy fetch() JSON válaszból."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — mezőket távolít el egy XHR JSON válaszból."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — megnyes egy objektumot, amelyet egy szkript közvetlenül rendel hozzá (nem JSON.parse-on keresztül)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — JSONPath-alapú mezőtörlések egy fetch() JSON válaszban."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — JSONPath-alapú mezőtörlések egy XHR JSON-lines válaszban."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Mezőket távolít el egy protobuf/jspb-kódolt válaszból."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath szerkesztések (törlés ÉS értékhozzárendelés) egy kimenő kérés törzsén."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath szerkesztések (törlés ÉS értékhozzárendelés) egy válasz törzsén."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex keresés/csere egy fetch() válasz törzsében."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex keresés/csere egy XHR válasz törzsében."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — helyettesít egy függvénynek átadott argumentumot."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — feltétel nélküli szöveghelyettesítés kimenő adatokon (URL-korlátozás nélkül)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — átírja egy <script> tag szövegét, mielőtt lefutna. A sedCount korlátozza, hogy ez a szabály hány csomópontot írhat át összesen (alapértelmezett: korlátlan)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — mezőket nyes ki egy natív metódushívásba BE átadott objektumból."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — megszakít vagy csendben mellőz egy szignatúrának megfelelő natív metódushívást."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — elveti vagy hibát dob egy elérő setter hozzárendelésnél (pl. Element.prototype.innerHTML), amelynek értéke egyezik a needle-lel."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — hirdetési szegmenseket távolít el egy HLS .m3u8 lejátszási lista válaszból."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — sikeres script/img/iframe/link betöltést szimulál a valódi hálózati kérés helyett."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — HTML attribútumokat távolít el az illeszkedő elemekről."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — törli egy DOM-csomópont szöveges tartalmát."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — átírja egy DOM-csomópont szöveges tartalmát."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — leállít egy automatikus átirányítást a <meta http-equiv=\"refresh\"> révén."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — beállít egy sütit."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — eltávolítja a névmintának megfelelő sütiket."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — beállít egy localStorage bejegyzést (biztonságos literál értékekre korlátozva, vagy a speciális \"remove\" jelzőértékre az egyező kulcsok törléséhez)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — átírja egy link href-jét saját szövegéből vagy egy másik attribútumból."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — blokkolja a kritériumoknak megfelelő setTimeout() hívásokat."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — blokkolja a kritériumoknak megfelelő setInterval() hívásokat."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — blokkolja a kritériumoknak megfelelő requestAnimationFrame() hívásokat."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — blokkolja a kritériumoknak megfelelő addEventListener() hívásokat."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — blokkolás helyett felgyorsítja/lelassítja az egyező setTimeout() hívásokat."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — blokkolás helyett felgyorsítja/lelassítja az egyező setInterval() hívásokat."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — blokkolja az eval() hívásokat, amelyek forrása egyezik a pattern-nel."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Letiltja az RTCPeerConnection-t — blokkolja a WebRTC-alapú előugró/nyomkövetési trükköket."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Semlegesíti a BlockAdBlock/FuckAdBlock stílusú hirdetésblokkoló-felismerő szkripteket."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Eltávolítja a target=\"_blank\" attribútumot a kattintott linkekről — blokkolja a kényszerített új lap átirányításokat."
+  },
+  "scanner_value_emptyString": {
+    "message": "Üres karakterlánc"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Üres tömb"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Üres objektum"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Üres függvény (nincs hatás)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Függvény, amely mindig true-t ad vissza"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Függvény, amely mindig false-t ad vissza"
+  },
+  "scanner_btn_block": {
+    "message": "Blokkolás"
+  },
+  "scanner_btn_edit": {
+    "message": "Szerkesztés"
+  },
+  "scanner_btn_delete": {
+    "message": "Törlés"
+  },
+  "scanner_status_blockApplied": {
+    "message": "A blokkolás alkalmazva — mentve ehhez a webhelyhez."
+  },
+  "scanner_status_editApplied": {
+    "message": "A szerkesztés alkalmazva — mentve ehhez a webhelyhez."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "A törlés alkalmazva — mentve ehhez a webhelyhez."
+  },
+  "scanner_block_warning": {
+    "message": "A blokkolás megakadályozza ennek a tulajdonságnak MINDEN jövőbeli olvasását — megtörheti az erre támaszkodó oldalfunkciókat. Ezt frissítéssel nem lehet visszavonni; a visszavonáshoz távolítsa el a szabályt a vezérlőpult Globális szabályok oldaláról."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Blokkolás mindenképp"
+  },
+  "scanner_edit_customOption": {
+    "message": "Egyéni…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "egyetlen token, szóköz nélkül (pl. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Írjon be egy értéket szóköz nélkül."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Szóköz nem megengedett — elutasításra kerül."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Így lesz mentve: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Oldal globális változói ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Szűrés név szerint…"
+  },
+  "scanner_empty": {
+    "message": "Nem található az oldal által hozzáadott globális változó ezen az oldalon."
+  },
+  "scanner_footer_limitation": {
+    "message": "Csak a var/function-stílusú globális változókat és az explicit window.x = hozzárendeléseket látja — a let/const/class deklarációk láthatatlanok bármely oldalvizsgáló számára (JS nyelvi korlátozás)."
+  },
+  "scanner_loading": {
+    "message": "Oldal globális változóinak átvizsgálása — Esc a megszakításhoz"
+  },
+  "common_add": {
+    "message": "Hozzáadás"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Vezérlőpult"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Áttekintés"
+  },
+  "dashboard_nav_rules": {
+    "message": "Egyéni szabályok"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Szabályforrás"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Engedélyezési lista"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Elemszabályok"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Globális szabályok"
+  },
+  "dashboard_nav_focus": {
+    "message": "Koncentráció"
+  },
+  "dashboard_nav_settings": {
+    "message": "Beállítások"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Védelem BE"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Védelem $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Támogassa a fejlesztést PayPalon keresztül"
+  },
+  "dashboard_donate_label": {
+    "message": "Hívj meg egy kávéra ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "BE"
+  },
+  "dashboard_toggle_off": {
+    "message": "KI"
+  },
+  "dashboard_overview_title": {
+    "message": "Áttekintés"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Az Ön védelmi vezérlőpultja"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Összesen blokkolva"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% ma"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Megállított nyomkövetők"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% ma"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Blokkolt kártevő"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "megállított fenyegetés"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Nem észlelt fenyegetést"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Megtakarított sávszélesség"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "átlag oldalanként"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Megtakarított idő"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "ebben a munkamenetben"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 ma",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— ma"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% a tegnapihoz képest",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 fenyegetés ma"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 további",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Blokkolt kérések"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Nyomkövetési kérések"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Kártevő-észlelések"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7n"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14n"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30n"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "blokkolva"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "nyomkövetők"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "kártevő"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Leginkább blokkolt domainek"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Legtöbb nyomkövetőt tartalmazó domainek"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Legtöbb kártevőt tartalmazó domainek"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Összes megtekintése"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Kevesebb megjelenítése"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Összes megtekintése ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Még nincs adat."
+  },
+  "dashboard_privacy_title": {
+    "message": "Adatvédelmi pontszám"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Blokkolt hirdetések"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Blokkolt nyomkövetők"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Kártevővédelem"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Hivatkozó anonimizálása"
+  },
+  "dashboard_rules_title": {
+    "message": "Egyéni szabályok"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Szerkesztés site-rules.txt formátumban — ugyanaz a szintaxis, mint a fő szabályfájlban. Az értékek egyesülnek a beépített szabályokkal."
+  },
+  "dashboard_rules_clear": {
+    "message": "Törlés"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Törli az összes egyéni szabályt?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Egyéni szabályok — ugyanaz a formátum, mint a site-rules.txt\n# Az értékek EGYESÜLNEK a beépített szabályokkal (nem cserélik le).\n#\n# ── Új domain hozzárendelése egy szabályszakaszhoz ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← az aldomainek automatikusan illeszkednek\n#\n# ── További domainek hozzáadása globális blokkoláshoz ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Webhelyenkénti kozmetikai szabályok ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Engedélyezési lista"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Webhelyek, amelyek megkerülik az összes blokkolást"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Webhely hozzáadása"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Elemszabályok"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "A(z) \"Elrejtendő elem kiválasztása\" segítségével manuálisan elrejtett elemek — webhely szerint csoportosítva"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Még nincsenek szabályok."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Globális szabályok"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "A(z) \"Oldal átvizsgálása szkriptek/változók keresésére\" segítségével manuálisan blokkolt/szerkesztett/törölt globális ablakváltozók — webhely szerint csoportosítva"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Még nincsenek szabályok."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "blokkolás"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "szerkesztés"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "törlés"
+  },
+  "dashboard_focus_title": {
+    "message": "Koncentrációs mód"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Blokkolja a figyelemelterelő webhelyeket ütemterv szerint"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Koncentrációs munkamenet"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Munkamenet szüneteltetve"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Munkamenet fut…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Munkamenet befejezve!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25p"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45p"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60p"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90p"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Egyéni"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "perc"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Figyelemelterelő lista"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Hozzáadás"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Adja meg a koncentráció alatt blokkolandó domaint (pl. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Beállítások"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Az AdBlock viselkedésének testreszabása"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Blokkolás"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Hirdetések blokkolása"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standard hirdetési hálózat blokkolása"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Nyomkövetők blokkolása"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Analitikai és nyomkövető szkriptek blokkolása"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kozmetikai szűrés"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Fennmaradó hirdetéshelyek elrejtése CSS-sel"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Kártevők blokkolása"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Ismert kártevődomainek blokkolása"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Adatvédelem"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Hivatkozó anonimizálása"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Hivatkozó fejlécek eltávolítása eredetek közötti kéréseknél"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Globális adatvédelmi vezérlés (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC leiratkozási jel küldése (Sec-GPC fejléc + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Ne kövessenek fejléc (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1 kérésfejléc küldése"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Adatok"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Statisztikák gyűjtése"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Csak helyi használati statisztikák (soha nem kerülnek feltöltésre)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Összes adat visszaállítása"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Szabályok, statisztikák és beállítások törlése"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Visszaállítás"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Visszaállítja az összes AdBlock-adatot? Ez nem vonható vissza."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Az összes adat törölve. Újratöltés…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Névjegy"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Verzió"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Frissítések keresése"
+  },
+  "dashboard_settings_checking": {
+    "message": "Ellenőrzés…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Újabb verzió érhető el"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Megtekintés"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Utoljára ellenőrizve $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (sikertelen — offline van?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Még nem ellenőrizve"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "A v$1 elérhető (Ön a v$2-t használja)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Szabályforrás"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Honnan szerzi be az AdBlock a webhelyszabályait"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Távoli szabály-URL-ek"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Tartalmazza a beépített alapértelmezettet (kapcsolható, nem távolítható el), valamint az Ön által hozzáadott URL-eket — mind egyesítve, mindegyik önállóan be-/kikapcsolható."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL hozzáadása"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Helyi szabályfájlok"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txt szabályfájlok feltöltése — egyesülnek az URL-forrásokkal. Több fájl is támogatott."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Fájl hozzáadása…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Exportálás…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Az exportálás sikertelen: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "ismeretlen hiba"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 átalakítva, $2 kihagyva $3 szabályból",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 kivételszabály (itt nincs érvénytelenítési modell)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 eljárási szelektor (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 kiterjesztett AdGuard-módosító",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 nem leképezett szkriptlet hívás",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 nem támogatott hálózati szabály módosító",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 már szerepel ennek a kiterjesztésnek a saját site-rules.txt fájljában",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 fel nem ismert szintaxis",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 betöltve",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 betöltve",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Exportálás"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Töltse le ennek a forrásnak a szabályait, átalakítva ennek a kiterjesztésnek a saját szintaxisára"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Alapértelmezett"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList család"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Nyelv szerint"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Egyéni (a saját URL-jei)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Teszt adatok betöltve ehhez: $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Általános"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Nyelv"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Módosítás után újraindítja ezt az oldalt"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automatikus (böngésző nyelve)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Menü"
+  }
+}

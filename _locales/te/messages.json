@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "సాధారణ సైట్ నియంత్రణలు మరియు ఫోకస్ సాధనాలతో ప్రకటనలు, ట్రాకర్లు మరియు తెలిసిన హానికరమైన డొమైన్‌లను బ్లాక్ చేయండి.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "సైట్ బ్లాక్ చేయబడింది — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "మీ భద్రత కోసం సైట్ బ్లాక్ చేయబడింది"
+  },
+  "blocked_title_adPopup": {
+    "message": "పాప్అప్/కొత్త ట్యాబ్ ప్రకటన బ్లాక్ చేయబడింది"
+  },
+  "blocked_host_unknown": {
+    "message": "తెలియని సైట్"
+  },
+  "blocked_hint_default": {
+    "message": "ఈ సైట్ మాల్‌వేర్/ఫిషింగ్ బ్లాక్‌లిస్ట్‌లో ఉంది. ఇది మీ సమాచారాన్ని దొంగిలించడానికి, క్రిప్టోకరెన్సీని మైన్ చేయడానికి లేదా అవాంఛిత సాఫ్ట్‌వేర్‌ను ఇన్‌స్టాల్ చేయడానికి ప్రయత్నించవచ్చు."
+  },
+  "blocked_hint_adPopup": {
+    "message": "మీరు వచ్చిన పేజీలో ఒక క్లిక్ ఈ ప్రకటన/పాప్అప్ నెట్‌వర్క్‌ను కొత్త ట్యాబ్‌లో తెరవడానికి ప్రయత్నించింది. మీరు ఈ ట్యాబ్‌ను సురక్షితంగా మూసివేయవచ్చు."
+  },
+  "blocked_dontWarn_label": {
+    "message": "ఈ సైట్ గురించి నన్ను మళ్లీ హెచ్చరించవద్దు"
+  },
+  "blocked_btn_goBack": {
+    "message": "వెనక్కి వెళ్ళు"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "ఈ విండోను మూసివేయండి"
+  },
+  "blocked_btn_proceed": {
+    "message": "అయినా కొనసాగించు"
+  },
+  "blocked_btn_proceeding": {
+    "message": "కొనసాగిస్తోంది…"
+  },
+  "common_remove": {
+    "message": "తొలగించు"
+  },
+  "common_cancel": {
+    "message": "రద్దు చేయి"
+  },
+  "menu_pickElement": {
+    "message": "దాచడానికి ఎలిమెంట్‌ను ఎంచుకోండి…"
+  },
+  "menu_scanGlobals": {
+    "message": "స్క్రిప్ట్‌లు/వేరియబుల్స్ కోసం పేజీని స్కాన్ చేయండి…"
+  },
+  "menu_editRules": {
+    "message": "ఈ సైట్ కోసం నియమాలను సవరించండి…"
+  },
+  "picker_badge_active": {
+    "message": "దాచడానికి ఎలిమెంట్‌ను ఎంచుకుంటోంది — రద్దు చేయడానికి Esc నొక్కండి"
+  },
+  "picker_btn_hide": {
+    "message": "ఈ ఎలిమెంట్‌ను దాచు"
+  },
+  "picker_btn_broaden": {
+    "message": "విస్తరించు"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "డాష్‌బోర్డ్"
+  },
+  "popup_review_title": {
+    "message": "AdBlock నచ్చిందా?"
+  },
+  "popup_review_subtitle": {
+    "message": "త్వరిత రేటింగ్ చాలా సహాయపడుతుంది."
+  },
+  "popup_review_rate": {
+    "message": "మమ్మల్ని రేట్ చేయండి"
+  },
+  "popup_review_dismiss": {
+    "message": "వద్దు ధన్యవాదాలు"
+  },
+  "popup_stat_blocked": {
+    "message": "బ్లాక్ చేయబడింది"
+  },
+  "popup_stat_malware": {
+    "message": "మాల్‌వేర్"
+  },
+  "popup_stat_speed": {
+    "message": "వేగం"
+  },
+  "popup_stat_saved": {
+    "message": "ఆదా చేయబడింది"
+  },
+  "popup_allowlist_banner": {
+    "message": "ఈ సైట్ అనుమతి జాబితాలో ఉంది"
+  },
+  "popup_action_focus": {
+    "message": "ఫోకస్ మోడ్"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ ఈ సైట్‌లో పాజ్ చేయండి"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ సైట్‌ను తిరిగి ప్రారంభించండి"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "గోప్యతా స్కోర్"
+  },
+  "popup_footer_settings": {
+    "message": "సెట్టింగ్‌లు"
+  },
+  "popup_ruleChip_title": {
+    "message": "ప్రస్తుతం లోడ్ చేయబడిన నెట్‌వర్క్ బ్లాకింగ్ నియమాలు"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… నియమాలు"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "నెట్‌వర్క్ నియమాలు: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 నెట్‌వర్క్ నియమాలు లోడ్ చేయబడ్డాయి",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "PayPal ద్వారా అభివృద్ధికి మద్దతు ఇవ్వండి"
+  },
+  "popup_donate_label": {
+    "message": "విరాళం ఇవ్వండి"
+  },
+  "popup_version_title": {
+    "message": "AdBlock వెర్షన్"
+  },
+  "popup_version_updateAvailable": {
+    "message": "అప్‌డేట్ అందుబాటులో ఉంది — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "కొత్త వెర్షన్ అందుబాటులో ఉంది — స్టోర్ పేజీని తెరవడానికి క్లిక్ చేయండి"
+  },
+  "popup_domain_unknown": {
+    "message": "తెలియని సైట్"
+  },
+  "popup_status_site": {
+    "message": "సైట్"
+  },
+  "popup_status_protection": {
+    "message": "రక్షణ"
+  },
+  "popup_status_allowlisted": {
+    "message": "అనుమతించబడింది"
+  },
+  "popup_status_on": {
+    "message": "ఆన్"
+  },
+  "popup_status_paused": {
+    "message": "పాజ్ చేయబడింది"
+  },
+  "popup_status_off": {
+    "message": "ఆఫ్"
+  },
+  "common_save": {
+    "message": "సేవ్ చేయి"
+  },
+  "common_close": {
+    "message": "మూసివేయి"
+  },
+  "ruleEditor_panel_title": {
+    "message": "నియమాలను సవరించండి — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "టెక్స్ట్‌బాక్స్‌లో చొప్పించడానికి క్లిక్ చేయండి"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "కీ సూచన ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "కీలను ఫిల్టర్ చేయండి…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "కాస్మెటిక్ / అభ్యర్థి సరిపోలిక"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "స్క్రిప్ట్‌లెట్‌లు (అధునాతనం)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "ఈ సైట్ కోసం ప్రస్తుత నియమాలు ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(ఈ సైట్ కోసం ఇంకా నియమాలు లేవు — అంతర్నిర్మిత లేదా అనుకూలమైనవి ఏవీ లేవు)"
+  },
+  "ruleEditor_hint": {
+    "message": "పంక్తికి ఒక \"key = value | value2\". దీన్ని చొప్పించడానికి పైన ఉన్న కీపై క్లిక్ చేయండి. [section] హెడర్‌లు లేవు. ఇక్కడ టైప్ చేసిన నియమాలు ఈ కీ కోసం ఇప్పటికే ఉన్న నియమాలకు జోడించబడతాయి (పైన చూడండి) — ఇది అంతర్నిర్మిత నియమాన్ని తొలగించలేదు లేదా భర్తీ చేయలేదు, మరియు ఒకే-విలువ ఫ్లాగ్ కీల కోసం సాధారణంగా అంతర్నిర్మిత విలువ గెలుస్తుంది."
+  },
+  "ruleEditor_status_saved": {
+    "message": "సేవ్ చేయబడింది — వర్తించిన నియమాలను చూడటానికి ఈ పేజీని మళ్లీ లోడ్ చేయండి."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "సేవ్ చేయడం విఫలమైంది — ఒంటరి \"[section]\" లైన్ లేదా భారీ పేస్ట్ కోసం తనిఖీ చేయండి."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "ఇంజెక్ట్ చేయబడిన స్టైల్‌షీట్ ద్వారా షరతులు లేకుండా దాచబడిన CSS సెలెక్టర్‌లు — హ్యూరిస్టిక్ తనిఖీ లేదు, కనిపించగానే దాచండి."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "అభ్యర్థి ఎలిమెంట్‌ల కోసం CSS సెలెక్టర్‌లు — దిగువన ఉన్న labels/link_patterns కూడా సరిపోలితేనే దాచబడతాయి."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "selectors వలె, ఫీడ్/టైమ్‌లైన్-శైలి కంటైనర్‌లకు పరిమితం."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "selectors వలె, మార్కెట్‌ప్లేస్/షాపింగ్-శైలి కంటైనర్‌లకు పరిమితం."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "selectors వలె, సైడ్‌బార్/రైట్-రైల్ ప్రాంతానికి పరిమితం."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "selectors వలె, వ్యక్తిగత పోస్ట్/ఆర్టికల్ కంటైనర్‌లకు పరిమితం."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "\"హోస్ట్\" ఎలిమెంట్‌ల కోసం CSS సెలెక్టర్‌లు, పైన selectors అదే విధంగా తనిఖీ చేయబడతాయి."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "అభ్యర్థి నిజంగా ప్రకటనేనని నిర్ధారించడానికి లక్షణాలు/సందర్భ వచనంతో సరిపోల్చబడిన టెక్స్ట్ లేబుల్‌లు (ఉదా. sponsored, promoted)."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "అది ప్రకటన అని నిర్ధారించడానికి అభ్యర్థి యొక్క స్వంత లింక్‌లు/లక్షణాలతో సరిపోల్చబడిన సబ్‌స్ట్రింగ్ నమూనాలు."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "label/link_pattern సరిపోలికల కోసం స్కాన్ చేయబడిన HTML లక్షణ పేర్లు (డిఫాల్ట్: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "లేబుల్ సరిపోలిక కోసం వచనం తీసుకోబడిన చైల్డ్ ఎలిమెంట్‌లు (డిఫాల్ట్: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "సరిపోలిన అభ్యర్థిని దాచే ముందు .closest() ద్వారా పైకి వెళ్లడానికి CSS సెలెక్టర్(లు) (కేవలం లేబుల్ మాత్రమే కాదు, కంటైనర్‌ను దాచుతుంది)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "<html>/<body> నుండి నిరంతరం తీసివేయబడిన క్లాస్ పేర్లు — రూట్ క్లాస్ ద్వారా నడిపే CSS-మాత్రమే టేకోవర్ ఓవర్‌లేలను ఓడిస్తుంది."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "<html>/<body> ఇన్‌లైన్ శైలి నుండి నిరంతరం క్లియర్ చేయబడిన CSS లక్షణ పేర్లు — JS-సెట్ స్క్రోల్-లాక్ మొదలైనవాటిని ఓడిస్తుంది."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 ఫ్లాగ్ — ఈ సైట్‌లో క్లిక్‌ల ద్వారా తెరవబడిన పాప్అప్/పాప్అండర్ ట్యాబ్‌లను ఆటోమేటిక్‌గా మూసివేస్తుంది."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — విండో లక్షణాన్ని శాశ్వతంగా స్థిర విలువకు లాక్ చేస్తుంది (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — ఏదైనా స్క్రిప్ట్ ఈ విండో లక్షణాన్ని చదివినప్పుడు ఎర్రర్‌ను విసురుతుంది."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — ఏదైనా స్క్రిప్ట్ ఈ విండో లక్షణంలో వ్రాసినప్పుడు ఎర్రర్‌ను విసురుతుంది."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — కాలింగ్ స్క్రిప్ట్ యొక్క సొంత స్టాక్ ట్రేస్ needle తో సరిపోలినప్పుడు మాత్రమే ఎర్రర్‌ను విసురుతుంది."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — needle తో సరిపోలే మూలం కలిగిన స్క్రిప్ట్ target ను చదివినప్పుడు ఎర్రర్‌ను విసురుతుంది."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — pattern తో సరిపోలే window.open() కాల్‌లను బ్లాక్ చేస్తుంది లేదా డికాయ్‌కు దారి మళ్లిస్తుంది."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — ప్రమాణాలకు సరిపోలే fetch() కాల్‌లను బ్లాక్ చేస్తుంది."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — ప్రమాణాలకు సరిపోలే XMLHttpRequest కాల్‌లను బ్లాక్ చేస్తుంది."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetch ను బ్లాక్ చేస్తుంది, ఐచ్ఛికంగా స్థిర నకిలీ ప్రతిస్పందన బాడీని తిరిగి ఇస్తుంది."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — లాక్‌ను దాటవేయడానికి ఒకే-మూలం about:blank iframe నిజమైన విండోకు తిరిగి చేరుకోకుండా నిరోధిస్తుంది."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — ఏదైనా JSON.parse() ఫలితం నుండి ఫీల్డ్‌లను తీసివేస్తుంది."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — fetch() JSON ప్రతిస్పందన నుండి ఫీల్డ్‌లను తీసివేస్తుంది."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — XHR JSON ప్రతిస్పందన నుండి ఫీల్డ్‌లను తీసివేస్తుంది."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — స్క్రిప్ట్ నేరుగా కేటాయించే ఆబ్జెక్ట్‌ను కత్తిరిస్తుంది (JSON.parse ద్వారా కాదు)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — fetch() JSON ప్రతిస్పందనలో JSONPath-ఆధారిత ఫీల్డ్ తొలగింపులు."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — XHR JSON-lines ప్రతిస్పందనలో JSONPath-ఆధారిత ఫీల్డ్ తొలగింపులు."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "protobuf/jspb-ఎన్‌కోడ్ చేయబడిన ప్రతిస్పందన నుండి ఫీల్డ్‌లను తీసివేస్తుంది."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — అవుట్‌గోయింగ్ రిక్వెస్ట్ బాడీపై JSONPath ఎడిట్‌లు (తొలగింపు మరియు విలువ కేటాయింపు రెండూ)."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — ప్రతిస్పందన బాడీపై JSONPath ఎడిట్‌లు (తొలగింపు మరియు విలువ కేటాయింపు రెండూ)."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — fetch() ప్రతిస్పందన బాడీలో regex శోధన/భర్తీ."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — XHR ప్రతిస్పందన బాడీలో regex శోధన/భర్తీ."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — ఫంక్షన్‌కు పంపిన ఒక ఆర్గ్యుమెంట్‌ను భర్తీ చేస్తుంది."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — అవుట్‌బౌండ్ డేటాపై షరతులు లేని టెక్స్ట్ భర్తీ (URL పరిధి లేదు)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — ఇది రన్ అయ్యే ముందు <script> ట్యాగ్ యొక్క వచనాన్ని తిరిగి వ్రాస్తుంది. sedCount ఈ నియమం ఎప్పుడైనా తిరిగి వ్రాసే నోడ్‌ల సంఖ్యను పరిమితం చేస్తుంది (డిఫాల్ట్: అపరిమితం)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — నేటివ్ మెథడ్ కాల్‌లోకి పంపిన ఆబ్జెక్ట్ నుండి ఫీల్డ్‌లను కత్తిరిస్తుంది."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — సంతకంతో సరిపోలే నేటివ్ మెథడ్ కాల్‌ను నిలిపివేస్తుంది లేదా నిశ్శబ్దంగా విస్మరిస్తుంది."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — విలువ needle తో సరిపోలే యాక్సెసర్ సెట్టర్ కేటాయింపులో (ఉదా. Element.prototype.innerHTML) వదిలివేస్తుంది లేదా ఎర్రర్‌ను విసురుతుంది."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — HLS .m3u8 ప్లేలిస్ట్ ప్రతిస్పందన నుండి ప్రకటన సెగ్మెంట్‌లను తీసివేస్తుంది."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — నిజమైన నెట్‌వర్క్ అభ్యర్థనకు బదులుగా script/img/iframe/link లోడ్ విజయవంతమైనట్లు నటిస్తుంది."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — సరిపోలే ఎలిమెంట్‌ల నుండి HTML లక్షణాలను తీసివేస్తుంది."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — DOM నోడ్ యొక్క వచన కంటెంట్‌ను క్లియర్ చేస్తుంది."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — DOM నోడ్ యొక్క వచన కంటెంట్‌ను తిరిగి వ్రాస్తుంది."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — <meta http-equiv=\"refresh\"> ద్వారా స్వయంచాలక దారిమళ్లింపును ఆపుతుంది."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — కుకీని సెట్ చేస్తుంది."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — పేరు నమూనాకు సరిపోలే కుకీలను తీసివేస్తుంది."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — localStorage ఎంట్రీని సెట్ చేస్తుంది (సురక్షితమైన అక్షరార్థ విలువలకు పరిమితం, లేదా సరిపోలే కీలను తొలగించడానికి ప్రత్యేక \"remove\" విలువ)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — లింక్ యొక్క href ను దాని స్వంత వచనం లేదా మరొక లక్షణం నుండి తిరిగి వ్రాస్తుంది."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — ప్రమాణాలకు సరిపోలే setTimeout() కాల్‌లను బ్లాక్ చేస్తుంది."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — ప్రమాణాలకు సరిపోలే setInterval() కాల్‌లను బ్లాక్ చేస్తుంది."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — ప్రమాణాలకు సరిపోలే requestAnimationFrame() కాల్‌లను బ్లాక్ చేస్తుంది."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — ప్రమాణాలకు సరిపోలే addEventListener() కాల్‌లను బ్లాక్ చేస్తుంది."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — వాటిని బ్లాక్ చేయడానికి బదులుగా సరిపోలే setTimeout() కాల్‌లను వేగవంతం/నెమ్మదిస్తుంది."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — వాటిని బ్లాక్ చేయడానికి బదులుగా సరిపోలే setInterval() కాల్‌లను వేగవంతం/నెమ్మదిస్తుంది."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — మూలం pattern తో సరిపోలే eval() కాల్‌లను బ్లాక్ చేస్తుంది."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnection ను నిలిపివేస్తుంది — WebRTC-ఆధారిత పాప్అప్/ట్రాకింగ్ ఉపాయాలను బ్లాక్ చేస్తుంది."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "BlockAdBlock/FuckAdBlock శైలి యాంటీ-యాడ్‌బ్లాక్ గుర్తింపు స్క్రిప్ట్‌లను నిర్వీర్యం చేస్తుంది."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "క్లిక్ చేసిన లింక్‌ల నుండి target=\"_blank\" ను తీసివేస్తుంది — బలవంతపు కొత్త-ట్యాబ్ దారిమళ్లింపులను బ్లాక్ చేస్తుంది."
+  },
+  "scanner_value_emptyString": {
+    "message": "ఖాళీ స్ట్రింగ్"
+  },
+  "scanner_value_emptyArray": {
+    "message": "ఖాళీ అర్రే"
+  },
+  "scanner_value_emptyObject": {
+    "message": "ఖాళీ ఆబ్జెక్ట్"
+  },
+  "scanner_value_noopFunc": {
+    "message": "ఖాళీ ఫంక్షన్ (ప్రభావం లేదు)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "ఎల్లప్పుడూ true ను తిరిగి ఇచ్చే ఫంక్షన్"
+  },
+  "scanner_value_falseFunc": {
+    "message": "ఎల్లప్పుడూ false ను తిరిగి ఇచ్చే ఫంక్షన్"
+  },
+  "scanner_btn_block": {
+    "message": "బ్లాక్ చేయి"
+  },
+  "scanner_btn_edit": {
+    "message": "సవరించు"
+  },
+  "scanner_btn_delete": {
+    "message": "తొలగించు"
+  },
+  "scanner_status_blockApplied": {
+    "message": "బ్లాక్ వర్తింపజేయబడింది — ఈ సైట్ కోసం సేవ్ చేయబడింది."
+  },
+  "scanner_status_editApplied": {
+    "message": "సవరణ వర్తింపజేయబడింది — ఈ సైట్ కోసం సేవ్ చేయబడింది."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "తొలగింపు వర్తింపజేయబడింది — ఈ సైట్ కోసం సేవ్ చేయబడింది."
+  },
+  "scanner_block_warning": {
+    "message": "బ్లాక్ చేయడం ఈ లక్షణం యొక్క అన్ని భవిష్యత్తు రీడ్‌లను నిరోధిస్తుంది — దీనిపై ఆధారపడిన పేజీ కార్యాచరణను విచ్ఛిన్నం చేయవచ్చు. దీన్ని రిఫ్రెష్ చేయడం ద్వారా రద్దు చేయలేరు; తిరిగి తీసుకురావడానికి డాష్‌బోర్డ్ యొక్క గ్లోబల్ రూల్స్ పేజీ నుండి నియమాన్ని తీసివేయండి."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "అయినా బ్లాక్ చేయి"
+  },
+  "scanner_edit_customOption": {
+    "message": "అనుకూలం…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "ఒకే టోకెన్, ఖాళీలు లేవు (ఉదా. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "ఖాళీలు లేకుండా విలువను టైప్ చేయండి."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "ఖాళీలు అనుమతించబడవు — తిరస్కరించబడుతుంది."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "ఇలా సేవ్ చేయబడుతుంది: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "పేజీ గ్లోబల్స్ ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "పేరు ద్వారా ఫిల్టర్ చేయండి…"
+  },
+  "scanner_empty": {
+    "message": "ఈ పేజీలో పేజీ-జోడించిన గ్లోబల్స్ ఏవీ కనుగొనబడలేదు."
+  },
+  "scanner_footer_limitation": {
+    "message": "var/function-శైలి గ్లోబల్స్ మరియు స్పష్టమైన window.x = కేటాయింపులను మాత్రమే చూస్తుంది — let/const/class డిక్లరేషన్‌లు ఏ పేజీ స్కానర్‌కైనా కనిపించవు (JS భాషా పరిమితి)."
+  },
+  "scanner_loading": {
+    "message": "పేజీ గ్లోబల్స్‌ను స్కాన్ చేస్తోంది — రద్దు చేయడానికి Esc నొక్కండి"
+  },
+  "common_add": {
+    "message": "జోడించు"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — డాష్‌బోర్డ్"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "అవలోకనం"
+  },
+  "dashboard_nav_rules": {
+    "message": "అనుకూల నియమాలు"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "నియమ మూలం"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "అనుమతి జాబితా"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "ఎలిమెంట్ నియమాలు"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "గ్లోబల్ నియమాలు"
+  },
+  "dashboard_nav_focus": {
+    "message": "ఫోకస్"
+  },
+  "dashboard_nav_settings": {
+    "message": "సెట్టింగ్‌లు"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "రక్షణ ఆన్"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "రక్షణ $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "PayPal ద్వారా అభివృద్ధికి మద్దతు ఇవ్వండి"
+  },
+  "dashboard_donate_label": {
+    "message": "నాకు కాఫీ కొనివ్వండి ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ఆన్"
+  },
+  "dashboard_toggle_off": {
+    "message": "ఆఫ్"
+  },
+  "dashboard_overview_title": {
+    "message": "అవలోకనం"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "మీ రక్షణ డాష్‌బోర్డ్"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "మొత్తం బ్లాక్ చేయబడింది"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% ఈరోజు"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "ఆపిన ట్రాకర్‌లు"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% ఈరోజు"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "బ్లాక్ చేయబడిన మాల్‌వేర్"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "ఆపిన బెదిరింపులు"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "బెదిరింపులు ఏవీ కనుగొనబడలేదు"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "ఆదా చేయబడిన బ్యాండ్‌విడ్త్"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "పేజీకి సగటు"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "ఆదా చేయబడిన సమయం"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "ఈ సెషన్‌లో"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 ఈరోజు",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— ఈరోజు"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "నిన్నటితో పోలిస్తే $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "ఈరోజు 0 బెదిరింపులు"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 మరిన్ని",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "బ్లాక్ చేయబడిన అభ్యర్థనలు"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "ట్రాకర్ అభ్యర్థనలు"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "మాల్‌వేర్ గుర్తింపులు"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7రో"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14రో"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30రో"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "బ్లాక్ చేయబడింది"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "ట్రాకర్‌లు"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "మాల్‌వేర్"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "అత్యధికంగా బ్లాక్ చేయబడిన డొమైన్‌లు"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "అత్యధిక ట్రాకర్ డొమైన్‌లు"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "అత్యధిక మాల్‌వేర్ డొమైన్‌లు"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "అన్నీ చూడండి"
+  },
+  "dashboard_domains_showLess": {
+    "message": "తక్కువ చూపించు"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "అన్నీ చూడండి ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "ఇంకా డేటా లేదు."
+  },
+  "dashboard_privacy_title": {
+    "message": "గోప్యతా స్కోర్"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "బ్లాక్ చేయబడిన ప్రకటనలు"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "బ్లాక్ చేయబడిన ట్రాకర్‌లు"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "మాల్‌వేర్ రక్షణ"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "రిఫరర్ అనామకీకరణ"
+  },
+  "dashboard_rules_title": {
+    "message": "అనుకూల నియమాలు"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "site-rules.txt ఫార్మాట్‌లో సవరించండి — ప్రధాన నియమాల ఫైల్ వలె అదే సింటాక్స్. విలువలు అంతర్నిర్మిత నియమాలతో విలీనం చేయబడతాయి."
+  },
+  "dashboard_rules_clear": {
+    "message": "క్లియర్ చేయి"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "అన్ని అనుకూల నియమాలను క్లియర్ చేయాలా?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# అనుకూల నియమాలు — site-rules.txt వలె అదే ఫార్మాట్\n# విలువలు అంతర్నిర్మిత నియమాలతో విలీనం చేయబడతాయి (భర్తీ చేయబడవు).\n#\n# ── కొత్త డొమైన్‌ను నియమ విభాగానికి మ్యాప్ చేయండి ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← సబ్‌డొమైన్‌లు స్వయంచాలకంగా సరిపోలుతాయి\n#\n# ── ప్రపంచవ్యాప్తంగా బ్లాక్ చేయడానికి అదనపు డొమైన్‌లను జోడించండి ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── సైట్‌కు కాస్మెటిక్ నియమాలు ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "అనుమతి జాబితా"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "అన్ని బ్లాకింగ్‌ను దాటవేసే సైట్‌లు"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ సైట్‌ను జోడించండి"
+  },
+  "dashboard_elementRules_title": {
+    "message": "ఎలిమెంట్ నియమాలు"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "\"దాచడానికి ఎలిమెంట్‌ను ఎంచుకోండి\" ద్వారా మాన్యువల్‌గా దాచబడిన ఎలిమెంట్‌లు — సైట్ వారీగా సమూహం చేయబడింది"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "ఇంకా నియమాలు లేవు."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "గ్లోబల్ నియమాలు"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "\"స్క్రిప్ట్‌లు/వేరియబుల్స్ కోసం పేజీని స్కాన్ చేయండి\" ద్వారా మాన్యువల్‌గా బ్లాక్/సవరించిన/తొలగించిన గ్లోబల్ విండో వేరియబుల్స్ — సైట్ వారీగా సమూహం చేయబడింది"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "ఇంకా నియమాలు లేవు."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "బ్లాక్ చేయి"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "సవరించు"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "తొలగించు"
+  },
+  "dashboard_focus_title": {
+    "message": "ఫోకస్ మోడ్"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "షెడ్యూల్ ప్రకారం దృష్టి మరల్చే సైట్‌లను బ్లాక్ చేయండి"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "ఫోకస్ సెషన్"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "సెషన్ పాజ్ చేయబడింది"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "సెషన్ నడుస్తోంది…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "సెషన్ పూర్తయింది!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25ని"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45ని"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60ని"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90ని"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "అనుకూలం"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "నిమి"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "దృష్టి మరల్పు జాబితా"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ జోడించు"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "ఫోకస్ సమయంలో బ్లాక్ చేయడానికి డొమైన్‌ను నమోదు చేయండి (ఉదా. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "సెట్టింగ్‌లు"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlock ప్రవర్తనను అనుకూలీకరించండి"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "బ్లాకింగ్"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "ప్రకటనలను బ్లాక్ చేయి"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "ప్రామాణిక ప్రకటన నెట్‌వర్క్ బ్లాకింగ్"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "ట్రాకర్‌లను బ్లాక్ చేయి"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "అనలిటిక్స్ & ట్రాకింగ్ స్క్రిప్ట్‌లను బ్లాక్ చేయి"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "కాస్మెటిక్ ఫిల్టరింగ్"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "CSS ద్వారా మిగిలిపోయిన ప్రకటన ప్లేస్‌హోల్డర్‌లను దాచు"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "మాల్‌వేర్‌ను బ్లాక్ చేయి"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "తెలిసిన మాల్‌వేర్ డొమైన్‌లను బ్లాక్ చేయి"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "గోప్యత"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "రిఫరర్ అనామకీకరణ"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "క్రాస్-ఆరిజిన్ అభ్యర్థనలపై రిఫరర్ హెడర్‌లను తీసివేయండి"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "గ్లోబల్ ప్రైవసీ కంట్రోల్ (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC ఆప్ట్-అవుట్ సిగ్నల్‌ను పంపండి (Sec-GPC హెడర్ + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "డు నాట్ ట్రాక్ హెడర్ (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1 అభ్యర్థన హెడర్‌ను పంపండి"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "డేటా"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "గణాంకాలను సేకరించండి"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "స్థానిక-మాత్రమే వినియోగ గణాంకాలు (ఎప్పుడూ అప్‌లోడ్ చేయబడవు)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "మొత్తం డేటాను రీసెట్ చేయండి"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "నియమాలు, గణాంకాలు మరియు సెట్టింగ్‌లను క్లియర్ చేయండి"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "రీసెట్ చేయి"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "మొత్తం AdBlock డేటాను రీసెట్ చేయాలా? దీన్ని రద్దు చేయలేరు."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "మొత్తం డేటా క్లియర్ చేయబడింది. మళ్లీ లోడ్ అవుతోంది…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "గురించి"
+  },
+  "dashboard_settings_version_name": {
+    "message": "వెర్షన్"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "అప్‌డేట్‌ల కోసం తనిఖీ చేయండి"
+  },
+  "dashboard_settings_checking": {
+    "message": "తనిఖీ చేస్తోంది…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "కొత్త వెర్షన్ అందుబాటులో ఉంది"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "చూడండి"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "చివరిసారి తనిఖీ చేయబడింది $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (విఫలమైంది — మీరు ఆఫ్‌లైన్‌లో ఉన్నారా?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "ఇంకా తనిఖీ చేయలేదు"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 అందుబాటులో ఉంది (మీ వద్ద v$2 ఉంది)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "నియమ మూలం"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock దాని సైట్ నియమాలను ఎక్కడి నుండి పొందుతుంది"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "రిమోట్ నియమ URLలు"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "అంతర్నిర్మిత డిఫాల్ట్‌ను (టోగుల్ చేయదగినది, తీసివేయలేనిది) మరియు మీరు జోడించే ఏవైనా URLలను కలిగి ఉంటుంది — అన్నీ విలీనం చేయబడ్డాయి, ప్రతి ఒక్కటి స్వతంత్రంగా ఆన్/ఆఫ్."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL జోడించు"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "స్థానిక నియమాల ఫైల్‌లు"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txt నియమాల ఫైల్‌లను అప్‌లోడ్ చేయండి — URL మూలాలతో విలీనం చేయబడతాయి. బహుళ ఫైల్‌లు మద్దతు ఇవ్వబడతాయి."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "ఫైల్‌ను జోడించు…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "ఎగుమతి చేస్తోంది…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "ఎగుమతి విఫలమైంది: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "తెలియని లోపం"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$3 నియమాలలో $1 మార్చబడింది, $2 దాటవేయబడింది",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 మినహాయింపు నియమాలు (ఇక్కడ రద్దు మోడల్ లేదు)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 ప్రక్రియా సెలెక్టర్‌లు (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 విస్తరించిన AdGuard మాడిఫయర్‌లు",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 మ్యాప్ చేయని స్క్రిప్ట్‌లెట్ కాల్‌లు",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 మద్దతు లేని నెట్‌వర్క్-నియమ మాడిఫయర్‌లు",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 ఇప్పటికే ఈ పొడిగింపు యొక్క స్వంత site-rules.txtలో క్యూరేట్ చేయబడ్డాయి",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 గుర్తించని సింటాక్స్",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 లోడ్ చేయబడింది",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 లోడ్ చేయబడింది",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "ఎగుమతి"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "ఈ పొడిగింపు యొక్క స్వంత సింటాక్స్‌కు మార్చబడిన ఈ మూలం యొక్క నియమాలను డౌన్‌లోడ్ చేయండి"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "డిఫాల్ట్"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList కుటుంబం"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "భాష వారీగా"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "అనుకూలం (మీ స్వంత URLలు)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "$1 కోసం నకిలీ డేటా సీడ్ చేయబడింది:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "సాధారణ"
+  },
+  "dashboard_settings_language_name": {
+    "message": "భాష"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "మార్చిన తర్వాత ఈ పేజీని పునఃప్రారంభిస్తుంది"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "స్వయంచాలకం (బ్రౌజర్ భాష)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "మెనూ"
+  }
+}

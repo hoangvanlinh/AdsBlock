@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Estä mainokset, seurannat ja tunnetut haitalliset verkkotunnukset yksinkertaisilla sivustoasetuksilla ja keskittymistyökaluilla.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Sivusto estetty — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Sivusto estetty turvallisuutesi vuoksi"
+  },
+  "blocked_title_adPopup": {
+    "message": "Ponnahdusmainos/uusi välilehti estetty"
+  },
+  "blocked_host_unknown": {
+    "message": "tuntematon sivusto"
+  },
+  "blocked_hint_default": {
+    "message": "Tämä sivusto on haittaohjelma-/tietojenkalasteluestolistalla. Se voi yrittää varastaa tietojasi, louhia kryptovaluuttaa tai asentaa ei-toivottua ohjelmistoa."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Napsautus sivulla, josta tulit, yritti avata tämän mainos-/ponnahdusverkoston uudessa välilehdessä. Voit sulkea tämän välilehden turvallisesti."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Älä varoita minua tästä sivustosta uudelleen"
+  },
+  "blocked_btn_goBack": {
+    "message": "Palaa takaisin"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Sulje tämä ikkuna"
+  },
+  "blocked_btn_proceed": {
+    "message": "Jatka silti"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Jatketaan…"
+  },
+  "common_remove": {
+    "message": "Poista"
+  },
+  "common_cancel": {
+    "message": "Peruuta"
+  },
+  "menu_pickElement": {
+    "message": "Valitse piilotettava elementti…"
+  },
+  "menu_scanGlobals": {
+    "message": "Skannaa sivu skriptien/muuttujien varalta…"
+  },
+  "menu_editRules": {
+    "message": "Muokkaa tämän sivuston sääntöjä…"
+  },
+  "picker_badge_active": {
+    "message": "Valitaan piilotettavaa elementtiä — peruuta painamalla Esc"
+  },
+  "picker_btn_hide": {
+    "message": "Piilota tämä elementti"
+  },
+  "picker_btn_broaden": {
+    "message": "Laajenna"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Kojelauta"
+  },
+  "popup_review_title": {
+    "message": "Pidätkö AdBlockista?"
+  },
+  "popup_review_subtitle": {
+    "message": "Nopea arvostelu auttaa paljon."
+  },
+  "popup_review_rate": {
+    "message": "Arvostele meidät"
+  },
+  "popup_review_dismiss": {
+    "message": "Ei kiitos"
+  },
+  "popup_stat_blocked": {
+    "message": "Estetty"
+  },
+  "popup_stat_malware": {
+    "message": "Haittaohjelma"
+  },
+  "popup_stat_speed": {
+    "message": "Nopeus"
+  },
+  "popup_stat_saved": {
+    "message": "Säästetty"
+  },
+  "popup_allowlist_banner": {
+    "message": "Tämä sivusto on sallittujen listalla"
+  },
+  "popup_action_focus": {
+    "message": "Keskittymistila"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Keskeytä tälle sivustolle"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Jatka sivustoa"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Yksityisyyspisteet"
+  },
+  "popup_footer_settings": {
+    "message": "Asetukset"
+  },
+  "popup_ruleChip_title": {
+    "message": "Tällä hetkellä ladatut verkon estosäännöt"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… sääntöä"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "verkkosäännöt: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 verkkosääntöä ladattu",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Tue kehitystä PayPalin kautta"
+  },
+  "popup_donate_label": {
+    "message": "Lahjoita"
+  },
+  "popup_version_title": {
+    "message": "AdBlock-versio"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Päivitys saatavilla — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Uudempi versio saatavilla — napsauta avataksesi kauppasivun"
+  },
+  "popup_domain_unknown": {
+    "message": "Tuntematon sivusto"
+  },
+  "popup_status_site": {
+    "message": "Sivusto"
+  },
+  "popup_status_protection": {
+    "message": "Suojaus"
+  },
+  "popup_status_allowlisted": {
+    "message": "Sallittu"
+  },
+  "popup_status_on": {
+    "message": "PÄÄLLÄ"
+  },
+  "popup_status_paused": {
+    "message": "Keskeytetty"
+  },
+  "popup_status_off": {
+    "message": "POIS"
+  },
+  "common_save": {
+    "message": "Tallenna"
+  },
+  "common_close": {
+    "message": "Sulje"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Muokkaa sääntöjä — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Napsauta lisätäksesi tekstikenttään"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Avainten viite ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Suodata avaimia…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOSMEETTINEN / EHDOKASVASTAAVUUS"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SKRIPTIT (EDISTYNYT)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Tämän sivuston nykyiset säännöt ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(ei vielä sääntöjä tälle sivustolle — ei sisäänrakennettuja eikä omia)"
+  },
+  "ruleEditor_hint": {
+    "message": "Yksi \"key = value | value2\" riviä kohti. Napsauta yllä olevaa avainta lisätäksesi sen. Ei [section]-otsikoita. Tähän kirjoitetut säännöt LISÄTÄÄN tämän avaimen olemassa oleviin sääntöihin (katso yllä) — tämä ei voi poistaa tai ohittaa sisäänrakennettua sääntöä, ja yksiarvoisilla lippuavaimilla sisäänrakennettu arvo yleensä voittaa."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Tallennettu — lataa tämä sivu uudelleen nähdäksesi sovelletut säännöt."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Tallennus epäonnistui — tarkista, onko mukana irrallinen \"[section]\"-rivi tai valtava liite."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS-valitsimet, jotka piilotetaan ehdoitta injektoidun tyylitiedoston kautta — ei heuristista tarkistusta, piilotetaan vain näkyessään."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS-valitsimet EHDOKAS-elementeille — piilotetaan vain, jos ne täsmäävät myös alla oleviin kohteisiin labels/link_patterns."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Sama kuin selectors, rajattu syöte-/aikajana-tyylisiin säiliöihin."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Sama kuin selectors, rajattu markkinapaikka-/ostostyylisiin säiliöihin."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Sama kuin selectors, rajattu sivupalkki-/oikean reunan alueeseen."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Sama kuin selectors, rajattu yksittäisiin julkaisu-/artikkelisäiliöihin."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS-valitsimet \"isäntä\"-elementeille, tarkistettu samalla tavalla kuin selectors yllä."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Tekstitunnisteet (esim. sponsored, promoted), joita verrataan attribuutteihin/kontekstitekstiin vahvistaakseen, että ehdokas on todella mainos."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Alimerkkijonokuviot, joita verrataan ehdokkaan omiin linkkeihin/attribuutteihin vahvistaakseen, että se on mainos."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "HTML-attribuuttien nimet, joita skannataan label/link_pattern-täsmäysten varalta (oletus: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Lapsielementit, joista tekstiä otetaan tunnistetäsmäystä varten (oletus: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS-valitsin(a), jota käytetään ylöspäin kulkemiseen .closest()-metodilla ennen täsmäävän ehdokkaan piilottamista (piilottaa säiliön, ei vain tunnistetta)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Luokkanimet, jotka poistetaan jatkuvasti kohteista <html>/<body> — voittaa juuriluokan ohjaamat pelkän CSS:n valtausylitteet."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "CSS-ominaisuuksien nimet, jotka tyhjennetään jatkuvasti kohteiden <html>/<body> sisäisestä tyylistä — voittaa JS:llä asetetun vieritysluvun jne."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0-lippu — sulkee automaattisesti tällä sivustolla tehdyistä napsautuksista avautuvat ponnahdus-/piilovälilehdet."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — lukitsee ikkunaominaisuuden pysyvästi kiinteään arvoon (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — heittää virheen, kun mikä tahansa skripti lukee tätä ikkunaominaisuutta."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — heittää virheen, kun mikä tahansa skripti kirjoittaa tähän ikkunaominaisuuteen."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — heittää virheen vain, kun kutsuvan skriptin oma pinojälki täsmää arvoon needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — heittää virheen, kun lähteeltään arvoon needle täsmäävä skripti lukee kohteen target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — estää tai ohjaa syöttiin window.open()-kutsut, jotka täsmäävät kuvioon pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — estää fetch()-kutsut, jotka täsmäävät kriteereihin."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — estää XMLHttpRequest-kutsut, jotka täsmäävät kriteereihin."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — estää fetch-kutsun ja palauttaa halutessa kiinteän väärennetyn vastausrungon."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — estää saman alkuperän about:blank-iframea pääsemästä takaisin todelliseen ikkunaan lukituksen ohittamiseksi."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — poistaa kentät mistä tahansa JSON.parse()-tuloksesta."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — poistaa kentät fetch()-kutsun JSON-vastauksesta."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — poistaa kentät XHR:n JSON-vastauksesta."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — karsii objektin, jonka skripti asettaa suoraan (ei JSON.parse-kutsun kautta)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — JSONPath-pohjaiset kenttäpoistot fetch()-kutsun JSON-vastauksessa."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — JSONPath-pohjaiset kenttäpoistot XHR:n JSON-lines-vastauksessa."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Poistaa kentät protobuf/jspb-koodatusta vastauksesta."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath-muokkaukset (poistot JA arvon asetukset) lähtevän pyynnön rungossa."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath-muokkaukset (poistot JA arvon asetukset) vastauksen rungossa."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex-haku/korvaus fetch()-vastauksen rungossa."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex-haku/korvaus XHR-vastauksen rungossa."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — korvaa funktiolle välitetyn argumentin."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — ehdoton tekstin korvaus lähtevässä datassa (ei URL-rajausta)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — kirjoittaa <script>-tagin tekstin uudelleen ennen sen suoritusta. sedCount rajoittaa, kuinka monta solmua tämä sääntö koskaan kirjoittaa uudelleen (oletus: rajoittamaton)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — karsii kentät objektista, joka välitetään natiivimetodikutsuun."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — keskeyttää tai hiljaisesti ohittaa allekirjoitukseen täsmäävän natiivimetodikutsun."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — hylkää tai heittää virheen käyttäjäasettajan asetuksessa (esim. Element.prototype.innerHTML), jonka arvo täsmää arvoon needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — poistaa mainossegmentit HLS .m3u8 -soittolistavastauksesta."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — teeskentelee onnistunutta script/img/iframe/link-latausta todellisen verkkopyynnön sijaan."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — poistaa HTML-attribuutit täsmäävistä elementeistä."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — tyhjentää DOM-solmun tekstisisällön."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — kirjoittaa DOM-solmun tekstisisällön uudelleen."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — pysäyttää automaattisen uudelleenohjauksen <meta http-equiv=\"refresh\">-elementin kautta."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — asettaa evästeen."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — poistaa nimikuvioon täsmäävät evästeet."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — asettaa localStorage-merkinnän (rajattu turvallisiin kirjaimellisiin arvoihin tai erikoisarvoon \"remove\" täsmäävien avainten poistamiseksi)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — kirjoittaa linkin href-arvon uudelleen sen omasta tekstistä tai toisesta attribuutista."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — estää setTimeout()-kutsut, jotka täsmäävät kriteereihin."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — estää setInterval()-kutsut, jotka täsmäävät kriteereihin."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — estää requestAnimationFrame()-kutsut, jotka täsmäävät kriteereihin."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — estää addEventListener()-kutsut, jotka täsmäävät kriteereihin."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — nopeuttaa/hidastaa täsmääviä setTimeout()-kutsuja estämisen sijaan."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — nopeuttaa/hidastaa täsmääviä setInterval()-kutsuja estämisen sijaan."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — estää eval()-kutsut, joiden lähde täsmää kuvioon pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Poistaa käytöstä RTCPeerConnectionin — estää WebRTC-pohjaiset ponnahdus-/seurantatempaukset."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Neutraloi BlockAdBlock/FuckAdBlock-tyylisiä mainostenestotunnistusskriptejä."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Poistaa target=\"_blank\"-määrityksen napsautetuista linkeistä — estää pakotetut uudelleenohjaukset uuteen välilehteen."
+  },
+  "scanner_value_emptyString": {
+    "message": "Tyhjä merkkijono"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Tyhjä taulukko"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Tyhjä objekti"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Tyhjä funktio (ei toimintoa)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funktio, joka palauttaa aina true-arvon"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funktio, joka palauttaa aina false-arvon"
+  },
+  "scanner_btn_block": {
+    "message": "Estä"
+  },
+  "scanner_btn_edit": {
+    "message": "Muokkaa"
+  },
+  "scanner_btn_delete": {
+    "message": "Poista"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Esto sovellettu — tallennettu tälle sivustolle."
+  },
+  "scanner_status_editApplied": {
+    "message": "Muokkaus sovellettu — tallennettu tälle sivustolle."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Poisto sovellettu — tallennettu tälle sivustolle."
+  },
+  "scanner_block_warning": {
+    "message": "Esto estää KAIKKI tämän ominaisuuden tulevat lukemiset — voi rikkoa siitä riippuvaisen sivun toiminnallisuuden. Tätä ei voi kumota päivittämällä; poista sääntö kojelaudan Yleiset säännöt -sivulta palauttaaksesi."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Estä silti"
+  },
+  "scanner_edit_customOption": {
+    "message": "Mukautettu…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "yksi token, ei välilyöntejä (esim. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Kirjoita arvo ilman välilyöntejä."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Välilyönnit eivät ole sallittuja — hylätään."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Tallennetaan muodossa: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Sivun globaalit muuttujat ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Suodata nimen mukaan…"
+  },
+  "scanner_empty": {
+    "message": "Tällä sivulla ei löytynyt sivun lisäämiä globaaleja muuttujia."
+  },
+  "scanner_footer_limitation": {
+    "message": "Näkee vain var/function-tyylisiä globaaleja muuttujia ja eksplisiittisiä window.x =-määrityksiä — let/const/class-julistukset ovat näkymättömiä millekään sivuskannerille (JS-kielen rajoitus)."
+  },
+  "scanner_loading": {
+    "message": "Skannataan sivun globaaleja muuttujia — peruuta painamalla Esc"
+  },
+  "common_add": {
+    "message": "Lisää"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Kojelauta"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Yleiskatsaus"
+  },
+  "dashboard_nav_rules": {
+    "message": "Mukautetut säännöt"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Sääntölähde"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Sallittujen lista"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Elementtisäännöt"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Yleiset säännöt"
+  },
+  "dashboard_nav_focus": {
+    "message": "Keskittyminen"
+  },
+  "dashboard_nav_settings": {
+    "message": "Asetukset"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Suojaus PÄÄLLÄ"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Suojaus $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Tue kehitystä PayPalin kautta"
+  },
+  "dashboard_donate_label": {
+    "message": "Osta minulle kahvi ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "PÄÄLLÄ"
+  },
+  "dashboard_toggle_off": {
+    "message": "POIS"
+  },
+  "dashboard_overview_title": {
+    "message": "Yleiskatsaus"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Suojauksesi kojelauta"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Estetty yhteensä"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0 % tänään"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Pysäytetyt seurannat"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0 % tänään"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Estetty haittaohjelma"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "pysäytettyä uhkaa"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Uhkia ei havaittu"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Säästetty kaistanleveys"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "keskiarvo per sivu"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Säästetty aika"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "tässä istunnossa"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 tänään",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— tänään"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1 % eiliseen verrattuna",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 uhkaa tänään"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 lisää",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Estetyt pyynnöt"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Seurantapyynnöt"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Haittaohjelmahavainnot"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7 pv"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14 pv"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30 pv"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "estetty"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "seurannat"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "haittaohjelma"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Eniten estetyt verkkotunnukset"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Eniten seurantoja sisältävät verkkotunnukset"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Eniten haittaohjelmia sisältävät verkkotunnukset"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Näytä kaikki"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Näytä vähemmän"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Näytä kaikki ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Ei vielä tietoja."
+  },
+  "dashboard_privacy_title": {
+    "message": "Yksityisyyspisteet"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Estetyt mainokset"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Estetyt seurannat"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Haittaohjelmasuoja"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Viittaajan anonymisointi"
+  },
+  "dashboard_rules_title": {
+    "message": "Mukautetut säännöt"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Muokkaa site-rules.txt-muodossa — sama syntaksi kuin pääsääntötiedostossa. Arvot yhdistetään sisäänrakennettuihin sääntöihin."
+  },
+  "dashboard_rules_clear": {
+    "message": "Tyhjennä"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Tyhjennetäänkö kaikki mukautetut säännöt?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Mukautetut säännöt — sama muoto kuin site-rules.txt\n# Arvot YHDISTETÄÄN sisäänrakennettuihin sääntöihin (ei korvata).\n#\n# ── Uuden verkkotunnuksen liittäminen sääntöosioon ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← alitunnukset täsmätään automaattisesti\n#\n# ── Lisäverkkotunnusten lisääminen yleiseen estoon ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Sivustokohtaiset kosmeettiset säännöt ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Sallittujen lista"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Sivustot, jotka ohittavat kaiken eston"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Lisää sivusto"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Elementtisäännöt"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elementit, jotka on piilotettu manuaalisesti \"Valitse piilotettava elementti\" -toiminnolla — ryhmitelty sivustoittain"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Ei vielä sääntöjä."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Yleiset säännöt"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Ikkunan globaalit muuttujat, jotka on manuaalisesti estetty/muokattu/poistettu \"Skannaa sivu skriptien/muuttujien varalta\" -toiminnolla — ryhmitelty sivustoittain"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Ei vielä sääntöjä."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "estä"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "muokkaa"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "poista"
+  },
+  "dashboard_focus_title": {
+    "message": "Keskittymistila"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Estä häiritsevät sivustot aikataulun mukaan"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Keskittymisistunto"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Istunto keskeytetty"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Istunto käynnissä…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Istunto valmis!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 min"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 min"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 min"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 min"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Mukautettu"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Häiriölista"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Lisää"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Anna verkkotunnus, joka estetään keskittymisen aikana (esim. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Asetukset"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Mukauta AdBlockin toimintaa"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Estäminen"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Estä mainokset"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standardi mainosverkostojen esto"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Estä seurannat"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Estä analytiikka- ja seurantaskriptit"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kosmeettinen suodatus"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Piilota jäljelle jääneet mainospaikat CSS:n avulla"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Estä haittaohjelmat"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Estä tunnetut haittaohjelmien verkkotunnukset"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Yksityisyys"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Viittaajan anonymisointi"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Poista viittaajaotsikot ristialkuperäpyynnöistä"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Yleinen yksityisyydenhallinta (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Lähetä GPC-kieltäytymissignaali (Sec-GPC-otsikko + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Älä seuraa -otsikko (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Lähetä DNT: 1 -pyyntöotsikko"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Tiedot"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Kerää tilastoja"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Vain paikalliset käyttötilastot (ei koskaan ladata)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Nollaa kaikki tiedot"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Tyhjennä säännöt, tilastot ja asetukset"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Nollaa"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Nollataanko kaikki AdBlock-tiedot? Tätä ei voi kumota."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Kaikki tiedot tyhjennetty. Ladataan uudelleen…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Tietoja"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versio"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Tarkista päivitykset"
+  },
+  "dashboard_settings_checking": {
+    "message": "Tarkistetaan…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Uudempi versio saatavilla"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Näytä"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Viimeksi tarkistettu $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (epäonnistui — oletko yhteydettä?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Ei vielä tarkistettu"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 on saatavilla (sinulla on v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Sääntölähde"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Mistä AdBlock hakee sivustosääntönsä"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Etäsääntöjen URL-osoitteet"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Sisältää sisäänrakennetun oletuksen (kytkettävissä, ei poistettavissa) sekä kaikki lisäämäsi URL-osoitteet — kaikki yhdistetty, jokainen erikseen päällä/pois."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Lisää URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Paikalliset sääntötiedostot"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Lataa .txt-sääntötiedostoja — yhdistetään URL-lähteisiin. Useita tiedostoja tuetaan."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Lisää tiedosto…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Viedään…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Vienti epäonnistui: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "tuntematon virhe"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 muunnettu, $2 ohitettu $3 säännöstä",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 poikkeussääntöä (ei peruutusmallia täällä)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 proseduraalista valitsinta (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 laajennettua AdGuard-muuntajaa",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 kartoittamatonta skriptikutsua",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 ei-tuettua verkkosääntömuuntajaa",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 jo koottu tämän laajennuksen omaan site-rules.txt-tiedostoon",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 tunnistamatonta syntaksia",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 ladattu",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 ladattu",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Vie"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Lataa tämän lähteen säännöt muunnettuna tämän laajennuksen omaan syntaksiin"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Oletus"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList-perhe"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Kielen mukaan"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Mukautettu (omat URL-osoitteesi)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Testidataa lisätty päivälle $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Yleiset"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Kieli"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Käynnistää tämän sivun uudelleen muutoksen jälkeen"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automaattinen (selaimen kieli)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Valikko"
+  }
+}

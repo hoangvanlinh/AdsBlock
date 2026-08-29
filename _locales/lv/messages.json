@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Bloķē reklāmas, izsekotājus un zināmus ļaunprātīgus domēnus, izmantojot vienkāršu vietņu kontroli un fokusa rīkus."
+  },
+  "blocked_pageTitle": {
+    "message": "Vietne bloķēta — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Vietne bloķēta jūsu drošībai"
+  },
+  "blocked_title_adPopup": {
+    "message": "Uznirstošais/jaunās cilnes reklāmas logs bloķēts"
+  },
+  "blocked_host_unknown": {
+    "message": "nezināma vietne"
+  },
+  "blocked_hint_default": {
+    "message": "Šī vietne ir ļaunprogrammatūras / pikšķerēšanas melnajā sarakstā. Tā var mēģināt nozagt jūsu informāciju, iegūt kriptovalūtu vai instalēt nevēlamu programmatūru."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Klikšķis vietnē, no kuras jūs atnācāt, mēģināja atvērt šo reklāmas/uznirstošā loga tīklu jaunā cilnē. Šo cilni var droši aizvērt."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Vairs nebrīdināt mani par šo vietni"
+  },
+  "blocked_btn_goBack": {
+    "message": "Atgriezties"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Aizvērt šo logu"
+  },
+  "blocked_btn_proceed": {
+    "message": "Tomēr turpināt"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Turpina…"
+  },
+  "common_remove": {
+    "message": "Noņemt"
+  },
+  "common_cancel": {
+    "message": "Atcelt"
+  },
+  "menu_pickElement": {
+    "message": "Izvēlēties elementu, ko slēpt…"
+  },
+  "menu_scanGlobals": {
+    "message": "Skenēt lapu skriptu/mainīgo meklēšanai…"
+  },
+  "menu_editRules": {
+    "message": "Rediģēt šīs vietnes noteikumus…"
+  },
+  "picker_badge_active": {
+    "message": "Notiek elementa izvēle slēpšanai — spiediet Esc, lai atceltu"
+  },
+  "picker_btn_hide": {
+    "message": "Slēpt šo elementu"
+  },
+  "picker_btn_broaden": {
+    "message": "Paplašināt"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Vadības panelis"
+  },
+  "popup_review_title": {
+    "message": "Patīk AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Ātrs vērtējums ļoti palīdz."
+  },
+  "popup_review_rate": {
+    "message": "Novērtēt mūs"
+  },
+  "popup_review_dismiss": {
+    "message": "Nē, paldies"
+  },
+  "popup_stat_blocked": {
+    "message": "Bloķēts"
+  },
+  "popup_stat_malware": {
+    "message": "Ļaunprogrammatūra"
+  },
+  "popup_stat_speed": {
+    "message": "Ātrums"
+  },
+  "popup_stat_saved": {
+    "message": "Ietaupīts"
+  },
+  "popup_allowlist_banner": {
+    "message": "Šī vietne ir atļauto sarakstā"
+  },
+  "popup_action_focus": {
+    "message": "Fokusa režīms"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Apturēt vietnē"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Atsākt vietni"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Privātuma rādītājs"
+  },
+  "popup_footer_settings": {
+    "message": "Iestatījumi"
+  },
+  "popup_ruleChip_title": {
+    "message": "Pašlaik ielādētie tīkla bloķēšanas noteikumi"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… noteikumi"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "tīkla noteikumi: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "Ielādēti $1 tīkla noteikumi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Atbalstīt izstrādi ar PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Ziedot"
+  },
+  "popup_version_title": {
+    "message": "AdBlock versija"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Pieejams atjauninājums — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Ir pieejama jaunāka versija — noklikšķiniet, lai atvērtu veikala ierakstu"
+  },
+  "popup_domain_unknown": {
+    "message": "Nezināma vietne"
+  },
+  "popup_status_site": {
+    "message": "Vietne"
+  },
+  "popup_status_protection": {
+    "message": "Aizsardzība"
+  },
+  "popup_status_allowlisted": {
+    "message": "Atļauto sarakstā"
+  },
+  "popup_status_on": {
+    "message": "IESLĒGTA"
+  },
+  "popup_status_paused": {
+    "message": "Apturēta"
+  },
+  "popup_status_off": {
+    "message": "IZSLĒGTA"
+  },
+  "common_save": {
+    "message": "Saglabāt"
+  },
+  "common_close": {
+    "message": "Aizvērt"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Rediģēt noteikumus — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Noklikšķiniet, lai ievietotu teksta laukā"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Atslēgu uzziņa ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtrēt atslēgas…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOSMĒTISKĀ / KANDIDĀTU ATBILSTĪBA"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SKRIPTI (PAPLAŠINĀTI)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Pašreizējie šīs vietnes noteikumi ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(šai vietnei vēl nav noteikumu — ne iebūvētu, ne pielāgotu)"
+  },
+  "ruleEditor_hint": {
+    "message": "Katrā rindā viena \"key = value | value2\". Noklikšķiniet uz atslēgas augstāk, lai to ievietotu. Bez [section] virsrakstiem. Šeit ierakstītie noteikumi tiek PIEVIENOTI šīs atslēgas esošajiem noteikumiem (skatiet augstāk) — tas nevar noņemt vai pārrakstīt iebūvētu noteikumu, un vienvērtības karodziņu atslēgām parasti joprojām uzvar iebūvētā vērtība."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Saglabāts — pārlādējiet šo lapu, lai redzētu piemērotos noteikumus."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Saglabāšana neizdevās — pārbaudiet, vai nav nejaušas \"[section]\" rindas vai pārāk liela ielīmēta teksta."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS selektori, kas bez nosacījumiem tiek slēpti ar ievietotu stila lapu — bez heiristikas pārbaudes, vienkārši slēpj uzreiz."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS selektori KANDIDĀTU elementiem — tiek slēpti tikai tad, ja tie arī atbilst zemāk esošajiem labels/link_patterns."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Tas pats, kas selectors, bet ierobežots ar feed/laika joslas tipa konteineriem."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Tas pats, kas selectors, bet ierobežots ar tirdzniecības/veikala tipa konteineriem."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Tas pats, kas selectors, bet ierobežots ar sānjoslas/labās puses paneļa zonu."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Tas pats, kas selectors, bet ierobežots ar atsevišķu ziņu/rakstu konteineriem."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS selektori \"host\" elementiem, pārbaudīti tāpat kā selectors augstāk."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Teksta etiķetes (piem., sponsored, promoted), kas tiek salīdzinātas ar atribūtiem/konteksta tekstu, lai apstiprinātu, ka kandidāts patiešām ir reklāma."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Apakšvirknes paraugi, kas tiek salīdzināti ar kandidāta pašu saitēm/atribūtiem, lai apstiprinātu, ka tā ir reklāma."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "HTML atribūtu nosaukumi, kas tiek skenēti label/link_pattern atbilstībām (noklusējums: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Bērnelementi, no kuriem iegūt tekstu etiķešu salīdzināšanai (noklusējums: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS selektors(-i), pa kuriem uziet augšup ar .closest(), pirms slēpt atbilstošu kandidātu (slēpt konteineru, ne tikai etiķeti)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Klašu nosaukumi, kas nepārtraukti tiek noņemti no <html>/<body> — tas neitralizē tikai-CSS pārņemšanas pārklājumus, kurus vada saknes klase."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "CSS īpašību nosaukumi, kas nepārtraukti tiek notīrīti no <html>/<body> iekļautā (inline) stila — tas neitralizē ar JS iestatītu ritināšanas bloķēšanu utt."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 karodziņš — automātiski aizvērt uznirstošās/paslēptās cilnes, ko atver klikšķi šajā vietnē."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — bloķēt loga īpašību pastāvīgi noteiktā vērtībā (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — izmest kļūdu, ja jebkurš skripts nolasa šo loga īpašību."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — izmest kļūdu, ja jebkurš skripts pieraksta šo loga īpašību."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — izmest kļūdu tikai tad, ja izsaucošā skripta paša steka pēdas atbilst needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — izmest kļūdu, kad skripts, kura avots atbilst needle, nolasa target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — bloķēt vai novirzīt uz viltus mērķi window.open() izsaukumus, kas atbilst pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — bloķēt fetch() izsaukumus, kas atbilst kritērijiem."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — bloķēt XMLHttpRequest izsaukumus, kas atbilst kritērijiem."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — bloķēt fetch, pēc izvēles atgriežot fiksētu viltus atbildes saturu."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — neļauj tās pašas izcelsmes about:blank iframe piekļūt atpakaļ reālajam logam, lai apietu bloķējumu."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — noņemt laukus no jebkura JSON.parse() rezultāta."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — noņemt laukus no fetch() JSON atbildes."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — noņemt laukus no XHR JSON atbildes."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — noņemt laukus no objekta, kuru skripts piešķir tieši (nevis caur JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — uz JSONPath balstīta lauku dzēšana fetch() JSON atbildē."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — uz JSONPath balstīta lauku dzēšana XHR JSON-lines atbildē."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Noņemt laukus no protobuf/jspb kodētas atbildes."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath rediģēšana (gan dzēšana, GAN vērtību piešķiršana) izejošā pieprasījuma saturā."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath rediģēšana (gan dzēšana, GAN vērtību piešķiršana) atbildes saturā."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex meklēšana/aizvietošana fetch() atbildes saturā."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex meklēšana/aizvietošana XHR atbildes saturā."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — aizvietot vienu funkcijai nodotu argumentu."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — beznosacījumu teksta aizvietošana izejošos datos (bez URL ierobežojuma)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — pārrakstīt <script> taga tekstu pirms tā izpildes. sedCount ierobežo, cik mezglus šis noteikums jebkad pārrakstīs (noklusējums: neierobežoti)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — noņemt laukus no objekta, kas tiek nodots IEKŠĀ natīvā metodes izsaukumā."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — pārtraukt vai klusi ignorēt natīvās metodes izsaukumu, kas atbilst signature."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — atmest vai izmest kļūdu piekļuves iestatītāja (setter) piešķiršanai (piem., Element.prototype.innerHTML), kuras vērtība atbilst needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — noņemt reklāmu segmentus no HLS .m3u8 atskaņošanas saraksta atbildes."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — imitēt veiksmīgu script/img/iframe/link ielādi, nevis reālu tīkla pieprasījumu."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — noņemt HTML atribūtus no atbilstošiem elementiem."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — notīrīt DOM mezgla teksta saturu."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — pārrakstīt DOM mezgla teksta saturu."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — apturēt <meta http-equiv=\"refresh\"> automātisko novirzīšanu."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — iestatīt sīkdatni."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — noņemt sīkdatnes, kas atbilst nosaukuma paraugam."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — iestatīt localStorage ierakstu (ierobežots ar drošām burtiskām vērtībām vai īpašo \"remove\" vērtību, lai dzēstu atbilstošas atslēgas)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — pārrakstīt saites href no tās paša teksta vai cita atribūta."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — bloķēt setTimeout() izsaukumus, kas atbilst kritērijiem."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — bloķēt setInterval() izsaukumus, kas atbilst kritērijiem."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — bloķēt requestAnimationFrame() izsaukumus, kas atbilst kritērijiem."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — bloķēt addEventListener() izsaukumus, kas atbilst kritērijiem."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — paātrināt/palēnināt atbilstošus setTimeout() izsaukumus, nevis tos bloķēt."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — paātrināt/palēnināt atbilstošus setInterval() izsaukumus, nevis tos bloķēt."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — bloķēt eval() izsaukumus, kuru avots atbilst pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Atspējo RTCPeerConnection — bloķē uz WebRTC balstītus uznirstošo logu/izsekošanas trikus."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Neitralizē BlockAdBlock/FuckAdBlock tipa anti-adblock atklāšanas skriptus."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Noņem target=\"_blank\" no noklikšķinātām saitēm — bloķē piespiedu jaunas cilnes novirzīšanu."
+  },
+  "scanner_value_emptyString": {
+    "message": "Tukša virkne"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Tukšs masīvs"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Tukšs objekts"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Tukša funkcija (bez darbības)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funkcija, kas vienmēr atgriež true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funkcija, kas vienmēr atgriež false"
+  },
+  "scanner_btn_block": {
+    "message": "Bloķēt"
+  },
+  "scanner_btn_edit": {
+    "message": "Rediģēt"
+  },
+  "scanner_btn_delete": {
+    "message": "Dzēst"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Bloķēšana piemērota — saglabāta šai vietnei."
+  },
+  "scanner_status_editApplied": {
+    "message": "Rediģēšana piemērota — saglabāta šai vietnei."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Dzēšana piemērota — saglabāta šai vietnei."
+  },
+  "scanner_block_warning": {
+    "message": "Bloķēšana neļauj VISUS turpmākos šī īpašuma nolasījumus — var izjaukt lapas funkcionalitāti, kas no tā ir atkarīga. To nevar atsaukt, atsvaidzinot lapu; lai atceltu, noņemiet noteikumu vadības paneļa lapā Global Rules."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Tomēr bloķēt"
+  },
+  "scanner_edit_customOption": {
+    "message": "Pielāgots…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "viena vērtība, bez atstarpēm (piem., 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Ievadiet vērtību bez atstarpēm."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Atstarpes nav atļautas — tiks noraidīts."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Tiks saglabāts kā: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Lapas globālie mainīgie ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtrēt pēc nosaukuma…"
+  },
+  "scanner_empty": {
+    "message": "Šajā lapā nav atrasti lapas pievienoti globālie mainīgie."
+  },
+  "scanner_footer_limitation": {
+    "message": "Redz tikai var/function tipa globālos mainīgos un tiešus window.x = piešķīrumus — let/const/class deklarācijas nav redzamas nevienam lapas skenerim (JS valodas ierobežojums)."
+  },
+  "scanner_loading": {
+    "message": "Skenē lapas globālos mainīgos — spiediet Esc, lai atceltu"
+  },
+  "common_add": {
+    "message": "Pievienot"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Vadības panelis"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Pārskats"
+  },
+  "dashboard_nav_rules": {
+    "message": "Pielāgotie noteikumi"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Noteikumu avots"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Atļauto saraksts"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Elementu noteikumi"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Globālie noteikumi"
+  },
+  "dashboard_nav_focus": {
+    "message": "Fokuss"
+  },
+  "dashboard_nav_settings": {
+    "message": "Iestatījumi"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Aizsardzība IESLĒGTA"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Aizsardzība $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Atbalstīt izstrādi ar PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Nopērc man kafiju ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "IESLĒGTS"
+  },
+  "dashboard_toggle_off": {
+    "message": "IZSLĒGTS"
+  },
+  "dashboard_overview_title": {
+    "message": "Pārskats"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Jūsu aizsardzības vadības panelis"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Kopā bloķēts"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% šodien"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Apturēti izsekotāji"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% šodien"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Bloķēta ļaunprogrammatūra"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "apturēti draudi"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Draudi nav konstatēti"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Ietaupīts joslas platums"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "vidēji uz lapu"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Ietaupītais laiks"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "šajā sesijā"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 šodien",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— šodien"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% salīdzinājumā ar vakardienu",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 draudu šodien"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 vairāk",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Bloķētie pieprasījumi"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Izsekotāju pieprasījumi"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Ļaunprogrammatūras atklāšana"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7d"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14d"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30d"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "bloķēts"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "izsekotāji"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "ļaunprogrammatūra"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Visvairāk bloķētie domēni"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Visvairāk izsekotāju domēni"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Visvairāk ļaunprogrammatūras domēni"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Skatīt visu"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Rādīt mazāk"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Skatīt visu ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Vēl nav datu."
+  },
+  "dashboard_privacy_title": {
+    "message": "Privātuma rādītājs"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Bloķētas reklāmas"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Bloķēti izsekotāji"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Aizsardzība pret ļaunprogrammatūru"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Referrer anonimizācija"
+  },
+  "dashboard_rules_title": {
+    "message": "Pielāgotie noteikumi"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Rediģēt site-rules.txt formātā — tāda pati sintakse kā galvenajā noteikumu failā. Vērtības tiek apvienotas ar iebūvētajiem noteikumiem."
+  },
+  "dashboard_rules_clear": {
+    "message": "Notīrīt"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Notīrīt visus pielāgotos noteikumus?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Pielāgoti noteikumi — tāds pats formāts kā site-rules.txt\n# Vērtības tiek APVIENOTAS ar iebūvētajiem noteikumiem (nevis aizstātas).\n#\n# ── Piesaistīt jaunu domēnu noteikumu sadaļai ──────────────────────────────────\n# [host_patterns]\n# example.com = example      ← apakšdomēni tiek saskaņoti automātiski\n#\n# ── Pievienot papildu domēnus globālai bloķēšanai ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Kosmētiskie noteikumi katrai vietnei ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Atļauto saraksts"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Vietnes, kas apiet visu bloķēšanu"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Pievienot vietni"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Elementu noteikumi"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elementi, kas manuāli paslēpti, izmantojot \"Izvēlēties elementu, ko slēpt\" — grupēti pēc vietnes"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Vēl nav noteikumu."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Globālie noteikumi"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Loga globālie mainīgie, kas manuāli bloķēti/rediģēti/dzēsti, izmantojot \"Skenēt lapu skriptu/mainīgo meklēšanai\" — grupēti pēc vietnes"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Vēl nav noteikumu."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "bloķēt"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "rediģēt"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "dzēst"
+  },
+  "dashboard_focus_title": {
+    "message": "Fokusa režīms"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Bloķēt uzmanību novērsošas vietnes pēc grafika"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Fokusa sesija"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Sesija apturēta"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Sesija darbojas…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Sesija pabeigta!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25m"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45m"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60m"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90m"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Pielāgots"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Novēršanas saraksts"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Pievienot"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Ievadiet domēnu, ko bloķēt fokusa laikā (piem., twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Iestatījumi"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Pielāgot AdBlock darbību"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Bloķēšana"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Bloķēt reklāmas"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standarta reklāmu tīklu bloķēšana"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Bloķēt izsekotājus"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Bloķēt analītikas un izsekošanas skriptus"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kosmētiskā filtrēšana"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Slēpt atlikušos reklāmu vietturus ar CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Bloķēt ļaunprogrammatūru"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Bloķēt zināmus ļaunprogrammatūras domēnus"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Privātums"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Referrer anonimizācija"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Noņemt referrer galvenes starpdomēnu pieprasījumos"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Globālā privātuma kontrole"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Sūtīt GPC atteikšanās signālu (Sec-GPC galvene + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Do Not Track galvene"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Sūtīt DNT: 1 pieprasījuma galveni"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Dati"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Vākt statistiku"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Tikai lokāla lietošanas statistika (nekad netiek augšupielādēta)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Atiestatīt visus datus"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Notīrīt noteikumus, statistiku un iestatījumus"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Atiestatīt"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Atiestatīt visus AdBlock datus? To nevar atsaukt."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Visi dati notīrīti. Notiek pārlāde…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Par"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versija"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Pārbaudīt atjauninājumus"
+  },
+  "dashboard_settings_checking": {
+    "message": "Pārbauda…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Ir pieejama jaunāka versija"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Skatīt"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Pēdējoreiz pārbaudīts $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (neizdevās — nav interneta savienojuma?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Vēl nav pārbaudīts"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "Pieejama v$1 (jums ir v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Noteikumu avots"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "No kurienes AdBlock iegūst savus vietņu noteikumus"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Attālinātie noteikumu URL"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Ietver iebūvēto noklusējumu (pārslēdzams, nenoņemams) plus jebkurus jūsu pievienotos URL — visi apvienoti, katrs neatkarīgi ieslēdzams/izslēdzams."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Pievienot URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Vietējie noteikumu faili"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Augšupielādēt .txt noteikumu failus — apvienoti ar URL avotiem. Atbalstīti vairāki faili."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Pievienot failu…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Eksportē…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Eksportēšana neizdevās: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "nezināma kļūda"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 konvertēti, $2 izlaisti no $3 noteikumiem",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 izņēmuma noteikumi (šeit nav atcelšanas modeļa)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 procedurāli selektori (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 AdGuard paplašinātie modifikatori",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 nekartēti skriptu izsaukumi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 neatbalstīti tīkla noteikumu modifikatori",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 jau apstrādāti šī repozitorija paša site-rules.txt failā",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 neatpazīta sintakse",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 ielādēti",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 ielādēti",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Eksportēt"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Lejupielādēt šī avota noteikumus, konvertētus šī repozitorija pašu sintaksē"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Noklusējums"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList saime"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Pēc valodas"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Pielāgoti (jūsu paša URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Ielādēti fiktīvi dati priekš $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Vispārīgi"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Valoda"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Pēc maiņas šī lapa tiek restartēta"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automātiski (pārlūkprogrammas valoda)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Izvēlne"
+  }
+}

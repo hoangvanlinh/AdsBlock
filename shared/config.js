@@ -23,9 +23,7 @@ self.ADBLOCK_CONFIG = {
   // right ship-time default for these — they should stay off for everyone
   // else, not on-by-default the way a language-agnostic source is.
   //
-  // The region entries below are every asset tagged `"group": "regions"` in
-  // uBlock Origin's own asset list (github.com/gorhill/uBlock — assets.json)
-  // as of 2026-08-22, one entry per list (first mirror URL when an asset
+  // The dashboard's Rule Source page shows a "Region/Language" column for
   // lists more than one). Re-pull that file and re-filter on group ===
   // 'regions' to refresh this set instead of hand-editing entries in place.
   RULES_REMOTE_URL: [

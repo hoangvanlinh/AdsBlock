@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "通过简单的网站控制和专注工具，拦截广告、跟踪器和已知的恶意域名。"
+  },
+  "blocked_pageTitle": {
+    "message": "网站已拦截 — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "为了您的安全，此网站已被拦截"
+  },
+  "blocked_title_adPopup": {
+    "message": "已拦截弹窗/新标签页广告"
+  },
+  "blocked_host_unknown": {
+    "message": "未知网站"
+  },
+  "blocked_hint_default": {
+    "message": "此网站在恶意软件/网络钓鱼黑名单中。它可能会试图窃取您的信息、挖掘加密货币或安装不需要的软件。"
+  },
+  "blocked_hint_adPopup": {
+    "message": "您来源页面上的一次点击试图在新标签页中打开这个广告/弹窗网络。您可以放心关闭此标签页。"
+  },
+  "blocked_dontWarn_label": {
+    "message": "不再提醒我此网站"
+  },
+  "blocked_btn_goBack": {
+    "message": "返回"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "关闭此窗口"
+  },
+  "blocked_btn_proceed": {
+    "message": "仍要继续"
+  },
+  "blocked_btn_proceeding": {
+    "message": "正在继续…"
+  },
+  "common_remove": {
+    "message": "移除"
+  },
+  "common_cancel": {
+    "message": "取消"
+  },
+  "menu_pickElement": {
+    "message": "选取要隐藏的元素…"
+  },
+  "menu_scanGlobals": {
+    "message": "扫描页面中的脚本/变量…"
+  },
+  "menu_editRules": {
+    "message": "编辑此网站的规则…"
+  },
+  "picker_badge_active": {
+    "message": "正在选取要隐藏的元素 — 按 Esc 取消"
+  },
+  "picker_btn_hide": {
+    "message": "隐藏此元素"
+  },
+  "picker_btn_broaden": {
+    "message": "扩大范围"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — 广告与跟踪器拦截"
+  },
+  "popup_openDashboard_title": {
+    "message": "控制面板"
+  },
+  "popup_review_title": {
+    "message": "AdBlock 好用吗？"
+  },
+  "popup_review_subtitle": {
+    "message": "简单评分会有很大帮助。"
+  },
+  "popup_review_rate": {
+    "message": "去评分"
+  },
+  "popup_review_dismiss": {
+    "message": "不用了"
+  },
+  "popup_stat_blocked": {
+    "message": "已拦截"
+  },
+  "popup_stat_malware": {
+    "message": "恶意软件"
+  },
+  "popup_stat_speed": {
+    "message": "速度"
+  },
+  "popup_stat_saved": {
+    "message": "已节省"
+  },
+  "popup_allowlist_banner": {
+    "message": "此网站已加入白名单"
+  },
+  "popup_action_focus": {
+    "message": "专注模式"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ 在此网站暂停"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ 在此网站恢复"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "隐私评分"
+  },
+  "popup_footer_settings": {
+    "message": "设置"
+  },
+  "popup_ruleChip_title": {
+    "message": "当前已加载的网络拦截规则"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… 条规则"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "网络规则：？"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "已加载 $1 条网络规则",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "通过 PayPal 支持开发"
+  },
+  "popup_donate_label": {
+    "message": "捐赠"
+  },
+  "popup_version_title": {
+    "message": "AdBlock 版本"
+  },
+  "popup_version_updateAvailable": {
+    "message": "有可用更新 — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "有新版本可用 — 点击打开商店页面"
+  },
+  "popup_domain_unknown": {
+    "message": "未知网站"
+  },
+  "popup_status_site": {
+    "message": "网站"
+  },
+  "popup_status_protection": {
+    "message": "保护"
+  },
+  "popup_status_allowlisted": {
+    "message": "已加入白名单"
+  },
+  "popup_status_on": {
+    "message": "开启"
+  },
+  "popup_status_paused": {
+    "message": "已暂停"
+  },
+  "popup_status_off": {
+    "message": "关闭"
+  },
+  "common_save": {
+    "message": "保存"
+  },
+  "common_close": {
+    "message": "关闭"
+  },
+  "ruleEditor_panel_title": {
+    "message": "编辑规则 — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "点击以插入文本框"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "键值参考（$1）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "筛选键名…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "外观隐藏 / 候选匹配"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "脚本片段（高级）"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "此网站当前的规则（$1）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "（此网站暂无规则 — 内置或自定义均无）"
+  },
+  "ruleEditor_hint": {
+    "message": "每行一条 \"key = value | value2\"。点击上方的键名可将其插入。不要使用 [section] 标题。此处输入的规则会被添加到该键已有的规则中（见上方）— 无法删除或覆盖内置规则，且对于单值标志键，内置值通常仍然优先。"
+  },
+  "ruleEditor_status_saved": {
+    "message": "已保存 — 重新加载此页面以查看应用的规则。"
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "保存失败 — 请检查是否有多余的 \"[section]\" 行或粘贴内容过大。"
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "通过注入的样式表无条件隐藏的 CSS 选择器 — 不做启发式检查，见即隐藏。"
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "用于候选元素的 CSS 选择器 — 仅当它们同时匹配下方的 labels/link_patterns 时才会被隐藏。"
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "与 selectors 相同，仅限于信息流/时间线样式的容器。"
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "与 selectors 相同，仅限于市场/购物样式的容器。"
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "与 selectors 相同，仅限于侧边栏/右侧栏区域。"
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "与 selectors 相同，仅限于单个帖子/文章容器。"
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "用于 \"host\" 元素的 CSS 选择器，检查方式与上方的 selectors 相同。"
+  },
+  "ruleEditor_ref_labels": {
+    "message": "与属性/上下文文本进行匹配的文本标签（例如 sponsored、promoted），用于确认候选元素确实是广告。"
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "与候选元素自身的链接/属性进行匹配的子字符串模式，用于确认它是广告。"
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "用于扫描 label/link_pattern 匹配的 HTML 属性名（默认：aria-label、data-promoted、post-type 等）。"
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "用于提取文本以进行 label 匹配的子元素（默认：header、[role=heading]、span、a）。"
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "在隐藏匹配到的候选元素之前，通过 .closest() 向上查找的 CSS 选择器（隐藏整个容器，而不仅仅是标签本身）。"
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "持续从 <html>/<body> 中剥离的类名 — 用于破解由根类驱动的纯 CSS 劫持式遮罩层。"
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "持续从 <html>/<body> 的内联样式中清除的 CSS 属性名 — 用于破解由 JS 设置的滚动锁定等行为。"
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 标志 — 自动关闭因点击此网站而打开的弹窗/后置弹窗标签页。"
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — 将某个 window 属性永久锁定为固定值（undefined、true、false、noopFunc 等）。"
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — 当任何脚本读取该 window 属性时抛出错误。"
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — 当任何脚本写入该 window 属性时抛出错误。"
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — 仅当调用脚本自身的调用栈匹配 needle 时才抛出错误。"
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — 当源码匹配 needle 的脚本读取 target 时抛出错误。"
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — 拦截或诱饵重定向匹配 pattern 的 window.open() 调用。"
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — 拦截匹配条件的 fetch() 调用。"
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — 拦截匹配条件的 XMLHttpRequest 调用。"
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — 拦截 fetch，可选择返回一个固定的伪造响应体。"
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — 阻止同源的 about:blank iframe 反向访问真实 window 以绕过锁定。"
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — 从任何 JSON.parse() 结果中移除字段。"
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — 从 fetch() 的 JSON 响应中移除字段。"
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — 从 XHR 的 JSON 响应中移除字段。"
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — 对脚本直接赋值（而非通过 JSON.parse）的对象进行裁剪。"
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — 在 fetch() 的 JSON 响应中基于 JSONPath 删除字段。"
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — 在 XHR 的 JSON-lines 格式响应中基于 JSONPath 删除字段。"
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "从 protobuf/jspb 编码的响应中移除字段。"
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — 对发出的请求体进行基于 JSONPath 的编辑（删除及赋值）。"
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — 对响应体进行基于 JSONPath 的编辑（删除及赋值）。"
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — 对 fetch() 响应体进行正则查找/替换。"
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — 对 XHR 响应体进行正则查找/替换。"
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — 替换传递给某个函数的一个参数。"
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — 对发出的数据进行无条件文本替换（不限定 URL）。"
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — 在 <script> 标签运行前重写其文本内容。sedCount 限制该规则最多重写的节点数（默认：无限制）。"
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — 从传入某个原生方法调用的对象中裁剪字段。"
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — 中止或静默跳过匹配某个签名的原生方法调用。"
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — 当通过访问器 setter（例如 Element.prototype.innerHTML）赋的值匹配 needle 时，丢弃赋值或抛出错误。"
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — 从 HLS .m3u8 播放列表响应中移除广告片段。"
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — 伪造 script/img/iframe/link 加载成功，而不实际发起网络请求。"
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — 从匹配的元素中移除 HTML 属性。"
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — 清空某个 DOM 节点的文本内容。"
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — 重写某个 DOM 节点的文本内容。"
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — 阻止 <meta http-equiv=\"refresh\"> 自动跳转。"
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — 设置一个 cookie。"
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — 移除匹配名称模式的 cookie。"
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — 设置一个 localStorage 项（仅限安全的字面值，或使用特殊关键字 \"remove\" 来删除匹配的键）。"
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — 根据链接自身的文本或另一个属性重写其 href。"
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — 拦截匹配条件的 setTimeout() 调用。"
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — 拦截匹配条件的 setInterval() 调用。"
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — 拦截匹配条件的 requestAnimationFrame() 调用。"
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — 拦截匹配条件的 addEventListener() 调用。"
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — 加快/减慢匹配的 setTimeout() 调用，而不是直接拦截。"
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — 加快/减慢匹配的 setInterval() 调用，而不是直接拦截。"
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — 拦截源码匹配 pattern 的 eval() 调用。"
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "禁用 RTCPeerConnection — 拦截基于 WebRTC 的弹窗/追踪手段。"
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "破解 BlockAdBlock/FuckAdBlock 一类的反广告拦截检测脚本。"
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "从被点击的链接上移除 target=\"_blank\" — 阻止强制新标签页跳转。"
+  },
+  "scanner_value_emptyString": {
+    "message": "空字符串"
+  },
+  "scanner_value_emptyArray": {
+    "message": "空数组"
+  },
+  "scanner_value_emptyObject": {
+    "message": "空对象"
+  },
+  "scanner_value_noopFunc": {
+    "message": "空函数（无操作）"
+  },
+  "scanner_value_trueFunc": {
+    "message": "始终返回 true 的函数"
+  },
+  "scanner_value_falseFunc": {
+    "message": "始终返回 false 的函数"
+  },
+  "scanner_btn_block": {
+    "message": "拦截"
+  },
+  "scanner_btn_edit": {
+    "message": "编辑"
+  },
+  "scanner_btn_delete": {
+    "message": "删除"
+  },
+  "scanner_status_blockApplied": {
+    "message": "已应用拦截 — 已为此网站保存。"
+  },
+  "scanner_status_editApplied": {
+    "message": "已应用编辑 — 已为此网站保存。"
+  },
+  "scanner_status_deleteApplied": {
+    "message": "已应用删除 — 已为此网站保存。"
+  },
+  "scanner_block_warning": {
+    "message": "拦截会阻止此后对该属性的所有读取操作 — 可能会破坏依赖它的页面功能。刷新页面无法撤销此操作；请在控制面板的 Global Rules 页面中删除该规则以恢复。"
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "仍然拦截"
+  },
+  "scanner_edit_customOption": {
+    "message": "自定义…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "单个词元，不含空格（例如：42、hello、{}）"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "请输入一个不含空格的值。"
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "不允许包含空格 — 将被拒绝。"
+  },
+  "scanner_edit_hintPreview": {
+    "message": "将存储为：$1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "页面全局变量（$1）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "按名称筛选…"
+  },
+  "scanner_empty": {
+    "message": "此页面上未发现由页面自身添加的全局变量。"
+  },
+  "scanner_footer_limitation": {
+    "message": "只能看到 var/function 风格的全局变量以及显式的 window.x = 赋值 — let/const/class 声明对任何页面扫描器都是不可见的（JS 语言本身的限制）。"
+  },
+  "scanner_loading": {
+    "message": "正在扫描页面全局变量 — 按 Esc 取消"
+  },
+  "common_add": {
+    "message": "添加"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — 控制面板"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — 广告与跟踪器拦截"
+  },
+  "dashboard_nav_overview": {
+    "message": "概览"
+  },
+  "dashboard_nav_rules": {
+    "message": "自定义规则"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "规则来源"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "白名单"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "元素规则"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "全局规则"
+  },
+  "dashboard_nav_focus": {
+    "message": "专注"
+  },
+  "dashboard_nav_settings": {
+    "message": "设置"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "保护已开启"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "保护 $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "通过 PayPal 支持开发"
+  },
+  "dashboard_donate_label": {
+    "message": "请我喝杯咖啡 ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "开启"
+  },
+  "dashboard_toggle_off": {
+    "message": "关闭"
+  },
+  "dashboard_overview_title": {
+    "message": "概览"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "您的保护面板"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "总计拦截"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "今日 +0%"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "已拦截跟踪器"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "今日 +0%"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "已拦截恶意软件"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "已阻止的威胁"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "未检测到威胁"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "已节省带宽"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "平均每页"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "已节省时间"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "本次会话"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "今日 +$1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "今日 —"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "较昨日 $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "今日 0 个威胁"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 及另外 $2 个",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "拦截的请求"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "跟踪器请求"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "恶意软件检测"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7 天"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14 天"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30 天"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "已拦截"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "跟踪器"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "恶意软件"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1：$2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "拦截最多的域名"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "跟踪器最多的域名"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "恶意软件最多的域名"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "查看全部"
+  },
+  "dashboard_domains_showLess": {
+    "message": "收起"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "查看全部（$1）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "暂无数据。"
+  },
+  "dashboard_privacy_title": {
+    "message": "隐私评分"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "已拦截广告"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "已拦截跟踪器"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "恶意软件防护"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "来源匿名化"
+  },
+  "dashboard_rules_title": {
+    "message": "自定义规则"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "以 site-rules.txt 格式编辑 — 与主规则文件使用相同语法。数值会与内置规则合并。"
+  },
+  "dashboard_rules_clear": {
+    "message": "清空"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "清空所有自定义规则？"
+  },
+  "dashboard_customRules_template": {
+    "message": "# 自定义规则 — 与 site-rules.txt 格式相同\n# 数值会与内置规则合并（而非替换）。\n#\n# ── 将新域名映射到某个规则分区 ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← 子域名会自动匹配\n#\n# ── 全局添加需要拦截的额外域名 ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── 针对单个网站的外观规则 ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "白名单"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "绕过所有拦截的网站"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ 添加网站"
+  },
+  "dashboard_elementRules_title": {
+    "message": "元素规则"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "通过\"选取要隐藏的元素\"手动隐藏的元素 — 按网站分组"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "暂无规则。"
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1（$2）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "全局规则"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "通过\"扫描页面中的脚本/变量\"手动拦截/编辑/删除的 window 全局变量 — 按网站分组"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "暂无规则。"
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1（$2）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "拦截"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "编辑"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "删除"
+  },
+  "dashboard_focus_title": {
+    "message": "专注模式"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "按计划拦截让人分心的网站"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "专注时段"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "时段已暂停"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "时段进行中…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "时段已完成！"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 分钟"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 分钟"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 分钟"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 分钟"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "自定义"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "分钟"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "分心网站列表"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ 添加"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "输入专注期间要拦截的域名（例如：twitter.com）："
+  },
+  "dashboard_settings_title": {
+    "message": "设置"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "自定义 AdBlock 的行为"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "拦截"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "拦截广告"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "标准广告网络拦截"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "拦截跟踪器"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "拦截分析和跟踪脚本"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "外观过滤"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "通过 CSS 隐藏残留的广告占位符"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "拦截恶意软件"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "拦截已知的恶意软件域名"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "隐私"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "来源匿名化"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "在跨域请求中去除 referrer 请求头"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "全局隐私控制（GPC）"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "发送 GPC 退出信号（Sec-GPC 请求头 + navigator.globalPrivacyControl）"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "请勿跟踪（DNT）请求头"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "发送 DNT: 1 请求头"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "数据"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "收集统计信息"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "仅本地使用统计（绝不上传）"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "重置所有数据"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "清除规则、统计信息和设置"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "重置"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "重置所有 AdBlock 数据？此操作无法撤销。"
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "所有数据已清除。正在重新加载…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "关于"
+  },
+  "dashboard_settings_version_name": {
+    "message": "版本"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "检查更新"
+  },
+  "dashboard_settings_checking": {
+    "message": "正在检查…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "有新版本可用"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "查看"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "上次检查时间：$1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": "（失败 — 离线？）"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "尚未检查过"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 可用（您当前使用的是 v$2）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "规则来源"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock 获取网站规则的来源"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "远程规则地址"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "包含内置的默认来源（可开关，不可删除），以及您添加的任何地址 — 全部合并使用，各自独立开关。"
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "添加地址"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "本地规则文件"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "上传 .txt 规则文件 — 与 URL 来源合并使用。支持多个文件。"
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "添加文件…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "正在导出…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "导出失败：$1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "未知错误"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "已转换 $1 条，跳过 $2 条，共 $3 条规则",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 条例外规则（此处没有对应的取消匹配模型）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 个过程化选择器（:has-text、:xpath 等）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 个 AdGuard 扩展修饰符",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 个未映射的脚本片段调用",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 个不支持的网络规则修饰符",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 条已存在于本仓库自带的 site-rules.txt 中",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 条无法识别的语法",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "已加载 $1/$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "已加载 $1 条",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "导出"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "下载此来源的规则，已转换为本仓库自己的语法"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "默认"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList 系列"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "按语言分类"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "自定义（您自己的地址）"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1（$2）",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "已为 $1 生成测试数据：",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "常规"
+  },
+  "dashboard_settings_language_name": {
+    "message": "语言"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "更改后将重新加载此页面"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "自动（跟随浏览器语言）"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "菜单"
+  }
+}

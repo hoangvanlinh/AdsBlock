@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "חסום פרסומות, גורמי מעקב ותחומים זדוניים ידועים באמצעות פקדי אתר פשוטים וכלי ריכוז.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "האתר נחסם — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "האתר נחסם למען בטיחותך"
+  },
+  "blocked_title_adPopup": {
+    "message": "פרסומת קופצת/כרטיסייה חדשה נחסמה"
+  },
+  "blocked_host_unknown": {
+    "message": "אתר לא ידוע"
+  },
+  "blocked_hint_default": {
+    "message": "אתר זה נמצא ברשימת חסימה של תוכנות זדוניות/דיוג. הוא עלול לנסות לגנוב את המידע שלך, לכרות מטבעות קריפטו או להתקין תוכנה לא רצויה."
+  },
+  "blocked_hint_adPopup": {
+    "message": "לחיצה בדף שממנו הגעת ניסתה לפתוח את רשת הפרסום/החלונות הקופצים הזו בכרטיסייה חדשה. אפשר לסגור כרטיסייה זו בבטחה."
+  },
+  "blocked_dontWarn_label": {
+    "message": "אל תזהיר אותי שוב לגבי אתר זה"
+  },
+  "blocked_btn_goBack": {
+    "message": "חזרה"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "סגור חלון זה"
+  },
+  "blocked_btn_proceed": {
+    "message": "המשך בכל זאת"
+  },
+  "blocked_btn_proceeding": {
+    "message": "ממשיך…"
+  },
+  "common_remove": {
+    "message": "הסר"
+  },
+  "common_cancel": {
+    "message": "ביטול"
+  },
+  "menu_pickElement": {
+    "message": "בחר רכיב להסתרה…"
+  },
+  "menu_scanGlobals": {
+    "message": "סרוק את הדף לחיפוש סקריפטים/משתנים…"
+  },
+  "menu_editRules": {
+    "message": "ערוך כללים לאתר זה…"
+  },
+  "picker_badge_active": {
+    "message": "בוחר רכיב להסתרה — לחץ Esc לביטול"
+  },
+  "picker_btn_hide": {
+    "message": "הסתר רכיב זה"
+  },
+  "picker_btn_broaden": {
+    "message": "הרחב"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "לוח בקרה"
+  },
+  "popup_review_title": {
+    "message": "נהנה מ-AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "דירוג מהיר עוזר מאוד."
+  },
+  "popup_review_rate": {
+    "message": "דרג אותנו"
+  },
+  "popup_review_dismiss": {
+    "message": "לא תודה"
+  },
+  "popup_stat_blocked": {
+    "message": "נחסמו"
+  },
+  "popup_stat_malware": {
+    "message": "תוכנה זדונית"
+  },
+  "popup_stat_speed": {
+    "message": "מהירות"
+  },
+  "popup_stat_saved": {
+    "message": "נחסך"
+  },
+  "popup_allowlist_banner": {
+    "message": "אתר זה ברשימת ההתרה"
+  },
+  "popup_action_focus": {
+    "message": "מצב ריכוז"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ השהה עבור אתר זה"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ המשך אתר"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "ציון פרטיות"
+  },
+  "popup_footer_settings": {
+    "message": "הגדרות"
+  },
+  "popup_ruleChip_title": {
+    "message": "כללי חסימת רשת שטעונים כעת"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… כללים"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "כללי רשת: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 כללי רשת נטענו",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "תמוך בפיתוח דרך PayPal"
+  },
+  "popup_donate_label": {
+    "message": "תרום"
+  },
+  "popup_version_title": {
+    "message": "גרסת AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "עדכון זמין — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "גרסה חדשה יותר זמינה — לחץ לפתיחת דף החנות"
+  },
+  "popup_domain_unknown": {
+    "message": "אתר לא ידוע"
+  },
+  "popup_status_site": {
+    "message": "אתר"
+  },
+  "popup_status_protection": {
+    "message": "הגנה"
+  },
+  "popup_status_allowlisted": {
+    "message": "מותר"
+  },
+  "popup_status_on": {
+    "message": "פעילה"
+  },
+  "popup_status_paused": {
+    "message": "מושהית"
+  },
+  "popup_status_off": {
+    "message": "כבויה"
+  },
+  "common_save": {
+    "message": "שמור"
+  },
+  "common_close": {
+    "message": "סגור"
+  },
+  "ruleEditor_panel_title": {
+    "message": "ערוך כללים — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "לחץ להוספה לתיבת הטקסט"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "מדריך מפתחות ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "סנן מפתחות…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "התאמה קוסמטית / מועמדת"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "סקריפטלטים (מתקדם)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "כללים נוכחיים לאתר זה ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(אין עדיין כללים לאתר זה — לא מובנים ולא מותאמים אישית)"
+  },
+  "ruleEditor_hint": {
+    "message": "\"key = value | value2\" אחד בכל שורה. לחץ על מפתח למעלה כדי להוסיף אותו. אין כותרות [section]. כללים שנכתבים כאן מתווספים לכללים הקיימים עבור מפתח זה (ראה למעלה) — לא ניתן להסיר או לעקוף כלל מובנה, ועבור מפתחות דגל בעלי ערך יחיד, הערך המובנה בדרך כלל מנצח."
+  },
+  "ruleEditor_status_saved": {
+    "message": "נשמר — טען מחדש דף זה כדי לראות את הכללים שהוחלו."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "השמירה נכשלה — בדוק אם יש שורת \"[section]\" בודדת או הדבקה ענקית."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "בוררי CSS המוסתרים ללא תנאי באמצעות גיליון סגנון מוזרק — ללא בדיקה היוריסטית, פשוט מוסתר עם ראייה."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "בוררי CSS לרכיבים מועמדים — מוסתרים רק אם הם תואמים גם ל-labels/link_patterns למטה."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "כמו selectors, מוגבל למכולות בסגנון פיד/ציר זמן."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "כמו selectors, מוגבל למכולות בסגנון שוק/קניות."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "כמו selectors, מוגבל לאזור סרגל צד/עמודה ימנית."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "כמו selectors, מוגבל למכולות פוסט/מאמר בודדות."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "בוררי CSS לרכיבי \"מארח\", נבדקים באותה דרך כמו selectors למעלה."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "תוויות טקסט (למשל sponsored, promoted) המושוות למאפיינים/טקסט הקשר כדי לאשר שמועמד הוא באמת פרסומת."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "תבניות תת-מחרוזת המושוות לקישורים/מאפיינים של המועמד עצמו כדי לאשר שזו פרסומת."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "שמות מאפייני HTML הנסרקים להתאמות label/link_pattern (ברירת מחדל: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "רכיבי צאצא שמהם נשלף טקסט להתאמת תוויות (ברירת מחדל: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "בורר(י) CSS לעלייה דרך .closest() לפני הסתרת מועמד תואם (מסתיר את המכולה, לא רק את התווית)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "שמות מחלקות המוסרים ברציפות מ-<html>/<body> — מביס שכבות השתלטות המבוססות CSS בלבד המונעות על ידי מחלקת שורש."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "שמות מאפייני CSS המנוקים ברציפות מהסגנון המוטבע של <html>/<body> — מביס נעילת גלילה שנקבעה על ידי JS וכו'."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "דגל 1/0 — סוגר אוטומטית כרטיסיות קופצות/נסתרות שנפתחות מקליקים באתר זה."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — נועל לצמיתות מאפיין חלון לערך קבוע (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — זורק שגיאה כאשר סקריפט כלשהו קורא מאפיין חלון זה."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — זורק שגיאה כאשר סקריפט כלשהו כותב למאפיין חלון זה."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — זורק שגיאה רק כאשר עקבת המחסנית של הסקריפט הקורא עצמו תואמת ל-needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — זורק שגיאה כאשר סקריפט עם מקור שתואם ל-needle קורא את target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — חוסם או מפנה למתקן פיתיון קריאות window.open() שתואמות ל-pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — חוסם קריאות fetch() שתואמות לקריטריונים."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — חוסם קריאות XMLHttpRequest שתואמות לקריטריונים."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — חוסם fetch, עם אפשרות להחזיר גוף תגובה מזויף קבוע."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — מונע מ-iframe בעל about:blank מאותו מקור להגיע חזרה לחלון האמיתי כדי לעקוף נעילה."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — מסיר שדות מכל תוצאת JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — מסיר שדות מתגובת JSON של fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — מסיר שדות מתגובת JSON של XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — גוזם אובייקט שסקריפט מקצה ישירות (לא דרך JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — מחיקות שדות מבוססות JSONPath בתגובת JSON של fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — מחיקות שדות מבוססות JSONPath בתגובת JSON-lines של XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "מסיר שדות מתגובה המקודדת ב-protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — עריכות JSONPath (מחיקות והקצאת ערכים כאחד) על גוף בקשה יוצאת."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — עריכות JSONPath (מחיקות והקצאת ערכים כאחד) על גוף תגובה."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — חיפוש/החלפה ב-regex בגוף תגובת fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — חיפוש/החלפה ב-regex בגוף תגובת XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — מחליף ארגומנט אחד שמועבר לפונקציה."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — החלפת טקסט ללא תנאי בנתונים יוצאים (ללא הגבלת URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — כותב מחדש את הטקסט של תג <script> לפני שהוא רץ. sedCount מגביל כמה צמתים כלל זה יכתוב מחדש בסך הכל (ברירת מחדל: ללא הגבלה)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — גוזם שדות מאובייקט שמועבר לתוך קריאת שיטה מקורית."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — מבטל או מתעלם בשקט מקריאת שיטה מקורית שתואמת לחתימה."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — מפיל או זורק שגיאה בהקצאת setter נגיש (למשל Element.prototype.innerHTML) שערכו תואם ל-needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — מסיר קטעי פרסומות מתגובת רשימת ניגון HLS ‎.m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — מעמיד פנים שטעינת script/img/iframe/link הצליחה במקום בקשת הרשת האמיתית."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — מסיר מאפייני HTML מרכיבים תואמים."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — מנקה את תוכן הטקסט של צומת DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — כותב מחדש את תוכן הטקסט של צומת DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — עוצר הפניה אוטומטית דרך <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — מגדיר עוגייה."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — מסיר עוגיות שתואמות לתבנית שם."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — מגדיר ערך ב-localStorage (מוגבל לערכים מילוליים בטוחים, או הערך המיוחד \"remove\" למחיקת מפתחות תואמים)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — כותב מחדש את ה-href של קישור מהטקסט שלו עצמו או ממאפיין אחר."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — חוסם קריאות setTimeout() שתואמות לקריטריונים."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — חוסם קריאות setInterval() שתואמות לקריטריונים."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — חוסם קריאות requestAnimationFrame() שתואמות לקריטריונים."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — חוסם קריאות addEventListener() שתואמות לקריטריונים."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — מאיץ/מאט קריאות setTimeout() תואמות במקום לחסום אותן."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — מאיץ/מאט קריאות setInterval() תואמות במקום לחסום אותן."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — חוסם קריאות eval() שהמקור שלהן תואם ל-pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "מנטרל את RTCPeerConnection — חוסם תרגילי חלונות קופצים/מעקב מבוססי WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "מנטרל סקריפטי זיהוי אנטי-חסימת-פרסומות בסגנון BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "מסיר target=\"_blank\" מקישורים שנלחצו — חוסם הפניות כפויות לכרטיסייה חדשה."
+  },
+  "scanner_value_emptyString": {
+    "message": "מחרוזת ריקה"
+  },
+  "scanner_value_emptyArray": {
+    "message": "מערך ריק"
+  },
+  "scanner_value_emptyObject": {
+    "message": "אובייקט ריק"
+  },
+  "scanner_value_noopFunc": {
+    "message": "פונקציה ריקה (ללא פעולה)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "פונקציה שמחזירה תמיד true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "פונקציה שמחזירה תמיד false"
+  },
+  "scanner_btn_block": {
+    "message": "חסום"
+  },
+  "scanner_btn_edit": {
+    "message": "ערוך"
+  },
+  "scanner_btn_delete": {
+    "message": "מחק"
+  },
+  "scanner_status_blockApplied": {
+    "message": "החסימה הוחלה — נשמרה עבור אתר זה."
+  },
+  "scanner_status_editApplied": {
+    "message": "העריכה הוחלה — נשמרה עבור אתר זה."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "המחיקה הוחלה — נשמרה עבור אתר זה."
+  },
+  "scanner_block_warning": {
+    "message": "חסימה מונעת את כל הקריאות העתידיות של מאפיין זה — עלולה לשבש פונקציונליות דף שתלויה בו. לא ניתן לבטל זאת ברענון; הסר את הכלל מדף הכללים הגלובליים בלוח הבקרה כדי לשחזר."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "חסום בכל זאת"
+  },
+  "scanner_edit_customOption": {
+    "message": "מותאם אישית…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "אסימון בודד, ללא רווחים (למשל 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "הקלד ערך ללא רווחים."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "רווחים אינם מותרים — יידחה."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "יישמר כ: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "משתנים גלובליים של הדף ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "סנן לפי שם…"
+  },
+  "scanner_empty": {
+    "message": "לא נמצאו משתנים גלובליים שנוספו על ידי הדף בדף זה."
+  },
+  "scanner_footer_limitation": {
+    "message": "רואה רק משתנים גלובליים בסגנון var/function והקצאות מפורשות של window.x = — הכרזות let/const/class אינן נראות לכל סורק דפים (מגבלת שפת JS)."
+  },
+  "scanner_loading": {
+    "message": "סורק משתנים גלובליים של הדף — לחץ Esc לביטול"
+  },
+  "common_add": {
+    "message": "הוסף"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — לוח בקרה"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "סקירה כללית"
+  },
+  "dashboard_nav_rules": {
+    "message": "כללים מותאמים אישית"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "מקור כללים"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "רשימת התרה"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "כללי רכיבים"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "כללים גלובליים"
+  },
+  "dashboard_nav_focus": {
+    "message": "ריכוז"
+  },
+  "dashboard_nav_settings": {
+    "message": "הגדרות"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "הגנה פעילה"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "הגנה $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "תמוך בפיתוח דרך PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "קנה לי קפה ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "פעילה"
+  },
+  "dashboard_toggle_off": {
+    "message": "כבויה"
+  },
+  "dashboard_overview_title": {
+    "message": "סקירה כללית"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "לוח ההגנה שלך"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "סה\"כ נחסמו"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% היום"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "גורמי מעקב נעצרו"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% היום"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "תוכנה זדונית נחסמה"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "איומים נעצרו"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "לא זוהו איומים"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "רוחב פס שנחסך"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "ממוצע לדף"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "זמן שנחסך"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "בסשן זה"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 היום",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— היום"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% לעומת אתמול",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 איומים היום"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 ועוד $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "בקשות שנחסמו"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "בקשות גורמי מעקב"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "זיהויי תוכנות זדוניות"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7 ימים"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14 ימים"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30 ימים"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "נחסמו"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "גורמי מעקב"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "תוכנה זדונית"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "תחומים חסומים ביותר"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "תחומים עם הכי הרבה גורמי מעקב"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "תחומים עם הכי הרבה תוכנה זדונית"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "הצג הכל"
+  },
+  "dashboard_domains_showLess": {
+    "message": "הצג פחות"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "הצג הכל ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "אין נתונים עדיין."
+  },
+  "dashboard_privacy_title": {
+    "message": "ציון פרטיות"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "פרסומות שנחסמו"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "גורמי מעקב שנחסמו"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "הגנה מפני תוכנות זדוניות"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "אנונימיזציית מפנה"
+  },
+  "dashboard_rules_title": {
+    "message": "כללים מותאמים אישית"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "ערוך בפורמט site-rules.txt — אותו תחביר כמו קובץ הכללים הראשי. ערכים ממוזגים עם כללים מובנים."
+  },
+  "dashboard_rules_clear": {
+    "message": "נקה"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "לנקות את כל הכללים המותאמים אישית?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# כללים מותאמים אישית — אותו פורמט כמו site-rules.txt\n# ערכים מתמזגים עם הכללים המובנים (אינם מחליפים אותם).\n#\n# ── מיפוי תחום חדש לקטע כללים ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← תת-תחומים מותאמים אוטומטית\n#\n# ── הוספת תחומים נוספים לחסימה גלובלית ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── כללים קוסמטיים לכל אתר ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "רשימת התרה"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "אתרים העוקפים את כל החסימה"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ הוסף אתר"
+  },
+  "dashboard_elementRules_title": {
+    "message": "כללי רכיבים"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "רכיבים שהוסתרו ידנית באמצעות \"בחר רכיב להסתרה\" — מקובצים לפי אתר"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "אין עדיין כללים."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "כללים גלובליים"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "משתני חלון גלובליים שנחסמו/נערכו/נמחקו ידנית באמצעות \"סרוק את הדף לחיפוש סקריפטים/משתנים\" — מקובצים לפי אתר"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "אין עדיין כללים."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "חסום"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "ערוך"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "מחק"
+  },
+  "dashboard_focus_title": {
+    "message": "מצב ריכוז"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "חסום אתרים מסיחי דעת לפי לוח זמנים"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "סשן ריכוז"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "הסשן מושהה"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "הסשן פועל…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "הסשן הושלם!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 דק'"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 דק'"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 דק'"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 דק'"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "מותאם אישית"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "דק'"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "רשימת הסחות דעת"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ הוסף"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "הזן תחום לחסימה במהלך ריכוז (למשל twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "הגדרות"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "התאם אישית את התנהגות AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "חסימה"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "חסום פרסומות"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "חסימה סטנדרטית של רשתות פרסום"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "חסום גורמי מעקב"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "חסום סקריפטים של אנליטיקה ומעקב"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "סינון קוסמטי"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "הסתר מציין מקום פרסומות שנותרו באמצעות CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "חסום תוכנות זדוניות"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "חסום תחומי תוכנות זדוניות ידועים"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "פרטיות"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "אנונימיזציית מפנה"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "הסר כותרות מפנה בבקשות חוצות-מקור"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "בקרת פרטיות גלובלית (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "שלח את אות ההימנעות של GPC (כותרת Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "כותרת אל תעקוב (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "שלח כותרת בקשה DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "נתונים"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "אסוף סטטיסטיקות"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "סטטיסטיקות שימוש מקומיות בלבד (לעולם לא מועלות)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "אפס את כל הנתונים"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "נקה כללים, סטטיסטיקות והגדרות"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "איפוס"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "לאפס את כל נתוני AdBlock? לא ניתן לבטל פעולה זו."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "כל הנתונים נוקו. טוען מחדש…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "אודות"
+  },
+  "dashboard_settings_version_name": {
+    "message": "גרסה"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "בדוק עדכונים"
+  },
+  "dashboard_settings_checking": {
+    "message": "בודק…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "גרסה חדשה יותר זמינה"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "הצג"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "נבדק לאחרונה $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (נכשל — אתה לא מקוון?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "עדיין לא נבדק"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 זמינה (יש לך v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "מקור כללים"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "מהיכן AdBlock מביא את כללי האתר שלו"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "כתובות URL של כללים מרוחקים"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "כולל את ברירת המחדל המובנית (ניתנת להחלפה, לא ניתנת להסרה) בתוספת כל כתובת URL שתוסיף — כולן ממוזגות, כל אחת מופעלת/כבויה באופן עצמאי."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "הוסף URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "קבצי כללים מקומיים"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "העלה קבצי כללים .txt — ממוזגים עם מקורות URL. נתמכים מספר קבצים."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "הוסף קובץ…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "מייצא…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "הייצוא נכשל: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "שגיאה לא ידועה"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 הומרו, $2 דולגו מתוך $3 כללים",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 כללי חריגה (אין כאן מודל ביטול)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 בוררים פרוצדורליים (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 מתאמי AdGuard מורחבים",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 קריאות scriptlet לא ממופות",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 מתאמי כלל רשת לא נתמכים",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 כבר מוגדרים ב-site-rules.txt הפרטי של הרחבה זו",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 תחביר לא מזוהה",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 נטענו",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 נטענו",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "ייצוא"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "הורד את כללי מקור זה שהומרו לתחביר הפרטי של הרחבה זו"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "ברירת מחדל"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "משפחת EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "לפי שפה"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "מותאם אישית (כתובות ה-URL שלך)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "נתוני דמה נזרעו עבור $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "כללי"
+  },
+  "dashboard_settings_language_name": {
+    "message": "שפה"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "מפעיל מחדש דף זה לאחר שינוי"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "אוטומטי (שפת הדפדפן)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "תפריט"
+  }
+}

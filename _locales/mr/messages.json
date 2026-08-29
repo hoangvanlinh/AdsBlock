@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "सोप्या साइट नियंत्रणे आणि फोकस साधनांसह जाहिराती, ट्रॅकर आणि ज्ञात हानिकारक डोमेन ब्लॉक करा.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "साइट ब्लॉक केली — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "तुमच्या सुरक्षिततेसाठी साइट ब्लॉक केली"
+  },
+  "blocked_title_adPopup": {
+    "message": "पॉपअप/नवीन टॅब जाहिरात ब्लॉक केली"
+  },
+  "blocked_host_unknown": {
+    "message": "अज्ञात साइट"
+  },
+  "blocked_hint_default": {
+    "message": "ही साइट मालवेअर/फिशिंग ब्लॉकलिस्टमध्ये आहे. ती तुमची माहिती चोरण्याचा, क्रिप्टोकरन्सी माइन करण्याचा किंवा अनिष्ट सॉफ्टवेअर इंस्टॉल करण्याचा प्रयत्न करू शकते."
+  },
+  "blocked_hint_adPopup": {
+    "message": "तुम्ही ज्या पेजवरून आलात तेथील एका क्लिकने हे जाहिरात/पॉपअप नेटवर्क नवीन टॅबमध्ये उघडण्याचा प्रयत्न केला. तुम्ही हा टॅब सुरक्षितपणे बंद करू शकता."
+  },
+  "blocked_dontWarn_label": {
+    "message": "या साइटबद्दल मला पुन्हा इशारा देऊ नका"
+  },
+  "blocked_btn_goBack": {
+    "message": "मागे जा"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "ही विंडो बंद करा"
+  },
+  "blocked_btn_proceed": {
+    "message": "तरीही पुढे जा"
+  },
+  "blocked_btn_proceeding": {
+    "message": "पुढे जात आहोत…"
+  },
+  "common_remove": {
+    "message": "काढा"
+  },
+  "common_cancel": {
+    "message": "रद्द करा"
+  },
+  "menu_pickElement": {
+    "message": "लपवण्यासाठी एलिमेंट निवडा…"
+  },
+  "menu_scanGlobals": {
+    "message": "स्क्रिप्ट/व्हेरिएबल्ससाठी पेज स्कॅन करा…"
+  },
+  "menu_editRules": {
+    "message": "या साइटसाठी नियम संपादित करा…"
+  },
+  "picker_badge_active": {
+    "message": "लपवण्यासाठी एलिमेंट निवडत आहोत — रद्द करण्यासाठी Esc दाबा"
+  },
+  "picker_btn_hide": {
+    "message": "हे एलिमेंट लपवा"
+  },
+  "picker_btn_broaden": {
+    "message": "विस्तृत करा"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "डॅशबोर्ड"
+  },
+  "popup_review_title": {
+    "message": "AdBlock आवडते का?"
+  },
+  "popup_review_subtitle": {
+    "message": "एक जलद रेटिंग खूप मदत करते."
+  },
+  "popup_review_rate": {
+    "message": "आम्हाला रेट करा"
+  },
+  "popup_review_dismiss": {
+    "message": "नको धन्यवाद"
+  },
+  "popup_stat_blocked": {
+    "message": "ब्लॉक केले"
+  },
+  "popup_stat_malware": {
+    "message": "मालवेअर"
+  },
+  "popup_stat_speed": {
+    "message": "वेग"
+  },
+  "popup_stat_saved": {
+    "message": "वाचवले"
+  },
+  "popup_allowlist_banner": {
+    "message": "ही साइट परवानगी यादीत आहे"
+  },
+  "popup_action_focus": {
+    "message": "फोकस मोड"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ या साइटवर विराम द्या"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ साइट पुन्हा सुरू करा"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "गोपनीयता स्कोअर"
+  },
+  "popup_footer_settings": {
+    "message": "सेटिंग्ज"
+  },
+  "popup_ruleChip_title": {
+    "message": "सध्या लोड केलेले नेटवर्क ब्लॉकिंग नियम"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… नियम"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "नेटवर्क नियम: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 नेटवर्क नियम लोड झाले",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "PayPal द्वारे विकासाला पाठिंबा द्या"
+  },
+  "popup_donate_label": {
+    "message": "देणगी द्या"
+  },
+  "popup_version_title": {
+    "message": "AdBlock आवृत्ती"
+  },
+  "popup_version_updateAvailable": {
+    "message": "अपडेट उपलब्ध — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "नवीन आवृत्ती उपलब्ध आहे — स्टोअर पेज उघडण्यासाठी क्लिक करा"
+  },
+  "popup_domain_unknown": {
+    "message": "अज्ञात साइट"
+  },
+  "popup_status_site": {
+    "message": "साइट"
+  },
+  "popup_status_protection": {
+    "message": "संरक्षण"
+  },
+  "popup_status_allowlisted": {
+    "message": "परवानगी दिली"
+  },
+  "popup_status_on": {
+    "message": "चालू"
+  },
+  "popup_status_paused": {
+    "message": "विरामित"
+  },
+  "popup_status_off": {
+    "message": "बंद"
+  },
+  "common_save": {
+    "message": "जतन करा"
+  },
+  "common_close": {
+    "message": "बंद करा"
+  },
+  "ruleEditor_panel_title": {
+    "message": "नियम संपादित करा — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "टेक्स्टबॉक्समध्ये घालण्यासाठी क्लिक करा"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "की संदर्भ ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "की फिल्टर करा…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "कॉस्मेटिक / उमेदवार जुळणी"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "स्क्रिप्टलेट्स (प्रगत)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "या साइटसाठी सध्याचे नियम ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(या साइटसाठी अद्याप कोणतेही नियम नाहीत — बिल्ट-इन किंवा कस्टम नाहीत)"
+  },
+  "ruleEditor_hint": {
+    "message": "प्रति ओळ एक \"key = value | value2\". घालण्यासाठी वरील एका कीवर क्लिक करा. कोणतेही [section] हेडर नाहीत. येथे टाइप केलेले नियम या कीसाठी विद्यमान नियमांमध्ये जोडले जातात (वर पहा) — हे बिल्ट-इन नियम काढू किंवा ओव्हरराइड करू शकत नाही, आणि एकल-मूल्य फ्लॅग कींसाठी सहसा बिल्ट-इन मूल्य जिंकते."
+  },
+  "ruleEditor_status_saved": {
+    "message": "जतन केले — लागू केलेले नियम पाहण्यासाठी हे पेज पुन्हा लोड करा."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "जतन करणे अयशस्वी — एखादी वेगळी \"[section]\" ओळ किंवा प्रचंड पेस्ट आहे का ते तपासा."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "इंजेक्ट केलेल्या स्टाइलशीटद्वारे बिनशर्त लपवलेले CSS निवडक — कोणतीही ह्युरिस्टिक तपासणी नाही, दिसताच लपवा."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "उमेदवार एलिमेंट्ससाठी CSS निवडक — खालील labels/link_patterns देखील जुळले तरच लपवले जातात."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "selectors सारखेच, फीड/टाइमलाइन-शैली कंटेनर्सपर्यंत मर्यादित."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "selectors सारखेच, मार्केटप्लेस/शॉपिंग-शैली कंटेनर्सपर्यंत मर्यादित."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "selectors सारखेच, साइडबार/उजव्या रेल क्षेत्रापर्यंत मर्यादित."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "selectors सारखेच, वैयक्तिक पोस्ट/लेख कंटेनर्सपर्यंत मर्यादित."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "\"होस्ट\" एलिमेंट्ससाठी CSS निवडक, वरील selectors प्रमाणेच तपासले जातात."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "उमेदवार खरोखर जाहिरात आहे याची पुष्टी करण्यासाठी अ‍ॅट्रिब्यूट्स/संदर्भ मजकुराशी जुळवलेले मजकूर लेबल्स (उदा. sponsored, promoted)."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "ती जाहिरात आहे याची पुष्टी करण्यासाठी उमेदवाराच्या स्वतःच्या लिंक्स/अ‍ॅट्रिब्यूट्सशी जुळवलेले सबस्ट्रिंग पॅटर्न."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "label/link_pattern जुळण्यांसाठी स्कॅन केलेली HTML अ‍ॅट्रिब्यूट नावे (डीफॉल्ट: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "लेबल जुळणीसाठी मजकूर काढलेले चाइल्ड एलिमेंट्स (डीफॉल्ट: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "जुळणारा उमेदवार लपवण्यापूर्वी .closest() द्वारे वर जाण्यासाठी CSS निवडक (लेबलच नाही, तर कंटेनर लपवते)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "<html>/<body> मधून सतत काढलेली क्लास नावे — रूट क्लासद्वारे चालवलेल्या फक्त-CSS टेकओव्हर ओव्हरलेजना पराभूत करते."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "<html>/<body> इनलाइन स्टाइलमधून सतत साफ केलेली CSS प्रॉपर्टी नावे — JS-सेट स्क्रोल-लॉक इत्यादींना पराभूत करते."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 फ्लॅग — या साइटवरील क्लिक्समुळे उघडलेले पॉपअप/पॉपअंडर टॅब आपोआप बंद करते."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — विंडो प्रॉपर्टी कायमस्वरूपी निश्चित मूल्यावर लॉक करते (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — जेव्हा कोणतीही स्क्रिप्ट ही विंडो प्रॉपर्टी वाचते तेव्हा त्रुटी फेकते."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — जेव्हा कोणतीही स्क्रिप्ट या विंडो प्रॉपर्टीत लिहिते तेव्हा त्रुटी फेकते."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — केवळ जेव्हा कॉलिंग स्क्रिप्टचा स्वतःचा स्टॅक ट्रेस needle शी जुळतो तेव्हाच त्रुटी फेकते."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — needle शी जुळणाऱ्या स्रोतासह स्क्रिप्ट target वाचते तेव्हा त्रुटी फेकते."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — pattern शी जुळणारे window.open() कॉल्स ब्लॉक करते किंवा डिकॉयकडे रीडायरेक्ट करते."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — निकषांशी जुळणारे fetch() कॉल्स ब्लॉक करते."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — निकषांशी जुळणारे XMLHttpRequest कॉल्स ब्लॉक करते."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetch ब्लॉक करते, पर्यायाने एक निश्चित बनावट प्रतिसाद बॉडी परत करते."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — लॉक बायपास करण्यासाठी समान-मूळ about:blank iframe ला खऱ्या विंडोपर्यंत पोहोचण्यापासून रोखते."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — कोणत्याही JSON.parse() निकालातून फील्ड्स काढून टाकते."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — fetch() JSON प्रतिसादातून फील्ड्स काढून टाकते."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — XHR JSON प्रतिसादातून फील्ड्स काढून टाकते."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — स्क्रिप्ट थेट नियुक्त करते त्या ऑब्जेक्टला ट्रिम करते (JSON.parse द्वारे नाही)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — fetch() JSON प्रतिसादात JSONPath-आधारित फील्ड डिलीशन्स."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — XHR JSON-lines प्रतिसादात JSONPath-आधारित फील्ड डिलीशन्स."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "protobuf/jspb-एन्कोड केलेल्या प्रतिसादातून फील्ड्स काढून टाकते."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — आउटगोइंग विनंती बॉडीवर JSONPath एडिट्स (डिलीशन आणि मूल्य नियुक्ती दोन्ही)."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — प्रतिसाद बॉडीवर JSONPath एडिट्स (डिलीशन आणि मूल्य नियुक्ती दोन्ही)."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — fetch() प्रतिसाद बॉडीमध्ये regex शोध/बदली."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — XHR प्रतिसाद बॉडीमध्ये regex शोध/बदली."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — फंक्शनला पास केलेला एक आर्ग्युमेंट बदलते."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — आउटबाउंड डेटावर बिनशर्त मजकूर बदली (कोणतेही URL स्कोपिंग नाही)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — चालण्यापूर्वी <script> टॅगचा मजकूर पुन्हा लिहिते. sedCount हा नियम कधीही किती नोड्स पुन्हा लिहील ते मर्यादित करते (डीफॉल्ट: अमर्यादित)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — नेटिव्ह मेथड कॉलमध्ये पास केलेल्या ऑब्जेक्टमधून फील्ड्स ट्रिम करते."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — सिग्नेचरशी जुळणारा नेटिव्ह मेथड कॉल थांबवते किंवा शांतपणे दुर्लक्ष करते."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — मूल्य needle शी जुळणाऱ्या अ‍ॅक्सेसर सेटर नियुक्तीमध्ये (उदा. Element.prototype.innerHTML) सोडते किंवा त्रुटी फेकते."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — HLS .m3u8 प्लेलिस्ट प्रतिसादातून जाहिरात सेगमेंट्स काढून टाकते."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — खऱ्या नेटवर्क विनंतीऐवजी script/img/iframe/link लोड यशस्वी झाल्याचे भासवते."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — जुळणाऱ्या एलिमेंट्सवरून HTML अ‍ॅट्रिब्यूट्स काढून टाकते."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — DOM नोडची मजकूर सामग्री साफ करते."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — DOM नोडची मजकूर सामग्री पुन्हा लिहिते."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — <meta http-equiv=\"refresh\"> द्वारे स्वयंचलित रीडायरेक्ट थांबवते."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — कुकी सेट करते."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — नाव पॅटर्नशी जुळणाऱ्या कुकीज काढून टाकते."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — localStorage एंट्री सेट करते (सुरक्षित शाब्दिक मूल्यांपुरते मर्यादित, किंवा जुळणाऱ्या कीज डिलीट करण्यासाठी विशेष \"remove\" मूल्य)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — लिंकचा href त्याच्या स्वतःच्या मजकुरातून किंवा दुसऱ्या अ‍ॅट्रिब्यूटमधून पुन्हा लिहिते."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — निकषांशी जुळणारे setTimeout() कॉल्स ब्लॉक करते."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — निकषांशी जुळणारे setInterval() कॉल्स ब्लॉक करते."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — निकषांशी जुळणारे requestAnimationFrame() कॉल्स ब्लॉक करते."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — निकषांशी जुळणारे addEventListener() कॉल्स ब्लॉक करते."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — ब्लॉक करण्याऐवजी जुळणारे setTimeout() कॉल्स वेगवान/मंद करते."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — ब्लॉक करण्याऐवजी जुळणारे setInterval() कॉल्स वेगवान/मंद करते."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — स्रोत pattern शी जुळणारे eval() कॉल्स ब्लॉक करते."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnection अक्षम करते — WebRTC-आधारित पॉपअप/ट्रॅकिंग युक्त्या ब्लॉक करते."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "BlockAdBlock/FuckAdBlock-शैलीच्या अँटी-अ‍ॅडब्लॉक शोध स्क्रिप्ट्स निष्प्रभ करते."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "क्लिक केलेल्या लिंक्सवरून target=\"_blank\" काढून टाकते — सक्तीचे नवीन-टॅब रीडायरेक्ट्स ब्लॉक करते."
+  },
+  "scanner_value_emptyString": {
+    "message": "रिकामी स्ट्रिंग"
+  },
+  "scanner_value_emptyArray": {
+    "message": "रिकामी अ‍ॅरे"
+  },
+  "scanner_value_emptyObject": {
+    "message": "रिकामे ऑब्जेक्ट"
+  },
+  "scanner_value_noopFunc": {
+    "message": "रिकामे फंक्शन (काही परिणाम नाही)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "नेहमी true परत करणारे फंक्शन"
+  },
+  "scanner_value_falseFunc": {
+    "message": "नेहमी false परत करणारे फंक्शन"
+  },
+  "scanner_btn_block": {
+    "message": "ब्लॉक करा"
+  },
+  "scanner_btn_edit": {
+    "message": "संपादित करा"
+  },
+  "scanner_btn_delete": {
+    "message": "हटवा"
+  },
+  "scanner_status_blockApplied": {
+    "message": "ब्लॉक लागू केला — या साइटसाठी जतन केले."
+  },
+  "scanner_status_editApplied": {
+    "message": "संपादन लागू केले — या साइटसाठी जतन केले."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "हटवणे लागू केले — या साइटसाठी जतन केले."
+  },
+  "scanner_block_warning": {
+    "message": "ब्लॉक या प्रॉपर्टीच्या सर्व भविष्यातील रीड्सना प्रतिबंध करतो — यावर अवलंबून असलेली पेज कार्यक्षमता खंडित होऊ शकते. रिफ्रेश करून हे पूर्ववत केले जाऊ शकत नाही; पूर्ववत करण्यासाठी डॅशबोर्डच्या ग्लोबल रूल्स पेजवरून नियम काढा."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "तरीही ब्लॉक करा"
+  },
+  "scanner_edit_customOption": {
+    "message": "कस्टम…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "एकच टोकन, स्पेसशिवाय (उदा. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "स्पेसशिवाय मूल्य टाइप करा."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "स्पेसना परवानगी नाही — नाकारले जाईल."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "असे जतन केले जाईल: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "पेज ग्लोबल्स ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "नावाने फिल्टर करा…"
+  },
+  "scanner_empty": {
+    "message": "या पेजवर पेज-जोडलेले कोणतेही ग्लोबल्स सापडले नाहीत."
+  },
+  "scanner_footer_limitation": {
+    "message": "फक्त var/function-शैली ग्लोबल्स आणि स्पष्ट window.x = नियुक्त्या पाहते — let/const/class घोषणा कोणत्याही पेज स्कॅनरला अदृश्य असतात (JS भाषा मर्यादा)."
+  },
+  "scanner_loading": {
+    "message": "पेज ग्लोबल्स स्कॅन करत आहोत — रद्द करण्यासाठी Esc दाबा"
+  },
+  "common_add": {
+    "message": "जोडा"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — डॅशबोर्ड"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "आढावा"
+  },
+  "dashboard_nav_rules": {
+    "message": "कस्टम नियम"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "नियम स्रोत"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "परवानगी यादी"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "एलिमेंट नियम"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "ग्लोबल नियम"
+  },
+  "dashboard_nav_focus": {
+    "message": "फोकस"
+  },
+  "dashboard_nav_settings": {
+    "message": "सेटिंग्ज"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "संरक्षण चालू"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "संरक्षण $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "PayPal द्वारे विकासाला पाठिंबा द्या"
+  },
+  "dashboard_donate_label": {
+    "message": "मला कॉफी द्या ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "चालू"
+  },
+  "dashboard_toggle_off": {
+    "message": "बंद"
+  },
+  "dashboard_overview_title": {
+    "message": "आढावा"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "तुमचा संरक्षण डॅशबोर्ड"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "एकूण ब्लॉक केले"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% आज"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "थांबवलेले ट्रॅकर"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% आज"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "ब्लॉक केलेला मालवेअर"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "थांबवलेले धोके"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "कोणतेही धोके आढळले नाहीत"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "वाचवलेला बँडविड्थ"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "प्रति पेज सरासरी"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "वाचवलेला वेळ"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "या सत्रात"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 आज",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— आज"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "काल तुलनेत $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "आज 0 धोके"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 अधिक",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "ब्लॉक केलेल्या विनंत्या"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "ट्रॅकर विनंत्या"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "मालवेअर शोध"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7दि"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14दि"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30दि"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "ब्लॉक केले"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "ट्रॅकर"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "मालवेअर"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "सर्वाधिक ब्लॉक केलेले डोमेन"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "सर्वाधिक ट्रॅकर डोमेन"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "सर्वाधिक मालवेअर डोमेन"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "सर्व पहा"
+  },
+  "dashboard_domains_showLess": {
+    "message": "कमी दाखवा"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "सर्व पहा ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "अद्याप डेटा नाही."
+  },
+  "dashboard_privacy_title": {
+    "message": "गोपनीयता स्कोअर"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "ब्लॉक केलेल्या जाहिराती"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "ब्लॉक केलेले ट्रॅकर"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "मालवेअर संरक्षण"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "रेफरर निनावीकरण"
+  },
+  "dashboard_rules_title": {
+    "message": "कस्टम नियम"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "site-rules.txt फॉरमॅटमध्ये संपादित करा — मुख्य नियम फाइल प्रमाणेच सिंटॅक्स. मूल्ये बिल्ट-इन नियमांसह मर्ज केली जातात."
+  },
+  "dashboard_rules_clear": {
+    "message": "साफ करा"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "सर्व कस्टम नियम साफ करायचे?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# कस्टम नियम — site-rules.txt प्रमाणेच फॉरमॅट\n# मूल्ये बिल्ट-इन नियमांसह मर्ज केली जातात (बदलली जात नाहीत).\n#\n# ── नवीन डोमेन नियम विभागाशी मॅप करा ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← सबडोमेन आपोआप जुळतात\n#\n# ── जागतिक स्तरावर ब्लॉक करण्यासाठी अतिरिक्त डोमेन जोडा ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── प्रति-साइट कॉस्मेटिक नियम ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "परवानगी यादी"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "सर्व ब्लॉकिंग बायपास करणाऱ्या साइट्स"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ साइट जोडा"
+  },
+  "dashboard_elementRules_title": {
+    "message": "एलिमेंट नियम"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "\"लपवण्यासाठी एलिमेंट निवडा\" द्वारे मॅन्युअली लपवलेले एलिमेंट्स — साइटनुसार गटबद्ध"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "अद्याप कोणतेही नियम नाहीत."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "ग्लोबल नियम"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "\"स्क्रिप्ट/व्हेरिएबल्ससाठी पेज स्कॅन करा\" द्वारे मॅन्युअली ब्लॉक/संपादित/हटवलेले ग्लोबल विंडो व्हेरिएबल्स — साइटनुसार गटबद्ध"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "अद्याप कोणतेही नियम नाहीत."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "ब्लॉक"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "संपादित"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "हटवा"
+  },
+  "dashboard_focus_title": {
+    "message": "फोकस मोड"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "वेळापत्रकानुसार लक्ष विचलित करणाऱ्या साइट्स ब्लॉक करा"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "फोकस सत्र"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "सत्र विरामित"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "सत्र सुरू आहे…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "सत्र पूर्ण झाले!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25मि"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45मि"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60मि"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90मि"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "कस्टम"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "मिनिट"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "विचलन यादी"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ जोडा"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "फोकस दरम्यान ब्लॉक करण्यासाठी डोमेन प्रविष्ट करा (उदा. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "सेटिंग्ज"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlock वर्तन सानुकूलित करा"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "ब्लॉकिंग"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "जाहिराती ब्लॉक करा"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "मानक जाहिरात नेटवर्क ब्लॉकिंग"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "ट्रॅकर ब्लॉक करा"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "अ‍ॅनालिटिक्स आणि ट्रॅकिंग स्क्रिप्ट्स ब्लॉक करा"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "कॉस्मेटिक फिल्टरिंग"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "CSS द्वारे उरलेले जाहिरात प्लेसहोल्डर्स लपवा"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "मालवेअर ब्लॉक करा"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "ज्ञात मालवेअर डोमेन ब्लॉक करा"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "गोपनीयता"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "रेफरर निनावीकरण"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "क्रॉस-ओरिजिन विनंत्यांवरील रेफरर हेडर्स काढा"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "ग्लोबल प्रायव्हसी कंट्रोल (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC ऑप्ट-आउट सिग्नल पाठवा (Sec-GPC हेडर + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "डू नॉट ट्रॅक हेडर (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1 विनंती हेडर पाठवा"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "डेटा"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "आकडेवारी संकलित करा"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "फक्त स्थानिक वापर आकडेवारी (कधीही अपलोड होत नाही)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "सर्व डेटा रीसेट करा"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "नियम, आकडेवारी आणि सेटिंग्ज साफ करा"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "रीसेट करा"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "सर्व AdBlock डेटा रीसेट करायचा? हे पूर्ववत केले जाऊ शकत नाही."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "सर्व डेटा साफ केला. पुन्हा लोड होत आहे…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "विषयी"
+  },
+  "dashboard_settings_version_name": {
+    "message": "आवृत्ती"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "अपडेट्स तपासा"
+  },
+  "dashboard_settings_checking": {
+    "message": "तपासत आहोत…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "नवीन आवृत्ती उपलब्ध आहे"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "पहा"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "शेवटचे तपासले $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (अयशस्वी — तुम्ही ऑफलाइन आहात का?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "अद्याप तपासले नाही"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 उपलब्ध आहे (तुमच्याकडे v$2 आहे)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "नियम स्रोत"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock त्याचे साइट नियम कोठून मिळवते"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "रिमोट नियम URL"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "बिल्ट-इन डीफॉल्ट (टॉगल करण्यायोग्य, काढता येत नाही) आणि तुम्ही जोडलेली कोणतीही URL समाविष्ट आहे — सर्व मर्ज केलेली, प्रत्येक स्वतंत्रपणे चालू/बंद."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL जोडा"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "स्थानिक नियम फाइल्स"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txt नियम फाइल्स अपलोड करा — URL स्रोतांसह मर्ज केल्या जातात. अनेक फाइल्स समर्थित."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "फाइल जोडा…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "एक्सपोर्ट करत आहोत…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "एक्सपोर्ट अयशस्वी: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "अज्ञात त्रुटी"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$3 नियमांपैकी $1 रूपांतरित, $2 वगळले",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 अपवाद नियम (येथे रद्द करण्याचे मॉडेल नाही)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 प्रोसीजरल निवडक (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 विस्तारित AdGuard मॉडिफायर्स",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 न-मॅप केलेले स्क्रिप्टलेट कॉल्स",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 असमर्थित नेटवर्क-नियम मॉडिफायर्स",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 आधीच या एक्स्टेंशनच्या स्वतःच्या site-rules.txt मध्ये क्युरेट केलेले",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 अपरिचित सिंटॅक्स",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 लोड झाले",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 लोड झाले",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "एक्सपोर्ट करा"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "या एक्स्टेंशनच्या स्वतःच्या सिंटॅक्समध्ये रूपांतरित या स्रोताचे नियम डाउनलोड करा"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "डीफॉल्ट"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList कुटुंब"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "भाषेनुसार"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "कस्टम (तुमच्या स्वतःच्या URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "$1 साठी बनावट डेटा सीड केला:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "सामान्य"
+  },
+  "dashboard_settings_language_name": {
+    "message": "भाषा"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "बदलल्यानंतर हे पेज पुन्हा सुरू करते"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "स्वयंचलित (ब्राउझर भाषा)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "मेनू"
+  }
+}

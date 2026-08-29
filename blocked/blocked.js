@@ -189,7 +189,6 @@ let openerHost = '';
   });
 })();
 
-// "Proceed anyway" — mirrors uBlock Origin's own document-blocked page: a
 // Proceed button plus a "Don't warn me again about this site" checkbox.
 // Unchecked, the bypass only lasts this browser session (chrome.storage.
 // session, cleared on restart); checked, it's added to the PERMANENT

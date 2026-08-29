@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "সাধারণ সাইট নিয়ন্ত্রণ ও ফোকাস টুল দিয়ে বিজ্ঞাপন, ট্র্যাকার এবং পরিচিত ক্ষতিকর ডোমেইন ব্লক করুন।",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "সাইট ব্লক করা হয়েছে — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "আপনার নিরাপত্তার জন্য সাইটটি ব্লক করা হয়েছে"
+  },
+  "blocked_title_adPopup": {
+    "message": "পপআপ/নতুন ট্যাব বিজ্ঞাপন ব্লক করা হয়েছে"
+  },
+  "blocked_host_unknown": {
+    "message": "অজানা সাইট"
+  },
+  "blocked_hint_default": {
+    "message": "এই সাইটটি ম্যালওয়্যার/ফিশিং ব্লকলিস্টে রয়েছে। এটি আপনার তথ্য চুরি করতে, ক্রিপ্টোকারেন্সি মাইন করতে বা অবাঞ্ছিত সফটওয়্যার ইনস্টল করতে চেষ্টা করতে পারে।"
+  },
+  "blocked_hint_adPopup": {
+    "message": "আপনি যে পেজ থেকে এসেছেন সেখানে একটি ক্লিক এই বিজ্ঞাপন/পপআপ নেটওয়ার্কটি নতুন ট্যাবে খোলার চেষ্টা করেছিল। আপনি নিরাপদে এই ট্যাবটি বন্ধ করতে পারেন।"
+  },
+  "blocked_dontWarn_label": {
+    "message": "এই সাইট সম্পর্কে আর সতর্ক করবেন না"
+  },
+  "blocked_btn_goBack": {
+    "message": "ফিরে যান"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "এই উইন্ডো বন্ধ করুন"
+  },
+  "blocked_btn_proceed": {
+    "message": "যেভাবেই হোক এগিয়ে যান"
+  },
+  "blocked_btn_proceeding": {
+    "message": "এগিয়ে যাওয়া হচ্ছে…"
+  },
+  "common_remove": {
+    "message": "সরান"
+  },
+  "common_cancel": {
+    "message": "বাতিল"
+  },
+  "menu_pickElement": {
+    "message": "লুকানোর জন্য একটি এলিমেন্ট বেছে নিন…"
+  },
+  "menu_scanGlobals": {
+    "message": "স্ক্রিপ্ট/ভ্যারিয়েবলের জন্য পেজ স্ক্যান করুন…"
+  },
+  "menu_editRules": {
+    "message": "এই সাইটের নিয়ম সম্পাদনা করুন…"
+  },
+  "picker_badge_active": {
+    "message": "লুকানোর এলিমেন্ট বেছে নেওয়া হচ্ছে — বাতিল করতে Esc চাপুন"
+  },
+  "picker_btn_hide": {
+    "message": "এই এলিমেন্ট লুকান"
+  },
+  "picker_btn_broaden": {
+    "message": "প্রসারিত করুন"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "ড্যাশবোর্ড"
+  },
+  "popup_review_title": {
+    "message": "AdBlock ভালো লাগছে?"
+  },
+  "popup_review_subtitle": {
+    "message": "একটি দ্রুত রেটিং অনেক সাহায্য করে।"
+  },
+  "popup_review_rate": {
+    "message": "আমাদের রেট করুন"
+  },
+  "popup_review_dismiss": {
+    "message": "না ধন্যবাদ"
+  },
+  "popup_stat_blocked": {
+    "message": "ব্লক করা হয়েছে"
+  },
+  "popup_stat_malware": {
+    "message": "ম্যালওয়্যার"
+  },
+  "popup_stat_speed": {
+    "message": "গতি"
+  },
+  "popup_stat_saved": {
+    "message": "সাশ্রয়"
+  },
+  "popup_allowlist_banner": {
+    "message": "এই সাইটটি অনুমতিপ্রাপ্ত তালিকায় রয়েছে"
+  },
+  "popup_action_focus": {
+    "message": "ফোকাস মোড"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ সাইটে বিরতি দিন"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ সাইট পুনরায় শুরু করুন"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "গোপনীয়তা স্কোর"
+  },
+  "popup_footer_settings": {
+    "message": "সেটিংস"
+  },
+  "popup_ruleChip_title": {
+    "message": "বর্তমানে লোড হওয়া নেটওয়ার্ক ব্লকিং নিয়ম"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… নিয়ম"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "নেটওয়ার্ক নিয়ম: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 নেটওয়ার্ক নিয়ম লোড হয়েছে",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "PayPal-এর মাধ্যমে ডেভেলপমেন্টে সহায়তা করুন"
+  },
+  "popup_donate_label": {
+    "message": "দান করুন"
+  },
+  "popup_version_title": {
+    "message": "AdBlock সংস্করণ"
+  },
+  "popup_version_updateAvailable": {
+    "message": "আপডেট উপলব্ধ — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "একটি নতুন সংস্করণ উপলব্ধ — স্টোর পেজ খুলতে ক্লিক করুন"
+  },
+  "popup_domain_unknown": {
+    "message": "অজানা সাইট"
+  },
+  "popup_status_site": {
+    "message": "সাইট"
+  },
+  "popup_status_protection": {
+    "message": "সুরক্ষা"
+  },
+  "popup_status_allowlisted": {
+    "message": "অনুমতিপ্রাপ্ত"
+  },
+  "popup_status_on": {
+    "message": "চালু"
+  },
+  "popup_status_paused": {
+    "message": "বিরতি দেওয়া হয়েছে"
+  },
+  "popup_status_off": {
+    "message": "বন্ধ"
+  },
+  "common_save": {
+    "message": "সংরক্ষণ করুন"
+  },
+  "common_close": {
+    "message": "বন্ধ করুন"
+  },
+  "ruleEditor_panel_title": {
+    "message": "নিয়ম সম্পাদনা — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "টেক্সটবক্সে সন্নিবেশ করতে ক্লিক করুন"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "কী রেফারেন্স ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "কী ফিল্টার করুন…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "কসমেটিক / প্রার্থী ম্যাচিং"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "স্ক্রিপ্টলেট (উন্নত)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "এই সাইটের বর্তমান নিয়মসমূহ ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(এই সাইটের জন্য এখনও কোনো নিয়ম নেই — বিল্ট-ইন বা কাস্টম)"
+  },
+  "ruleEditor_hint": {
+    "message": "প্রতি লাইনে একটি \"key = value | value2\"। সন্নিবেশ করতে উপরের কোনো কী-তে ক্লিক করুন। কোনো [section] শিরোনাম নেই। এখানে টাইপ করা নিয়মগুলো এই কী-এর জন্য বিদ্যমান নিয়মে যোগ করা হয় (উপরে দেখুন) — এটি বিল্ট-ইন নিয়ম মুছতে বা প্রতিস্থাপন করতে পারে না, এবং একক-মান ফ্ল্যাগ কী-এর ক্ষেত্রে সাধারণত বিল্ট-ইন মানই জয়ী হয়।"
+  },
+  "ruleEditor_status_saved": {
+    "message": "সংরক্ষিত হয়েছে — প্রয়োগকৃত নিয়ম দেখতে এই পেজটি রিলোড করুন।"
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "সংরক্ষণ ব্যর্থ হয়েছে — একটি বিচ্ছিন্ন \"[section]\" লাইন বা বিশাল পেস্ট আছে কিনা পরীক্ষা করুন।"
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "একটি ইনজেক্টেড স্টাইলশিটের মাধ্যমে নিঃশর্তভাবে লুকানো CSS সিলেক্টর — কোনো হিউরিস্টিক চেক নেই, শুধু দেখামাত্র লুকিয়ে ফেলে।"
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "প্রার্থী এলিমেন্টের জন্য CSS সিলেক্টর — শুধুমাত্র নিচের labels/link_patterns-এর সাথেও মিলে গেলে লুকানো হয়।"
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "selectors-এর মতোই, ফিড/টাইমলাইন-শৈলীর কনটেইনারে সীমাবদ্ধ।"
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "selectors-এর মতোই, মার্কেটপ্লেস/শপিং-শৈলীর কনটেইনারে সীমাবদ্ধ।"
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "selectors-এর মতোই, একটি সাইডবার/ডান-রেইল এলাকায় সীমাবদ্ধ।"
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "selectors-এর মতোই, পৃথক পোস্ট/আর্টিকেল কনটেইনারে সীমাবদ্ধ।"
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "\"হোস্ট\" এলিমেন্টের জন্য CSS সিলেক্টর, উপরের selectors-এর মতোই পরীক্ষা করা হয়।"
+  },
+  "ruleEditor_ref_labels": {
+    "message": "টেক্সট লেবেল (যেমন sponsored, promoted) যা প্রার্থীটি সত্যিই একটি বিজ্ঞাপন কিনা তা নিশ্চিত করতে অ্যাট্রিবিউট/প্রসঙ্গ টেক্সটের সাথে মেলানো হয়।"
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "প্রার্থীর নিজস্ব লিংক/অ্যাট্রিবিউটের সাথে মেলানো সাব-স্ট্রিং প্যাটার্ন, এটি বিজ্ঞাপন কিনা তা নিশ্চিত করতে।"
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "label/link_pattern মিল খোঁজার জন্য স্ক্যান করা HTML অ্যাট্রিবিউট নাম (ডিফল্ট: aria-label, data-promoted, post-type, …)।"
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "লেবেল ম্যাচিংয়ের জন্য টেক্সট নেওয়ার চাইল্ড এলিমেন্ট (ডিফল্ট: header, [role=heading], span, a)।"
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "মিলে যাওয়া প্রার্থী লুকানোর আগে .closest() দিয়ে উপরে যাওয়ার CSS সিলেক্টর (শুধু লেবেল নয়, পুরো কনটেইনার লুকায়)।"
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "<html>/<body> থেকে ক্রমাগত সরানো ক্লাস নাম — রুট ক্লাস দ্বারা চালিত শুধুমাত্র-CSS টেকওভার ওভারলে পরাস্ত করে।"
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "<html>/<body> ইনলাইন স্টাইল থেকে ক্রমাগত সাফ করা CSS প্রোপার্টি নাম — JS-সেট স্ক্রল-লক ইত্যাদি পরাস্ত করে।"
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 ফ্ল্যাগ — এই সাইটে ক্লিকের মাধ্যমে খোলা পপআপ/পপআন্ডার ট্যাব স্বয়ংক্রিয়ভাবে বন্ধ করে।"
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — একটি উইন্ডো প্রোপার্টি স্থায়ীভাবে একটি নির্দিষ্ট মানে লক করে (undefined, true, false, noopFunc, …)।"
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — যখন কোনো স্ক্রিপ্ট এই উইন্ডো প্রোপার্টি পড়ে তখন থ্রো করে।"
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — যখন কোনো স্ক্রিপ্ট এই উইন্ডো প্রোপার্টিতে লেখে তখন থ্রো করে।"
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — শুধুমাত্র যখন কলিং স্ক্রিপ্টের নিজস্ব স্ট্যাক ট্রেস needle-এর সাথে মেলে তখন থ্রো করে।"
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — needle-এর সাথে মেলে এমন সোর্সের স্ক্রিপ্ট target পড়লে থ্রো করে।"
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — pattern-এর সাথে মেলে এমন window.open() কল ব্লক বা ডিকয়-রিডাইরেক্ট করে।"
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — মানদণ্ডের সাথে মেলে এমন fetch() কল ব্লক করে।"
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — মানদণ্ডের সাথে মেলে এমন XMLHttpRequest কল ব্লক করে।"
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetch ব্লক করে, ঐচ্ছিকভাবে একটি নির্দিষ্ট নকল প্রতিক্রিয়া বডি ফেরত দেয়।"
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — একই-অরিজিনের about:blank iframe-কে লক এড়াতে আসল উইন্ডোতে পৌঁছাতে বাধা দেয়।"
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — যেকোনো JSON.parse() ফলাফল থেকে ফিল্ড সরায়।"
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — একটি fetch() JSON প্রতিক্রিয়া থেকে ফিল্ড সরায়।"
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — একটি XHR JSON প্রতিক্রিয়া থেকে ফিল্ড সরায়।"
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — একটি স্ক্রিপ্ট সরাসরি নির্ধারণ করা অবজেক্টকে ছাঁটাই করে (JSON.parse এর মাধ্যমে নয়)।"
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — একটি fetch() JSON প্রতিক্রিয়ায় JSONPath-ভিত্তিক ফিল্ড মোছা।"
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — একটি XHR JSON-lines প্রতিক্রিয়ায় JSONPath-ভিত্তিক ফিল্ড মোছা।"
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "একটি protobuf/jspb-এনকোডেড প্রতিক্রিয়া থেকে ফিল্ড সরায়।"
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — একটি আউটগোয়িং অনুরোধ বডিতে JSONPath এডিট (মোছা এবং মান নির্ধারণ উভয়ই)।"
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — একটি প্রতিক্রিয়া বডিতে JSONPath এডিট (মোছা এবং মান নির্ধারণ উভয়ই)।"
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — একটি fetch() প্রতিক্রিয়া বডিতে regex খুঁজে/প্রতিস্থাপন করে।"
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — একটি XHR প্রতিক্রিয়া বডিতে regex খুঁজে/প্রতিস্থাপন করে।"
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — একটি ফাংশনে পাস করা একটি আর্গুমেন্ট প্রতিস্থাপন করে।"
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — আউটবাউন্ড ডেটার উপর নিঃশর্ত টেক্সট প্রতিস্থাপন (কোনো URL স্কোপিং ছাড়াই)।"
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — চলার আগে একটি <script> ট্যাগের টেক্সট পুনর্লিখন করে। sedCount এই নিয়ম কতগুলো নোড পুনর্লিখন করবে তা সীমিত করে (ডিফল্ট: সীমাহীন)।"
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — একটি নেটিভ মেথড কলে পাস করা অবজেক্ট থেকে ফিল্ড ছাঁটাই করে।"
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — একটি স্বাক্ষরের সাথে মেলে এমন নেটিভ মেথড কল বাতিল বা নীরবে নো-অপ করে।"
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — needle-এর সাথে মেলে এমন মান সহ একটি অ্যাক্সেসর সেটার অ্যাসাইনমেন্ট (যেমন Element.prototype.innerHTML) বাদ দেয় বা থ্রো করে।"
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — একটি HLS .m3u8 প্লেলিস্ট প্রতিক্রিয়া থেকে বিজ্ঞাপন সেগমেন্ট সরায়।"
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — আসল নেটওয়ার্ক অনুরোধের পরিবর্তে script/img/iframe/link লোড সফল বলে নকল করে।"
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — মিলে যাওয়া এলিমেন্ট থেকে HTML অ্যাট্রিবিউট সরায়।"
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — একটি DOM নোডের টেক্সট বিষয়বস্তু সাফ করে।"
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — একটি DOM নোডের টেক্সট বিষয়বস্তু পুনর্লিখন করে।"
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — একটি <meta http-equiv=\"refresh\"> স্বয়ংক্রিয়-রিডাইরেক্ট বন্ধ করে।"
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — একটি কুকি সেট করে।"
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — নাম প্যাটার্নের সাথে মেলে এমন কুকি সরায়।"
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — একটি localStorage এন্ট্রি সেট করে (নিরাপদ আক্ষরিক মানে সীমাবদ্ধ, অথবা মিলে যাওয়া কী মুছতে বিশেষ \"remove\" সেন্টিনেল)।"
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — একটি লিংকের href নিজস্ব টেক্সট বা অন্য অ্যাট্রিবিউট থেকে পুনর্লিখন করে।"
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — মানদণ্ডের সাথে মেলে এমন setTimeout() কল ব্লক করে।"
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — মানদণ্ডের সাথে মেলে এমন setInterval() কল ব্লক করে।"
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — মানদণ্ডের সাথে মেলে এমন requestAnimationFrame() কল ব্লক করে।"
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — মানদণ্ডের সাথে মেলে এমন addEventListener() কল ব্লক করে।"
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — ব্লক করার পরিবর্তে মিলে যাওয়া setTimeout() কল দ্রুত/ধীর করে।"
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — ব্লক করার পরিবর্তে মিলে যাওয়া setInterval() কল দ্রুত/ধীর করে।"
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — যার সোর্স pattern-এর সাথে মেলে এমন eval() কল ব্লক করে।"
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnection নিষ্ক্রিয় করে — WebRTC-ভিত্তিক পপআপ/ট্র্যাকিং কৌশল ব্লক করে।"
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "BlockAdBlock/FuckAdBlock-শৈলীর অ্যান্টি-অ্যাডব্লক সনাক্তকরণ স্ক্রিপ্ট নিষ্ক্রিয় করে।"
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "ক্লিক করা লিংক থেকে target=\"_blank\" সরায় — জোরপূর্বক নতুন-ট্যাব রিডাইরেক্ট ব্লক করে।"
+  },
+  "scanner_value_emptyString": {
+    "message": "খালি স্ট্রিং"
+  },
+  "scanner_value_emptyArray": {
+    "message": "খালি অ্যারে"
+  },
+  "scanner_value_emptyObject": {
+    "message": "খালি অবজেক্ট"
+  },
+  "scanner_value_noopFunc": {
+    "message": "খালি ফাংশন (নো-অপ)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "সবসময় true রিটার্ন করা ফাংশন"
+  },
+  "scanner_value_falseFunc": {
+    "message": "সবসময় false রিটার্ন করা ফাংশন"
+  },
+  "scanner_btn_block": {
+    "message": "ব্লক করুন"
+  },
+  "scanner_btn_edit": {
+    "message": "সম্পাদনা করুন"
+  },
+  "scanner_btn_delete": {
+    "message": "মুছুন"
+  },
+  "scanner_status_blockApplied": {
+    "message": "ব্লক প্রয়োগ করা হয়েছে — এই সাইটের জন্য সংরক্ষিত।"
+  },
+  "scanner_status_editApplied": {
+    "message": "সম্পাদনা প্রয়োগ করা হয়েছে — এই সাইটের জন্য সংরক্ষিত।"
+  },
+  "scanner_status_deleteApplied": {
+    "message": "মুছে ফেলা প্রয়োগ করা হয়েছে — এই সাইটের জন্য সংরক্ষিত।"
+  },
+  "scanner_block_warning": {
+    "message": "ব্লক এই প্রোপার্টির সকল ভবিষ্যৎ রিড প্রতিরোধ করে — এটির উপর নির্ভরশীল পেজ কার্যকারিতা ভেঙে যেতে পারে। রিফ্রেশ করে এটি পূর্বাবস্থায় ফেরানো যায় না; ফিরিয়ে আনতে ড্যাশবোর্ডের গ্লোবাল রুলস পেজ থেকে নিয়মটি সরান।"
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "তবুও ব্লক করুন"
+  },
+  "scanner_edit_customOption": {
+    "message": "কাস্টম…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "একক টোকেন, স্পেস ছাড়া (যেমন 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "স্পেস ছাড়া একটি মান টাইপ করুন।"
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "স্পেস অনুমোদিত নয় — প্রত্যাখ্যান করা হবে।"
+  },
+  "scanner_edit_hintPreview": {
+    "message": "এটি সংরক্ষিত হবে: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "পেজ গ্লোবাল ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "নাম অনুসারে ফিল্টার করুন…"
+  },
+  "scanner_empty": {
+    "message": "এই পেজে পেজ-যুক্ত কোনো গ্লোবাল পাওয়া যায়নি।"
+  },
+  "scanner_footer_limitation": {
+    "message": "শুধুমাত্র var/function-শৈলীর গ্লোবাল এবং সুস্পষ্ট window.x = অ্যাসাইনমেন্ট দেখতে পায় — let/const/class ঘোষণা যেকোনো পেজ স্ক্যানারের কাছে অদৃশ্য (JS ভাষার সীমাবদ্ধতা)।"
+  },
+  "scanner_loading": {
+    "message": "পেজ গ্লোবাল স্ক্যান করা হচ্ছে — বাতিল করতে Esc চাপুন"
+  },
+  "common_add": {
+    "message": "যোগ করুন"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — ড্যাশবোর্ড"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "ওভারভিউ"
+  },
+  "dashboard_nav_rules": {
+    "message": "কাস্টম নিয়ম"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "নিয়মের উৎস"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "অনুমোদন তালিকা"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "এলিমেন্ট নিয়ম"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "গ্লোবাল নিয়ম"
+  },
+  "dashboard_nav_focus": {
+    "message": "ফোকাস"
+  },
+  "dashboard_nav_settings": {
+    "message": "সেটিংস"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "সুরক্ষা চালু"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "সুরক্ষা $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "PayPal-এর মাধ্যমে ডেভেলপমেন্টে সহায়তা করুন"
+  },
+  "dashboard_donate_label": {
+    "message": "আমাকে এক কাপ কফি খাওয়ান ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "চালু"
+  },
+  "dashboard_toggle_off": {
+    "message": "বন্ধ"
+  },
+  "dashboard_overview_title": {
+    "message": "ওভারভিউ"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "আপনার সুরক্ষা ড্যাশবোর্ড"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "মোট ব্লক করা হয়েছে"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% আজ"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "ট্র্যাকার বন্ধ করা হয়েছে"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% আজ"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "ম্যালওয়্যার ব্লক করা হয়েছে"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "হুমকি বন্ধ করা হয়েছে"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "কোনো হুমকি শনাক্ত হয়নি"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "ব্যান্ডউইথ সাশ্রয়"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "প্রতি পেজে গড়ে"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "সময় সাশ্রয়"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "এই সেশনে"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 আজ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— আজ"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "গতকালের তুলনায় $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "আজ ০টি হুমকি"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +আরও $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "ব্লক করা অনুরোধ"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "ট্র্যাকার অনুরোধ"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "ম্যালওয়্যার শনাক্তকরণ"
+  },
+  "dashboard_chart_range7d": {
+    "message": "৭দিন"
+  },
+  "dashboard_chart_range14d": {
+    "message": "১৪দিন"
+  },
+  "dashboard_chart_range30d": {
+    "message": "৩০দিন"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "ব্লক করা"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "ট্র্যাকার"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "ম্যালওয়্যার"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "সর্বাধিক ব্লক করা ডোমেইন"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "সর্বাধিক ট্র্যাকার ডোমেইন"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "সর্বাধিক ম্যালওয়্যার ডোমেইন"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "সব দেখুন"
+  },
+  "dashboard_domains_showLess": {
+    "message": "কম দেখান"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "সব দেখুন ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "এখনও কোনো ডেটা নেই।"
+  },
+  "dashboard_privacy_title": {
+    "message": "গোপনীয়তা স্কোর"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "বিজ্ঞাপন ব্লক করা হয়েছে"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "ট্র্যাকার ব্লক করা হয়েছে"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "ম্যালওয়্যার সুরক্ষা"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "রেফারার অ্যানোনিমাইজেশন"
+  },
+  "dashboard_rules_title": {
+    "message": "কাস্টম নিয়ম"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "site-rules.txt ফরম্যাটে সম্পাদনা করুন — প্রধান নিয়ম ফাইলের মতোই সিনট্যাক্স। মানগুলো বিল্ট-ইন নিয়মের সাথে মার্জ করা হয়।"
+  },
+  "dashboard_rules_clear": {
+    "message": "মুছুন"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "সমস্ত কাস্টম নিয়ম মুছে ফেলবেন?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# কাস্টম নিয়ম — site-rules.txt এর মতোই ফরম্যাট\n# মানগুলো বিল্ট-ইন নিয়মের সাথে মার্জ করা হয় (প্রতিস্থাপন নয়)।\n#\n# ── একটি নতুন ডোমেইনকে নিয়মের সেকশনে ম্যাপ করুন ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← সাবডোমেইন স্বয়ংক্রিয়ভাবে মেলানো হয়\n#\n# ── গ্লোবালভাবে ব্লক করতে অতিরিক্ত ডোমেইন যোগ করুন ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── প্রতি-সাইট কসমেটিক নিয়ম ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "অনুমোদন তালিকা"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "সমস্ত ব্লকিং এড়িয়ে যাওয়া সাইট"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ সাইট যোগ করুন"
+  },
+  "dashboard_elementRules_title": {
+    "message": "এলিমেন্ট নিয়ম"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "\"লুকানোর জন্য এলিমেন্ট বেছে নিন\" এর মাধ্যমে ম্যানুয়ালি লুকানো এলিমেন্ট — সাইট অনুসারে গোষ্ঠীভুক্ত"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "এখনও কোনো নিয়ম নেই।"
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "গ্লোবাল নিয়ম"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "\"স্ক্রিপ্ট/ভ্যারিয়েবলের জন্য পেজ স্ক্যান করুন\" এর মাধ্যমে ম্যানুয়ালি ব্লক/সম্পাদিত/মুছে ফেলা উইন্ডো গ্লোবাল — সাইট অনুসারে গোষ্ঠীভুক্ত"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "এখনও কোনো নিয়ম নেই।"
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "ব্লক"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "সম্পাদনা"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "মুছুন"
+  },
+  "dashboard_focus_title": {
+    "message": "ফোকাস মোড"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "সময়সূচী অনুযায়ী মনোযোগ-বিঘ্নকারী সাইট ব্লক করুন"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "ফোকাস সেশন"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "সেশন বিরতি দেওয়া হয়েছে"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "সেশন চলছে…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "সেশন সম্পূর্ণ!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "২৫মি"
+  },
+  "dashboard_focus_dur45": {
+    "message": "৪৫মি"
+  },
+  "dashboard_focus_dur60": {
+    "message": "৬০মি"
+  },
+  "dashboard_focus_dur90": {
+    "message": "৯০মি"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "কাস্টম"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "মিনিট"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "মনোযোগ-বিঘ্নকারী সাইট তালিকা"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ যোগ করুন"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "ফোকাসের সময় ব্লক করতে ডোমেইন লিখুন (যেমন twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "সেটিংস"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlock এর আচরণ কাস্টমাইজ করুন"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "ব্লকিং"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "বিজ্ঞাপন ব্লক করুন"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "স্ট্যান্ডার্ড বিজ্ঞাপন নেটওয়ার্ক ব্লকিং"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "ট্র্যাকার ব্লক করুন"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "অ্যানালিটিক্স ও ট্র্যাকিং স্ক্রিপ্ট ব্লক করুন"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "কসমেটিক ফিল্টারিং"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "CSS এর মাধ্যমে অবশিষ্ট বিজ্ঞাপন প্লেসহোল্ডার লুকান"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "ম্যালওয়্যার ব্লক করুন"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "পরিচিত ম্যালওয়্যার ডোমেইন ব্লক করুন"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "গোপনীয়তা"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "রেফারার অ্যানোনিমাইজেশন"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "ক্রস-অরিজিন অনুরোধে রেফারার হেডার সরান"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "গ্লোবাল প্রাইভেসি কন্ট্রোল (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC অপ্ট-আউট সিগন্যাল পাঠান (Sec-GPC হেডার + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "ডু নট ট্র্যাক হেডার (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1 অনুরোধ হেডার পাঠান"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "ডেটা"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "পরিসংখ্যান সংগ্রহ করুন"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "শুধুমাত্র স্থানীয় ব্যবহারের পরিসংখ্যান (কখনও আপলোড করা হয় না)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "সমস্ত ডেটা রিসেট করুন"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "নিয়ম, পরিসংখ্যান এবং সেটিংস মুছুন"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "রিসেট করুন"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "সমস্ত AdBlock ডেটা রিসেট করবেন? এটি পূর্বাবস্থায় ফেরানো যাবে না।"
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "সমস্ত ডেটা মুছে ফেলা হয়েছে। রিলোড হচ্ছে…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "সম্পর্কে"
+  },
+  "dashboard_settings_version_name": {
+    "message": "সংস্করণ"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "আপডেট পরীক্ষা করুন"
+  },
+  "dashboard_settings_checking": {
+    "message": "পরীক্ষা করা হচ্ছে…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "একটি নতুন সংস্করণ উপলব্ধ"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "দেখুন"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "সর্বশেষ পরীক্ষা $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (ব্যর্থ — অফলাইনে আছেন কি?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "এখনও পরীক্ষা করা হয়নি"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 উপলব্ধ (আপনার আছে v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "নিয়মের উৎস"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock কোথা থেকে সাইট নিয়ম আনে"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "রিমোট নিয়ম URL"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "বিল্ট-ইন ডিফল্ট (টগলযোগ্য, অপসারণযোগ্য নয়) এবং আপনার যোগ করা যেকোনো URL অন্তর্ভুক্ত — সব মার্জ করা, প্রতিটি স্বাধীনভাবে চালু/বন্ধ করা যায়।"
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL যোগ করুন"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "স্থানীয় নিয়ম ফাইল"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txt নিয়ম ফাইল আপলোড করুন — URL উৎসের সাথে মার্জ করা হয়। একাধিক ফাইল সমর্থিত।"
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "ফাইল যোগ করুন…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "এক্সপোর্ট করা হচ্ছে…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "এক্সপোর্ট ব্যর্থ হয়েছে: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "অজানা ত্রুটি"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$3 নিয়মের মধ্যে $1টি রূপান্তরিত, $2টি বাদ দেওয়া হয়েছে",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1টি ব্যতিক্রম নিয়ম (এখানে কোনো বাতিলকরণ মডেল নেই)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1টি প্রসেডারাল সিলেক্টর (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1টি AdGuard-এক্সটেন্ডেড মডিফায়ার",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1টি ম্যাপবিহীন স্ক্রিপ্টলেট কল",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1টি অসমর্থিত নেটওয়ার্ক-নিয়ম মডিফায়ার",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1টি ইতিমধ্যে এই এক্সটেনশনের নিজস্ব site-rules.txt এ কিউরেট করা আছে",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1টি অচেনা সিনট্যাক্স",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 লোড হয়েছে",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 লোড হয়েছে",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "এক্সপোর্ট"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "এই এক্সটেনশনের নিজস্ব সিনট্যাক্সে রূপান্তরিত এই উৎসের নিয়মগুলো ডাউনলোড করুন"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "ডিফল্ট"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList পরিবার"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "ভাষা অনুসারে"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "কাস্টম (আপনার নিজস্ব URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "$1 এর জন্য নকল ডেটা সিড করা হয়েছে:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "সাধারণ"
+  },
+  "dashboard_settings_language_name": {
+    "message": "ভাষা"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "পরিবর্তনের পর এই পেজ পুনরায় লোড হয়"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "স্বয়ংক্রিয় (ব্রাউজারের ভাষা)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "মেনু"
+  }
+}

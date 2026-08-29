@@ -30,7 +30,12 @@
 // gap matters far less there than on a page a user just opened to look at).
 (function () {
   // Keep in sync with the directories actually shipped under _locales/.
-  var AVAILABLE_LOCALES = ['en', 'vi'];
+  var AVAILABLE_LOCALES = [
+    'en', 'vi', 'ar', 'bg', 'bn', 'ca', 'cs', 'da', 'de', 'el', 'es', 'et',
+    'fa', 'fi', 'fr', 'gu', 'he', 'hi', 'hr', 'hu', 'id', 'it', 'ja', 'kn',
+    'ko', 'lt', 'lv', 'ml', 'mr', 'ms', 'nl', 'no', 'pl', 'pt', 'ro', 'ru',
+    'sk', 'sl', 'sr', 'sv', 'ta', 'te', 'th', 'tr', 'uk', 'zh'
+  ];
 
   function applyI18n(root) {
     if (typeof document === 'undefined' || !document.querySelectorAll) return;
@@ -153,8 +158,7 @@
 
   // "Auto" gap this closes: chrome.i18n's own native resolution only ever
   // looks at getUILanguage() (the browser's CHROME/MENU display language —
-  // uBlock Origin's own listMatchesEnvironment() uses only this too). A
-  // browser can display its own menus in English while the user's actual
+  // A browser can display its own menus in English while the user's actual
   // OS/content-language preference (navigator.language,
   // chrome://settings/languages — a SEPARATE setting) is Vietnamese;
   // getUILanguage()-only resolution misses that entirely. Candidate

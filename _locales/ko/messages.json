@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "간단한 사이트 제어와 집중 도구로 광고, 추적기 및 알려진 악성 도메인을 차단합니다.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "사이트 차단됨 — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "안전을 위해 사이트가 차단되었습니다"
+  },
+  "blocked_title_adPopup": {
+    "message": "팝업/새 탭 광고가 차단되었습니다"
+  },
+  "blocked_host_unknown": {
+    "message": "알 수 없는 사이트"
+  },
+  "blocked_hint_default": {
+    "message": "이 사이트는 악성코드/피싱 차단 목록에 있습니다. 사용자의 정보를 훔치거나, 암호화폐를 채굴하거나, 원치 않는 소프트웨어를 설치하려고 시도할 수 있습니다."
+  },
+  "blocked_hint_adPopup": {
+    "message": "이전 페이지에서의 클릭이 이 광고/팝업 네트워크를 새 탭에서 열려고 시도했습니다. 이 탭은 안전하게 닫아도 됩니다."
+  },
+  "blocked_dontWarn_label": {
+    "message": "이 사이트에 대해 다시 경고하지 않음"
+  },
+  "blocked_btn_goBack": {
+    "message": "뒤로 가기"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "이 창 닫기"
+  },
+  "blocked_btn_proceed": {
+    "message": "그래도 계속하기"
+  },
+  "blocked_btn_proceeding": {
+    "message": "계속하는 중…"
+  },
+  "common_remove": {
+    "message": "제거"
+  },
+  "common_cancel": {
+    "message": "취소"
+  },
+  "menu_pickElement": {
+    "message": "숨길 요소 선택…"
+  },
+  "menu_scanGlobals": {
+    "message": "스크립트/변수를 위해 페이지 스캔…"
+  },
+  "menu_editRules": {
+    "message": "이 사이트의 규칙 편집…"
+  },
+  "picker_badge_active": {
+    "message": "숨길 요소 선택 중 — 취소하려면 Esc를 누르세요"
+  },
+  "picker_btn_hide": {
+    "message": "이 요소 숨기기"
+  },
+  "picker_btn_broaden": {
+    "message": "확장"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "대시보드"
+  },
+  "popup_review_title": {
+    "message": "AdBlock이 마음에 드시나요?"
+  },
+  "popup_review_subtitle": {
+    "message": "빠른 평가는 큰 도움이 됩니다."
+  },
+  "popup_review_rate": {
+    "message": "평가하기"
+  },
+  "popup_review_dismiss": {
+    "message": "괜찮습니다"
+  },
+  "popup_stat_blocked": {
+    "message": "차단됨"
+  },
+  "popup_stat_malware": {
+    "message": "악성코드"
+  },
+  "popup_stat_speed": {
+    "message": "속도"
+  },
+  "popup_stat_saved": {
+    "message": "절약됨"
+  },
+  "popup_allowlist_banner": {
+    "message": "이 사이트는 허용 목록에 있습니다"
+  },
+  "popup_action_focus": {
+    "message": "집중 모드"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ 이 사이트에서 일시 중지"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ 사이트 재개"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "개인정보 보호 점수"
+  },
+  "popup_footer_settings": {
+    "message": "설정"
+  },
+  "popup_ruleChip_title": {
+    "message": "현재 로드된 네트워크 차단 규칙"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… 규칙"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "네트워크 규칙: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "네트워크 규칙 $1개 로드됨",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "PayPal을 통해 개발 후원하기"
+  },
+  "popup_donate_label": {
+    "message": "후원"
+  },
+  "popup_version_title": {
+    "message": "AdBlock 버전"
+  },
+  "popup_version_updateAvailable": {
+    "message": "업데이트 가능 — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "새 버전을 사용할 수 있습니다 — 클릭하여 스토어 페이지 열기"
+  },
+  "popup_domain_unknown": {
+    "message": "알 수 없는 사이트"
+  },
+  "popup_status_site": {
+    "message": "사이트"
+  },
+  "popup_status_protection": {
+    "message": "보호"
+  },
+  "popup_status_allowlisted": {
+    "message": "허용됨"
+  },
+  "popup_status_on": {
+    "message": "켜짐"
+  },
+  "popup_status_paused": {
+    "message": "일시 중지됨"
+  },
+  "popup_status_off": {
+    "message": "꺼짐"
+  },
+  "common_save": {
+    "message": "저장"
+  },
+  "common_close": {
+    "message": "닫기"
+  },
+  "ruleEditor_panel_title": {
+    "message": "규칙 편집 — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "텍스트 상자에 삽입하려면 클릭"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "키 참조 ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "키 필터링…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "미용 / 후보 매칭"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "스크립트릿 (고급)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "이 사이트의 현재 규칙 ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(이 사이트에 대한 규칙이 아직 없습니다 — 내장 또는 사용자 지정 모두 없음)"
+  },
+  "ruleEditor_hint": {
+    "message": "줄당 하나의 \"key = value | value2\". 위의 키를 클릭하면 삽입됩니다. [section] 헤더 없음. 여기에 입력한 규칙은 이 키에 대한 기존 규칙에 추가됩니다(위 참조) — 내장 규칙을 제거하거나 재정의할 수 없으며, 단일 값 플래그 키의 경우 일반적으로 내장 값이 우선합니다."
+  },
+  "ruleEditor_status_saved": {
+    "message": "저장됨 — 적용된 규칙을 보려면 이 페이지를 새로고침하세요."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "저장 실패 — 단독 \"[section]\" 줄이나 거대한 붙여넣기가 있는지 확인하세요."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "삽입된 스타일시트를 통해 무조건 숨겨지는 CSS 선택자 — 휴리스틱 검사 없이 보이는 즉시 숨깁니다."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "후보 요소용 CSS 선택자 — 아래의 labels/link_patterns도 일치하는 경우에만 숨겨집니다."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "selectors와 동일하며 피드/타임라인 스타일 컨테이너로 제한됩니다."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "selectors와 동일하며 마켓플레이스/쇼핑 스타일 컨테이너로 제한됩니다."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "selectors와 동일하며 사이드바/오른쪽 레일 영역으로 제한됩니다."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "selectors와 동일하며 개별 게시물/기사 컨테이너로 제한됩니다."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "\"호스트\" 요소용 CSS 선택자로, 위의 selectors와 동일한 방식으로 확인됩니다."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "후보가 실제로 광고인지 확인하기 위해 속성/문맥 텍스트와 대조하는 텍스트 레이블(예: sponsored, promoted)."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "후보가 광고임을 확인하기 위해 후보 자체의 링크/속성과 대조하는 부분 문자열 패턴."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "label/link_pattern 일치를 스캔하는 HTML 속성 이름(기본값: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "레이블 매칭을 위해 텍스트를 가져오는 자식 요소(기본값: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "일치하는 후보를 숨기기 전에 .closest()를 통해 위로 이동할 CSS 선택자(레이블뿐 아니라 컨테이너를 숨깁니다)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "<html>/<body>에서 지속적으로 제거되는 클래스 이름 — 루트 클래스로 구동되는 CSS 전용 탈취 오버레이를 무력화합니다."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "<html>/<body> 인라인 스타일에서 지속적으로 지워지는 CSS 속성 이름 — JS로 설정된 스크롤 잠금 등을 무력화합니다."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 플래그 — 이 사이트에서 클릭으로 열린 팝업/팝언더 탭을 자동으로 닫습니다."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — 창 속성을 고정 값(undefined, true, false, noopFunc, …)으로 영구적으로 잠급니다."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — 어떤 스크립트가 이 창 속성을 읽으면 오류를 발생시킵니다."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — 어떤 스크립트가 이 창 속성에 쓰면 오류를 발생시킵니다."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — 호출 스크립트 자체의 스택 추적이 needle과 일치할 때만 오류를 발생시킵니다."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — needle과 일치하는 소스를 가진 스크립트가 target을 읽을 때 오류를 발생시킵니다."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — pattern과 일치하는 window.open() 호출을 차단하거나 미끼로 리디렉션합니다."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — 조건에 일치하는 fetch() 호출을 차단합니다."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — 조건에 일치하는 XMLHttpRequest 호출을 차단합니다."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetch를 차단하고 선택적으로 고정된 가짜 응답 본문을 반환합니다."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — 동일 출처의 about:blank iframe이 잠금을 우회하기 위해 실제 창에 다시 접근하는 것을 막습니다."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — 모든 JSON.parse() 결과에서 필드를 제거합니다."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — fetch() JSON 응답에서 필드를 제거합니다."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — XHR JSON 응답에서 필드를 제거합니다."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — 스크립트가 직접 할당하는 객체를 정리합니다(JSON.parse를 통하지 않음)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — fetch() JSON 응답에서 JSONPath 기반 필드 삭제."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — XHR JSON-lines 응답에서 JSONPath 기반 필드 삭제."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "protobuf/jspb로 인코딩된 응답에서 필드를 제거합니다."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — 나가는 요청 본문에 대한 JSONPath 편집(삭제 및 값 할당 모두)."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — 응답 본문에 대한 JSONPath 편집(삭제 및 값 할당 모두)."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — fetch() 응답 본문에서 정규식 찾기/바꾸기."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — XHR 응답 본문에서 정규식 찾기/바꾸기."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — 함수에 전달된 하나의 인수를 대체합니다."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — 나가는 데이터에 대한 무조건적인 텍스트 대체(URL 범위 지정 없음)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — 실행되기 전에 <script> 태그의 텍스트를 다시 씁니다. sedCount는 이 규칙이 다시 쓸 노드 수를 제한합니다(기본값: 무제한)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — 네이티브 메서드 호출로 전달되는 객체에서 필드를 정리합니다."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — 시그니처와 일치하는 네이티브 메서드 호출을 중단하거나 조용히 무시합니다."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — 값이 needle과 일치하는 접근자 세터 할당(예: Element.prototype.innerHTML)을 삭제하거나 오류를 발생시킵니다."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — HLS .m3u8 재생목록 응답에서 광고 세그먼트를 제거합니다."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — 실제 네트워크 요청 대신 script/img/iframe/link 로드가 성공한 것처럼 위장합니다."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — 일치하는 요소에서 HTML 속성을 제거합니다."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — DOM 노드의 텍스트 콘텐츠를 지웁니다."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — DOM 노드의 텍스트 콘텐츠를 다시 씁니다."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — <meta http-equiv=\"refresh\">를 통한 자동 리디렉션을 중지합니다."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — 쿠키를 설정합니다."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — 이름 패턴과 일치하는 쿠키를 제거합니다."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — localStorage 항목을 설정합니다(안전한 리터럴 값으로 제한되거나, 일치하는 키를 삭제하는 특수 \"remove\" 값 사용)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — 링크의 href를 자체 텍스트 또는 다른 속성에서 다시 씁니다."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — 조건에 일치하는 setTimeout() 호출을 차단합니다."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — 조건에 일치하는 setInterval() 호출을 차단합니다."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — 조건에 일치하는 requestAnimationFrame() 호출을 차단합니다."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — 조건에 일치하는 addEventListener() 호출을 차단합니다."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — 차단하는 대신 일치하는 setTimeout() 호출의 속도를 높이거나 늦춥니다."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — 차단하는 대신 일치하는 setInterval() 호출의 속도를 높이거나 늦춥니다."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — 소스가 pattern과 일치하는 eval() 호출을 차단합니다."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnection을 비활성화합니다 — WebRTC 기반 팝업/추적 트릭을 차단합니다."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "BlockAdBlock/FuckAdBlock 스타일의 광고 차단기 감지 스크립트를 무력화합니다."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "클릭된 링크에서 target=\"_blank\"를 제거합니다 — 강제 새 탭 리디렉션을 차단합니다."
+  },
+  "scanner_value_emptyString": {
+    "message": "빈 문자열"
+  },
+  "scanner_value_emptyArray": {
+    "message": "빈 배열"
+  },
+  "scanner_value_emptyObject": {
+    "message": "빈 객체"
+  },
+  "scanner_value_noopFunc": {
+    "message": "빈 함수(작업 없음)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "항상 true를 반환하는 함수"
+  },
+  "scanner_value_falseFunc": {
+    "message": "항상 false를 반환하는 함수"
+  },
+  "scanner_btn_block": {
+    "message": "차단"
+  },
+  "scanner_btn_edit": {
+    "message": "편집"
+  },
+  "scanner_btn_delete": {
+    "message": "삭제"
+  },
+  "scanner_status_blockApplied": {
+    "message": "차단이 적용됨 — 이 사이트에 대해 저장되었습니다."
+  },
+  "scanner_status_editApplied": {
+    "message": "편집이 적용됨 — 이 사이트에 대해 저장되었습니다."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "삭제가 적용됨 — 이 사이트에 대해 저장되었습니다."
+  },
+  "scanner_block_warning": {
+    "message": "차단하면 이 속성의 모든 향후 읽기가 방지됩니다 — 이에 의존하는 페이지 기능이 손상될 수 있습니다. 새로고침해도 되돌릴 수 없습니다. 되돌리려면 대시보드의 전역 규칙 페이지에서 규칙을 제거하세요."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "그래도 차단"
+  },
+  "scanner_edit_customOption": {
+    "message": "사용자 지정…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "공백 없는 단일 토큰(예: 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "공백 없이 값을 입력하세요."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "공백은 허용되지 않습니다 — 거부됩니다."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "다음과 같이 저장됩니다: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "페이지 전역 변수 ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "이름으로 필터링…"
+  },
+  "scanner_empty": {
+    "message": "이 페이지에서 페이지에 추가된 전역 변수를 찾을 수 없습니다."
+  },
+  "scanner_footer_limitation": {
+    "message": "var/function 스타일의 전역 변수와 명시적 window.x = 할당만 볼 수 있습니다 — let/const/class 선언은 어떤 페이지 스캐너에도 보이지 않습니다(JS 언어 제한)."
+  },
+  "scanner_loading": {
+    "message": "페이지 전역 변수를 스캔하는 중 — 취소하려면 Esc를 누르세요"
+  },
+  "common_add": {
+    "message": "추가"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — 대시보드"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "개요"
+  },
+  "dashboard_nav_rules": {
+    "message": "사용자 지정 규칙"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "규칙 소스"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "허용 목록"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "요소 규칙"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "전역 규칙"
+  },
+  "dashboard_nav_focus": {
+    "message": "집중"
+  },
+  "dashboard_nav_settings": {
+    "message": "설정"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "보호 켜짐"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "보호 $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "PayPal을 통해 개발 후원하기"
+  },
+  "dashboard_donate_label": {
+    "message": "커피 사주기 ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "켜짐"
+  },
+  "dashboard_toggle_off": {
+    "message": "꺼짐"
+  },
+  "dashboard_overview_title": {
+    "message": "개요"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "귀하의 보호 대시보드"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "총 차단됨"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "오늘 +0%"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "중지된 추적기"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "오늘 +0%"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "차단된 악성코드"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "중지된 위협"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "위협이 감지되지 않았습니다"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "절약된 대역폭"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "페이지당 평균"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "절약된 시간"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "이번 세션"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "오늘 +$1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "오늘 —"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "어제 대비 $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "오늘 위협 0건"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 외 $2건",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "차단된 요청"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "추적기 요청"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "악성코드 탐지"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7일"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14일"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30일"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "차단됨"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "추적기"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "악성코드"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "가장 많이 차단된 도메인"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "추적기가 가장 많은 도메인"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "악성코드가 가장 많은 도메인"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "모두 보기"
+  },
+  "dashboard_domains_showLess": {
+    "message": "간략히 보기"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "모두 보기 ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "아직 데이터가 없습니다."
+  },
+  "dashboard_privacy_title": {
+    "message": "개인정보 보호 점수"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "차단된 광고"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "차단된 추적기"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "악성코드 보호"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "리퍼러 익명화"
+  },
+  "dashboard_rules_title": {
+    "message": "사용자 지정 규칙"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "site-rules.txt 형식으로 편집 — 기본 규칙 파일과 동일한 구문. 값은 내장 규칙과 병합됩니다."
+  },
+  "dashboard_rules_clear": {
+    "message": "지우기"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "모든 사용자 지정 규칙을 지우시겠습니까?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# 사용자 지정 규칙 — site-rules.txt와 동일한 형식\n# 값은 내장 규칙과 병합됩니다(대체되지 않음).\n#\n# ── 새 도메인을 규칙 섹션에 매핑 ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← 하위 도메인은 자동으로 일치합니다\n#\n# ── 전역 차단을 위해 추가 도메인 추가 ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── 사이트별 미용 규칙 ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "허용 목록"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "모든 차단을 우회하는 사이트"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ 사이트 추가"
+  },
+  "dashboard_elementRules_title": {
+    "message": "요소 규칙"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "\"숨길 요소 선택\"으로 수동으로 숨긴 요소 — 사이트별로 그룹화됨"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "아직 규칙이 없습니다."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "전역 규칙"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "\"스크립트/변수를 위해 페이지 스캔\"으로 수동으로 차단/편집/삭제한 전역 창 변수 — 사이트별로 그룹화됨"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "아직 규칙이 없습니다."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "차단"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "편집"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "삭제"
+  },
+  "dashboard_focus_title": {
+    "message": "집중 모드"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "일정에 따라 주의를 산만하게 하는 사이트를 차단합니다"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "집중 세션"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "세션 일시 중지됨"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "세션 실행 중…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "세션 완료!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25분"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45분"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60분"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90분"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "사용자 지정"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "분"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "주의 산만 목록"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ 추가"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "집중 중 차단할 도메인을 입력하세요(예: twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "설정"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlock 동작 사용자 지정"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "차단"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "광고 차단"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "표준 광고 네트워크 차단"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "추적기 차단"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "분석 및 추적 스크립트 차단"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "미용 필터링"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "CSS를 통해 남은 광고 자리표시자 숨기기"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "악성코드 차단"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "알려진 악성코드 도메인 차단"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "개인정보 보호"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "리퍼러 익명화"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "교차 출처 요청에서 리퍼러 헤더 제거"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "전역 개인정보 보호 제어(GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC 옵트아웃 신호 보내기(Sec-GPC 헤더 + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "추적 금지 헤더(DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1 요청 헤더 보내기"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "데이터"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "통계 수집"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "로컬 전용 사용 통계(업로드되지 않음)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "모든 데이터 재설정"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "규칙, 통계 및 설정 지우기"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "재설정"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "모든 AdBlock 데이터를 재설정하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "모든 데이터가 지워졌습니다. 새로고침 중…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "정보"
+  },
+  "dashboard_settings_version_name": {
+    "message": "버전"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "업데이트 확인"
+  },
+  "dashboard_settings_checking": {
+    "message": "확인 중…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "새 버전을 사용할 수 있습니다"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "보기"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "마지막 확인: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (실패 — 오프라인 상태인가요?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "아직 확인하지 않음"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1을(를) 사용할 수 있습니다(현재 버전: v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "규칙 소스"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock이 사이트 규칙을 가져오는 위치"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "원격 규칙 URL"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "내장 기본값(토글 가능, 제거 불가)과 사용자가 추가한 모든 URL을 포함합니다 — 모두 병합되며 각각 독립적으로 켜고 끌 수 있습니다."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL 추가"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "로컬 규칙 파일"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txt 규칙 파일 업로드 — URL 소스와 병합됩니다. 여러 파일이 지원됩니다."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "파일 추가…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "내보내는 중…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "내보내기 실패: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "알 수 없는 오류"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$3개 규칙 중 $1개 변환됨, $2개 건너뜀",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "예외 규칙 $1개(여기에는 취소 모델이 없음)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "절차적 선택자 $1개(:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "확장된 AdGuard 수정자 $1개",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "매핑되지 않은 스크립트릿 호출 $1개",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "지원되지 않는 네트워크 규칙 수정자 $1개",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1개는 이 확장 프로그램 자체의 site-rules.txt에 이미 정리되어 있음",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "인식할 수 없는 구문 $1개",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 로드됨",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 로드됨",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "내보내기"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "이 소스의 규칙을 이 확장 프로그램 자체 구문으로 변환하여 다운로드"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "기본값"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList 계열"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "언어별"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "사용자 지정(사용자의 URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "$1에 대한 가짜 데이터가 시드되었습니다:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "일반"
+  },
+  "dashboard_settings_language_name": {
+    "message": "언어"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "변경 후 이 페이지를 다시 시작합니다"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "자동(브라우저 언어)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "메뉴"
+  }
+}

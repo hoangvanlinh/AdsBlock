@@ -3057,7 +3057,6 @@ EXT.storage.onChanged.addListener((changes, area) => {
 });
 
 // ── Popunder/click-hijack tab auto-close ─────────────────────────────
-// Mirrors uBlock Origin's opener-hostname-keyed $popunder filter (see uBO's
 // src/js/tab.js onPopupUpdated/popunderMatch): closing a spawned tab based
 // on which SITE opened it, not what domain it landed on, is the only way to
 // catch popups that land on a legitimate destination (e.g. an affiliate-

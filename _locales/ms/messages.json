@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Sekat iklan, penjejak dan domain berniat jahat yang diketahui dengan kawalan tapak yang mudah dan alat fokus.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Tapak disekat — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Tapak disekat demi keselamatan anda"
+  },
+  "blocked_title_adPopup": {
+    "message": "Iklan pop timbul/tab baharu disekat"
+  },
+  "blocked_host_unknown": {
+    "message": "tapak tidak diketahui"
+  },
+  "blocked_hint_default": {
+    "message": "Tapak ini berada dalam senarai sekatan perisian hasad/pancingan data. Ia mungkin cuba mencuri maklumat anda, melombong mata wang kripto atau memasang perisian yang tidak diingini."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Klik pada halaman asal anda cuba membuka rangkaian iklan/pop timbul ini dalam tab baharu. Anda boleh menutup tab ini dengan selamat."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Jangan beri amaran tentang tapak ini lagi"
+  },
+  "blocked_btn_goBack": {
+    "message": "Kembali"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Tutup tetingkap ini"
+  },
+  "blocked_btn_proceed": {
+    "message": "Teruskan juga"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Meneruskan…"
+  },
+  "common_remove": {
+    "message": "Alih keluar"
+  },
+  "common_cancel": {
+    "message": "Batal"
+  },
+  "menu_pickElement": {
+    "message": "Pilih elemen untuk disembunyikan…"
+  },
+  "menu_scanGlobals": {
+    "message": "Imbas halaman untuk skrip/pemboleh ubah…"
+  },
+  "menu_editRules": {
+    "message": "Edit peraturan untuk tapak ini…"
+  },
+  "picker_badge_active": {
+    "message": "Memilih elemen untuk disembunyikan — tekan Esc untuk batal"
+  },
+  "picker_btn_hide": {
+    "message": "Sembunyikan elemen ini"
+  },
+  "picker_btn_broaden": {
+    "message": "Luaskan"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Papan Pemuka"
+  },
+  "popup_review_title": {
+    "message": "Suka AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Penilaian pantas sangat membantu."
+  },
+  "popup_review_rate": {
+    "message": "Nilaikan kami"
+  },
+  "popup_review_dismiss": {
+    "message": "Tidak, terima kasih"
+  },
+  "popup_stat_blocked": {
+    "message": "Disekat"
+  },
+  "popup_stat_malware": {
+    "message": "Perisian hasad"
+  },
+  "popup_stat_speed": {
+    "message": "Kelajuan"
+  },
+  "popup_stat_saved": {
+    "message": "Dijimatkan"
+  },
+  "popup_allowlist_banner": {
+    "message": "Tapak ini berada dalam senarai dibenarkan"
+  },
+  "popup_action_focus": {
+    "message": "Mod Fokus"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Jeda untuk tapak"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Sambung semula tapak"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Skor privasi"
+  },
+  "popup_footer_settings": {
+    "message": "Tetapan"
+  },
+  "popup_ruleChip_title": {
+    "message": "Peraturan sekatan rangkaian yang sedang dimuatkan"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… peraturan"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "peraturan rangkaian: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 peraturan rangkaian dimuatkan",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Sokong pembangunan melalui PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Derma"
+  },
+  "popup_version_title": {
+    "message": "Versi AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Kemas kini tersedia — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Versi lebih baharu tersedia — klik untuk membuka halaman kedai"
+  },
+  "popup_domain_unknown": {
+    "message": "Tapak tidak diketahui"
+  },
+  "popup_status_site": {
+    "message": "Tapak"
+  },
+  "popup_status_protection": {
+    "message": "Perlindungan"
+  },
+  "popup_status_allowlisted": {
+    "message": "Dibenarkan"
+  },
+  "popup_status_on": {
+    "message": "HIDUP"
+  },
+  "popup_status_paused": {
+    "message": "Dijeda"
+  },
+  "popup_status_off": {
+    "message": "MATI"
+  },
+  "common_save": {
+    "message": "Simpan"
+  },
+  "common_close": {
+    "message": "Tutup"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Edit peraturan — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Klik untuk memasukkan ke dalam kotak teks"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Rujukan kunci ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Tapis kunci…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "PADANAN KOSMETIK / CALON"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SKRIPTLET (LANJUTAN)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Peraturan semasa untuk tapak ini ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(belum ada peraturan untuk tapak ini — sama ada terbina dalam atau tersuai)"
+  },
+  "ruleEditor_hint": {
+    "message": "Satu \"key = value | value2\" setiap baris. Klik kunci di atas untuk memasukkannya. Tiada pengepala [section]. Peraturan yang ditaip di sini DITAMBAH kepada peraturan sedia ada untuk kunci ini (lihat di atas) — ini tidak boleh mengalih keluar atau mengatasi peraturan terbina dalam, dan untuk kunci bendera nilai tunggal, nilai terbina dalam biasanya menang."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Disimpan — muat semula halaman ini untuk melihat peraturan yang digunakan."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Gagal menyimpan — periksa sama ada terdapat baris \"[section]\" yang berasingan atau tampal yang besar."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "Pemilih CSS yang disembunyikan tanpa syarat melalui helaian gaya yang disuntik — tiada semakan heuristik, hanya sembunyikan apabila dilihat."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "Pemilih CSS untuk elemen CALON — hanya disembunyikan jika ia juga sepadan dengan labels/link_patterns di bawah."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Sama seperti selectors, terhad kepada bekas bergaya suapan/garis masa."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Sama seperti selectors, terhad kepada bekas bergaya pasar/beli-belah."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Sama seperti selectors, terhad kepada kawasan bar sisi/rel kanan."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Sama seperti selectors, terhad kepada bekas siaran/artikel individu."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "Pemilih CSS untuk elemen \"hos\", disemak dengan cara yang sama seperti selectors di atas."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Label teks (cth. sponsored, promoted) yang dipadankan dengan atribut/teks konteks untuk mengesahkan bahawa calon sememangnya iklan."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Corak substring yang dipadankan dengan pautan/atribut calon itu sendiri untuk mengesahkan ia adalah iklan."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Nama atribut HTML yang diimbas untuk padanan label/link_pattern (lalai: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Elemen anak yang teks diambil daripadanya untuk padanan label (lalai: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "Pemilih CSS untuk melangkah ke atas melalui .closest() sebelum menyembunyikan calon yang sepadan (menyembunyikan bekas, bukan hanya label)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Nama kelas yang dialih keluar secara berterusan daripada <html>/<body> — mengalahkan lapisan pengambilalihan hanya-CSS yang didorong oleh kelas root."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Nama sifat CSS yang dikosongkan secara berterusan daripada gaya sebaris <html>/<body> — mengalahkan kunci tatal yang ditetapkan JS, dsb."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Bendera 1/0 — menutup secara automatik tab pop timbul/popunder yang dibuka oleh klik pada tapak ini."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — mengunci sifat tetingkap secara kekal kepada nilai tetap (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — melontar ralat apabila mana-mana skrip membaca sifat tetingkap ini."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — melontar ralat apabila mana-mana skrip menulis kepada sifat tetingkap ini."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — hanya melontar ralat apabila jejak tindanan skrip pemanggil sendiri sepadan dengan needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — melontar ralat apabila skrip dengan sumber yang sepadan dengan needle membaca target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — menyekat atau mengubah hala umpan panggilan window.open() yang sepadan dengan pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — menyekat panggilan fetch() yang sepadan dengan kriteria."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — menyekat panggilan XMLHttpRequest yang sepadan dengan kriteria."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — menyekat fetch, secara pilihan mengembalikan badan respons palsu yang tetap."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — menghalang iframe about:blank asal yang sama daripada mencapai semula ke tetingkap sebenar untuk memintas kunci."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — mengalih keluar medan daripada mana-mana hasil JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — mengalih keluar medan daripada respons JSON fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — mengalih keluar medan daripada respons JSON XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — memangkas objek yang diberikan secara langsung oleh skrip (bukan melalui JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — pemadaman medan berasaskan JSONPath dalam respons JSON fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — pemadaman medan berasaskan JSONPath dalam respons JSON-lines XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Mengalih keluar medan daripada respons yang dikodkan protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — penyuntingan JSONPath (pemadaman DAN penetapan nilai) pada badan permintaan keluar."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — penyuntingan JSONPath (pemadaman DAN penetapan nilai) pada badan respons."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — carian/gantian regex dalam badan respons fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — carian/gantian regex dalam badan respons XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — menggantikan satu argumen yang diberikan kepada fungsi."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — penggantian teks tanpa syarat pada data keluar (tiada skop URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — menulis semula teks tag <script> sebelum ia berjalan. sedCount mengehadkan bilangan nod yang akan ditulis semula oleh peraturan ini (lalai: tidak terhad)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — memangkas medan daripada objek yang diberikan MASUK ke panggilan kaedah asli."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — membatalkan atau mengabaikan secara senyap panggilan kaedah asli yang sepadan dengan tandatangan."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — melepaskan atau melontar ralat pada penetapan setter pengakses (cth. Element.prototype.innerHTML) yang nilainya sepadan dengan needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — mengalih keluar segmen iklan daripada respons senarai main HLS .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — berpura-pura pemuatan script/img/iframe/link berjaya sebagai ganti permintaan rangkaian sebenar."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — mengalih keluar atribut HTML daripada elemen yang sepadan."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — mengosongkan kandungan teks nod DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — menulis semula kandungan teks nod DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — menghentikan pengubahalihan automatik melalui <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — menetapkan kuki."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — mengalih keluar kuki yang sepadan dengan corak nama."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — menetapkan entri localStorage (terhad kepada nilai literal selamat, atau nilai khas \"remove\" untuk memadamkan kunci yang sepadan)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — menulis semula href pautan daripada teksnya sendiri atau atribut lain."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — menyekat panggilan setTimeout() yang sepadan dengan kriteria."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — menyekat panggilan setInterval() yang sepadan dengan kriteria."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — menyekat panggilan requestAnimationFrame() yang sepadan dengan kriteria."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — menyekat panggilan addEventListener() yang sepadan dengan kriteria."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — mempercepat/melambatkan panggilan setTimeout() yang sepadan dan bukannya menyekatnya."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — mempercepat/melambatkan panggilan setInterval() yang sepadan dan bukannya menyekatnya."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — menyekat panggilan eval() yang sumbernya sepadan dengan pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Melumpuhkan RTCPeerConnection — menyekat helah pop timbul/penjejakan berasaskan WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Melumpuhkan skrip pengesanan anti-sekatan-iklan gaya BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Mengalih keluar target=\"_blank\" daripada pautan yang diklik — menyekat pengubahalihan tab baharu yang dipaksa."
+  },
+  "scanner_value_emptyString": {
+    "message": "Rentetan kosong"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Tatasusunan kosong"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Objek kosong"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Fungsi kosong (tiada kesan)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Fungsi yang sentiasa mengembalikan true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Fungsi yang sentiasa mengembalikan false"
+  },
+  "scanner_btn_block": {
+    "message": "Sekat"
+  },
+  "scanner_btn_edit": {
+    "message": "Edit"
+  },
+  "scanner_btn_delete": {
+    "message": "Padam"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Sekatan digunakan — disimpan untuk tapak ini."
+  },
+  "scanner_status_editApplied": {
+    "message": "Penyuntingan digunakan — disimpan untuk tapak ini."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Pemadaman digunakan — disimpan untuk tapak ini."
+  },
+  "scanner_block_warning": {
+    "message": "Sekatan menghalang SEMUA bacaan masa depan sifat ini — boleh merosakkan fungsi halaman yang bergantung padanya. Ini tidak boleh dibuat asal dengan menyegarkan; alih keluar peraturan daripada halaman Peraturan Global papan pemuka untuk membalikkan."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Sekat juga"
+  },
+  "scanner_edit_customOption": {
+    "message": "Tersuai…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "token tunggal, tiada ruang (cth. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Taip nilai tanpa ruang."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Ruang tidak dibenarkan — akan ditolak."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Akan disimpan sebagai: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Global halaman ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Tapis mengikut nama…"
+  },
+  "scanner_empty": {
+    "message": "Tiada global yang ditambah halaman ditemui pada halaman ini."
+  },
+  "scanner_footer_limitation": {
+    "message": "Hanya melihat global bergaya var/function dan penetapan window.x = eksplisit — pengisytiharan let/const/class tidak dapat dilihat oleh mana-mana pengimbas halaman (had bahasa JS)."
+  },
+  "scanner_loading": {
+    "message": "Mengimbas global halaman — tekan Esc untuk batal"
+  },
+  "common_add": {
+    "message": "Tambah"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Papan Pemuka"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Gambaran keseluruhan"
+  },
+  "dashboard_nav_rules": {
+    "message": "Peraturan Tersuai"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Sumber Peraturan"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Senarai Dibenarkan"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Peraturan Elemen"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Peraturan Global"
+  },
+  "dashboard_nav_focus": {
+    "message": "Fokus"
+  },
+  "dashboard_nav_settings": {
+    "message": "Tetapan"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Perlindungan HIDUP"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Perlindungan $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Sokong pembangunan melalui PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Belikan saya kopi ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "HIDUP"
+  },
+  "dashboard_toggle_off": {
+    "message": "MATI"
+  },
+  "dashboard_overview_title": {
+    "message": "Gambaran keseluruhan"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Papan pemuka perlindungan anda"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Jumlah disekat"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% hari ini"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Penjejak dihentikan"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% hari ini"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Perisian hasad disekat"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "ancaman dihentikan"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Tiada ancaman dikesan"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Lebar jalur dijimatkan"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "purata setiap halaman"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Masa dijimatkan"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "dalam sesi ini"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 hari ini",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— hari ini"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% berbanding semalam",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 ancaman hari ini"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 lagi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Permintaan disekat"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Permintaan penjejak"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Pengesanan perisian hasad"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7h"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14h"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30h"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "disekat"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "penjejak"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "perisian hasad"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Domain paling banyak disekat"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Domain paling banyak penjejak"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Domain paling banyak perisian hasad"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Lihat semua"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Tunjukkan kurang"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Lihat semua ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Tiada data lagi."
+  },
+  "dashboard_privacy_title": {
+    "message": "Skor privasi"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Iklan disekat"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Penjejak disekat"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Perlindungan perisian hasad"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Penganoniman perujuk"
+  },
+  "dashboard_rules_title": {
+    "message": "Peraturan Tersuai"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Edit dalam format site-rules.txt — sintaks sama seperti fail peraturan utama. Nilai digabungkan dengan peraturan terbina dalam."
+  },
+  "dashboard_rules_clear": {
+    "message": "Kosongkan"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Kosongkan semua peraturan tersuai?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Peraturan tersuai — format sama seperti site-rules.txt\n# Nilai DIGABUNGKAN dengan peraturan terbina dalam (bukan menggantikan).\n#\n# ── Petakan domain baharu kepada bahagian peraturan ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← subdomain dipadankan secara automatik\n#\n# ── Tambah domain tambahan untuk sekat secara global ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Peraturan kosmetik setiap tapak ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Senarai Dibenarkan"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Tapak yang memintas semua sekatan"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Tambah tapak"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Peraturan Elemen"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elemen yang disembunyikan secara manual melalui \"Pilih elemen untuk disembunyikan\" — dikumpulkan mengikut tapak"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Belum ada peraturan."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Peraturan Global"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Pemboleh ubah tetingkap global yang disekat/disunting/dipadam secara manual melalui \"Imbas halaman untuk skrip/pemboleh ubah\" — dikumpulkan mengikut tapak"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Belum ada peraturan."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "sekat"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "edit"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "padam"
+  },
+  "dashboard_focus_title": {
+    "message": "Mod Fokus"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Sekat tapak yang mengganggu tumpuan mengikut jadual"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Sesi Fokus"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Sesi dijeda"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Sesi berjalan…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Sesi selesai!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25m"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45m"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60m"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90m"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Tersuai"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Senarai gangguan"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Tambah"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Masukkan domain untuk disekat semasa fokus (cth. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Tetapan"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Sesuaikan tingkah laku AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Sekatan"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Sekat iklan"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Sekatan rangkaian iklan standard"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Sekat penjejak"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Sekat skrip analitik & penjejakan"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Penapisan kosmetik"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Sembunyikan pemegang tempat iklan yang tinggal melalui CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Sekat perisian hasad"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Sekat domain perisian hasad yang diketahui"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Privasi"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Penganoniman perujuk"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Alih keluar pengepala perujuk pada permintaan silang asal"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Kawalan Privasi Global (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Hantar isyarat pilih keluar GPC (pengepala Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Pengepala Jangan Jejak (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Hantar pengepala permintaan DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Data"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Kumpul statistik"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Statistik penggunaan tempatan sahaja (tidak pernah dimuat naik)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Tetapkan semula semua data"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Kosongkan peraturan, statistik dan tetapan"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Tetapkan Semula"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Tetapkan semula semua data AdBlock? Ini tidak boleh dibuat asal."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Semua data dikosongkan. Memuat semula…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Tentang"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versi"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Semak kemas kini"
+  },
+  "dashboard_settings_checking": {
+    "message": "Menyemak…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Versi lebih baharu tersedia"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Lihat"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Terakhir disemak $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (gagal — adakah anda di luar talian?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Belum pernah disemak"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 tersedia (anda mempunyai v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Sumber Peraturan"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Dari mana AdBlock mendapatkan peraturan tapaknya"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL peraturan jauh"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Termasuk lalai terbina dalam (boleh togol, tidak boleh dialih keluar) ditambah mana-mana URL yang anda tambah — semua digabungkan, setiap satu dihidupkan/dimatikan secara berasingan."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Tambah URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Fail peraturan tempatan"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Muat naik fail peraturan .txt — digabungkan dengan sumber URL. Berbilang fail disokong."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Tambah fail…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Mengeksport…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Eksport gagal: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "ralat tidak diketahui"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 ditukar, $2 dilangkau daripada $3 peraturan",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 peraturan pengecualian (tiada model pembatalan di sini)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 pemilih prosedur (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 pengubah suai AdGuard lanjutan",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 panggilan skriptlet tidak dipetakan",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 pengubah suai peraturan rangkaian tidak disokong",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 sudah dikurasi dalam site-rules.txt sendiri sambungan ini",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 sintaks tidak dikenali",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 dimuatkan",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 dimuatkan",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Eksport"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Muat turun peraturan sumber ini yang ditukar kepada sintaks sendiri sambungan ini"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Lalai"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Keluarga EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Mengikut bahasa"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Tersuai (URL anda sendiri)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Data palsu disemai untuk $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Umum"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Bahasa"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Memulakan semula halaman ini selepas perubahan"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automatik (bahasa pelayar)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Menu"
+  }
+}

@@ -17,7 +17,7 @@
 // UI-language "Auto" resolution.
 //
 // chrome.i18n.getUILanguage() (the browser's CHROME/MENU display language;
-// uBlock Origin's own listMatchesEnvironment() uses only this) and
+// listMatchesEnvironment() uses only this) and
 // navigator.language/navigator.languages (the browser's Accept-Language /
 // "preferred languages" list, chrome://settings/languages — a SEPARATE
 // setting) can genuinely disagree: a browser can display its own menus in

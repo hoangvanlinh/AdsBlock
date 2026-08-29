@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Blockera annonser, spårare och kända skadliga domäner med enkla webbplatskontroller och fokusverktyg.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Webbplatsen blockerad — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Webbplatsen blockerad för din säkerhet"
+  },
+  "blocked_title_adPopup": {
+    "message": "Popup-annons/ny flik blockerad"
+  },
+  "blocked_host_unknown": {
+    "message": "okänd webbplats"
+  },
+  "blocked_hint_default": {
+    "message": "Den här webbplatsen finns på en blockeringslista för skadlig kod/nätfiske. Den kan försöka stjäla din information, bryta kryptovaluta eller installera oönskad programvara."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Ett klick på sidan du kom från försökte öppna detta annons-/popupnätverk i en ny flik. Du kan tryggt stänga den här fliken."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Varna mig inte om denna webbplats igen"
+  },
+  "blocked_btn_goBack": {
+    "message": "Gå tillbaka"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Stäng detta fönster"
+  },
+  "blocked_btn_proceed": {
+    "message": "Fortsätt ändå"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Fortsätter…"
+  },
+  "common_remove": {
+    "message": "Ta bort"
+  },
+  "common_cancel": {
+    "message": "Avbryt"
+  },
+  "menu_pickElement": {
+    "message": "Välj element att dölja…"
+  },
+  "menu_scanGlobals": {
+    "message": "Skanna sidan efter skript/variabler…"
+  },
+  "menu_editRules": {
+    "message": "Redigera regler för denna webbplats…"
+  },
+  "picker_badge_active": {
+    "message": "Väljer element att dölja — tryck Esc för att avbryta"
+  },
+  "picker_btn_hide": {
+    "message": "Dölj detta element"
+  },
+  "picker_btn_broaden": {
+    "message": "Utöka"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Instrumentpanel"
+  },
+  "popup_review_title": {
+    "message": "Gillar du AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Ett snabbt betyg hjälper mycket."
+  },
+  "popup_review_rate": {
+    "message": "Betygsätt oss"
+  },
+  "popup_review_dismiss": {
+    "message": "Nej tack"
+  },
+  "popup_stat_blocked": {
+    "message": "Blockerat"
+  },
+  "popup_stat_malware": {
+    "message": "Skadlig kod"
+  },
+  "popup_stat_speed": {
+    "message": "Hastighet"
+  },
+  "popup_stat_saved": {
+    "message": "Sparat"
+  },
+  "popup_allowlist_banner": {
+    "message": "Denna webbplats är på tillåtelselistan"
+  },
+  "popup_action_focus": {
+    "message": "Fokusläge"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Pausa för webbplatsen"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Återuppta webbplatsen"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Integritetspoäng"
+  },
+  "popup_footer_settings": {
+    "message": "Inställningar"
+  },
+  "popup_ruleChip_title": {
+    "message": "Nätverksblockeringsregler som är inlästa nu"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… regler"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "nätverksregler: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 nätverksregler inlästa",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Stöd utvecklingen via PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Donera"
+  },
+  "popup_version_title": {
+    "message": "AdBlock-version"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Uppdatering tillgänglig — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "En nyare version är tillgänglig — klicka för att öppna butikssidan"
+  },
+  "popup_domain_unknown": {
+    "message": "Okänd webbplats"
+  },
+  "popup_status_site": {
+    "message": "Webbplats"
+  },
+  "popup_status_protection": {
+    "message": "Skydd"
+  },
+  "popup_status_allowlisted": {
+    "message": "Tillåten"
+  },
+  "popup_status_on": {
+    "message": "PÅ"
+  },
+  "popup_status_paused": {
+    "message": "Pausad"
+  },
+  "popup_status_off": {
+    "message": "AV"
+  },
+  "common_save": {
+    "message": "Spara"
+  },
+  "common_close": {
+    "message": "Stäng"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Redigera regler — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Klicka för att infoga i textrutan"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Nyckelreferens ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtrera nycklar…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOSMETISK / KANDIDATMATCHNING"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLETS (AVANCERAT)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Nuvarande regler för denna webbplats ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(inga regler för denna webbplats ännu — varken inbyggda eller egna)"
+  },
+  "ruleEditor_hint": {
+    "message": "En \"key = value | value2\" per rad. Klicka på en nyckel ovan för att infoga den. Inga [section]-rubriker. Regler skrivna här LÄGGS TILL i befintliga regler för denna nyckel (se ovan) — detta kan inte ta bort eller åsidosätta en inbyggd regel, och för flaggnycklar med ett enda värde vinner vanligtvis det inbyggda värdet."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Sparat — läs in denna sida igen för att se de tillämpade reglerna."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Det gick inte att spara — kontrollera om det finns en fristående \"[section]\"-rad eller en enorm inklistring."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS-väljare som döljs villkorslöst via ett injicerat stilmall — ingen heuristisk kontroll, döljs bara vid synlighet."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS-väljare för KANDIDAT-element — döljs endast om de också matchar labels/link_patterns nedan."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Samma som selectors, begränsat till behållare i flöde-/tidslinjestil."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Samma som selectors, begränsat till behållare i marknadsplats-/shoppingstil."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Samma som selectors, begränsat till ett sidopanel-/höger-ramnområde."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Samma som selectors, begränsat till enskilda inlägg-/artikelbehållare."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS-väljare för \"värd\"-element, kontrollerade på samma sätt som selectors ovan."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Textetiketter (t.ex. sponsored, promoted) som jämförs med attribut/kontexttext för att bekräfta att en kandidat verkligen är en annons."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Delsträngsmönster som jämförs med en kandidats egna länkar/attribut för att bekräfta att det är en annons."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "HTML-attributnamn som skannas efter label/link_pattern-matchningar (standard: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Underordnade element som text hämtas från för etikettmatchning (standard: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS-väljare för att gå uppåt via .closest() innan en matchande kandidat döljs (döljer behållaren, inte bara etiketten)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Klassnamn som kontinuerligt tas bort från <html>/<body> — besegrar enbart CSS-baserade övertagandelager som drivs av en rotklass."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "CSS-egenskapsnamn som kontinuerligt rensas från <html>/<body> infogade stil — besegrar JS-inställd rullningslås osv."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0-flagga — stänger automatiskt popup-/popunder-flikar öppnade av klick på denna webbplats."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — låser en fönsteregenskap permanent till ett fast värde (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — kastar ett fel när något skript läser denna fönsteregenskap."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — kastar ett fel när något skript skriver till denna fönsteregenskap."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — kastar bara ett fel när det anropande skriptets egen stackspårning matchar needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — kastar ett fel när ett skript med en källa som matchar needle läser target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — blockerar eller lockomdirigerar window.open()-anrop som matchar pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — blockerar fetch()-anrop som matchar kriterierna."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — blockerar XMLHttpRequest-anrop som matchar kriterierna."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — blockerar fetch, och returnerar valfritt en fast falsk svarstext."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — hindrar en about:blank-iframe med samma ursprung från att nå tillbaka till det riktiga fönstret för att kringgå ett lås."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — tar bort fält från vilket JSON.parse()-resultat som helst."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — tar bort fält från ett fetch() JSON-svar."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — tar bort fält från ett XHR JSON-svar."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — beskär ett objekt som ett skript tilldelar direkt (inte via JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — JSONPath-baserade fältborttagningar i ett fetch() JSON-svar."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — JSONPath-baserade fältborttagningar i ett XHR JSON-lines-svar."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Tar bort fält från ett protobuf/jspb-kodat svar."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath-redigeringar (borttagningar OCH värdetilldelning) på en utgående förfrågningstext."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath-redigeringar (borttagningar OCH värdetilldelning) på en svarstext."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex-sökning/ersättning i en fetch()-svarstext."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex-sökning/ersättning i en XHR-svarstext."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — ersätter ett argument som skickas till en funktion."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — villkorslös textersättning på utgående data (ingen URL-avgränsning)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — skriver om texten i en <script>-tagg innan den körs. sedCount begränsar hur många noder denna regel någonsin skriver om (standard: obegränsat)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — beskär fält från ett objekt som skickas IN i ett anrop av en inbyggd metod."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — avbryter eller ignorerar tyst ett anrop av en inbyggd metod som matchar en signatur."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — förkastar eller kastar ett fel vid en åtkomst-settertilldelning (t.ex. Element.prototype.innerHTML) vars värde matchar needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — tar bort annonssegment från ett HLS .m3u8-spellistsvar."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — låtsas att en script/img/iframe/link-inläsning lyckades istället för den riktiga nätverksbegäran."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — tar bort HTML-attribut från matchande element."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — rensar textinnehållet i en DOM-nod."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — skriver om textinnehållet i en DOM-nod."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — stoppar en automatisk omdirigering via <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — anger en cookie."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — tar bort cookies som matchar ett namnmönster."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — anger en localStorage-post (begränsat till säkra bokstavliga värden, eller det speciella värdet \"remove\" för att ta bort matchande nycklar)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — skriver om en länks href från dess egen text eller ett annat attribut."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — blockerar setTimeout()-anrop som matchar kriterierna."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — blockerar setInterval()-anrop som matchar kriterierna."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — blockerar requestAnimationFrame()-anrop som matchar kriterierna."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — blockerar addEventListener()-anrop som matchar kriterierna."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — påskyndar/saktar ner matchande setTimeout()-anrop istället för att blockera dem."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — påskyndar/saktar ner matchande setInterval()-anrop istället för att blockera dem."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — blockerar eval()-anrop vars källa matchar pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Inaktiverar RTCPeerConnection — blockerar WebRTC-baserade popup-/spårningstrick."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Neutraliserar upptäcktsskript för annonsblockering i BlockAdBlock/FuckAdBlock-stil."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Tar bort target=\"_blank\" från klickade länkar — blockerar tvingade omdirigeringar till ny flik."
+  },
+  "scanner_value_emptyString": {
+    "message": "Tom sträng"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Tom array"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Tomt objekt"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Tom funktion (utan effekt)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funktion som alltid returnerar true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funktion som alltid returnerar false"
+  },
+  "scanner_btn_block": {
+    "message": "Blockera"
+  },
+  "scanner_btn_edit": {
+    "message": "Redigera"
+  },
+  "scanner_btn_delete": {
+    "message": "Ta bort"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Blockering tillämpad — sparad för denna webbplats."
+  },
+  "scanner_status_editApplied": {
+    "message": "Redigering tillämpad — sparad för denna webbplats."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Borttagning tillämpad — sparad för denna webbplats."
+  },
+  "scanner_block_warning": {
+    "message": "Blockering förhindrar ALLA framtida läsningar av denna egenskap — kan förstöra sidfunktionalitet som förlitar sig på den. Detta kan inte ångras genom att uppdatera; ta bort regeln från instrumentpanelens sida Globala regler för att återställa."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Blockera ändå"
+  },
+  "scanner_edit_customOption": {
+    "message": "Anpassad…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "enskild token, inga mellanslag (t.ex. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Skriv ett värde utan mellanslag."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Mellanslag är inte tillåtna — kommer att avvisas."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Kommer att sparas som: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Globala sidvariabler ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtrera efter namn…"
+  },
+  "scanner_empty": {
+    "message": "Inga sidtillagda globala variabler hittades på denna sida."
+  },
+  "scanner_footer_limitation": {
+    "message": "Ser bara var/function-stilens globala variabler och explicita window.x =-tilldelningar — let/const/class-deklarationer är osynliga för alla sidskannrar (JS-språkbegränsning)."
+  },
+  "scanner_loading": {
+    "message": "Skannar globala sidvariabler — tryck Esc för att avbryta"
+  },
+  "common_add": {
+    "message": "Lägg till"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Instrumentpanel"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Översikt"
+  },
+  "dashboard_nav_rules": {
+    "message": "Egna regler"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Regelkälla"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Tillåtelselista"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Elementregler"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Globala regler"
+  },
+  "dashboard_nav_focus": {
+    "message": "Fokus"
+  },
+  "dashboard_nav_settings": {
+    "message": "Inställningar"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Skydd PÅ"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Skydd $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Stöd utvecklingen via PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Bjud mig på en kaffe ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "PÅ"
+  },
+  "dashboard_toggle_off": {
+    "message": "AV"
+  },
+  "dashboard_overview_title": {
+    "message": "Översikt"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Din skyddsinstrumentpanel"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Totalt blockerat"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0 % idag"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Stoppade spårare"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0 % idag"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Blockerad skadlig kod"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "stoppade hot"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Inga hot upptäckta"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Sparad bandbredd"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "genomsnitt per sida"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Sparad tid"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "i denna session"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 idag",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— idag"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1 % jämfört med igår",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 hot idag"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 till",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Blockerade förfrågningar"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Spårningsförfrågningar"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Upptäckter av skadlig kod"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7d"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14d"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30d"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "blockerat"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "spårare"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "skadlig kod"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Mest blockerade domäner"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Domäner med flest spårare"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Domäner med mest skadlig kod"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Visa alla"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Visa mindre"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Visa alla ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Inga data ännu."
+  },
+  "dashboard_privacy_title": {
+    "message": "Integritetspoäng"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Blockerade annonser"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Blockerade spårare"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Skydd mot skadlig kod"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Referrer-anonymisering"
+  },
+  "dashboard_rules_title": {
+    "message": "Egna regler"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Redigera i site-rules.txt-format — samma syntax som huvudregelfilen. Värden slås samman med inbyggda regler."
+  },
+  "dashboard_rules_clear": {
+    "message": "Rensa"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Rensa alla egna regler?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Egna regler — samma format som site-rules.txt\n# Värden SLÅS SAMMAN med inbyggda regler (ersätts inte).\n#\n# ── Koppla en ny domän till ett regelavsnitt ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← underdomäner matchas automatiskt\n#\n# ── Lägg till fler domäner för global blockering ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Kosmetiska regler per webbplats ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Tillåtelselista"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Webbplatser som kringgår all blockering"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Lägg till webbplats"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Elementregler"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Element som dolts manuellt via \"Välj element att dölja\" — grupperade efter webbplats"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Inga regler ännu."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Globala regler"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Globala fönstervariabler manuellt blockerade/redigerade/borttagna via \"Skanna sidan efter skript/variabler\" — grupperade efter webbplats"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Inga regler ännu."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "blockera"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "redigera"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "ta bort"
+  },
+  "dashboard_focus_title": {
+    "message": "Fokusläge"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Blockera distraherande webbplatser enligt schema"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Fokussession"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Session pausad"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Session pågår…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Session slutförd!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 min"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 min"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 min"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 min"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Anpassad"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Distraktionslista"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Lägg till"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Ange domän att blockera under fokus (t.ex. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Inställningar"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Anpassa AdBlocks beteende"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Blockering"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Blockera annonser"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standardblockering av annonsnätverk"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Blockera spårare"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Blockera analys- och spårningsskript"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kosmetisk filtrering"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Dölj kvarvarande annonsplatshållare via CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Blockera skadlig kod"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Blockera kända domäner med skadlig kod"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Integritet"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Referrer-anonymisering"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Ta bort referrer-headrar vid cross-origin-förfrågningar"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Global Privacy Control (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Skicka GPC-avanmälningssignalen (Sec-GPC-header + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Do Not Track-header (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Skicka DNT: 1-förfrågningshuvud"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Data"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Samla in statistik"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Endast lokal användningsstatistik (laddas aldrig upp)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Återställ all data"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Rensa regler, statistik och inställningar"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Återställ"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Återställa all AdBlock-data? Detta kan inte ångras."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "All data har rensats. Läser in igen…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Om"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Version"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Sök efter uppdateringar"
+  },
+  "dashboard_settings_checking": {
+    "message": "Söker…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "En nyare version är tillgänglig"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Visa"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Senast kontrollerad $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (misslyckades — är du offline?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Ännu inte kontrollerad"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 är tillgänglig (du har v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Regelkälla"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Var AdBlock hämtar sina webbplatsregler ifrån"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Fjärrregel-URL:er"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Inkluderar den inbyggda standarden (kan växlas, kan inte tas bort) plus eventuella URL:er du lägger till — alla sammanslagna, var och en av/på oberoende."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Lägg till URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Lokala regelfiler"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Ladda upp .txt-regelfiler — slås samman med URL-källor. Flera filer stöds."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Lägg till fil…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Exporterar…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Export misslyckades: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "okänt fel"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 konverterade, $2 hoppade över av $3 regler",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 undantagsregler (ingen avbokningsmodell här)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 procedurmässiga väljare (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 utökade AdGuard-modifierare",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 okartlagda scriptlet-anrop",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 ej stödda nätverksregelmodifierare",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 redan sammanställda i denna tilläggs egen site-rules.txt",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 okänd syntax",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 inlästa",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 inlästa",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Exportera"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Ladda ner den här källans regler konverterade till detta tilläggs egen syntax"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Standard"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList-familjen"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Efter språk"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Anpassad (dina egna URL:er)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Fejkdata inmatad för $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Allmänt"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Språk"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Startar om denna sida efter ändring"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automatiskt (webbläsarspråk)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Meny"
+  }
+}

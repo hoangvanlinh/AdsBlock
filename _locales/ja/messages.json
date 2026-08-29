@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "シンプルなサイト単位のコントロールと集中モードで、広告・トラッカー・既知の悪意あるドメインをブロックします。",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "サイトがブロックされました — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "安全のためサイトをブロックしました"
+  },
+  "blocked_title_adPopup": {
+    "message": "ポップアップ/新規タブ広告をブロックしました"
+  },
+  "blocked_host_unknown": {
+    "message": "不明なサイト"
+  },
+  "blocked_hint_default": {
+    "message": "このサイトはマルウェア/フィッシングのブロックリストに登録されています。情報の盗取、暗号資産のマイニング、望まないソフトウェアのインストールを試みる可能性があります。"
+  },
+  "blocked_hint_adPopup": {
+    "message": "移動元のページでのクリックが、この広告/ポップアップネットワークを新しいタブで開こうとしました。このタブは安全に閉じることができます。"
+  },
+  "blocked_dontWarn_label": {
+    "message": "このサイトについて今後警告しない"
+  },
+  "blocked_btn_goBack": {
+    "message": "戻る"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "このウィンドウを閉じる"
+  },
+  "blocked_btn_proceed": {
+    "message": "このまま進む"
+  },
+  "blocked_btn_proceeding": {
+    "message": "処理中…"
+  },
+  "common_remove": {
+    "message": "削除"
+  },
+  "common_cancel": {
+    "message": "キャンセル"
+  },
+  "menu_pickElement": {
+    "message": "非表示にする要素を選択…"
+  },
+  "menu_scanGlobals": {
+    "message": "ページのスクリプト/変数をスキャン…"
+  },
+  "menu_editRules": {
+    "message": "このサイトのルールを編集…"
+  },
+  "picker_badge_active": {
+    "message": "非表示にする要素を選択中 — Escキーでキャンセル"
+  },
+  "picker_btn_hide": {
+    "message": "この要素を非表示にする"
+  },
+  "picker_btn_broaden": {
+    "message": "範囲を広げる"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "ダッシュボード"
+  },
+  "popup_review_title": {
+    "message": "AdBlockはいかがですか?"
+  },
+  "popup_review_subtitle": {
+    "message": "簡単な評価がとても役立ちます。"
+  },
+  "popup_review_rate": {
+    "message": "評価する"
+  },
+  "popup_review_dismiss": {
+    "message": "今はしない"
+  },
+  "popup_stat_blocked": {
+    "message": "ブロック済み"
+  },
+  "popup_stat_malware": {
+    "message": "マルウェア"
+  },
+  "popup_stat_speed": {
+    "message": "速度"
+  },
+  "popup_stat_saved": {
+    "message": "削減量"
+  },
+  "popup_allowlist_banner": {
+    "message": "このサイトは許可リストに登録されています"
+  },
+  "popup_action_focus": {
+    "message": "集中モード"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ このサイトで一時停止"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ サイトを再開"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "プライバシースコア"
+  },
+  "popup_footer_settings": {
+    "message": "設定"
+  },
+  "popup_ruleChip_title": {
+    "message": "現在読み込まれているネットワークブロックルール"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… ルール"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "ネットワークルール: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "ネットワークルール $1 件を読み込み済み",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "PayPalで開発を支援する"
+  },
+  "popup_donate_label": {
+    "message": "寄付する"
+  },
+  "popup_version_title": {
+    "message": "AdBlockのバージョン"
+  },
+  "popup_version_updateAvailable": {
+    "message": "更新があります — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "新しいバージョンがあります — クリックしてストアページを開く"
+  },
+  "popup_domain_unknown": {
+    "message": "不明なサイト"
+  },
+  "popup_status_site": {
+    "message": "サイト"
+  },
+  "popup_status_protection": {
+    "message": "保護"
+  },
+  "popup_status_allowlisted": {
+    "message": "許可リストに登録済み"
+  },
+  "popup_status_on": {
+    "message": "オン"
+  },
+  "popup_status_paused": {
+    "message": "一時停止中"
+  },
+  "popup_status_off": {
+    "message": "オフ"
+  },
+  "common_save": {
+    "message": "保存"
+  },
+  "common_close": {
+    "message": "閉じる"
+  },
+  "ruleEditor_panel_title": {
+    "message": "ルールを編集 — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "クリックしてテキストエリアに挿入"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "キーリファレンス ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "キーを絞り込む…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "コスメティック / 候補マッチング"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "スクリプトレット(上級)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "このサイトの現在のルール ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(このサイトのルールはまだありません — 組み込み・カスタムいずれも)"
+  },
+  "ruleEditor_hint": {
+    "message": "1行につき \"key = value | value2\" を1つ。上のキーをクリックすると挿入されます。[section] ヘッダーは不要です。ここに入力したルールは、このキーの既存ルール(上記参照)に追加されます — 組み込みルールを削除・上書きすることはできず、単一値のフラグキーでは通常、組み込みの値が優先されます。"
+  },
+  "ruleEditor_status_saved": {
+    "message": "保存しました — このページを再読み込みするとルールが適用されます。"
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "保存に失敗しました — 余分な \"[section]\" 行や、貼り付けたテキストが大きすぎないか確認してください。"
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "挿入されたスタイルシートによって無条件に非表示になるCSSセレクター — ヒューリスティックな判定はなく、見つけ次第即座に非表示にします。"
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "候補要素用のCSSセレクター — 下記のlabels/link_patternsにも一致した場合のみ非表示になります。"
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "selectorsと同様ですが、フィード/タイムライン形式のコンテナに限定されます。"
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "selectorsと同様ですが、マーケットプレイス/ショッピング形式のコンテナに限定されます。"
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "selectorsと同様ですが、サイドバー/右レール領域に限定されます。"
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "selectorsと同様ですが、個々の投稿/記事コンテナに限定されます。"
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "\"host\"要素用のCSSセレクターで、上記のselectorsと同じ方法でチェックされます。"
+  },
+  "ruleEditor_ref_labels": {
+    "message": "テキストラベル(例: sponsored、promoted)を属性/コンテキストのテキストと照合し、候補が本当に広告かどうかを確認します。"
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "候補自体のリンク/属性と照合される部分文字列パターンで、広告かどうかを確認します。"
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "label/link_patternの一致判定のためにスキャンされるHTML属性名(デフォルト: aria-label、data-promoted、post-type、…)。"
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "ラベル照合のためにテキストを取得する子要素(デフォルト: header、[role=heading]、span、a)。"
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "一致した候補を非表示にする前に .closest() で辿り着くCSSセレクター(ラベルだけでなくコンテナごと非表示にします)。"
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "<html>/<body>から継続的に取り除かれるクラス名 — ルートクラスによって駆動されるCSSのみのテイクオーバーオーバーレイを無効化します。"
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "<html>/<body>のインラインスタイルから継続的にクリアされるCSSプロパティ名 — JSで設定されるscroll-lockなどを無効化します。"
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0フラグ — このサイトのクリックによって開かれたポップアップ/ポップアンダータブを自動的に閉じます。"
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — windowプロパティを固定値(undefined、true、false、noopFuncなど)に恒久的に固定します。"
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — このwindowプロパティをどのスクリプトが読み取ってもエラーを発生させます。"
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — このwindowプロパティにどのスクリプトが書き込んでもエラーを発生させます。"
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — 呼び出し元スクリプト自身のスタックトレースがneedleに一致した場合のみエラーを発生させます。"
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — ソースがneedleに一致するスクリプトがtargetを読み取った場合にエラーを発生させます。"
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — patternに一致するwindow.open()呼び出しをブロックまたはデコイでリダイレクトします。"
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — 条件に一致するfetch()呼び出しをブロックします。"
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — 条件に一致するXMLHttpRequest呼び出しをブロックします。"
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — fetchをブロックし、任意で固定の偽レスポンス本文を返します。"
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — 同一オリジンのabout:blank iframeが実際のwindowに再アクセスしてロックを回避するのを防ぎます。"
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — あらゆるJSON.parse()の結果からフィールドを削除します。"
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — fetch()のJSONレスポンスからフィールドを削除します。"
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — XHRのJSONレスポンスからフィールドを削除します。"
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — スクリプトが直接代入するオブジェクトを削減します(JSON.parse経由ではない場合)。"
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — fetch()のJSONレスポンスに対するJSONPathベースのフィールド削除。"
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — XHRのJSON-linesレスポンスに対するJSONPathベースのフィールド削除。"
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "protobuf/jspb形式でエンコードされたレスポンスからフィールドを削除します。"
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — 送信リクエスト本文に対するJSONPath編集(削除と値の代入の両方)。"
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — レスポンス本文に対するJSONPath編集(削除と値の代入の両方)。"
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — fetch()のレスポンス本文に対する正規表現の検索/置換。"
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — XHRのレスポンス本文に対する正規表現の検索/置換。"
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — 関数に渡される引数を1つ置き換えます。"
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — 送信データに対する無条件のテキスト置換(URLによる範囲指定なし)。"
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — 実行前に<script>タグのテキストを書き換えます。sedCountはこのルールが書き換えるノード数の上限です(デフォルト: 無制限)。"
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — ネイティブメソッド呼び出しに渡されるオブジェクトからフィールドを削減します。"
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — signatureに一致するネイティブメソッド呼び出しを中止するか、静かに無効化します。"
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — アクセサーセッター(例: Element.prototype.innerHTML)への代入で、値がneedleに一致する場合に無効化またはエラーを発生させます。"
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — HLSの.m3u8プレイリストレスポンスから広告セグメントを削除します。"
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — 実際のネットワークリクエストの代わりに、script/img/iframe/linkの読み込みを成功したように見せかけます。"
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — 一致する要素からHTML属性を削除します。"
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — DOMノードのテキストコンテンツをクリアします。"
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — DOMノードのテキストコンテンツを書き換えます。"
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — <meta http-equiv=\"refresh\">による自動リダイレクトを停止します。"
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — クッキーを設定します。"
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — 名前パターンに一致するクッキーを削除します。"
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — localStorageのエントリを設定します(安全なリテラル値、または一致するキーを削除する特別な値\"remove\"に限定されます)。"
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — リンク自身のテキストまたは別の属性から、そのhrefを書き換えます。"
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — 条件に一致するsetTimeout()呼び出しをブロックします。"
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — 条件に一致するsetInterval()呼び出しをブロックします。"
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — 条件に一致するrequestAnimationFrame()呼び出しをブロックします。"
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — 条件に一致するaddEventListener()呼び出しをブロックします。"
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — 一致するsetTimeout()呼び出しをブロックする代わりに、速度を上げたり下げたりします。"
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — 一致するsetInterval()呼び出しをブロックする代わりに、速度を上げたり下げたりします。"
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — ソースがpatternに一致するeval()呼び出しをブロックします。"
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "RTCPeerConnectionを無効化します — WebRTCを利用したポップアップ/トラッキングの手口をブロックします。"
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "BlockAdBlock/FuckAdBlock系のアンチアドブロック検出スクリプトを無効化します。"
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "クリックされたリンクからtarget=\"_blank\"を取り除きます — 強制的な新規タブへのリダイレクトをブロックします。"
+  },
+  "scanner_value_emptyString": {
+    "message": "空の文字列"
+  },
+  "scanner_value_emptyArray": {
+    "message": "空の配列"
+  },
+  "scanner_value_emptyObject": {
+    "message": "空のオブジェクト"
+  },
+  "scanner_value_noopFunc": {
+    "message": "空の関数(no-op)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "常にtrueを返す関数"
+  },
+  "scanner_value_falseFunc": {
+    "message": "常にfalseを返す関数"
+  },
+  "scanner_btn_block": {
+    "message": "ブロック"
+  },
+  "scanner_btn_edit": {
+    "message": "編集"
+  },
+  "scanner_btn_delete": {
+    "message": "削除"
+  },
+  "scanner_status_blockApplied": {
+    "message": "ブロックを適用しました — このサイトに保存されました。"
+  },
+  "scanner_status_editApplied": {
+    "message": "編集を適用しました — このサイトに保存されました。"
+  },
+  "scanner_status_deleteApplied": {
+    "message": "削除を適用しました — このサイトに保存されました。"
+  },
+  "scanner_block_warning": {
+    "message": "ブロックすると、このプロパティの今後の読み取りがすべて防止されます — これに依存しているページ機能が壊れる可能性があります。再読み込みしても元に戻せません。元に戻すには、ダッシュボードのGlobal Rulesページからルールを削除してください。"
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "それでもブロックする"
+  },
+  "scanner_edit_customOption": {
+    "message": "カスタム…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "スペースなしの単一トークン(例: 42、hello、{})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "スペースなしの値を入力してください。"
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "スペースは使用できません — 拒否されます。"
+  },
+  "scanner_edit_hintPreview": {
+    "message": "次の値として保存されます: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "ページのグローバル変数 ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "名前で絞り込む…"
+  },
+  "scanner_empty": {
+    "message": "このページにページ追加のグローバル変数は見つかりませんでした。"
+  },
+  "scanner_footer_limitation": {
+    "message": "var/function形式のグローバル変数と、明示的なwindow.x = という代入のみが見られます — let/const/class宣言はどのページスキャナーからも見えません(JS言語の制約です)。"
+  },
+  "scanner_loading": {
+    "message": "ページのグローバル変数をスキャン中 — Escキーでキャンセル"
+  },
+  "common_add": {
+    "message": "追加"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — ダッシュボード"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "概要"
+  },
+  "dashboard_nav_rules": {
+    "message": "カスタムルール"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "ルールソース"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "許可リスト"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "要素ルール"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "グローバルルール"
+  },
+  "dashboard_nav_focus": {
+    "message": "集中"
+  },
+  "dashboard_nav_settings": {
+    "message": "設定"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "保護オン"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "保護 $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "PayPalで開発を支援する"
+  },
+  "dashboard_donate_label": {
+    "message": "コーヒーをおごる ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "オン"
+  },
+  "dashboard_toggle_off": {
+    "message": "オフ"
+  },
+  "dashboard_overview_title": {
+    "message": "概要"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "あなたの保護ダッシュボード"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "合計ブロック数"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "本日 +0%"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "停止したトラッカー"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "本日 +0%"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "ブロックしたマルウェア"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "件の脅威を阻止"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "脅威は検出されていません"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "節約した帯域幅"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "ページあたり平均"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "節約した時間"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "今回のセッション"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "本日 +$1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "本日 —"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "前日比 $1%",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "本日の脅威 0件"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 ほか+$2件",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "ブロックされたリクエスト"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "トラッカーのリクエスト"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "マルウェアの検出"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7日"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14日"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30日"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "ブロック"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "トラッカー"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "マルウェア"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "ブロック数が多いドメイン"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "トラッカードメイン上位"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "マルウェアドメイン上位"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "すべて表示"
+  },
+  "dashboard_domains_showLess": {
+    "message": "表示を減らす"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "すべて表示 ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "まだデータがありません。"
+  },
+  "dashboard_privacy_title": {
+    "message": "プライバシースコア"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "ブロックした広告"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "ブロックしたトラッカー"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "マルウェア保護"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "リファラーの匿名化"
+  },
+  "dashboard_rules_title": {
+    "message": "カスタムルール"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "site-rules.txt形式で編集します — メインのルールファイルと同じ構文です。値は組み込みルールとマージされます。"
+  },
+  "dashboard_rules_clear": {
+    "message": "クリア"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "すべてのカスタムルールをクリアしますか?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# カスタムルール — site-rules.txtと同じ形式\n# 値は組み込みルールとマージされます(置き換えではありません)。\n#\n# ── 新しいドメインをルールセクションにマッピング ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← サブドメインは自動的にマッチします\n#\n# ── グローバルにブロックする追加ドメインを登録 ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── サイトごとのコスメティックルール ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "許可リスト"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "すべてのブロックを回避するサイト"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ サイトを追加"
+  },
+  "dashboard_elementRules_title": {
+    "message": "要素ルール"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "「非表示にする要素を選択」で手動で非表示にした要素 — サイトごとにグループ化"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "まだルールがありません。"
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "グローバルルール"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "「ページのスクリプト/変数をスキャン」で手動でブロック/編集/削除したwindowのグローバル変数 — サイトごとにグループ化"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "まだルールがありません。"
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "ブロック"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "編集"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "削除"
+  },
+  "dashboard_focus_title": {
+    "message": "集中モード"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "スケジュールに沿って気の散るサイトをブロック"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "集中セッション"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "セッション一時停止中"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "セッション実行中…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "セッション完了!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25分"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45分"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60分"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90分"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "カスタム"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "分"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "気が散るサイトのリスト"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ 追加"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "集中モード中にブロックするドメインを入力してください(例: twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "設定"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlockの動作をカスタマイズ"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "ブロック"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "広告をブロック"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "標準的な広告ネットワークのブロック"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "トラッカーをブロック"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "アナリティクス・トラッキングスクリプトをブロック"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "コスメティックフィルタリング"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "CSSで残った広告のプレースホルダーを非表示"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "マルウェアをブロック"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "既知のマルウェアドメインをブロック"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "プライバシー"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "リファラーの匿名化"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "クロスオリジンリクエストのリファラーヘッダーを削除"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Global Privacy Control"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPCオプトアウト信号を送信(Sec-GPCヘッダー + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Do Not Trackヘッダー"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1リクエストヘッダーを送信"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "データ"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "統計を収集"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "ローカルのみの利用統計(アップロードされません)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "すべてのデータをリセット"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "ルール、統計、設定を消去"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "リセット"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "AdBlockのすべてのデータをリセットしますか? この操作は元に戻せません。"
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "すべてのデータが消去されました。再読み込み中…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "情報"
+  },
+  "dashboard_settings_version_name": {
+    "message": "バージョン"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "更新を確認"
+  },
+  "dashboard_settings_checking": {
+    "message": "確認中…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "新しいバージョンがあります"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "表示"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "最終確認: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": "(失敗 — オフラインですか?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "まだ確認していません"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1が利用可能です(現在: v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "ルールソース"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlockがサイトルールを取得する場所"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "リモートルールURL"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "組み込みのデフォルト(切り替え可能、削除不可)に加え、追加したURLをすべて含みます — すべてマージされ、それぞれ個別にオン/オフできます。"
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URLを追加"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "ローカルルールファイル"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": ".txtルールファイルをアップロード — URLソースとマージされます。複数ファイルに対応。"
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "ファイルを追加…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "エクスポート中…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "エクスポートに失敗しました: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "不明なエラー"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$3件中 $1件を変換、$2件をスキップ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1件の例外ルール(ここには取り消しモデルはありません)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1件の手続き型セレクター(:has-text、:xpathなど)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1件のAdGuard拡張修飾子",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1件のマッピングされていないスクリプトレット呼び出し",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1件のサポートされていないネットワークルール修飾子",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1件はこのリポジトリ独自のsite-rules.txtで既にキュレーション済み",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1件の認識できない構文",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2件を読み込み済み",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1件を読み込み済み",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "エクスポート"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "このソースのルールをこのリポジトリ独自の文法に変換してダウンロード"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "デフォルト"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyListファミリー"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "言語別"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "カスタム(自分のURL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "$1用のダミーデータを生成しました:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "一般"
+  },
+  "dashboard_settings_language_name": {
+    "message": "言語"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "変更後、このページが再起動します"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "自動(ブラウザの言語)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "メニュー"
+  }
+}

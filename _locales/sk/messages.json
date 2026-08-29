@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Blokujte reklamy, sledovacie prvky a známe škodlivé domény pomocou jednoduchých ovládacích prvkov pre jednotlivé stránky a nástrojov na sústredenie."
+  },
+  "blocked_pageTitle": {
+    "message": "Stránka zablokovaná — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Stránka zablokovaná kvôli vašej bezpečnosti"
+  },
+  "blocked_title_adPopup": {
+    "message": "Vyskakovacie okno/reklama v novej karte zablokovaná"
+  },
+  "blocked_host_unknown": {
+    "message": "neznáma stránka"
+  },
+  "blocked_hint_default": {
+    "message": "Táto stránka je na zozname škodlivého softvéru / phishingu. Môže sa pokúsiť ukradnúť vaše údaje, ťažiť kryptomeny alebo nainštalovať nechcený softvér."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Kliknutie na stránke, z ktorej ste prišli, sa pokúsilo otvoriť túto reklamnú/vyskakovaciu sieť v novej karte. Túto kartu môžete pokojne zavrieť."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Túto stránku už znova neupozorňovať"
+  },
+  "blocked_btn_goBack": {
+    "message": "Späť"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Zavrieť toto okno"
+  },
+  "blocked_btn_proceed": {
+    "message": "Aj tak pokračovať"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Pokračuje sa…"
+  },
+  "common_remove": {
+    "message": "Odstrániť"
+  },
+  "common_cancel": {
+    "message": "Zrušiť"
+  },
+  "menu_pickElement": {
+    "message": "Vybrať prvok na skrytie…"
+  },
+  "menu_scanGlobals": {
+    "message": "Skenovať stránku pre skripty/premenné…"
+  },
+  "menu_editRules": {
+    "message": "Upraviť pravidlá pre túto stránku…"
+  },
+  "picker_badge_active": {
+    "message": "Vyberá sa prvok na skrytie — stlačením Esc zrušíte"
+  },
+  "picker_btn_hide": {
+    "message": "Skryť tento prvok"
+  },
+  "picker_btn_broaden": {
+    "message": "Rozšíriť"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Reklamy, Sledovacie prvky"
+  },
+  "popup_openDashboard_title": {
+    "message": "Ovládací panel"
+  },
+  "popup_review_title": {
+    "message": "Páči sa vám AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Rýchle hodnotenie veľmi pomôže."
+  },
+  "popup_review_rate": {
+    "message": "Ohodnotiť nás"
+  },
+  "popup_review_dismiss": {
+    "message": "Nie, ďakujem"
+  },
+  "popup_stat_blocked": {
+    "message": "Zablokované"
+  },
+  "popup_stat_malware": {
+    "message": "Škodlivý softvér"
+  },
+  "popup_stat_speed": {
+    "message": "Rýchlosť"
+  },
+  "popup_stat_saved": {
+    "message": "Ušetrené"
+  },
+  "popup_allowlist_banner": {
+    "message": "Táto stránka je na zozname povolených"
+  },
+  "popup_action_focus": {
+    "message": "Režim sústredenia"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Pozastaviť na stránke"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Obnoviť stránku"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Skóre súkromia"
+  },
+  "popup_footer_settings": {
+    "message": "Nastavenia"
+  },
+  "popup_ruleChip_title": {
+    "message": "Aktuálne načítané pravidlá sieťového blokovania"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… pravidlá"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "sieťové pravidlá: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 sieťových pravidiel načítaných",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Podporte vývoj cez PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Prispieť"
+  },
+  "popup_version_title": {
+    "message": "Verzia AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Dostupná aktualizácia — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Je dostupná novšia verzia — kliknutím otvoríte záznam v obchode"
+  },
+  "popup_domain_unknown": {
+    "message": "Neznáma stránka"
+  },
+  "popup_status_site": {
+    "message": "Stránka"
+  },
+  "popup_status_protection": {
+    "message": "Ochrana"
+  },
+  "popup_status_allowlisted": {
+    "message": "Na zozname povolených"
+  },
+  "popup_status_on": {
+    "message": "ZAP"
+  },
+  "popup_status_paused": {
+    "message": "Pozastavené"
+  },
+  "popup_status_off": {
+    "message": "VYP"
+  },
+  "common_save": {
+    "message": "Uložiť"
+  },
+  "common_close": {
+    "message": "Zavrieť"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Upraviť pravidlá — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Kliknutím vložíte do textového poľa"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Referencia kľúčov ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtrovať kľúče…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOZMETICKÉ / ZHODA KANDIDÁTOV"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SKRIPTLETY (POKROČILÉ)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Aktuálne pravidlá pre túto stránku ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(zatiaľ žiadne pravidlá pre túto stránku — vstavané ani vlastné)"
+  },
+  "ruleEditor_hint": {
+    "message": "Jeden riadok v tvare \"key = value | value2\". Kliknutím na kľúč vyššie ho vložíte. Žiadne hlavičky [section]. Pravidlá zadané tu sa PRIDÁVAJÚ k existujúcim pravidlám pre tento kľúč (pozri vyššie) — týmto nemožno odstrániť ani prepísať vstavané pravidlo a pri kľúčoch s jednou hodnotou (flag) zvyčajne stále vyhráva vstavaná hodnota."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Uložené — pre zobrazenie použitých pravidiel načítajte stránku znova."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Uloženie zlyhalo — skontrolujte, či nechýba riadok \"[section]\" alebo či nejde o príliš veľkú vloženú časť."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS selektory skryté bezpodmienečne cez vložený štýlopis — žiadna heuristická kontrola, len okamžité skrytie."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS selektory pre KANDIDÁTSKE prvky — skryjú sa len vtedy, ak zároveň zodpovedajú aj labels/link_patterns nižšie."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Rovnaké ako selectors, obmedzené na kontajnery typu feed/timeline."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Rovnaké ako selectors, obmedzené na kontajnery typu marketplace/nákupy."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Rovnaké ako selectors, obmedzené na bočný panel/right-rail oblasť."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Rovnaké ako selectors, obmedzené na jednotlivé kontajnery príspevkov/článkov."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS selektory pre \"hostiteľské\" prvky, kontrolované rovnako ako selectors vyššie."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Textové označenia (napr. sponsored, promoted) porovnávané s atribútmi/kontextovým textom na potvrdenie, že kandidát je naozaj reklama."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Vzory podreťazcov porovnávané s vlastnými odkazmi/atribútmi kandidáta na potvrdenie, že ide o reklamu."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Názvy HTML atribútov prehľadávané pre zhody s label/link_pattern (predvolené: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Podradené prvky, z ktorých sa čerpá text na porovnávanie s labels (predvolené: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS selektor(y), cez ktoré sa prejde nahor pomocou .closest() pred skrytím nájdeného kandidáta (skryje sa kontajner, nielen samotné označenie)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Názvy tried priebežne odstraňované z <html>/<body> — ruší CSS-only overlaye, ktoré prevzali stránku pomocou koreňovej triedy."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Názvy CSS vlastností priebežne mazané z inline štýlu <html>/<body> — ruší JS uzamknutie posúvania (scroll-lock) a podobné triky."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Príznak 1/0 — automaticky zatvára vyskakovacie/popunder karty otvorené kliknutiami na tejto stránke."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — natrvalo uzamkne vlastnosť window na pevnú hodnotu (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — vyhodí výnimku, keď ktorýkoľvek skript číta túto vlastnosť window."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — vyhodí výnimku, keď ktorýkoľvek skript zapisuje do tejto vlastnosti window."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — vyhodí výnimku len vtedy, keď vlastný stack trace volajúceho skriptu zodpovedá needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — vyhodí výnimku, keď skript, ktorého zdroj zodpovedá needle, číta target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — zablokuje alebo presmeruje na návnadu (decoy) volania window.open() zodpovedajúce pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — blokuje volania fetch() zodpovedajúce kritériám."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — blokuje volania XMLHttpRequest zodpovedajúce kritériám."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — blokuje fetch, voliteľne s vrátením pevne danej falošnej odpovede."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — zabraňuje iframe typu about:blank rovnakého pôvodu siahnuť späť do skutočného window a obísť uzamknutie."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — odstráni polia z ľubovoľného výsledku JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — odstráni polia z JSON odpovede volania fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — odstráni polia z JSON odpovede XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — orezanie objektu, ktorý skript priradí priamo (nie cez JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — mazanie polí založené na JSONPath v JSON odpovedi volania fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — mazanie polí založené na JSONPath v JSON-lines odpovedi XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Odstráni polia z odpovede kódovanej vo formáte protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — úpravy založené na JSONPath (mazanie AJ priradenie hodnôt) v tele odchádzajúcej požiadavky."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — úpravy založené na JSONPath (mazanie AJ priradenie hodnôt) v tele odpovede."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — nahradenie pomocou regulárneho výrazu v tele odpovede volania fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — nahradenie pomocou regulárneho výrazu v tele odpovede XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — nahradí jeden argument odovzdaný funkcii."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — bezpodmienečné nahradenie textu v odchádzajúcich dátach (bez obmedzenia na URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — prepíše text elementu <script> ešte pred jeho spustením. sedCount obmedzuje, koľko uzlov toto pravidlo maximálne kedy prepíše (predvolené: bez obmedzenia)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — orezanie polí z objektu odovzdaného DO volania natívnej metódy."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — preruší alebo potichu ignoruje (no-op) volanie natívnej metódy zodpovedajúce signatúre."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — zahodí alebo vyhodí výnimku pri priradení cez accessor setter (napr. Element.prototype.innerHTML), ktorého hodnota zodpovedá needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — odstráni reklamné segmenty z odpovede HLS playlistu .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — predstiera úspešné načítanie script/img/iframe/link namiesto skutočnej sieťovej požiadavky."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — odstráni HTML atribúty zo zodpovedajúcich prvkov."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — vymaže textový obsah DOM uzla."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — prepíše textový obsah DOM uzla."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — zastaví automatické presmerovanie cez <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — nastaví cookie."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — odstráni cookies zodpovedajúce vzoru mena."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — nastaví položku localStorage (obmedzené na bezpečné literálne hodnoty, alebo špeciálny výraz \"remove\" na zmazanie zodpovedajúcich kľúčov)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — prepíše href odkazu z jeho vlastného textu alebo iného atribútu."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — blokuje volania setTimeout() zodpovedajúce kritériám."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — blokuje volania setInterval() zodpovedajúce kritériám."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — blokuje volania requestAnimationFrame() zodpovedajúce kritériám."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — blokuje volania addEventListener() zodpovedajúce kritériám."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — namiesto blokovania zrýchli/spomalí zodpovedajúce volania setTimeout()."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — namiesto blokovania zrýchli/spomalí zodpovedajúce volania setInterval()."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — blokuje volania eval(), ktorých zdroj zodpovedá pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Vypína RTCPeerConnection — blokuje triky založené na WebRTC pre vyskakovacie okná/sledovanie."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Ruší skripty na detekciu blokovania reklám typu BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Odstráni target=\"_blank\" z kliknutých odkazov — blokuje vynútené presmerovania do novej karty."
+  },
+  "scanner_value_emptyString": {
+    "message": "Prázdny reťazec"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Prázdne pole"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Prázdny objekt"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Prázdna funkcia (no-op)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funkcia, ktorá vždy vráti true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funkcia, ktorá vždy vráti false"
+  },
+  "scanner_btn_block": {
+    "message": "Blokovať"
+  },
+  "scanner_btn_edit": {
+    "message": "Upraviť"
+  },
+  "scanner_btn_delete": {
+    "message": "Odstrániť"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Blokovanie použité — uložené pre túto stránku."
+  },
+  "scanner_status_editApplied": {
+    "message": "Úprava použitá — uložená pre túto stránku."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Odstránenie použité — uložené pre túto stránku."
+  },
+  "scanner_block_warning": {
+    "message": "Blokovanie zabráni VŠETKÝM budúcim čítaniam tejto vlastnosti — môže narušiť funkčnosť stránky, ktorá sa na ňu spolieha. Toto sa nedá vrátiť obnovením stránky; pre vrátenie zmeny odstráňte pravidlo na stránke Globálne pravidlá v ovládacom paneli."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Aj tak blokovať"
+  },
+  "scanner_edit_customOption": {
+    "message": "Vlastné…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "jeden token, bez medzier (napr. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Zadajte hodnotu bez medzier."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Medzery nie sú povolené — budú odmietnuté."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Uloží sa ako: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Globálne premenné stránky ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtrovať podľa názvu…"
+  },
+  "scanner_empty": {
+    "message": "Na tejto stránke sa nenašli žiadne globálne premenné pridané stránkou."
+  },
+  "scanner_footer_limitation": {
+    "message": "Vidí len globálne premenné v štýle var/function a explicitné priradenia window.x = — deklarácie let/const/class sú pre akýkoľvek skener stránky neviditeľné (obmedzenie jazyka JS)."
+  },
+  "scanner_loading": {
+    "message": "Skenujú sa globálne premenné stránky — stlačením Esc zrušíte"
+  },
+  "common_add": {
+    "message": "Pridať"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Ovládací panel"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Reklamy, Sledovacie prvky"
+  },
+  "dashboard_nav_overview": {
+    "message": "Prehľad"
+  },
+  "dashboard_nav_rules": {
+    "message": "Vlastné pravidlá"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Zdroj pravidiel"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Zoznam povolených"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Pravidlá prvkov"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Globálne pravidlá"
+  },
+  "dashboard_nav_focus": {
+    "message": "Sústredenie"
+  },
+  "dashboard_nav_settings": {
+    "message": "Nastavenia"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Ochrana ZAPNUTÁ"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Ochrana $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Podporte vývoj cez PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Kúpte mi kávu ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ZAP"
+  },
+  "dashboard_toggle_off": {
+    "message": "VYP"
+  },
+  "dashboard_overview_title": {
+    "message": "Prehľad"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Váš ochranný panel"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Celkovo zablokované"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0 % dnes"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Zastavené sledovacie prvky"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0 % dnes"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Zablokovaný škodlivý softvér"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "zastavených hrozieb"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Nezistené žiadne hrozby"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Ušetrená šírka pásma"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "priemer na stránku"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Ušetrený čas"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "v tejto relácii"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 dnes",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— dnes"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1 % oproti včerajšku",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 hrozieb dnes"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 a ďalších $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Zablokované požiadavky"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Požiadavky sledovacích prvkov"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Detekcie škodlivého softvéru"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7d"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14d"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30d"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "zablokované"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "sledovacie prvky"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "škodlivý softvér"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Najviac blokované domény"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Najviac sledovacích domén"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Najviac škodlivých domén"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Zobraziť všetky"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Zobraziť menej"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Zobraziť všetky ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Zatiaľ žiadne údaje."
+  },
+  "dashboard_privacy_title": {
+    "message": "Skóre súkromia"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Zablokované reklamy"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Zablokované sledovacie prvky"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Ochrana pred škodlivým softvérom"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Anonymizácia referrera"
+  },
+  "dashboard_rules_title": {
+    "message": "Vlastné pravidlá"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Upravujte vo formáte site-rules.txt — rovnaká syntax ako v hlavnom súbore pravidiel. Hodnoty sa zlučujú so vstavanými pravidlami."
+  },
+  "dashboard_rules_clear": {
+    "message": "Vymazať"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Vymazať všetky vlastné pravidlá?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Vlastné pravidlá — rovnaký formát ako site-rules.txt\n# Hodnoty sa ZLUČUJÚ so vstavanými pravidlami (nenahrádzajú sa).\n#\n# ── Priradenie novej domény k sekcii pravidiel ──────────────────────────\n# [host_patterns]\n# example.com = example          ← subdomény sa priraďujú automaticky\n#\n# ── Pridanie ďalších domén na globálne blokovanie ───────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Kozmetické pravidlá pre jednotlivé stránky ───────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Zoznam povolených"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Stránky, ktoré obchádzajú všetko blokovanie"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Pridať stránku"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Pravidlá prvkov"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Prvky skryté manuálne cez \"Vybrať prvok na skrytie\" — zoskupené podľa stránky"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Zatiaľ žiadne pravidlá."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Globálne pravidlá"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Globálne premenné window zablokované/upravené/odstránené manuálne cez \"Skenovať stránku pre skripty/premenné\" — zoskupené podľa stránky"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Zatiaľ žiadne pravidlá."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "blokovať"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "upraviť"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "odstrániť"
+  },
+  "dashboard_focus_title": {
+    "message": "Režim sústredenia"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Blokovanie rušivých stránok podľa plánu"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Relácia sústredenia"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Relácia pozastavená"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Relácia prebieha…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Relácia dokončená!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25m"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45m"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60m"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90m"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Vlastné"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Zoznam rušivých stránok"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Pridať"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Zadajte doménu, ktorá sa má blokovať počas sústredenia (napr. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Nastavenia"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Prispôsobte správanie AdBlocku"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Blokovanie"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Blokovať reklamy"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Štandardné blokovanie reklamných sietí"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Blokovať sledovacie prvky"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Blokovanie analytických a sledovacích skriptov"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kozmetické filtrovanie"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Skryje pozostatky reklamných zástupných miest pomocou CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Blokovať škodlivý softvér"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Blokovanie známych domén so škodlivým softvérom"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Súkromie"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Anonymizácia referrera"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Odstráni hlavičky referrera pri požiadavkách medzi rôznymi pôvodmi"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Global Privacy Control"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Odosiela signál na odhlásenie GPC (hlavička Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Hlavička Do Not Track"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Odosiela požiadavkovú hlavičku DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Údaje"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Zbierať štatistiky"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Iba lokálne štatistiky používania (nikdy sa neodosielajú)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Obnoviť všetky údaje"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Vymaže pravidlá, štatistiky a nastavenia"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Obnoviť"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Obnoviť všetky údaje AdBlocku? Túto akciu nemožno vrátiť späť."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Všetky údaje vymazané. Znova sa načítava…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "O aplikácii"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Verzia"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Skontrolovať aktualizácie"
+  },
+  "dashboard_settings_checking": {
+    "message": "Kontroluje sa…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Je dostupná novšia verzia"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Zobraziť"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Naposledy skontrolované $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (zlyhalo — bez pripojenia?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Zatiaľ neskontrolované"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "Je dostupná verzia v$1 (máte v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Zdroj pravidiel"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Odkiaľ AdBlock načítava svoje pravidlá pre stránky"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Adresy URL vzdialených pravidiel"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Zahŕňa vstavaný predvolený zdroj (možno prepnúť, nemožno odstrániť) plus všetky adresy URL, ktoré pridáte — všetky sa zlúčia, každá sa dá zapnúť/vypnúť samostatne."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Pridať URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Miestne súbory pravidiel"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Nahrajte súbory pravidiel .txt — zlúčia sa so zdrojmi z URL. Podporuje viacero súborov."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Pridať súbor…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Exportuje sa…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Export zlyhal: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "neznáma chyba"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 prevedených, $2 preskočených z $3 pravidiel",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 výnimkových pravidiel (tu neexistuje model zrušenia)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 procedurálnych selektorov (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 rozšírených AdGuard modifikátorov",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 nepriradených volaní skriptletov",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 nepodporovaných sieťových modifikátorov pravidiel",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 už zahrnutých vo vlastnom súbore site-rules.txt tohto repozitára",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 nerozpoznanej syntaxe",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 načítaných",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 načítaných",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Exportovať"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Stiahnite pravidlá tohto zdroja prevedené do vlastnej syntaxe tohto repozitára"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Predvolené"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Rodina EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Podľa jazyka"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Vlastné (vaše vlastné adresy URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Vygenerované testovacie údaje pre $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Všeobecné"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Jazyk"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Po zmene sa táto stránka reštartuje"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automaticky (jazyk prehliadača)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Menu"
+  }
+}

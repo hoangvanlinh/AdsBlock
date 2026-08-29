@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Blokkeer advertenties, trackers en bekende schadelijke domeinen met eenvoudige site-instellingen en focustools.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Site geblokkeerd — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Site geblokkeerd voor uw veiligheid"
+  },
+  "blocked_title_adPopup": {
+    "message": "Pop-upadvertentie/nieuw tabblad geblokkeerd"
+  },
+  "blocked_host_unknown": {
+    "message": "onbekende site"
+  },
+  "blocked_hint_default": {
+    "message": "Deze site staat op een blokkeerlijst voor malware/phishing. Deze kan proberen uw gegevens te stelen, cryptovaluta te delven of ongewenste software te installeren."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Een klik op de pagina waar u vandaan kwam, probeerde dit advertentie-/pop-upnetwerk in een nieuw tabblad te openen. U kunt dit tabblad veilig sluiten."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Waarschuw me niet opnieuw over deze site"
+  },
+  "blocked_btn_goBack": {
+    "message": "Ga terug"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Dit venster sluiten"
+  },
+  "blocked_btn_proceed": {
+    "message": "Toch doorgaan"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Doorgaan…"
+  },
+  "common_remove": {
+    "message": "Verwijderen"
+  },
+  "common_cancel": {
+    "message": "Annuleren"
+  },
+  "menu_pickElement": {
+    "message": "Te verbergen element kiezen…"
+  },
+  "menu_scanGlobals": {
+    "message": "Pagina scannen op scripts/variabelen…"
+  },
+  "menu_editRules": {
+    "message": "Regels voor deze site bewerken…"
+  },
+  "picker_badge_active": {
+    "message": "Te verbergen element kiezen — druk op Esc om te annuleren"
+  },
+  "picker_btn_hide": {
+    "message": "Dit element verbergen"
+  },
+  "picker_btn_broaden": {
+    "message": "Verbreden"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Dashboard"
+  },
+  "popup_review_title": {
+    "message": "Bevalt AdBlock u?"
+  },
+  "popup_review_subtitle": {
+    "message": "Een snelle beoordeling helpt enorm."
+  },
+  "popup_review_rate": {
+    "message": "Beoordeel ons"
+  },
+  "popup_review_dismiss": {
+    "message": "Nee bedankt"
+  },
+  "popup_stat_blocked": {
+    "message": "Geblokkeerd"
+  },
+  "popup_stat_malware": {
+    "message": "Malware"
+  },
+  "popup_stat_speed": {
+    "message": "Snelheid"
+  },
+  "popup_stat_saved": {
+    "message": "Bespaard"
+  },
+  "popup_allowlist_banner": {
+    "message": "Deze site staat op de toegestane lijst"
+  },
+  "popup_action_focus": {
+    "message": "Focusmodus"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Pauzeren voor deze site"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Site hervatten"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Privacyscore"
+  },
+  "popup_footer_settings": {
+    "message": "Instellingen"
+  },
+  "popup_ruleChip_title": {
+    "message": "Momenteel geladen netwerkblokkeringsregels"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… regels"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "netwerkregels: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 netwerkregels geladen",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Steun de ontwikkeling via PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Doneren"
+  },
+  "popup_version_title": {
+    "message": "AdBlock-versie"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Update beschikbaar — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Er is een nieuwere versie beschikbaar — klik om de winkelpagina te openen"
+  },
+  "popup_domain_unknown": {
+    "message": "Onbekende site"
+  },
+  "popup_status_site": {
+    "message": "Site"
+  },
+  "popup_status_protection": {
+    "message": "Bescherming"
+  },
+  "popup_status_allowlisted": {
+    "message": "Toegestaan"
+  },
+  "popup_status_on": {
+    "message": "AAN"
+  },
+  "popup_status_paused": {
+    "message": "Gepauzeerd"
+  },
+  "popup_status_off": {
+    "message": "UIT"
+  },
+  "common_save": {
+    "message": "Opslaan"
+  },
+  "common_close": {
+    "message": "Sluiten"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Regels bewerken — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Klik om in het tekstvak in te voegen"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Sleutelreferentie ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Sleutels filteren…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "COSMETISCHE / KANDIDAAT-OVEREENKOMST"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLETS (GEAVANCEERD)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Huidige regels voor deze site ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(nog geen regels voor deze site — noch ingebouwd, noch aangepast)"
+  },
+  "ruleEditor_hint": {
+    "message": "Eén \"key = value | value2\" per regel. Klik op een sleutel hierboven om deze in te voegen. Geen [section]-headers. Hier getypte regels worden TOEGEVOEGD aan bestaande regels voor deze sleutel (zie hierboven) — dit kan een ingebouwde regel niet verwijderen of overschrijven, en bij vlagsleutels met één waarde wint doorgaans de ingebouwde waarde."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Opgeslagen — laad deze pagina opnieuw om de toegepaste regels te zien."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Opslaan mislukt — controleer op een losse \"[section]\"-regel of een enorme plaknactie."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS-selectors die onvoorwaardelijk worden verborgen via een geïnjecteerd stylesheet — geen heuristische controle, gewoon verbergen zodra zichtbaar."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS-selectors voor KANDIDAAT-elementen — worden alleen verborgen als ze ook overeenkomen met labels/link_patterns hieronder."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Hetzelfde als selectors, beperkt tot containers in feed-/tijdlijnstijl."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Hetzelfde als selectors, beperkt tot containers in marktplaats-/winkelstijl."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Hetzelfde als selectors, beperkt tot een zijbalk-/rechterrailgebied."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Hetzelfde als selectors, beperkt tot individuele bericht-/artikelcontainers."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS-selectors voor \"host\"-elementen, op dezelfde manier gecontroleerd als selectors hierboven."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Tekstlabels (bijv. sponsored, promoted) vergeleken met attributen/contexttekst om te bevestigen dat een kandidaat echt een advertentie is."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Substringpatronen vergeleken met de eigen links/attributen van een kandidaat om te bevestigen dat het een advertentie is."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "HTML-attribuutnamen die worden gescand op label/link_pattern-overeenkomsten (standaard: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Onderliggende elementen waaruit tekst wordt gehaald voor labelovereenkomst (standaard: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS-selector(s) om via .closest() omhoog te gaan voordat een overeenkomende kandidaat wordt verborgen (verbergt de container, niet alleen het label)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Klassenamen die continu worden verwijderd uit <html>/<body> — verslaat overname-overlays die alleen op CSS zijn gebaseerd en worden aangedreven door een rootklasse."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "CSS-eigenschapsnamen die continu worden gewist uit de inline stijl van <html>/<body> — verslaat door JS ingestelde scrollvergrendeling enz."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0-vlag — sluit automatisch pop-up-/popunder-tabbladen die worden geopend door klikken op deze site."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — vergrendelt een vensterEigenschap permanent op een vaste waarde (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — geeft een fout wanneer een script deze vensterEigenschap leest."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — geeft een fout wanneer een script naar deze vensterEigenschap schrijft."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — geeft alleen een fout wanneer de eigen stack trace van het aanroepende script overeenkomt met needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — geeft een fout wanneer een script met een bron die overeenkomt met needle target leest."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — blokkeert of leidt lokaas-om window.open()-aanroepen die overeenkomen met pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — blokkeert fetch()-aanroepen die aan de criteria voldoen."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — blokkeert XMLHttpRequest-aanroepen die aan de criteria voldoen."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — blokkeert fetch, met optioneel een vaste nepresponstekst terug."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — voorkomt dat een about:blank-iframe met dezelfde oorsprong het echte venster weer bereikt om een vergrendeling te omzeilen."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — verwijdert velden uit elk JSON.parse()-resultaat."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — verwijdert velden uit een JSON-respons van fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — verwijdert velden uit een JSON-respons van XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — snoeit een object dat een script direct toewijst (niet via JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — op JSONPath gebaseerde veldverwijderingen in een JSON-respons van fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — op JSONPath gebaseerde veldverwijderingen in een JSON-lines-respons van XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Verwijdert velden uit een protobuf/jspb-gecodeerde respons."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath-bewerkingen (verwijderingen EN waardetoewijzing) op een uitgaande verzoektekst."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath-bewerkingen (verwijderingen EN waardetoewijzing) op een responstekst."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex zoeken/vervangen in een responstekst van fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex zoeken/vervangen in een responstekst van XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — vervangt één argument dat aan een functie wordt doorgegeven."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — onvoorwaardelijke tekstvervanging op uitgaande gegevens (geen URL-bereik)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — herschrijft de tekst van een <script>-tag voordat deze wordt uitgevoerd. sedCount beperkt hoeveel knooppunten deze regel ooit zal herschrijven (standaard: onbeperkt)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — snoeit velden uit een object dat wordt doorgegeven AAN een aanroep van een native methode."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — breekt een aanroep van een native methode af of negeert deze stilzwijgend als deze overeenkomt met een handtekening."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — laat een setter-toewijzing (bijv. Element.prototype.innerHTML) vallen of geeft een fout wanneer de waarde overeenkomt met needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — verwijdert advertentiesegmenten uit een HLS .m3u8-afspeellijstrespons."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — doet alsof het laden van script/img/iframe/link is geslaagd in plaats van het echte netwerkverzoek."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — verwijdert HTML-attributen van overeenkomende elementen."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — wist de tekstinhoud van een DOM-knooppunt."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — herschrijft de tekstinhoud van een DOM-knooppunt."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — stopt een automatische omleiding via <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — stelt een cookie in."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — verwijdert cookies die overeenkomen met een naampatroon."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — stelt een localStorage-item in (beperkt tot veilige letterlijke waarden, of de speciale waarde \"remove\" om overeenkomende sleutels te verwijderen)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — herschrijft de href van een link vanuit de eigen tekst of een ander attribuut."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — blokkeert setTimeout()-aanroepen die aan de criteria voldoen."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — blokkeert setInterval()-aanroepen die aan de criteria voldoen."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — blokkeert requestAnimationFrame()-aanroepen die aan de criteria voldoen."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — blokkeert addEventListener()-aanroepen die aan de criteria voldoen."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — versnelt/vertraagt overeenkomende setTimeout()-aanroepen in plaats van ze te blokkeren."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — versnelt/vertraagt overeenkomende setInterval()-aanroepen in plaats van ze te blokkeren."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — blokkeert eval()-aanroepen waarvan de bron overeenkomt met pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Schakelt RTCPeerConnection uit — blokkeert op WebRTC gebaseerde pop-up-/trackingtrucs."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Neutraliseert detectiescripts voor advertentieblokkering in de stijl van BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Verwijdert target=\"_blank\" van aangeklikte links — blokkeert gedwongen omleidingen naar nieuwe tabbladen."
+  },
+  "scanner_value_emptyString": {
+    "message": "Lege string"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Lege array"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Leeg object"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Lege functie (zonder effect)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Functie die altijd true retourneert"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Functie die altijd false retourneert"
+  },
+  "scanner_btn_block": {
+    "message": "Blokkeren"
+  },
+  "scanner_btn_edit": {
+    "message": "Bewerken"
+  },
+  "scanner_btn_delete": {
+    "message": "Verwijderen"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Blokkering toegepast — opgeslagen voor deze site."
+  },
+  "scanner_status_editApplied": {
+    "message": "Bewerking toegepast — opgeslagen voor deze site."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Verwijdering toegepast — opgeslagen voor deze site."
+  },
+  "scanner_block_warning": {
+    "message": "Blokkeren voorkomt ALLE toekomstige leesbewerkingen van deze eigenschap — kan paginafunctionaliteit die hierop vertrouwt, breken. Dit kan niet ongedaan worden gemaakt door te vernieuwen; verwijder de regel van de pagina Globale regels in het dashboard om terug te draaien."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Toch blokkeren"
+  },
+  "scanner_edit_customOption": {
+    "message": "Aangepast…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "enkel token, geen spaties (bijv. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Typ een waarde zonder spaties."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Spaties zijn niet toegestaan — wordt geweigerd."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Wordt opgeslagen als: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Globale paginavariabelen ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filteren op naam…"
+  },
+  "scanner_empty": {
+    "message": "Geen door de pagina toegevoegde globale variabelen gevonden op deze pagina."
+  },
+  "scanner_footer_limitation": {
+    "message": "Ziet alleen globale variabelen in var/function-stijl en expliciete window.x =-toewijzingen — let/const/class-declaraties zijn onzichtbaar voor elke paginascanner (beperking van de JS-taal)."
+  },
+  "scanner_loading": {
+    "message": "Globale paginavariabelen scannen — druk op Esc om te annuleren"
+  },
+  "common_add": {
+    "message": "Toevoegen"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Dashboard"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Overzicht"
+  },
+  "dashboard_nav_rules": {
+    "message": "Aangepaste regels"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Regelbron"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Toegestane lijst"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Elementregels"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Globale regels"
+  },
+  "dashboard_nav_focus": {
+    "message": "Focus"
+  },
+  "dashboard_nav_settings": {
+    "message": "Instellingen"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Bescherming AAN"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Bescherming $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Steun de ontwikkeling via PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Trakteer me op koffie ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "AAN"
+  },
+  "dashboard_toggle_off": {
+    "message": "UIT"
+  },
+  "dashboard_overview_title": {
+    "message": "Overzicht"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Uw beschermingsdashboard"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Totaal geblokkeerd"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% vandaag"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Gestopte trackers"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% vandaag"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Geblokkeerde malware"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "gestopte bedreigingen"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Geen bedreigingen gedetecteerd"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Bespaarde bandbreedte"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "gemiddeld per pagina"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Bespaarde tijd"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "in deze sessie"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 vandaag",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— vandaag"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% ten opzichte van gisteren",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 bedreigingen vandaag"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 meer",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Geblokkeerde verzoeken"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Trackerverzoeken"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Malwaredetecties"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7d"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14d"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30d"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "geblokkeerd"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "trackers"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "malware"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Meest geblokkeerde domeinen"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Domeinen met de meeste trackers"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Domeinen met de meeste malware"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Alles bekijken"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Minder weergeven"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Alles bekijken ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Nog geen gegevens."
+  },
+  "dashboard_privacy_title": {
+    "message": "Privacyscore"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Geblokkeerde advertenties"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Geblokkeerde trackers"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Malwarebescherming"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Verwijzer-anonimisering"
+  },
+  "dashboard_rules_title": {
+    "message": "Aangepaste regels"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Bewerk in site-rules.txt-indeling — dezelfde syntaxis als het hoofdregelbestand. Waarden worden samengevoegd met ingebouwde regels."
+  },
+  "dashboard_rules_clear": {
+    "message": "Wissen"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Alle aangepaste regels wissen?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Aangepaste regels — dezelfde indeling als site-rules.txt\n# Waarden worden SAMENGEVOEGD met ingebouwde regels (niet vervangen).\n#\n# ── Nieuw domein koppelen aan een regelsectie ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← subdomeinen worden automatisch gekoppeld\n#\n# ── Extra domeinen toevoegen voor globale blokkering ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Cosmetische regels per site ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Toegestane lijst"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Sites die alle blokkering omzeilen"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Site toevoegen"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Elementregels"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elementen die handmatig zijn verborgen via \"Te verbergen element kiezen\" — gegroepeerd per site"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Nog geen regels."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Globale regels"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Globale venstervariabelen die handmatig zijn geblokkeerd/bewerkt/verwijderd via \"Pagina scannen op scripts/variabelen\" — gegroepeerd per site"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Nog geen regels."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "blokkeren"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "bewerken"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "verwijderen"
+  },
+  "dashboard_focus_title": {
+    "message": "Focusmodus"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Blokkeer afleidende sites volgens een schema"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Focussessie"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Sessie gepauzeerd"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Sessie bezig…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Sessie voltooid!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25m"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45m"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60m"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90m"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Aangepast"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Afleidingslijst"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Toevoegen"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Voer een domein in om te blokkeren tijdens focus (bijv. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Instellingen"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "AdBlock-gedrag aanpassen"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Blokkering"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Advertenties blokkeren"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standaard blokkering van advertentienetwerken"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Trackers blokkeren"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Analyse- en trackingscripts blokkeren"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Cosmetische filtering"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Overgebleven advertentieplaatshouders verbergen via CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Malware blokkeren"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Bekende malwaredomeinen blokkeren"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Privacy"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Verwijzer-anonimisering"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Verwijzerheaders verwijderen bij cross-origin-verzoeken"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Global Privacy Control (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "GPC-opt-outsignaal verzenden (Sec-GPC-header + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Do Not Track-header (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "DNT: 1-verzoekheader verzenden"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Gegevens"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Statistieken verzamelen"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Alleen lokale gebruiksstatistieken (nooit geüpload)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Alle gegevens resetten"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Regels, statistieken en instellingen wissen"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Resetten"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Alle AdBlock-gegevens resetten? Dit kan niet ongedaan worden gemaakt."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Alle gegevens zijn gewist. Opnieuw laden…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Over"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versie"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Controleren op updates"
+  },
+  "dashboard_settings_checking": {
+    "message": "Controleren…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Er is een nieuwere versie beschikbaar"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Weergeven"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Laatst gecontroleerd $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (mislukt — bent u offline?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Nog niet gecontroleerd"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 is beschikbaar (u heeft v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Regelbron"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Waar AdBlock zijn siteregels vandaan haalt"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL's voor externe regels"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Bevat de ingebouwde standaard (schakelbaar, niet verwijderbaar) plus eventuele URL's die u toevoegt — allemaal samengevoegd, elk onafhankelijk aan/uit."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "URL toevoegen"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Lokale regelbestanden"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Upload .txt-regelbestanden — worden samengevoegd met URL-bronnen. Meerdere bestanden worden ondersteund."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Bestand toevoegen…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Exporteren…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Exporteren mislukt: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "onbekende fout"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 geconverteerd, $2 overgeslagen van $3 regels",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 uitzonderingsregels (hier geen annuleringsmodel)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 procedurele selectors (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 uitgebreide AdGuard-modificaties",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 niet-toegewezen scriptlet-aanroepen",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 niet-ondersteunde netwerkregelmodificaties",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 al opgenomen in de eigen site-rules.txt van deze extensie",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 niet-herkende syntaxis",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 geladen",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 geladen",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Exporteren"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Download de regels van deze bron, geconverteerd naar de eigen syntaxis van deze extensie"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Standaard"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList-familie"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Op taal"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Aangepast (uw eigen URL's)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Nepgegevens ingevoerd voor $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Algemeen"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Taal"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Start deze pagina opnieuw op na wijziging"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automatisch (browsertaal)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Menu"
+  }
+}

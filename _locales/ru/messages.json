@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Блокируйте рекламу, трекеры и известные вредоносные домены с помощью простых настроек для сайтов и режима фокусировки."
+  },
+  "blocked_pageTitle": {
+    "message": "Сайт заблокирован — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Сайт заблокирован для вашей безопасности"
+  },
+  "blocked_title_adPopup": {
+    "message": "Всплывающая реклама/реклама в новой вкладке заблокирована"
+  },
+  "blocked_host_unknown": {
+    "message": "неизвестный сайт"
+  },
+  "blocked_hint_default": {
+    "message": "Этот сайт находится в списке блокировки вредоносного ПО / фишинга. Он может попытаться украсть вашу информацию, майнить криптовалюту или установить нежелательное ПО."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Клик на странице, с которой вы пришли, попытался открыть эту рекламную/всплывающую сеть в новой вкладке. Вы можете спокойно закрыть эту вкладку."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Больше не предупреждать об этом сайте"
+  },
+  "blocked_btn_goBack": {
+    "message": "Назад"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Закрыть это окно"
+  },
+  "blocked_btn_proceed": {
+    "message": "Всё равно продолжить"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Продолжение…"
+  },
+  "common_remove": {
+    "message": "Удалить"
+  },
+  "common_cancel": {
+    "message": "Отмена"
+  },
+  "menu_pickElement": {
+    "message": "Выбрать элемент для скрытия…"
+  },
+  "menu_scanGlobals": {
+    "message": "Сканировать страницу на скрипты/переменные…"
+  },
+  "menu_editRules": {
+    "message": "Изменить правила для этого сайта…"
+  },
+  "picker_badge_active": {
+    "message": "Выбор элемента для скрытия — нажмите Esc для отмены"
+  },
+  "picker_btn_hide": {
+    "message": "Скрыть этот элемент"
+  },
+  "picker_btn_broaden": {
+    "message": "Расширить"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Панель управления"
+  },
+  "popup_review_title": {
+    "message": "Нравится AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Быстрая оценка очень помогает."
+  },
+  "popup_review_rate": {
+    "message": "Оценить нас"
+  },
+  "popup_review_dismiss": {
+    "message": "Нет, спасибо"
+  },
+  "popup_stat_blocked": {
+    "message": "Заблокировано"
+  },
+  "popup_stat_malware": {
+    "message": "Вредоносное ПО"
+  },
+  "popup_stat_speed": {
+    "message": "Скорость"
+  },
+  "popup_stat_saved": {
+    "message": "Сэкономлено"
+  },
+  "popup_allowlist_banner": {
+    "message": "Этот сайт в списке разрешённых"
+  },
+  "popup_action_focus": {
+    "message": "Режим фокусировки"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Приостановить на сайте"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Возобновить на сайте"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Оценка приватности"
+  },
+  "popup_footer_settings": {
+    "message": "Настройки"
+  },
+  "popup_ruleChip_title": {
+    "message": "Текущее количество загруженных правил блокировки сети"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… правил"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "сетевые правила: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "Загружено сетевых правил: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Поддержать разработку через PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Пожертвовать"
+  },
+  "popup_version_title": {
+    "message": "Версия AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Доступно обновление — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Доступна новая версия — нажмите, чтобы открыть страницу магазина"
+  },
+  "popup_domain_unknown": {
+    "message": "Неизвестный сайт"
+  },
+  "popup_status_site": {
+    "message": "Сайт"
+  },
+  "popup_status_protection": {
+    "message": "Защита"
+  },
+  "popup_status_allowlisted": {
+    "message": "В списке разрешённых"
+  },
+  "popup_status_on": {
+    "message": "ВКЛ"
+  },
+  "popup_status_paused": {
+    "message": "Приостановлено"
+  },
+  "popup_status_off": {
+    "message": "ВЫКЛ"
+  },
+  "common_save": {
+    "message": "Сохранить"
+  },
+  "common_close": {
+    "message": "Закрыть"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Изменение правил — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Нажмите, чтобы вставить в текстовое поле"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Справочник ключей ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Фильтр ключей…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "КОСМЕТИЧЕСКИЕ / СОПОСТАВЛЕНИЕ КАНДИДАТОВ"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "СКРИПТЛЕТЫ (ДЛЯ ОПЫТНЫХ)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Текущие правила для этого сайта ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(пока нет правил для этого сайта — ни встроенных, ни пользовательских)"
+  },
+  "ruleEditor_hint": {
+    "message": "По одной записи \"key = value | value2\" на строку. Нажмите на ключ выше, чтобы вставить его. Без заголовков [section]. Правила, введённые здесь, ДОБАВЛЯЮТСЯ к любым существующим правилам для этого ключа (см. выше) — это не может удалить или переопределить встроенное правило, а для ключей-флагов с одним значением встроенное значение обычно всё равно побеждает."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Сохранено — перезагрузите эту страницу, чтобы увидеть применённые правила."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Не удалось сохранить — проверьте, нет ли лишней строки \"[section]\" или слишком большого вставленного текста."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS-селекторы, скрываемые безусловно через внедрённую таблицу стилей — без эвристической проверки, просто скрываются сразу."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS-селекторы для элементов-КАНДИДАТОВ — скрываются, только если они также соответствуют labels/link_patterns ниже."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "То же, что selectors, но ограничено контейнерами в стиле ленты/таймлайна."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "То же, что selectors, но ограничено контейнерами в стиле маркетплейса/магазина."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "То же, что selectors, но ограничено областью боковой панели/правой колонки."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "То же, что selectors, но ограничено отдельными контейнерами постов/статей."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS-селекторы для «хост»-элементов, проверяемых так же, как selectors выше."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Текстовые метки (например, sponsored, promoted), сопоставляемые с атрибутами/контекстным текстом для подтверждения, что кандидат действительно является рекламой."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Шаблоны подстрок, сопоставляемые с собственными ссылками/атрибутами кандидата для подтверждения, что это реклама."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Имена HTML-атрибутов, проверяемые на совпадения с label/link_pattern (по умолчанию: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Дочерние элементы, из которых извлекается текст для сопоставления с labels (по умолчанию: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS-селектор(ы), до которых нужно подняться через .closest() перед скрытием совпавшего кандидата (скрывается контейнер, а не только метка)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Имена классов, непрерывно удаляемые из <html>/<body> — нейтрализует CSS-оверлеи, управляемые корневым классом."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Имена CSS-свойств, непрерывно очищаемые из встроенного style у <html>/<body> — нейтрализует блокировку прокрутки, установленную через JS, и т. п."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Флаг 1/0 — автоматически закрывать вкладки popup/popunder, открытые кликами на этом сайте."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — навсегда зафиксировать свойство window заданным значением (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — выбрасывать исключение, когда любой скрипт читает это свойство window."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — выбрасывать исключение, когда любой скрипт записывает это свойство window."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — выбрасывать исключение только когда стек вызовов вызывающего скрипта совпадает с needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — выбрасывать исключение, когда скрипт, исходный код которого совпадает с needle, читает target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — блокировать или перенаправлять на подставной адрес вызовы window.open(), совпадающие с pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — блокировать вызовы fetch(), соответствующие критериям."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — блокировать вызовы XMLHttpRequest, соответствующие критериям."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — блокировать fetch, при необходимости возвращая фиксированное поддельное тело ответа."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — не позволяет iframe about:blank того же источника обратиться к настоящему window, чтобы обойти блокировку."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — удалять поля из любого результата JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — удалять поля из JSON-ответа fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — удалять поля из JSON-ответа XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — обрезать объект, который скрипт присваивает напрямую (не через JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — удаление полей на основе JSONPath в JSON-ответе fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — удаление полей на основе JSONPath в ответе XHR формата JSON-lines."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Удаляет поля из ответа, закодированного в protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — изменения на основе JSONPath (удаление И присвоение значений) в теле исходящего запроса."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — изменения на основе JSONPath (удаление И присвоение значений) в теле ответа."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — поиск и замена по regex в теле ответа fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — поиск и замена по regex в теле ответа XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — заменить один аргумент, передаваемый функции."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — безусловная замена текста в исходящих данных (без привязки к URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — переписать текст тега <script> перед его выполнением. sedCount ограничивает, сколько узлов это правило может переписать за всё время (по умолчанию: без ограничений)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — удалять поля из объекта, передаваемого В вызов нативного метода."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — прерывать или тихо игнорировать вызов нативного метода, совпадающий с сигнатурой."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — игнорировать или выбрасывать исключение при присвоении через setter-аксессор (например, Element.prototype.innerHTML), значение которого совпадает с needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — удалять рекламные сегменты из ответа HLS-плейлиста .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — имитировать успешную загрузку script/img/iframe/link вместо настоящего сетевого запроса."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — удалять HTML-атрибуты у совпадающих элементов."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — очищать текстовое содержимое DOM-узла."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — переписывать текстовое содержимое DOM-узла."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — останавливает автоматическое перенаправление через <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — установить cookie."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — удалять cookies, чьё имя совпадает с шаблоном."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — установить запись в localStorage (допускаются только безопасные буквальные значения, либо специальное значение \"remove\" для удаления совпадающих ключей)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — переписать href ссылки на основе её собственного текста или другого атрибута."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — блокировать вызовы setTimeout(), соответствующие критериям."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — блокировать вызовы setInterval(), соответствующие критериям."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — блокировать вызовы requestAnimationFrame(), соответствующие критериям."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — блокировать вызовы addEventListener(), соответствующие критериям."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — ускорять/замедлять совпадающие вызовы setTimeout() вместо их блокировки."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — ускорять/замедлять совпадающие вызовы setInterval() вместо их блокировки."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — блокировать вызовы eval(), исходный код которых совпадает с pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Отключает RTCPeerConnection — блокирует уловки со всплывающими окнами/отслеживанием на основе WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Нейтрализует скрипты обнаружения блокировщиков рекламы в стиле BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Убирает target=\"_blank\" у нажатых ссылок — блокирует принудительные переходы в новую вкладку."
+  },
+  "scanner_value_emptyString": {
+    "message": "Пустая строка"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Пустой массив"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Пустой объект"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Пустая функция (no-op)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Функция, всегда возвращающая true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Функция, всегда возвращающая false"
+  },
+  "scanner_btn_block": {
+    "message": "Заблокировать"
+  },
+  "scanner_btn_edit": {
+    "message": "Изменить"
+  },
+  "scanner_btn_delete": {
+    "message": "Удалить"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Блокировка применена — сохранено для этого сайта."
+  },
+  "scanner_status_editApplied": {
+    "message": "Изменение применено — сохранено для этого сайта."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Удаление применено — сохранено для этого сайта."
+  },
+  "scanner_block_warning": {
+    "message": "Блокировка предотвращает ВСЕ последующие чтения этого свойства — это может нарушить работу страницы, если она зависит от него. Обновление страницы это не отменит; чтобы отменить, удалите правило на странице «Глобальные правила» панели управления."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Всё равно заблокировать"
+  },
+  "scanner_edit_customOption": {
+    "message": "Другое…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "одно значение без пробелов (например, 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Введите значение без пробелов."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Пробелы недопустимы — значение будет отклонено."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Будет сохранено как: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Глобальные переменные страницы ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Фильтр по имени…"
+  },
+  "scanner_empty": {
+    "message": "На этой странице не найдено добавленных ею глобальных переменных."
+  },
+  "scanner_footer_limitation": {
+    "message": "Видит только глобальные переменные в стиле var/function и явные присваивания window.x = ... — объявления let/const/class невидимы для любого сканера страницы (ограничение языка JS)."
+  },
+  "scanner_loading": {
+    "message": "Сканирование глобальных переменных страницы — нажмите Esc для отмены"
+  },
+  "common_add": {
+    "message": "Добавить"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Панель управления"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Обзор"
+  },
+  "dashboard_nav_rules": {
+    "message": "Свои правила"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Источник правил"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Список разрешённых"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Правила элементов"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Глобальные правила"
+  },
+  "dashboard_nav_focus": {
+    "message": "Фокусировка"
+  },
+  "dashboard_nav_settings": {
+    "message": "Настройки"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Защита ВКЛ"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Защита $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Поддержать разработку через PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Угостить меня кофе ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ВКЛ"
+  },
+  "dashboard_toggle_off": {
+    "message": "ВЫКЛ"
+  },
+  "dashboard_overview_title": {
+    "message": "Обзор"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Ваша панель защиты"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Всего заблокировано"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% сегодня"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Трекеров остановлено"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% сегодня"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Вредоносного ПО заблокировано"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "угроз остановлено"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Угроз не обнаружено"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Трафика сэкономлено"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "в среднем на страницу"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Времени сэкономлено"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "за эту сессию"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 сегодня",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— сегодня"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% по сравнению со вчера",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 угроз сегодня"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 и ещё $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Заблокированные запросы"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Запросы трекеров"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Обнаружения вредоносного ПО"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7д"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14д"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30д"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "заблокировано"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "трекеров"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "вредоносного ПО"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Самые блокируемые домены"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Топ доменов-трекеров"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Топ вредоносных доменов"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Показать все"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Показать меньше"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Показать все ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Пока нет данных."
+  },
+  "dashboard_privacy_title": {
+    "message": "Оценка приватности"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Реклама заблокирована"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Трекеры заблокированы"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Защита от вредоносного ПО"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Анонимизация referrer"
+  },
+  "dashboard_rules_title": {
+    "message": "Свои правила"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Редактируйте в формате site-rules.txt — тот же синтаксис, что и у основного файла правил. Значения объединяются со встроенными правилами."
+  },
+  "dashboard_rules_clear": {
+    "message": "Очистить"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Очистить все свои правила?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Свои правила — тот же формат, что и site-rules.txt\n# Значения ОБЪЕДИНЯЮТСЯ со встроенными правилами (не заменяют их).\n#\n# ── Привязать новый домен к разделу правил ──────────────────────────────\n# [host_patterns]\n# example.com = example          ← поддомены сопоставляются автоматически\n#\n# ── Добавить домены для глобальной блокировки ────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Косметические правила для отдельного сайта ───────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Список разрешённых"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Сайты, для которых блокировка полностью отключена"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Добавить сайт"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Правила элементов"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Элементы, скрытые вручную через «Выбрать элемент для скрытия» — сгруппированы по сайтам"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Пока нет правил."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Глобальные правила"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Глобальные переменные window, заблокированные/изменённые/удалённые вручную через «Сканировать страницу на скрипты/переменные» — сгруппированы по сайтам"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Пока нет правил."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "блокировка"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "изменение"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "удаление"
+  },
+  "dashboard_focus_title": {
+    "message": "Режим фокусировки"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Блокируйте отвлекающие сайты по расписанию"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Сессия фокусировки"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Сессия приостановлена"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Сессия выполняется…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Сессия завершена!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 мин"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 мин"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 мин"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 мин"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Своё"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "мин"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Список отвлекающих сайтов"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Добавить"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Введите домен для блокировки во время фокусировки (например, twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Настройки"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Настройте поведение AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Блокировка"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Блокировать рекламу"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Стандартная блокировка рекламных сетей"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Блокировать трекеры"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Блокировать скрипты аналитики и отслеживания"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Косметическая фильтрация"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Скрывать оставшиеся заглушки рекламы с помощью CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Блокировать вредоносное ПО"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Блокировать известные вредоносные домены"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Приватность"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Анонимизация referrer"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Удалять заголовки referrer при кросс-доменных запросах"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Global Privacy Control"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Отправлять сигнал отказа GPC (заголовок Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Заголовок Do Not Track"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Отправлять заголовок запроса DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Данные"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Собирать статистику"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Статистика использования хранится только локально (никогда не отправляется)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Сбросить все данные"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Очистить правила, статистику и настройки"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Сбросить"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Сбросить все данные AdBlock? Это действие нельзя отменить."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Все данные очищены. Перезагрузка…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "О программе"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Версия"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Проверить обновления"
+  },
+  "dashboard_settings_checking": {
+    "message": "Проверка…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Доступна новая версия"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Просмотреть"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Последняя проверка: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (не удалось — нет сети?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Проверка ещё не выполнялась"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "Доступна v$1 (у вас v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Источник правил"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Откуда AdBlock загружает правила для сайтов"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Удалённые URL-адреса правил"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Включает встроенный источник по умолчанию (можно включать/выключать, но не удалить) плюс любые добавленные вами URL — все объединяются, каждый независимо включается/выключается."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Добавить URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Локальные файлы правил"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Загружайте файлы правил .txt — они объединяются с источниками по URL. Поддерживается несколько файлов."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Добавить файл…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Экспорт…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Ошибка экспорта: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "неизвестная ошибка"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 преобразовано, $2 пропущено из $3 правил",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 правил-исключений (здесь нет модели отмены)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 процедурных селекторов (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 расширенных модификаторов AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 несопоставленных вызовов скриптлетов",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 неподдерживаемых модификаторов сетевых правил",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 уже присутствуют в собственном site-rules.txt этого репозитория",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 нераспознанного синтаксиса",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "Загружено $1/$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "Загружено $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Экспорт"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Скачать правила этого источника, преобразованные в собственный синтаксис этого репозитория"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "По умолчанию"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Семейство EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "По языку"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Свои (ваши собственные URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Сгенерированы тестовые данные за $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Общие"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Язык"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Страница перезапустится после изменения"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Авто (язык браузера)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Меню"
+  }
+}

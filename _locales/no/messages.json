@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Blokker annonser, sporere og kjente skadelige domener med enkle nettstedskontroller og fokusverktøy.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Nettsted blokkert — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Nettstedet er blokkert for din sikkerhet"
+  },
+  "blocked_title_adPopup": {
+    "message": "Sprettoppannonse/ny fane blokkert"
+  },
+  "blocked_host_unknown": {
+    "message": "ukjent nettsted"
+  },
+  "blocked_hint_default": {
+    "message": "Dette nettstedet er på en blokkeringsliste for skadevare/phishing. Det kan forsøke å stjele informasjonen din, utvinne kryptovaluta eller installere uønsket programvare."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Et klikk på siden du kom fra, forsøkte å åpne dette annonse-/sprettoppnettverket i en ny fane. Du kan trygt lukke denne fanen."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Ikke advar meg om dette nettstedet igjen"
+  },
+  "blocked_btn_goBack": {
+    "message": "Gå tilbake"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Lukk dette vinduet"
+  },
+  "blocked_btn_proceed": {
+    "message": "Fortsett likevel"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Fortsetter…"
+  },
+  "common_remove": {
+    "message": "Fjern"
+  },
+  "common_cancel": {
+    "message": "Avbryt"
+  },
+  "menu_pickElement": {
+    "message": "Velg element som skal skjules…"
+  },
+  "menu_scanGlobals": {
+    "message": "Skann siden for skript/variabler…"
+  },
+  "menu_editRules": {
+    "message": "Rediger regler for dette nettstedet…"
+  },
+  "picker_badge_active": {
+    "message": "Velger element som skal skjules — trykk Esc for å avbryte"
+  },
+  "picker_btn_hide": {
+    "message": "Skjul dette elementet"
+  },
+  "picker_btn_broaden": {
+    "message": "Utvid"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Kontrollpanel"
+  },
+  "popup_review_title": {
+    "message": "Liker du AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "En rask vurdering hjelper mye."
+  },
+  "popup_review_rate": {
+    "message": "Vurder oss"
+  },
+  "popup_review_dismiss": {
+    "message": "Nei takk"
+  },
+  "popup_stat_blocked": {
+    "message": "Blokkert"
+  },
+  "popup_stat_malware": {
+    "message": "Skadevare"
+  },
+  "popup_stat_speed": {
+    "message": "Hastighet"
+  },
+  "popup_stat_saved": {
+    "message": "Spart"
+  },
+  "popup_allowlist_banner": {
+    "message": "Dette nettstedet er på tillatelseslisten"
+  },
+  "popup_action_focus": {
+    "message": "Fokusmodus"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Sett på pause for nettstedet"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Gjenoppta nettstedet"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Personvernscore"
+  },
+  "popup_footer_settings": {
+    "message": "Innstillinger"
+  },
+  "popup_ruleChip_title": {
+    "message": "Nettverksblokkeringsregler som er lastet inn nå"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… regler"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "nettverksregler: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 nettverksregler lastet inn",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Støtt utviklingen via PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Doner"
+  },
+  "popup_version_title": {
+    "message": "AdBlock-versjon"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Oppdatering tilgjengelig — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "En nyere versjon er tilgjengelig — klikk for å åpne butikksiden"
+  },
+  "popup_domain_unknown": {
+    "message": "Ukjent nettsted"
+  },
+  "popup_status_site": {
+    "message": "Nettsted"
+  },
+  "popup_status_protection": {
+    "message": "Beskyttelse"
+  },
+  "popup_status_allowlisted": {
+    "message": "Tillatt"
+  },
+  "popup_status_on": {
+    "message": "PÅ"
+  },
+  "popup_status_paused": {
+    "message": "Pauset"
+  },
+  "popup_status_off": {
+    "message": "AV"
+  },
+  "common_save": {
+    "message": "Lagre"
+  },
+  "common_close": {
+    "message": "Lukk"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Rediger regler — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Klikk for å sette inn i tekstboksen"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Nøkkelreferanse ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtrer nøkler…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOSMETISK / KANDIDAT-SAMSVAR"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLETS (AVANSERT)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Gjeldende regler for dette nettstedet ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(ingen regler for dette nettstedet ennå — verken innebygde eller egendefinerte)"
+  },
+  "ruleEditor_hint": {
+    "message": "Én \"key = value | value2\" per linje. Klikk på en nøkkel ovenfor for å sette den inn. Ingen [section]-overskrifter. Regler skrevet her LEGGES TIL eksisterende regler for denne nøkkelen (se ovenfor) — dette kan ikke fjerne eller overstyre en innebygd regel, og for flaggnøkler med én verdi vinner vanligvis den innebygde verdien."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Lagret — last inn denne siden på nytt for å se de anvendte reglene."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Lagring mislyktes — sjekk om det finnes en løsrevet \"[section]\"-linje eller en enorm innliming."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS-velgere som skjules betingelsesløst via et injisert stilark — ingen heuristisk sjekk, bare skjul ved øyesyn."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS-velgere for KANDIDAT-elementer — skjules bare hvis de også samsvarer med labels/link_patterns nedenfor."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Samme som selectors, begrenset til feed/tidslinje-lignende beholdere."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Samme som selectors, begrenset til markedsplass-/shoppinglignende beholdere."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Samme som selectors, begrenset til et sidefelt-/høyremargområde."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Samme som selectors, begrenset til individuelle innlegg-/artikkelbeholdere."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS-velgere for \"vert\"-elementer, sjekket på samme måte som selectors ovenfor."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Tekstetiketter (f.eks. sponsored, promoted) sammenlignet med attributter/kontekst-tekst for å bekrefte at en kandidat virkelig er en annonse."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Delstrengmønstre sammenlignet med en kandidats egne lenker/attributter for å bekrefte at det er en annonse."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "HTML-attributtnavn som skannes for label/link_pattern-treff (standard: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Underordnede elementer det hentes tekst fra for etikettmatching (standard: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS-velger(e) for å gå oppover via .closest() før en samsvarende kandidat skjules (skjuler beholderen, ikke bare etiketten)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Klassenavn som fjernes kontinuerlig fra <html>/<body> — beseirer kun-CSS-overtakelsesoverlegg drevet av en rotklasse."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "CSS-egenskapsnavn som ryddes kontinuerlig fra <html>/<body>-innebygd stil — beseirer JS-satt rullelås osv."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0-flagg — lukker automatisk sprettopp-/popunder-faner åpnet av klikk på dette nettstedet."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — låser en vindusegenskap permanent til en fast verdi (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — kaster en feil når et skript leser denne vindusegenskapen."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — kaster en feil når et skript skriver til denne vindusegenskapen."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — kaster bare en feil når det kallende skriptets egen stack-spor samsvarer med needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — kaster en feil når et skript med en kilde som samsvarer med needle, leser target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — blokkerer eller lokke-omdirigerer window.open()-kall som samsvarer med pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — blokkerer fetch()-kall som samsvarer med kriteriene."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — blokkerer XMLHttpRequest-kall som samsvarer med kriteriene."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — blokkerer fetch, og returnerer eventuelt en fast falsk svarkropp."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — hindrer en about:blank-iframe med samme opprinnelse fra å nå tilbake til det virkelige vinduet for å omgå en lås."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — fjerner felt fra ethvert JSON.parse()-resultat."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — fjerner felt fra en fetch() JSON-respons."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — fjerner felt fra en XHR JSON-respons."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — beskjærer et objekt som et skript tildeler direkte (ikke via JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — JSONPath-baserte feltslettinger i en fetch() JSON-respons."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — JSONPath-baserte feltslettinger i en XHR JSON-lines-respons."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Fjerner felt fra en protobuf/jspb-kodet respons."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath-redigeringer (slettinger OG verditildeling) på en utgående forespørselskropp."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath-redigeringer (slettinger OG verditildeling) på en svarkropp."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex-søk/erstatning i en fetch()-svarkropp."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex-søk/erstatning i en XHR-svarkropp."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — erstatter ett argument som sendes til en funksjon."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — betingelsesløs tekstutskifting på utgående data (ingen URL-avgrensning)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — skriver om teksten til en <script>-tag før den kjøres. sedCount begrenser hvor mange noder denne regelen noensinne skriver om (standard: ubegrenset)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — beskjærer felt fra et objekt sendt INN i et innebygd metodekall."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — avbryter eller stille ignorerer et innebygd metodekall som samsvarer med en signatur."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — dropper eller kaster en feil ved en tilgangs-setter-tildeling (f.eks. Element.prototype.innerHTML) hvis verdi samsvarer med needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — fjerner annonsesegmenter fra en HLS .m3u8-spillelisterespons."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — later som en vellykket script/img/iframe/link-lasting i stedet for den virkelige nettverksforespørselen."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — fjerner HTML-attributter fra samsvarende elementer."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — tømmer tekstinnholdet i en DOM-node."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — skriver om tekstinnholdet i en DOM-node."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — stopper en automatisk omdirigering via <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — angir en informasjonskapsel."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — fjerner informasjonskapsler som samsvarer med et navnemønster."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — angir en localStorage-oppføring (begrenset til trygge bokstavelige verdier, eller den spesielle verdien \"remove\" for å slette samsvarende nøkler)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — skriver om en lenkes href fra dens egen tekst eller et annet attributt."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — blokkerer setTimeout()-kall som samsvarer med kriteriene."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — blokkerer setInterval()-kall som samsvarer med kriteriene."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — blokkerer requestAnimationFrame()-kall som samsvarer med kriteriene."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — blokkerer addEventListener()-kall som samsvarer med kriteriene."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — fremskynder/senker samsvarende setTimeout()-kall i stedet for å blokkere dem."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — fremskynder/senker samsvarende setInterval()-kall i stedet for å blokkere dem."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — blokkerer eval()-kall hvis kilde samsvarer med pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Deaktiverer RTCPeerConnection — blokkerer WebRTC-baserte sprettopp-/sporingstriks."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Nøytraliserer BlockAdBlock/FuckAdBlock-lignende anti-adblokk-deteksjonsskript."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Fjerner target=\"_blank\" fra klikkede lenker — blokkerer tvungne omdirigeringer til ny fane."
+  },
+  "scanner_value_emptyString": {
+    "message": "Tom streng"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Tom matrise"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Tomt objekt"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Tom funksjon (uten effekt)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funksjon som alltid returnerer true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funksjon som alltid returnerer false"
+  },
+  "scanner_btn_block": {
+    "message": "Blokker"
+  },
+  "scanner_btn_edit": {
+    "message": "Rediger"
+  },
+  "scanner_btn_delete": {
+    "message": "Slett"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Blokkering anvendt — lagret for dette nettstedet."
+  },
+  "scanner_status_editApplied": {
+    "message": "Redigering anvendt — lagret for dette nettstedet."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Sletting anvendt — lagret for dette nettstedet."
+  },
+  "scanner_block_warning": {
+    "message": "Blokkering forhindrer ALLE fremtidige lesinger av denne egenskapen — kan ødelegge sidefunksjonalitet som er avhengig av den. Dette kan ikke angres ved å oppdatere; fjern regelen fra kontrollpanelets side for globale regler for å tilbakestille."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Blokker likevel"
+  },
+  "scanner_edit_customOption": {
+    "message": "Tilpasset…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "enkelt token, ingen mellomrom (f.eks. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Skriv inn en verdi uten mellomrom."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Mellomrom er ikke tillatt — vil bli avvist."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Vil bli lagret som: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Globale sidevariabler ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtrer etter navn…"
+  },
+  "scanner_empty": {
+    "message": "Ingen sidetilføyde globale variabler funnet på denne siden."
+  },
+  "scanner_footer_limitation": {
+    "message": "Ser bare var/function-stil globale variabler og eksplisitte window.x =-tildelinger — let/const/class-deklarasjoner er usynlige for enhver sideskanner (JS-språkbegrensning)."
+  },
+  "scanner_loading": {
+    "message": "Skanner globale sidevariabler — trykk Esc for å avbryte"
+  },
+  "common_add": {
+    "message": "Legg til"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Kontrollpanel"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Oversikt"
+  },
+  "dashboard_nav_rules": {
+    "message": "Egendefinerte regler"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Regelkilde"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Tillatelsesliste"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Elementregler"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Globale regler"
+  },
+  "dashboard_nav_focus": {
+    "message": "Fokus"
+  },
+  "dashboard_nav_settings": {
+    "message": "Innstillinger"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Beskyttelse PÅ"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Beskyttelse $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Støtt utviklingen via PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Spander en kaffe på meg ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "PÅ"
+  },
+  "dashboard_toggle_off": {
+    "message": "AV"
+  },
+  "dashboard_overview_title": {
+    "message": "Oversikt"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Ditt beskyttelseskontrollpanel"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Totalt blokkert"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0 % i dag"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Stoppede sporere"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0 % i dag"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Blokkert skadevare"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "stoppede trusler"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Ingen trusler oppdaget"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Spart båndbredde"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "gjennomsnitt per side"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Spart tid"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "i denne økten"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 i dag",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— i dag"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1 % sammenlignet med i går",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 trusler i dag"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 til",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Blokkerte forespørsler"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Sporingsforespørsler"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Skadevaredeteksjoner"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7d"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14d"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30d"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "blokkert"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "sporere"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "skadevare"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Mest blokkerte domener"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Domener med flest sporere"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Domener med mest skadevare"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Se alle"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Vis færre"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Se alle ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Ingen data ennå."
+  },
+  "dashboard_privacy_title": {
+    "message": "Personvernscore"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Blokkerte annonser"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Blokkerte sporere"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Skadevarebeskyttelse"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Referrer-anonymisering"
+  },
+  "dashboard_rules_title": {
+    "message": "Egendefinerte regler"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Rediger i site-rules.txt-format — samme syntaks som hovedregelfilen. Verdier slås sammen med innebygde regler."
+  },
+  "dashboard_rules_clear": {
+    "message": "Tøm"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Tøm alle egendefinerte regler?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Egendefinerte regler — samme format som site-rules.txt\n# Verdier SLÅS SAMMEN med innebygde regler (erstattes ikke).\n#\n# ── Koble et nytt domene til en regelseksjon ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← underdomener matches automatisk\n#\n# ── Legg til flere domener for global blokkering ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Kosmetiske regler per nettsted ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Tillatelsesliste"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Nettsteder som omgår all blokkering"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Legg til nettsted"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Elementregler"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elementer skjult manuelt via \"Velg element som skal skjules\" — gruppert etter nettsted"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Ingen regler ennå."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Globale regler"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Globale vindusvariabler blokkert/redigert/slettet manuelt via \"Skann siden for skript/variabler\" — gruppert etter nettsted"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Ingen regler ennå."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "blokker"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "rediger"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "slett"
+  },
+  "dashboard_focus_title": {
+    "message": "Fokusmodus"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Blokker distraherende nettsteder etter en tidsplan"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Fokusøkt"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Økt satt på pause"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Økt pågår…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Økt fullført!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25m"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45m"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60m"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90m"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Tilpasset"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Liste over distraksjoner"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Legg til"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Skriv inn domenet som skal blokkeres under fokus (f.eks. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Innstillinger"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Tilpass AdBlock-oppførsel"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Blokkering"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Blokker annonser"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standard blokkering av annonsenettverk"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Blokker sporere"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Blokker analyse- og sporingsskript"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kosmetisk filtrering"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Skjul gjenværende annonseplassholdere via CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Blokker skadevare"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Blokker kjente skadevaredomener"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Personvern"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Referrer-anonymisering"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Fjern referrer-headere ved forespørsler på tvers av opprinnelse"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Global Privacy Control (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Send GPC-fravalgssignalet (Sec-GPC-header + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Do Not Track-header (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Send DNT: 1-forespørselsheader"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Data"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Samle inn statistikk"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Kun lokal bruksstatistikk (lastes aldri opp)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Tilbakestill all data"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Tøm regler, statistikk og innstillinger"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Tilbakestill"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Tilbakestille all AdBlock-data? Dette kan ikke angres."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "All data er tømt. Laster på nytt…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Om"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versjon"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Se etter oppdateringer"
+  },
+  "dashboard_settings_checking": {
+    "message": "Kontrollerer…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "En nyere versjon er tilgjengelig"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Vis"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Sist sjekket $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (mislyktes — er du offline?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Ikke sjekket ennå"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 er tilgjengelig (du har v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Regelkilde"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Hvor AdBlock henter sine nettstedsregler fra"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL-er for eksterne regler"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Inkluderer den innebygde standarden (kan slås av/på, kan ikke fjernes) pluss eventuelle URL-er du legger til — alle slått sammen, hver uavhengig av/på."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Legg til URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Lokale regelfiler"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Last opp .txt-regelfiler — slås sammen med URL-kilder. Flere filer støttes."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Legg til fil…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Eksporterer…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Eksport mislyktes: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "ukjent feil"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 konvertert, $2 hoppet over av $3 regler",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 unntaksregler (ingen kanselleringsmodell her)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 prosedurale velgere (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 utvidede AdGuard-modifikatorer",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 ikke-tilordnede scriptlet-kall",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 ikke-støttede nettverksregel-modifikatorer",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 allerede kuratert i denne utvidelsens egen site-rules.txt",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 ikke-gjenkjent syntaks",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 lastet inn",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 lastet inn",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Eksporter"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Last ned reglene fra denne kilden konvertert til denne utvidelsens egen syntaks"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Standard"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList-familien"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Etter språk"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Egendefinert (dine egne URL-er)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Fyllte inn falske data for $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Generelt"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Språk"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Starter denne siden på nytt etter endring"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automatisk (nettleserspråk)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Meny"
+  }
+}

@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "Blokuokite reklamas, sekimo priemones ir žinomus kenkėjiškus domenus naudodami paprastus svetainės valdiklius ir susikaupimo įrankius.",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "Svetainė užblokuota — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Svetainė užblokuota jūsų saugumui"
+  },
+  "blocked_title_adPopup": {
+    "message": "Iššokantis skelbimas / nauja kortelė užblokuota"
+  },
+  "blocked_host_unknown": {
+    "message": "nežinoma svetainė"
+  },
+  "blocked_hint_default": {
+    "message": "Ši svetainė yra kenkėjiškų programų / sukčiavimo blokavimo sąraše. Ji gali bandyti pavogti jūsų informaciją, kasti kriptovaliutą arba įdiegti nepageidaujamą programinę įrangą."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Paspaudimas puslapyje, iš kurio atėjote, bandė atidaryti šį reklamos / iššokančiųjų langų tinklą naujoje kortelėje. Šią kortelę galite saugiai uždaryti."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Daugiau neįspėti apie šią svetainę"
+  },
+  "blocked_btn_goBack": {
+    "message": "Grįžti atgal"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Uždaryti šį langą"
+  },
+  "blocked_btn_proceed": {
+    "message": "Vis tiek tęsti"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Tęsiama…"
+  },
+  "common_remove": {
+    "message": "Pašalinti"
+  },
+  "common_cancel": {
+    "message": "Atšaukti"
+  },
+  "menu_pickElement": {
+    "message": "Pasirinkti slepiamą elementą…"
+  },
+  "menu_scanGlobals": {
+    "message": "Nuskaityti puslapį ieškant scenarijų / kintamųjų…"
+  },
+  "menu_editRules": {
+    "message": "Redaguoti šios svetainės taisykles…"
+  },
+  "picker_badge_active": {
+    "message": "Pasirenkamas slepiamas elementas — spauskite Esc, kad atšauktumėte"
+  },
+  "picker_btn_hide": {
+    "message": "Slėpti šį elementą"
+  },
+  "picker_btn_broaden": {
+    "message": "Praplėsti"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "Skydelis"
+  },
+  "popup_review_title": {
+    "message": "Patinka AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "Greitas įvertinimas labai padeda."
+  },
+  "popup_review_rate": {
+    "message": "Įvertinkite mus"
+  },
+  "popup_review_dismiss": {
+    "message": "Ne, ačiū"
+  },
+  "popup_stat_blocked": {
+    "message": "Užblokuota"
+  },
+  "popup_stat_malware": {
+    "message": "Kenkėjiška programa"
+  },
+  "popup_stat_speed": {
+    "message": "Greitis"
+  },
+  "popup_stat_saved": {
+    "message": "Sutaupyta"
+  },
+  "popup_allowlist_banner": {
+    "message": "Ši svetainė yra leidžiamų sąraše"
+  },
+  "popup_action_focus": {
+    "message": "Susikaupimo režimas"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Pristabdyti šioje svetainėje"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Tęsti svetainę"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Privatumo įvertis"
+  },
+  "popup_footer_settings": {
+    "message": "Nustatymai"
+  },
+  "popup_ruleChip_title": {
+    "message": "Šiuo metu įkeltos tinklo blokavimo taisyklės"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… taisyklių"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "tinklo taisyklės: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "Įkelta $1 tinklo taisyklių",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Paremti kūrimą per PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Aukoti"
+  },
+  "popup_version_title": {
+    "message": "AdBlock versija"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Yra atnaujinimas — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Yra naujesnė versija — spustelėkite, kad atidarytumėte parduotuvės puslapį"
+  },
+  "popup_domain_unknown": {
+    "message": "Nežinoma svetainė"
+  },
+  "popup_status_site": {
+    "message": "Svetainė"
+  },
+  "popup_status_protection": {
+    "message": "Apsauga"
+  },
+  "popup_status_allowlisted": {
+    "message": "Leidžiama"
+  },
+  "popup_status_on": {
+    "message": "ĮJUNGTA"
+  },
+  "popup_status_paused": {
+    "message": "Pristabdyta"
+  },
+  "popup_status_off": {
+    "message": "IŠJUNGTA"
+  },
+  "common_save": {
+    "message": "Išsaugoti"
+  },
+  "common_close": {
+    "message": "Uždaryti"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Redaguoti taisykles — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Spustelėkite, kad įterptumėte į teksto lauką"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Raktų nuoroda ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtruoti raktus…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "KOSMETINIS / KANDIDATO ATITIKIMAS"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCENARIJAI (IŠPLĖSTINIS)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Dabartinės šios svetainės taisyklės ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(šiai svetainei dar nėra taisyklių — nei įmontuotų, nei pasirinktinių)"
+  },
+  "ruleEditor_hint": {
+    "message": "Viena \"key = value | value2\" eilutėje. Spustelėkite raktą aukščiau, kad jį įterptumėte. Jokių [section] antraščių. Čia įvestos taisyklės PRIDEDAMOS prie esamų šio rakto taisyklių (žr. aukščiau) — tai negali pašalinti ar perrašyti įmontuotos taisyklės, o vienos reikšmės žymos raktams paprastai laimi įmontuota reikšmė."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Išsaugota — iš naujo įkelkite šį puslapį, kad pamatytumėte pritaikytas taisykles."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Nepavyko išsaugoti — patikrinkite, ar nėra pavienės \"[section]\" eilutės arba didžiulio įklijavimo."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "CSS parinkikliai, besąlygiškai slepiami per įterptą stilių lapą — jokio euristinio patikrinimo, tiesiog paslepiama pamačius."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "CSS parinkikliai KANDIDATO elementams — slepiami tik jei taip pat atitinka žemiau esančius labels/link_patterns."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "Tas pats kaip selectors, apribota iki srauto / laiko juostos stiliaus konteinerių."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "Tas pats kaip selectors, apribota iki turgavietės / apsipirkimo stiliaus konteinerių."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "Tas pats kaip selectors, apribota iki šoninės juostos / dešiniojo krašto srities."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "Tas pats kaip selectors, apribota iki atskirų įrašų / straipsnių konteinerių."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "CSS parinkikliai \"pagrindiniams\" elementams, tikrinami taip pat kaip selectors aukščiau."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Teksto etiketės (pvz., sponsored, promoted), lyginamos su atributais / konteksto tekstu, siekiant patvirtinti, kad kandidatas tikrai yra reklama."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Poeilučių šablonai, lyginami su paties kandidato nuorodomis / atributais, siekiant patvirtinti, kad tai reklama."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "HTML atributų pavadinimai, tikrinami dėl label/link_pattern atitikmenų (numatytoji: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Antriniai elementai, iš kurių imamas tekstas etiketės atitikimui (numatytoji: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "CSS parinkiklis(-iai), skirti pakilti aukštyn per .closest() prieš paslepiant atitinkamą kandidatą (slepia konteinerį, ne tik etiketę)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Klasių pavadinimai, nuolat šalinami iš <html>/<body> — įveikia tik CSS pagrįstas perėmimo perdangas, valdomas šakninės klasės."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "CSS savybių pavadinimai, nuolat išvalomi iš <html>/<body> įterptojo stiliaus — įveikia JS nustatytą slinkties užraktą ir kt."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "1/0 žyma — automatiškai uždaro iššokančiąsias / paslėptas korteles, atidarytas paspaudus šioje svetainėje."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — visam laikui užrakina lango savybę fiksuota reikšme (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — meta klaidą, kai bet koks scenarijus nuskaito šią lango savybę."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — meta klaidą, kai bet koks scenarijus įrašo į šią lango savybę."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — meta klaidą tik tada, kai kviečiančio scenarijaus paties krūvos pėdsakas atitinka needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — meta klaidą, kai scenarijus, kurio šaltinis atitinka needle, nuskaito target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — blokuoja arba nukreipia į masalą window.open() iškvietimus, atitinkančius pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — blokuoja fetch() iškvietimus, atitinkančius kriterijus."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — blokuoja XMLHttpRequest iškvietimus, atitinkančius kriterijus."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — blokuoja fetch, pasirinktinai grąžindamas fiksuotą netikrą atsakymo turinį."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — neleidžia to paties kilmės about:blank iframe pasiekti tikrojo lango, kad apeitų užraktą."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — pašalina laukus iš bet kokio JSON.parse() rezultato."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — pašalina laukus iš fetch() JSON atsakymo."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — pašalina laukus iš XHR JSON atsakymo."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — apkarpo objektą, kurį scenarijus priskiria tiesiogiai (ne per JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — JSONPath pagrįsti laukų trynimai fetch() JSON atsakyme."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — JSONPath pagrįsti laukų trynimai XHR JSON-lines atsakyme."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Pašalina laukus iš protobuf/jspb koduoto atsakymo."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath redagavimai (trynimas IR reikšmės priskyrimas) siunčiamos užklausos turinyje."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — JSONPath redagavimai (trynimas IR reikšmės priskyrimas) atsakymo turinyje."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex paieška/pakeitimas fetch() atsakymo turinyje."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — regex paieška/pakeitimas XHR atsakymo turinyje."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — pakeičia vieną funkcijai perduodamą argumentą."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — besąlyginis teksto pakeitimas siunčiamuose duomenyse (be URL apribojimo)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — perrašo <script> žymos tekstą prieš jam paleidžiant. sedCount apriboja, kiek mazgų ši taisyklė kada nors perrašys (numatytoji: neribota)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — apkarpo laukus iš objekto, perduodamo Į natyvaus metodo iškvietimą."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — nutraukia arba tyliai ignoruoja natyvaus metodo iškvietimą, atitinkantį parašą."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — atmeta arba meta klaidą, kai prieigos priskyrimo reikšmė (pvz., Element.prototype.innerHTML) atitinka needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — pašalina reklamos segmentus iš HLS .m3u8 grojaraščio atsakymo."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — apsimeta, kad script/img/iframe/link įkėlimas pavyko, vietoj tikros tinklo užklausos."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — pašalina HTML atributus iš atitinkančių elementų."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — išvalo DOM mazgo teksto turinį."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — perrašo DOM mazgo teksto turinį."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — sustabdo automatinį peradresavimą per <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — nustato slapuką."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — pašalina slapukus, atitinkančius pavadinimo šabloną."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — nustato localStorage įrašą (apribota saugiomis literalinėmis reikšmėmis arba specialia \"remove\" reikšme, skirta ištrinti atitinkančius raktus)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — perrašo nuorodos href iš jos paties teksto arba kito atributo."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — blokuoja setTimeout() iškvietimus, atitinkančius kriterijus."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — blokuoja setInterval() iškvietimus, atitinkančius kriterijus."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — blokuoja requestAnimationFrame() iškvietimus, atitinkančius kriterijus."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — blokuoja addEventListener() iškvietimus, atitinkančius kriterijus."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — pagreitina/sulėtina atitinkančius setTimeout() iškvietimus vietoj jų blokavimo."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — pagreitina/sulėtina atitinkančius setInterval() iškvietimus vietoj jų blokavimo."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — blokuoja eval() iškvietimus, kurių šaltinis atitinka pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Išjungia RTCPeerConnection — blokuoja WebRTC pagrįstus iššokančiųjų langų / sekimo triukus."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Neutralizuoja BlockAdBlock/FuckAdBlock stiliaus reklamos blokavimo aptikimo scenarijus."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Pašalina target=\"_blank\" iš paspaustų nuorodų — blokuoja priverstinius peradresavimus į naują kortelę."
+  },
+  "scanner_value_emptyString": {
+    "message": "Tuščia eilutė"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Tuščias masyvas"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Tuščias objektas"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Tuščia funkcija (be poveikio)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funkcija, visada grąžinanti true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funkcija, visada grąžinanti false"
+  },
+  "scanner_btn_block": {
+    "message": "Blokuoti"
+  },
+  "scanner_btn_edit": {
+    "message": "Redaguoti"
+  },
+  "scanner_btn_delete": {
+    "message": "Ištrinti"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Blokavimas pritaikytas — išsaugota šiai svetainei."
+  },
+  "scanner_status_editApplied": {
+    "message": "Redagavimas pritaikytas — išsaugota šiai svetainei."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Trynimas pritaikytas — išsaugota šiai svetainei."
+  },
+  "scanner_block_warning": {
+    "message": "Blokavimas neleidžia VISŲ būsimų šios savybės skaitymų — gali sugadinti nuo jos priklausančio puslapio funkcionalumą. To negalima anuliuoti atnaujinus puslapį; norėdami grąžinti, pašalinkite taisyklę iš skydelio Globalios taisyklės puslapio."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Vis tiek blokuoti"
+  },
+  "scanner_edit_customOption": {
+    "message": "Pasirinktinis…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "vienas žetonas, be tarpų (pvz., 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Įveskite reikšmę be tarpų."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Tarpai neleidžiami — bus atmesta."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Bus išsaugota kaip: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Puslapio globalūs kintamieji ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtruoti pagal pavadinimą…"
+  },
+  "scanner_empty": {
+    "message": "Šiame puslapyje nerasta puslapio pridėtų globalių kintamųjų."
+  },
+  "scanner_footer_limitation": {
+    "message": "Mato tik var/function stiliaus globalius kintamuosius ir aiškius window.x = priskyrimus — let/const/class deklaracijos yra nematomos jokiam puslapio skeneriui (JS kalbos apribojimas)."
+  },
+  "scanner_loading": {
+    "message": "Nuskaitomi puslapio globalūs kintamieji — spauskite Esc, kad atšauktumėte"
+  },
+  "common_add": {
+    "message": "Pridėti"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Skydelis"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "Apžvalga"
+  },
+  "dashboard_nav_rules": {
+    "message": "Pasirinktinės taisyklės"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Taisyklių šaltinis"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Leidžiamų sąrašas"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Elementų taisyklės"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Globalios taisyklės"
+  },
+  "dashboard_nav_focus": {
+    "message": "Susikaupimas"
+  },
+  "dashboard_nav_settings": {
+    "message": "Nustatymai"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Apsauga ĮJUNGTA"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Apsauga $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Paremti kūrimą per PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Nupirkite man kavos ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ĮJUNGTA"
+  },
+  "dashboard_toggle_off": {
+    "message": "IŠJUNGTA"
+  },
+  "dashboard_overview_title": {
+    "message": "Apžvalga"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Jūsų apsaugos skydelis"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Iš viso užblokuota"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0 % šiandien"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Sustabdytos sekimo priemonės"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0 % šiandien"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Užblokuota kenkėjiška programa"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "sustabdyta grėsmių"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Grėsmių neaptikta"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Sutaupytas pralaidumas"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "vidurkis puslapyje"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Sutaupytas laikas"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "šiame seanse"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 šiandien",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— šiandien"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1 % palyginti su vakar",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 grėsmių šiandien"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 daugiau",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Užblokuotos užklausos"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Sekimo užklausos"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Kenkėjiškų programų aptikimai"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7d"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14d"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30d"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "užblokuota"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "sekimo priemonės"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "kenkėjiška programa"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Labiausiai blokuojami domenai"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Domenai su daugiausia sekimo priemonių"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Domenai su daugiausia kenkėjiškų programų"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Rodyti visus"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Rodyti mažiau"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Rodyti visus ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Kol kas nėra duomenų."
+  },
+  "dashboard_privacy_title": {
+    "message": "Privatumo įvertis"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Užblokuotos reklamos"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Užblokuotos sekimo priemonės"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Apsauga nuo kenkėjiškų programų"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Nuorodos šaltinio anonimizavimas"
+  },
+  "dashboard_rules_title": {
+    "message": "Pasirinktinės taisyklės"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Redaguokite site-rules.txt formatu — tokia pati sintaksė kaip pagrindiniame taisyklių faile. Reikšmės sujungiamos su įmontuotomis taisyklėmis."
+  },
+  "dashboard_rules_clear": {
+    "message": "Išvalyti"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Išvalyti visas pasirinktines taisykles?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Pasirinktinės taisyklės — toks pat formatas kaip site-rules.txt\n# Reikšmės SUJUNGIAMOS su įmontuotomis taisyklėmis (nepakeičia jų).\n#\n# ── Susieti naują domeną su taisyklių skiltimi ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← subdomenai atitinkami automatiškai\n#\n# ── Pridėti papildomų domenų globaliam blokavimui ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Kosmetinės taisyklės kiekvienai svetainei ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Leidžiamų sąrašas"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Svetainės, apeinančios visą blokavimą"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Pridėti svetainę"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Elementų taisyklės"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elementai, paslėpti rankiniu būdu naudojant \"Pasirinkti slepiamą elementą\" — sugrupuoti pagal svetainę"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Kol kas nėra taisyklių."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Globalios taisyklės"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Globalūs lango kintamieji, rankiniu būdu užblokuoti/redaguoti/ištrinti naudojant \"Nuskaityti puslapį ieškant scenarijų/kintamųjų\" — sugrupuoti pagal svetainę"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Kol kas nėra taisyklių."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "blokuoti"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "redaguoti"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "ištrinti"
+  },
+  "dashboard_focus_title": {
+    "message": "Susikaupimo režimas"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Blokuoti dėmesį blaškančias svetaines pagal tvarkaraštį"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Susikaupimo seansas"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Seansas pristabdytas"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Seansas vyksta…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Seansas baigtas!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25 min"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45 min"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60 min"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90 min"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Pasirinktinis"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Blaškančių svetainių sąrašas"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Pridėti"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Įveskite domeną, kurį blokuoti susikaupimo metu (pvz., twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Nustatymai"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Tinkinkite AdBlock elgseną"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Blokavimas"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Blokuoti reklamas"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Standartinis reklamos tinklų blokavimas"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Blokuoti sekimo priemones"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Blokuoti analitikos ir sekimo scenarijus"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Kosmetinis filtravimas"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Slėpti likusius reklamos vietos rezervavimo ženklus naudojant CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Blokuoti kenkėjiškas programas"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Blokuoti žinomus kenkėjiškų programų domenus"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Privatumas"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Nuorodos šaltinio anonimizavimas"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Pašalinti nuorodos šaltinio antraštes tarpsritinėse užklausose"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Globali privatumo kontrolė (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Siųsti GPC atsisakymo signalą (Sec-GPC antraštė + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Nesekimo antraštė (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Siųsti DNT: 1 užklausos antraštę"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Duomenys"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Rinkti statistiką"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Tik vietinė naudojimo statistika (niekada neįkeliama)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Atkurti visus duomenis"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Išvalyti taisykles, statistiką ir nustatymus"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Atkurti"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Atkurti visus AdBlock duomenis? To negalima anuliuoti."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Visi duomenys išvalyti. Iš naujo įkeliama…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Apie"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versija"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Tikrinti atnaujinimus"
+  },
+  "dashboard_settings_checking": {
+    "message": "Tikrinama…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Yra naujesnė versija"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Peržiūrėti"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Paskutinį kartą tikrinta $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (nepavyko — esate neprisijungę?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Dar netikrinta"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 yra prieinama (jūs turite v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Taisyklių šaltinis"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "Iš kur AdBlock gauna savo svetainės taisykles"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Nuotolinių taisyklių URL"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Apima įmontuotą numatytąją (perjungiama, negalima pašalinti) plius bet kokius jūsų pridėtus URL — visi sujungti, kiekvienas nepriklausomai įjungiamas/išjungiamas."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Pridėti URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Vietiniai taisyklių failai"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Įkelkite .txt taisyklių failus — sujungiami su URL šaltiniais. Palaikomi keli failai."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Pridėti failą…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Eksportuojama…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Eksportavimas nepavyko: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "nežinoma klaida"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 konvertuota, $2 praleista iš $3 taisyklių",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 išimčių taisyklių (čia nėra atšaukimo modelio)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 procedūrinių parinkiklių (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 išplėstinių AdGuard modifikatorių",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 nesusietų scenarijaus iškvietimų",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 nepalaikomų tinklo taisyklės modifikatorių",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 jau sutvarkyta šio plėtinio nuosavame site-rules.txt",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 neatpažinta sintaksė",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 įkelta",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 įkelta",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Eksportuoti"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Atsisiųsti šio šaltinio taisykles, konvertuotas į šio plėtinio nuosavą sintaksę"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Numatytoji"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "EasyList šeima"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "Pagal kalbą"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Pasirinktinis (jūsų pačių URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "Sukurti netikri duomenys datai $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "Bendra"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Kalba"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Pakeitus iš naujo paleidžia šį puslapį"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automatinė (naršyklės kalba)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Meniu"
+  }
+}

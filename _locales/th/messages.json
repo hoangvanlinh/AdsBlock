@@ -1,0 +1,1186 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers",
+    "description": "Extension name shown in the browser toolbar and store listing"
+  },
+  "extDescription": {
+    "message": "บล็อกโฆษณา ตัวติดตาม และโดเมนอันตรายที่รู้จัก ด้วยการควบคุมไซต์ที่เรียบง่ายและเครื่องมือช่วยโฟกัส",
+    "description": "Extension description shown in the store listing"
+  },
+  "blocked_pageTitle": {
+    "message": "เว็บไซต์ถูกบล็อก — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "เว็บไซต์ถูกบล็อกเพื่อความปลอดภัยของคุณ"
+  },
+  "blocked_title_adPopup": {
+    "message": "โฆษณาป๊อปอัป/แท็บใหม่ถูกบล็อก"
+  },
+  "blocked_host_unknown": {
+    "message": "เว็บไซต์ที่ไม่รู้จัก"
+  },
+  "blocked_hint_default": {
+    "message": "เว็บไซต์นี้อยู่ในรายการบล็อกมัลแวร์/ฟิชชิง อาจพยายามขโมยข้อมูลของคุณ ขุดคริปโทเคอร์เรนซี หรือติดตั้งซอฟต์แวร์ที่ไม่ต้องการ"
+  },
+  "blocked_hint_adPopup": {
+    "message": "การคลิกบนหน้าที่คุณมาจากพยายามเปิดเครือข่ายโฆษณา/ป๊อปอัปนี้ในแท็บใหม่ คุณสามารถปิดแท็บนี้ได้อย่างปลอดภัย"
+  },
+  "blocked_dontWarn_label": {
+    "message": "อย่าเตือนฉันเกี่ยวกับเว็บไซต์นี้อีก"
+  },
+  "blocked_btn_goBack": {
+    "message": "ย้อนกลับ"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "ปิดหน้าต่างนี้"
+  },
+  "blocked_btn_proceed": {
+    "message": "ดำเนินการต่อไปอยู่ดี"
+  },
+  "blocked_btn_proceeding": {
+    "message": "กำลังดำเนินการต่อ…"
+  },
+  "common_remove": {
+    "message": "ลบออก"
+  },
+  "common_cancel": {
+    "message": "ยกเลิก"
+  },
+  "menu_pickElement": {
+    "message": "เลือกองค์ประกอบที่จะซ่อน…"
+  },
+  "menu_scanGlobals": {
+    "message": "สแกนหน้าเว็บเพื่อหาสคริปต์/ตัวแปร…"
+  },
+  "menu_editRules": {
+    "message": "แก้ไขกฎสำหรับเว็บไซต์นี้…"
+  },
+  "picker_badge_active": {
+    "message": "กำลังเลือกองค์ประกอบที่จะซ่อน — กด Esc เพื่อยกเลิก"
+  },
+  "picker_btn_hide": {
+    "message": "ซ่อนองค์ประกอบนี้"
+  },
+  "picker_btn_broaden": {
+    "message": "ขยาย"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "popup_openDashboard_title": {
+    "message": "แดชบอร์ด"
+  },
+  "popup_review_title": {
+    "message": "ชอบ AdBlock ไหม?"
+  },
+  "popup_review_subtitle": {
+    "message": "การให้คะแนนอย่างรวดเร็วช่วยได้มาก"
+  },
+  "popup_review_rate": {
+    "message": "ให้คะแนนเรา"
+  },
+  "popup_review_dismiss": {
+    "message": "ไม่ ขอบคุณ"
+  },
+  "popup_stat_blocked": {
+    "message": "ถูกบล็อก"
+  },
+  "popup_stat_malware": {
+    "message": "มัลแวร์"
+  },
+  "popup_stat_speed": {
+    "message": "ความเร็ว"
+  },
+  "popup_stat_saved": {
+    "message": "ประหยัดได้"
+  },
+  "popup_allowlist_banner": {
+    "message": "เว็บไซต์นี้อยู่ในรายการที่อนุญาต"
+  },
+  "popup_action_focus": {
+    "message": "โหมดโฟกัส"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ หยุดชั่วคราวสำหรับเว็บไซต์นี้"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ ดำเนินการต่อสำหรับเว็บไซต์"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "คะแนนความเป็นส่วนตัว"
+  },
+  "popup_footer_settings": {
+    "message": "การตั้งค่า"
+  },
+  "popup_ruleChip_title": {
+    "message": "กฎการบล็อกเครือข่ายที่โหลดอยู่ในขณะนี้"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… กฎ"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "กฎเครือข่าย: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "โหลดกฎเครือข่ายแล้ว $1 กฎ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "สนับสนุนการพัฒนาผ่าน PayPal"
+  },
+  "popup_donate_label": {
+    "message": "บริจาค"
+  },
+  "popup_version_title": {
+    "message": "เวอร์ชัน AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "มีการอัปเดต — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "มีเวอร์ชันใหม่กว่า — คลิกเพื่อเปิดหน้าร้านค้า"
+  },
+  "popup_domain_unknown": {
+    "message": "เว็บไซต์ที่ไม่รู้จัก"
+  },
+  "popup_status_site": {
+    "message": "เว็บไซต์"
+  },
+  "popup_status_protection": {
+    "message": "การป้องกัน"
+  },
+  "popup_status_allowlisted": {
+    "message": "ได้รับอนุญาต"
+  },
+  "popup_status_on": {
+    "message": "เปิด"
+  },
+  "popup_status_paused": {
+    "message": "หยุดชั่วคราว"
+  },
+  "popup_status_off": {
+    "message": "ปิด"
+  },
+  "common_save": {
+    "message": "บันทึก"
+  },
+  "common_close": {
+    "message": "ปิด"
+  },
+  "ruleEditor_panel_title": {
+    "message": "แก้ไขกฎ — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "คลิกเพื่อแทรกลงในกล่องข้อความ"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "การอ้างอิงคีย์ ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "กรองคีย์…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "การจับคู่เชิงความสวยงาม / ผู้สมัคร"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "สคริปต์เล็ต (ขั้นสูง)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "กฎปัจจุบันสำหรับเว็บไซต์นี้ ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(ยังไม่มีกฎสำหรับเว็บไซต์นี้ — ทั้งแบบในตัวและแบบกำหนดเอง)"
+  },
+  "ruleEditor_hint": {
+    "message": "หนึ่ง \"key = value | value2\" ต่อบรรทัด คลิกที่คีย์ด้านบนเพื่อแทรก ไม่มีส่วนหัว [section] กฎที่พิมพ์ที่นี่จะถูกเพิ่มเข้าไปในกฎที่มีอยู่สำหรับคีย์นี้ (ดูด้านบน) — ไม่สามารถลบหรือแทนที่กฎในตัวได้ และสำหรับคีย์แฟล็กค่าเดียว ค่าในตัวมักจะชนะ"
+  },
+  "ruleEditor_status_saved": {
+    "message": "บันทึกแล้ว — โหลดหน้านี้ใหม่เพื่อดูกฎที่ใช้งาน"
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "บันทึกไม่สำเร็จ — ตรวจสอบว่ามีบรรทัด \"[section]\" ที่แยกเดี่ยวหรือการวางข้อความขนาดใหญ่หรือไม่"
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "ตัวเลือก CSS ที่ถูกซ่อนโดยไม่มีเงื่อนไขผ่านสไตล์ชีตที่ถูกแทรกเข้าไป — ไม่มีการตรวจสอบแบบฮิวริสติก แค่ซ่อนเมื่อพบเห็น"
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "ตัวเลือก CSS สำหรับองค์ประกอบที่เป็นผู้สมัคร — จะถูกซ่อนก็ต่อเมื่อตรงกับ labels/link_patterns ด้านล่างด้วย"
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "เหมือนกับ selectors จำกัดเฉพาะคอนเทนเนอร์สไตล์ฟีด/ไทม์ไลน์"
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "เหมือนกับ selectors จำกัดเฉพาะคอนเทนเนอร์สไตล์ตลาด/ช้อปปิ้ง"
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "เหมือนกับ selectors จำกัดเฉพาะพื้นที่แถบด้านข้าง/ราวด้านขวา"
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "เหมือนกับ selectors จำกัดเฉพาะคอนเทนเนอร์โพสต์/บทความแต่ละรายการ"
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "ตัวเลือก CSS สำหรับองค์ประกอบ \"โฮสต์\" ตรวจสอบด้วยวิธีเดียวกับ selectors ด้านบน"
+  },
+  "ruleEditor_ref_labels": {
+    "message": "ป้ายกำกับข้อความ (เช่น sponsored, promoted) ที่จับคู่กับแอตทริบิวต์/ข้อความบริบทเพื่อยืนยันว่าผู้สมัครเป็นโฆษณาจริง"
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "รูปแบบสตริงย่อยที่จับคู่กับลิงก์/แอตทริบิวต์ของผู้สมัครเองเพื่อยืนยันว่าเป็นโฆษณา"
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "ชื่อแอตทริบิวต์ HTML ที่ถูกสแกนหาการจับคู่ label/link_pattern (ค่าเริ่มต้น: aria-label, data-promoted, post-type, …)"
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "องค์ประกอบลูกที่ดึงข้อความมาเพื่อจับคู่ป้ายกำกับ (ค่าเริ่มต้น: header, [role=heading], span, a)"
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "ตัวเลือก CSS สำหรับการเลื่อนขึ้นด้วย .closest() ก่อนซ่อนผู้สมัครที่ตรงกัน (ซ่อนคอนเทนเนอร์ ไม่ใช่แค่ป้ายกำกับ)"
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "ชื่อคลาสที่ถูกลบออกอย่างต่อเนื่องจาก <html>/<body> — เอาชนะเลเยอร์การเข้าครอบครองที่ใช้ CSS เท่านั้นซึ่งขับเคลื่อนด้วยคลาสรูท"
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "ชื่อคุณสมบัติ CSS ที่ถูกล้างอย่างต่อเนื่องจากสไตล์แบบอินไลน์ของ <html>/<body> — เอาชนะการล็อกการเลื่อนที่ตั้งค่าโดย JS เป็นต้น"
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "แฟล็ก 1/0 — ปิดแท็บป๊อปอัป/ป๊อปอันเดอร์ที่เปิดจากการคลิกในเว็บไซต์นี้โดยอัตโนมัติ"
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — ล็อกคุณสมบัติของหน้าต่างอย่างถาวรไปยังค่าคงที่ (undefined, true, false, noopFunc, …)"
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — แสดงข้อผิดพลาดเมื่อสคริปต์ใดๆ อ่านคุณสมบัติของหน้าต่างนี้"
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — แสดงข้อผิดพลาดเมื่อสคริปต์ใดๆ เขียนลงในคุณสมบัติของหน้าต่างนี้"
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — แสดงข้อผิดพลาดเฉพาะเมื่อสแตกเทรซของสคริปต์ที่เรียกใช้เองตรงกับ needle"
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — แสดงข้อผิดพลาดเมื่อสคริปต์ที่มีแหล่งที่มาตรงกับ needle อ่าน target"
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — บล็อกหรือเปลี่ยนเส้นทางไปยังตัวล่อสำหรับการเรียก window.open() ที่ตรงกับ pattern"
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — บล็อกการเรียก fetch() ที่ตรงตามเกณฑ์"
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — บล็อกการเรียก XMLHttpRequest ที่ตรงตามเกณฑ์"
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — บล็อก fetch โดยเลือกส่งเนื้อหาการตอบกลับปลอมแบบคงที่กลับไป"
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — ป้องกันไม่ให้ iframe about:blank ที่มีต้นทางเดียวกันเข้าถึงหน้าต่างจริงอีกครั้งเพื่อหลีกเลี่ยงการล็อก"
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — ลบฟิลด์ออกจากผลลัพธ์ JSON.parse() ใดๆ"
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — ลบฟิลด์ออกจากการตอบกลับ JSON ของ fetch()"
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — ลบฟิลด์ออกจากการตอบกลับ JSON ของ XHR"
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — ตัดแต่งอ็อบเจ็กต์ที่สคริปต์กำหนดค่าโดยตรง (ไม่ใช่ผ่าน JSON.parse)"
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — การลบฟิลด์ตาม JSONPath ในการตอบกลับ JSON ของ fetch()"
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — การลบฟิลด์ตาม JSONPath ในการตอบกลับ JSON-lines ของ XHR"
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "ลบฟิลด์ออกจากการตอบกลับที่เข้ารหัสด้วย protobuf/jspb"
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — การแก้ไข JSONPath (ทั้งการลบและการกำหนดค่า) บนเนื้อหาคำขอที่ส่งออก"
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — การแก้ไข JSONPath (ทั้งการลบและการกำหนดค่า) บนเนื้อหาการตอบกลับ"
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — การค้นหา/แทนที่ด้วย regex ในเนื้อหาการตอบกลับของ fetch()"
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — การค้นหา/แทนที่ด้วย regex ในเนื้อหาการตอบกลับของ XHR"
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — แทนที่อาร์กิวเมนต์หนึ่งที่ส่งไปยังฟังก์ชัน"
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — การแทนที่ข้อความแบบไม่มีเงื่อนไขในข้อมูลขาออก (ไม่มีขอบเขต URL)"
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — เขียนข้อความของแท็ก <script> ใหม่ก่อนที่จะทำงาน sedCount จำกัดจำนวนโหนดที่กฎนี้จะเขียนใหม่ (ค่าเริ่มต้น: ไม่จำกัด)"
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — ตัดแต่งฟิลด์จากอ็อบเจ็กต์ที่ส่งเข้าไปในการเรียกเมธอดดั้งเดิม"
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — ยกเลิกหรือเพิกเฉยแบบเงียบต่อการเรียกเมธอดดั้งเดิมที่ตรงกับลายเซ็น"
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — ละทิ้งหรือแสดงข้อผิดพลาดในการกำหนดค่าตัวตั้งค่าแบบเข้าถึงได้ (เช่น Element.prototype.innerHTML) ที่มีค่าตรงกับ needle"
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — ลบส่วนโฆษณาออกจากการตอบกลับเพลย์ลิสต์ HLS .m3u8"
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — แสร้งทำว่าการโหลด script/img/iframe/link สำเร็จแทนที่คำขอเครือข่ายจริง"
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — ลบแอตทริบิวต์ HTML ออกจากองค์ประกอบที่ตรงกัน"
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — ล้างเนื้อหาข้อความของโหนด DOM"
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — เขียนเนื้อหาข้อความของโหนด DOM ใหม่"
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — หยุดการเปลี่ยนเส้นทางอัตโนมัติผ่าน <meta http-equiv=\"refresh\">"
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — ตั้งค่าคุกกี้"
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — ลบคุกกี้ที่ตรงกับรูปแบบชื่อ"
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — ตั้งค่ารายการ localStorage (จำกัดเฉพาะค่าตัวอักษรที่ปลอดภัย หรือค่าพิเศษ \"remove\" เพื่อลบคีย์ที่ตรงกัน)"
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — เขียน href ของลิงก์ใหม่จากข้อความของตัวเองหรือแอตทริบิวต์อื่น"
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — บล็อกการเรียก setTimeout() ที่ตรงตามเกณฑ์"
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — บล็อกการเรียก setInterval() ที่ตรงตามเกณฑ์"
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — บล็อกการเรียก requestAnimationFrame() ที่ตรงตามเกณฑ์"
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — บล็อกการเรียก addEventListener() ที่ตรงตามเกณฑ์"
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — เร่ง/ชะลอการเรียก setTimeout() ที่ตรงกันแทนที่จะบล็อก"
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — เร่ง/ชะลอการเรียก setInterval() ที่ตรงกันแทนที่จะบล็อก"
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — บล็อกการเรียก eval() ที่แหล่งที่มาตรงกับ pattern"
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "ปิดใช้งาน RTCPeerConnection — บล็อกกลเม็ดป๊อปอัป/การติดตามที่ใช้ WebRTC"
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "ทำลายสคริปต์ตรวจจับการต่อต้านการบล็อกโฆษณาสไตล์ BlockAdBlock/FuckAdBlock"
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "ลบ target=\"_blank\" ออกจากลิงก์ที่คลิก — บล็อกการเปลี่ยนเส้นทางแท็บใหม่แบบบังคับ"
+  },
+  "scanner_value_emptyString": {
+    "message": "สตริงว่าง"
+  },
+  "scanner_value_emptyArray": {
+    "message": "อาร์เรย์ว่าง"
+  },
+  "scanner_value_emptyObject": {
+    "message": "อ็อบเจ็กต์ว่าง"
+  },
+  "scanner_value_noopFunc": {
+    "message": "ฟังก์ชันว่าง (ไม่มีผล)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "ฟังก์ชันที่คืนค่า true เสมอ"
+  },
+  "scanner_value_falseFunc": {
+    "message": "ฟังก์ชันที่คืนค่า false เสมอ"
+  },
+  "scanner_btn_block": {
+    "message": "บล็อก"
+  },
+  "scanner_btn_edit": {
+    "message": "แก้ไข"
+  },
+  "scanner_btn_delete": {
+    "message": "ลบ"
+  },
+  "scanner_status_blockApplied": {
+    "message": "ใช้การบล็อกแล้ว — บันทึกสำหรับเว็บไซต์นี้แล้ว"
+  },
+  "scanner_status_editApplied": {
+    "message": "ใช้การแก้ไขแล้ว — บันทึกสำหรับเว็บไซต์นี้แล้ว"
+  },
+  "scanner_status_deleteApplied": {
+    "message": "ใช้การลบแล้ว — บันทึกสำหรับเว็บไซต์นี้แล้ว"
+  },
+  "scanner_block_warning": {
+    "message": "การบล็อกจะป้องกันการอ่านคุณสมบัตินี้ทั้งหมดในอนาคต — อาจทำให้การทำงานของหน้าเว็บที่พึ่งพาคุณสมบัตินี้เสียหาย ไม่สามารถยกเลิกได้ด้วยการรีเฟรช ลบกฎออกจากหน้ากฎทั่วไปของแดชบอร์ดเพื่อย้อนกลับ"
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "บล็อกอยู่ดี"
+  },
+  "scanner_edit_customOption": {
+    "message": "กำหนดเอง…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "โทเค็นเดียว ไม่มีช่องว่าง (เช่น 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "พิมพ์ค่าโดยไม่มีช่องว่าง"
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "ไม่อนุญาตให้มีช่องว่าง — จะถูกปฏิเสธ"
+  },
+  "scanner_edit_hintPreview": {
+    "message": "จะถูกบันทึกเป็น: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "ตัวแปรทั่วไปของหน้าเว็บ ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "กรองตามชื่อ…"
+  },
+  "scanner_empty": {
+    "message": "ไม่พบตัวแปรทั่วไปที่หน้าเว็บเพิ่มในหน้านี้"
+  },
+  "scanner_footer_limitation": {
+    "message": "เห็นเฉพาะตัวแปรทั่วไปสไตล์ var/function และการกำหนดค่า window.x = อย่างชัดเจนเท่านั้น — การประกาศ let/const/class จะมองไม่เห็นสำหรับสแกนเนอร์หน้าเว็บใดๆ (ข้อจำกัดของภาษา JS)"
+  },
+  "scanner_loading": {
+    "message": "กำลังสแกนตัวแปรทั่วไปของหน้าเว็บ — กด Esc เพื่อยกเลิก"
+  },
+  "common_add": {
+    "message": "เพิ่ม"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — แดชบอร์ด"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "dashboard_nav_overview": {
+    "message": "ภาพรวม"
+  },
+  "dashboard_nav_rules": {
+    "message": "กฎที่กำหนดเอง"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "แหล่งที่มาของกฎ"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "รายการที่อนุญาต"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "กฎองค์ประกอบ"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "กฎทั่วไป"
+  },
+  "dashboard_nav_focus": {
+    "message": "โฟกัส"
+  },
+  "dashboard_nav_settings": {
+    "message": "การตั้งค่า"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "การป้องกันเปิดอยู่"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "การป้องกัน $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "สนับสนุนการพัฒนาผ่าน PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "เลี้ยงกาแฟฉันหน่อย ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "เปิด"
+  },
+  "dashboard_toggle_off": {
+    "message": "ปิด"
+  },
+  "dashboard_overview_title": {
+    "message": "ภาพรวม"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "แดชบอร์ดการป้องกันของคุณ"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "บล็อกทั้งหมด"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% วันนี้"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "ตัวติดตามที่หยุด"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% วันนี้"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "มัลแวร์ที่ถูกบล็อก"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "ภัยคุกคามที่หยุด"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "ไม่พบภัยคุกคาม"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "แบนด์วิดท์ที่ประหยัดได้"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "เฉลี่ยต่อหน้า"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "เวลาที่ประหยัดได้"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "ในเซสชันนี้"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 วันนี้",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— วันนี้"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% เทียบกับเมื่อวาน",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 ภัยคุกคามวันนี้"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 เพิ่มเติม",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "คำขอที่ถูกบล็อก"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "คำขอของตัวติดตาม"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "การตรวจพบมัลแวร์"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7วัน"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14วัน"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30วัน"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "ถูกบล็อก"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "ตัวติดตาม"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "มัลแวร์"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "โดเมนที่ถูกบล็อกมากที่สุด"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "โดเมนที่มีตัวติดตามมากที่สุด"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "โดเมนที่มีมัลแวร์มากที่สุด"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "ดูทั้งหมด"
+  },
+  "dashboard_domains_showLess": {
+    "message": "แสดงน้อยลง"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "ดูทั้งหมด ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "ยังไม่มีข้อมูล"
+  },
+  "dashboard_privacy_title": {
+    "message": "คะแนนความเป็นส่วนตัว"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "โฆษณาที่ถูกบล็อก"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "ตัวติดตามที่ถูกบล็อก"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "การป้องกันมัลแวร์"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "การซ่อนตัวตนของผู้อ้างอิง"
+  },
+  "dashboard_rules_title": {
+    "message": "กฎที่กำหนดเอง"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "แก้ไขในรูปแบบ site-rules.txt — ไวยากรณ์เดียวกับไฟล์กฎหลัก ค่าต่างๆ จะถูกรวมกับกฎในตัว"
+  },
+  "dashboard_rules_clear": {
+    "message": "ล้าง"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "ล้างกฎที่กำหนดเองทั้งหมดหรือไม่?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# กฎที่กำหนดเอง — รูปแบบเดียวกับ site-rules.txt\n# ค่าต่างๆ จะถูกรวมเข้ากับกฎในตัว (ไม่ใช่แทนที่)\n#\n# ── แมปโดเมนใหม่ไปยังส่วนกฎ ──────────────────────────────────\n# [host_patterns]\n# example.com = example          ← โดเมนย่อยจะถูกจับคู่โดยอัตโนมัติ\n#\n# ── เพิ่มโดเมนเพิ่มเติมเพื่อบล็อกทั่วโลก ─────────────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── กฎเชิงความสวยงามต่อเว็บไซต์ ──────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "รายการที่อนุญาต"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "เว็บไซต์ที่ข้ามการบล็อกทั้งหมด"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ เพิ่มเว็บไซต์"
+  },
+  "dashboard_elementRules_title": {
+    "message": "กฎองค์ประกอบ"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "องค์ประกอบที่ซ่อนด้วยตนเองผ่าน \"เลือกองค์ประกอบที่จะซ่อน\" — จัดกลุ่มตามเว็บไซต์"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "ยังไม่มีกฎ"
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "กฎทั่วไป"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "ตัวแปรหน้าต่างทั่วไปที่ถูกบล็อก/แก้ไข/ลบด้วยตนเองผ่าน \"สแกนหน้าเว็บเพื่อหาสคริปต์/ตัวแปร\" — จัดกลุ่มตามเว็บไซต์"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "ยังไม่มีกฎ"
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "บล็อก"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "แก้ไข"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "ลบ"
+  },
+  "dashboard_focus_title": {
+    "message": "โหมดโฟกัส"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "บล็อกเว็บไซต์ที่รบกวนสมาธิตามกำหนดการ"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "เซสชันโฟกัส"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "เซสชันหยุดชั่วคราว"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "เซสชันกำลังทำงาน…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "เซสชันเสร็จสมบูรณ์!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25น"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45น"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60น"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90น"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "กำหนดเอง"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "นาที"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "รายการสิ่งที่รบกวนสมาธิ"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ เพิ่ม"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "ป้อนโดเมนที่จะบล็อกระหว่างโฟกัส (เช่น twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "การตั้งค่า"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "ปรับแต่งพฤติกรรมของ AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "การบล็อก"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "บล็อกโฆษณา"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "การบล็อกเครือข่ายโฆษณามาตรฐาน"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "บล็อกตัวติดตาม"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "บล็อกสคริปต์การวิเคราะห์และการติดตาม"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "การกรองเชิงความสวยงาม"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "ซ่อนพื้นที่โฆษณาที่เหลืออยู่ผ่าน CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "บล็อกมัลแวร์"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "บล็อกโดเมนมัลแวร์ที่รู้จัก"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "ความเป็นส่วนตัว"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "การซ่อนตัวตนของผู้อ้างอิง"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "ลบส่วนหัวผู้อ้างอิงในคำขอข้ามต้นทาง"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "การควบคุมความเป็นส่วนตัวส่วนกลาง (GPC)"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "ส่งสัญญาณเลิกใช้งาน GPC (ส่วนหัว Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "ส่วนหัวห้ามติดตาม (DNT)"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "ส่งส่วนหัวคำขอ DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "ข้อมูล"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "เก็บสถิติ"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "สถิติการใช้งานในเครื่องเท่านั้น (ไม่เคยอัปโหลด)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "รีเซ็ตข้อมูลทั้งหมด"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "ล้างกฎ สถิติ และการตั้งค่า"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "รีเซ็ต"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "รีเซ็ตข้อมูล AdBlock ทั้งหมดหรือไม่? ไม่สามารถยกเลิกการดำเนินการนี้ได้"
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "ล้างข้อมูลทั้งหมดแล้ว กำลังโหลดใหม่…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "เกี่ยวกับ"
+  },
+  "dashboard_settings_version_name": {
+    "message": "เวอร์ชัน"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "ตรวจสอบการอัปเดต"
+  },
+  "dashboard_settings_checking": {
+    "message": "กำลังตรวจสอบ…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "มีเวอร์ชันใหม่กว่า"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "ดู"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "ตรวจสอบล่าสุด $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (ล้มเหลว — คุณออฟไลน์อยู่หรือไม่?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "ยังไม่เคยตรวจสอบ"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 พร้อมใช้งาน (คุณมี v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "แหล่งที่มาของกฎ"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "AdBlock รับกฎเว็บไซต์มาจากที่ใด"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "URL กฎระยะไกล"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "รวมค่าเริ่มต้นในตัว (สลับได้ ลบไม่ได้) บวกกับ URL ใดๆ ที่คุณเพิ่ม — ทั้งหมดถูกรวมกัน แต่ละรายการเปิด/ปิดได้อย่างอิสระ"
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "เพิ่ม URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "ไฟล์กฎในเครื่อง"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "อัปโหลดไฟล์กฎ .txt — จะถูกรวมกับแหล่งที่มา URL รองรับหลายไฟล์"
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "เพิ่มไฟล์…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "กำลังส่งออก…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "การส่งออกล้มเหลว: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "ข้อผิดพลาดที่ไม่รู้จัก"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "แปลงแล้ว $1 ข้าม $2 จากทั้งหมด $3 กฎ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "กฎยกเว้น $1 รายการ (ไม่มีรูปแบบการยกเลิกที่นี่)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "ตัวเลือกเชิงกระบวนการ $1 รายการ (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "ตัวปรับแต่ง AdGuard ที่ขยายเพิ่ม $1 รายการ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "การเรียกสคริปต์เล็ตที่ไม่ได้แมป $1 รายการ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "ตัวปรับแต่งกฎเครือข่ายที่ไม่รองรับ $1 รายการ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "มีอยู่แล้ว $1 รายการใน site-rules.txt ของส่วนขยายนี้เอง",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "ไวยากรณ์ที่ไม่รู้จัก $1 รายการ",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "โหลดแล้ว $1/$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "โหลดแล้ว $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "ส่งออก"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "ดาวน์โหลดกฎของแหล่งที่มานี้ที่แปลงเป็นไวยากรณ์ของส่วนขยายนี้เอง"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "ค่าเริ่มต้น"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "กลุ่ม EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "ตามภาษา"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "กำหนดเอง (URL ของคุณเอง)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "ใส่ข้อมูลปลอมสำหรับ $1 แล้ว:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "ทั่วไป"
+  },
+  "dashboard_settings_language_name": {
+    "message": "ภาษา"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "รีสตาร์ทหน้านี้หลังจากเปลี่ยนแปลง"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "อัตโนมัติ (ภาษาของเบราว์เซอร์)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "เมนู"
+  }
+}

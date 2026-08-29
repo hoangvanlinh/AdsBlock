@@ -1,0 +1,1184 @@
+{
+  "extName": {
+    "message": "AdBlock — Ads, Trackers"
+  },
+  "extDescription": {
+    "message": "Blochează reclame, elemente de urmărire și domenii cunoscute ca fiind malițioase, cu controale simple pentru site-uri și instrumente de concentrare."
+  },
+  "blocked_pageTitle": {
+    "message": "Site blocat — AdBlock"
+  },
+  "blocked_title_default": {
+    "message": "Site blocat pentru siguranța ta"
+  },
+  "blocked_title_adPopup": {
+    "message": "Reclamă pop-up/filă nouă blocată"
+  },
+  "blocked_host_unknown": {
+    "message": "site necunoscut"
+  },
+  "blocked_hint_default": {
+    "message": "Acest site se află pe o listă de blocare pentru malware/phishing. Poate încerca să îți fure informațiile, să mineze criptomonede sau să instaleze software nedorit."
+  },
+  "blocked_hint_adPopup": {
+    "message": "Un clic pe pagina de la care ai venit a încercat să deschidă această rețea de reclame/pop-up-uri într-o filă nouă. Poți închide în siguranță această filă."
+  },
+  "blocked_dontWarn_label": {
+    "message": "Nu mă mai avertiza despre acest site"
+  },
+  "blocked_btn_goBack": {
+    "message": "Înapoi"
+  },
+  "blocked_btn_closeWindow": {
+    "message": "Închide această fereastră"
+  },
+  "blocked_btn_proceed": {
+    "message": "Continuă oricum"
+  },
+  "blocked_btn_proceeding": {
+    "message": "Se continuă…"
+  },
+  "common_remove": {
+    "message": "Elimină"
+  },
+  "common_cancel": {
+    "message": "Anulează"
+  },
+  "menu_pickElement": {
+    "message": "Alege un element de ascuns…"
+  },
+  "menu_scanGlobals": {
+    "message": "Scanează pagina pentru scripturi/variabile…"
+  },
+  "menu_editRules": {
+    "message": "Editează regulile pentru acest site…"
+  },
+  "picker_badge_active": {
+    "message": "Se alege elementul de ascuns — apasă Esc pentru a anula"
+  },
+  "picker_btn_hide": {
+    "message": "Ascunde acest element"
+  },
+  "picker_btn_broaden": {
+    "message": "Extinde"
+  },
+  "popup_pageTitle": {
+    "message": "AdBlock"
+  },
+  "popup_brand_name": {
+    "message": "AdBlock — Reclame, Trackere"
+  },
+  "popup_openDashboard_title": {
+    "message": "Panou de control"
+  },
+  "popup_review_title": {
+    "message": "Îți place AdBlock?"
+  },
+  "popup_review_subtitle": {
+    "message": "O evaluare rapidă ne ajută foarte mult."
+  },
+  "popup_review_rate": {
+    "message": "Evaluează-ne"
+  },
+  "popup_review_dismiss": {
+    "message": "Nu, mulțumesc"
+  },
+  "popup_stat_blocked": {
+    "message": "Blocate"
+  },
+  "popup_stat_malware": {
+    "message": "Malware"
+  },
+  "popup_stat_speed": {
+    "message": "Viteză"
+  },
+  "popup_stat_saved": {
+    "message": "Economisit"
+  },
+  "popup_allowlist_banner": {
+    "message": "Acest site este pe lista permisă"
+  },
+  "popup_action_focus": {
+    "message": "Mod concentrare"
+  },
+  "popup_action_pause_emoji": {
+    "message": "⏸ Pauză pe acest site"
+  },
+  "popup_action_resume_emoji": {
+    "message": "▶ Reia pe acest site"
+  },
+  "popup_privacy_scoreLabel": {
+    "message": "Scor de confidențialitate"
+  },
+  "popup_footer_settings": {
+    "message": "Setări"
+  },
+  "popup_ruleChip_title": {
+    "message": "Regulile de blocare a rețelei încărcate momentan"
+  },
+  "popup_ruleChip_loading": {
+    "message": "… reguli"
+  },
+  "popup_ruleChip_unknown": {
+    "message": "reguli de rețea: ?"
+  },
+  "popup_ruleChip_loaded": {
+    "message": "$1 reguli de rețea încărcate",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "popup_donate_title": {
+    "message": "Susține dezvoltarea prin PayPal"
+  },
+  "popup_donate_label": {
+    "message": "Donează"
+  },
+  "popup_version_title": {
+    "message": "Versiune AdBlock"
+  },
+  "popup_version_updateAvailable": {
+    "message": "Actualizare disponibilă — v$1 → v$2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.43"
+      }
+    }
+  },
+  "popup_version_updateTitle": {
+    "message": "Este disponibilă o versiune mai nouă — apasă pentru a deschide pagina din magazin"
+  },
+  "popup_domain_unknown": {
+    "message": "Site necunoscut"
+  },
+  "popup_status_site": {
+    "message": "Site"
+  },
+  "popup_status_protection": {
+    "message": "Protecție"
+  },
+  "popup_status_allowlisted": {
+    "message": "Pe lista permisă"
+  },
+  "popup_status_on": {
+    "message": "ACTIVĂ"
+  },
+  "popup_status_paused": {
+    "message": "În pauză"
+  },
+  "popup_status_off": {
+    "message": "DEZACTIVATĂ"
+  },
+  "common_save": {
+    "message": "Salvează"
+  },
+  "common_close": {
+    "message": "Închide"
+  },
+  "ruleEditor_panel_title": {
+    "message": "Editează regulile — $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      }
+    }
+  },
+  "ruleEditor_ref_clickToInsert": {
+    "message": "Apasă pentru a insera în caseta de text"
+  },
+  "ruleEditor_ref_toggle": {
+    "message": "Referință chei ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "62"
+      }
+    }
+  },
+  "ruleEditor_ref_filterPlaceholder": {
+    "message": "Filtrează chei…"
+  },
+  "ruleEditor_ref_cosmeticLabel": {
+    "message": "COSMETIC / POTRIVIRE CANDIDAȚI"
+  },
+  "ruleEditor_ref_scriptletLabel": {
+    "message": "SCRIPTLET-URI (AVANSAT)"
+  },
+  "ruleEditor_existing_toggle": {
+    "message": "Regulile actuale pentru acest site ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "ruleEditor_existing_empty": {
+    "message": "(încă nu există reguli pentru acest site — nici predefinite, nici personalizate)"
+  },
+  "ruleEditor_hint": {
+    "message": "Câte o linie \"cheie = valoare | valoare2\". Apasă pe o cheie de mai sus pentru a o insera. Fără antete de tip [secțiune]. Regulile introduse aici sunt ADĂUGATE la regulile deja existente pentru această cheie (vezi mai sus) — acest lucru nu poate elimina sau suprascrie o regulă predefinită, iar pentru cheile cu o singură valoare (flag) valoarea predefinită de obicei tot câștigă."
+  },
+  "ruleEditor_status_saved": {
+    "message": "Salvat — reîncarcă această pagină pentru a vedea regulile aplicate."
+  },
+  "ruleEditor_status_saveFailed": {
+    "message": "Salvarea a eșuat — verifică dacă există o linie rătăcită \"[secțiune]\" sau un text lipit foarte mare."
+  },
+  "ruleEditor_ref_direct_hide_selectors": {
+    "message": "Selectori CSS ascunși necondiționat printr-o foaie de stil injectată — fără verificare euristică, doar ascunși la prima vedere."
+  },
+  "ruleEditor_ref_selectors": {
+    "message": "Selectori CSS pentru elemente CANDIDATE — ascunse doar dacă se potrivesc și cu labels/link_patterns de mai jos."
+  },
+  "ruleEditor_ref_feed_selectors": {
+    "message": "La fel ca selectors, limitat la containere de tip feed/cronologie."
+  },
+  "ruleEditor_ref_market_selectors": {
+    "message": "La fel ca selectors, limitat la containere de tip piață/magazin online."
+  },
+  "ruleEditor_ref_right_rail_selectors": {
+    "message": "La fel ca selectors, limitat la o zonă de bară laterală/right-rail."
+  },
+  "ruleEditor_ref_post_selectors": {
+    "message": "La fel ca selectors, limitat la containere individuale de postare/articol."
+  },
+  "ruleEditor_ref_ad_host_selectors": {
+    "message": "Selectori CSS pentru elemente \"gazdă\", verificați la fel ca selectors de mai sus."
+  },
+  "ruleEditor_ref_labels": {
+    "message": "Etichete text (de ex. sponsored, promoted) potrivite cu atribute/text din context pentru a confirma că un candidat este într-adevăr o reclamă."
+  },
+  "ruleEditor_ref_link_patterns": {
+    "message": "Modele de subșiruri potrivite cu propriile linkuri/atribute ale unui candidat pentru a confirma că este o reclamă."
+  },
+  "ruleEditor_ref_attr_keys": {
+    "message": "Nume de atribute HTML scanate pentru potriviri cu label/link_pattern (implicit: aria-label, data-promoted, post-type, …)."
+  },
+  "ruleEditor_ref_context_selectors": {
+    "message": "Elemente-copil din care se extrage text pentru potrivirea etichetelor (implicit: header, [role=heading], span, a)."
+  },
+  "ruleEditor_ref_hide_closest": {
+    "message": "Selector(i) CSS de urcat până la ei prin .closest() înainte de a ascunde un candidat potrivit (se ascunde containerul, nu doar eticheta)."
+  },
+  "ruleEditor_ref_strip_page_classes": {
+    "message": "Nume de clase eliminate continuu din <html>/<body> — anulează suprapunerile de tip preluare a paginii, controlate doar prin CSS printr-o clasă rădăcină."
+  },
+  "ruleEditor_ref_strip_inline_styles": {
+    "message": "Nume de proprietăți CSS curățate continuu din stilul inline al <html>/<body> — anulează blocarea derulării (scroll-lock) setată prin JS etc."
+  },
+  "ruleEditor_ref_close_popunder_tabs": {
+    "message": "Flag 1/0 — închide automat filele pop-up/popunder deschise de clicuri pe acest site."
+  },
+  "ruleEditor_ref_set_constant": {
+    "message": "\"chain value\" — blochează permanent o proprietate window la o valoare fixă (undefined, true, false, noopFunc, …)."
+  },
+  "ruleEditor_ref_abort_on_property_read": {
+    "message": "chain — aruncă o eroare când orice script citește această proprietate window."
+  },
+  "ruleEditor_ref_abort_on_property_write": {
+    "message": "chain — aruncă o eroare când orice script scrie această proprietate window."
+  },
+  "ruleEditor_ref_abort_on_stack_trace": {
+    "message": "\"chain, needle\" — aruncă o eroare doar când stiva de apel a scriptului apelant se potrivește cu needle."
+  },
+  "ruleEditor_ref_abort_current_script": {
+    "message": "\"target, needle, ctx\" — aruncă o eroare când un script a cărui sursă se potrivește cu needle citește target."
+  },
+  "ruleEditor_ref_no_window_open_if": {
+    "message": "\"pattern, delayMs, decoy\" — blochează sau redirecționează fals apelurile window.open() care se potrivesc cu pattern."
+  },
+  "ruleEditor_ref_prevent_fetch": {
+    "message": "propsToMatch — blochează apelurile fetch() care se potrivesc criteriilor."
+  },
+  "ruleEditor_ref_prevent_xhr": {
+    "message": "propsToMatch — blochează apelurile XMLHttpRequest care se potrivesc criteriilor."
+  },
+  "ruleEditor_ref_trusted_prevent_fetch": {
+    "message": "\"propsToMatch, directive\" — blochează fetch, opțional returnând un corp de răspuns fals fixat."
+  },
+  "ruleEditor_ref_prevent_dom_bypass": {
+    "message": "\"methodPath[, targetProp]\" — oprește un iframe about:blank de aceeași origine să ajungă înapoi în fereastra reală pentru a ocoli o blocare."
+  },
+  "ruleEditor_ref_json_prune": {
+    "message": "\"prunePaths, needlePaths\" — elimină câmpuri din orice rezultat JSON.parse()."
+  },
+  "ruleEditor_ref_json_prune_fetch": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — elimină câmpuri dintr-un răspuns JSON al unui fetch()."
+  },
+  "ruleEditor_ref_json_prune_xhr": {
+    "message": "\"prunePaths, needlePaths[, propsToMatch]\" — elimină câmpuri dintr-un răspuns JSON al unui XHR."
+  },
+  "ruleEditor_ref_json_prune_on_set": {
+    "message": "\"chain, prunePaths, needlePaths\" — elimină câmpuri dintr-un obiect atribuit direct de un script (nu prin JSON.parse)."
+  },
+  "ruleEditor_ref_json_edit": {
+    "message": "jsonq — ștergeri de câmpuri bazate pe JSONPath într-un răspuns JSON al unui fetch()."
+  },
+  "ruleEditor_ref_jsonl_edit_xhr": {
+    "message": "\"jsonq, urlPattern\" — ștergeri de câmpuri bazate pe JSONPath într-un răspuns JSON-lines al unui XHR."
+  },
+  "ruleEditor_ref_jspb_response_prune": {
+    "message": "Elimină câmpuri dintr-un răspuns codat protobuf/jspb."
+  },
+  "ruleEditor_ref_trusted_edit_request": {
+    "message": "\"jsonq, propsToMatch\" — modificări JSONPath (ștergeri ȘI atribuiri de valori) asupra corpului unei cereri trimise."
+  },
+  "ruleEditor_ref_trusted_edit_response": {
+    "message": "\"jsonq, propsToMatch\" — modificări JSONPath (ștergeri ȘI atribuiri de valori) asupra corpului unui răspuns."
+  },
+  "ruleEditor_ref_trusted_replace_fetch_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — căutare/înlocuire cu regex în corpul unui răspuns fetch()."
+  },
+  "ruleEditor_ref_trusted_replace_xhr_response": {
+    "message": "\"pattern, replacement, propsToMatch\" — căutare/înlocuire cu regex în corpul unui răspuns XHR."
+  },
+  "ruleEditor_ref_trusted_replace_argument": {
+    "message": "\"propChain, argIndex, value\" — înlocuiește un argument transmis unei funcții."
+  },
+  "ruleEditor_ref_trusted_replace_outbound_text": {
+    "message": "\"propChain, pattern, replacement\" — înlocuire de text necondiționată pe date trimise (fără limitare la o anumită adresă URL)."
+  },
+  "ruleEditor_ref_trusted_replace_script_text": {
+    "message": "\"nodeName, pattern[, sedCount=N][, includes=X][, excludes=X], replacement\" — rescrie textul unei etichete <script> înainte ca aceasta să ruleze. sedCount limitează câte noduri va rescrie vreodată această regulă (implicit: nelimitat)."
+  },
+  "ruleEditor_ref_trusted_prune_inbound_object": {
+    "message": "\"propChain, prunePaths, needlePaths\" — elimină câmpuri dintr-un obiect transmis CĂTRE un apel de metodă nativă."
+  },
+  "ruleEditor_ref_trusted_suppress_native_method": {
+    "message": "\"methodPath, signature[, behavior, stack]\" — anulează sau ignoră silențios un apel de metodă nativă care se potrivește cu o semnătură."
+  },
+  "ruleEditor_ref_trusted_suppress_setter": {
+    "message": "\"propChain, needle[, behavior]\" — respinge sau aruncă o eroare la o atribuire printr-un setter de accesor (de ex. Element.prototype.innerHTML) a cărui valoare se potrivește cu needle."
+  },
+  "ruleEditor_ref_m3u_prune": {
+    "message": "\"markers, propsToMatch\" — elimină segmentele de reclame dintr-un răspuns de tip playlist HLS .m3u8."
+  },
+  "ruleEditor_ref_prevent_element_src_loading": {
+    "message": "\"tagName, match\" — simulează reușita încărcării unui script/img/iframe/link în locul cererii de rețea reale."
+  },
+  "ruleEditor_ref_remove_attr": {
+    "message": "\"attrNames[, selector, behavior]\" — elimină atribute HTML din elementele potrivite."
+  },
+  "ruleEditor_ref_remove_node_text": {
+    "message": "\"nodeName, pattern\" — golește conținutul text al unui nod DOM."
+  },
+  "ruleEditor_ref_replace_node_text": {
+    "message": "\"nodeName, pattern, replacement\" — rescrie conținutul text al unui nod DOM."
+  },
+  "ruleEditor_ref_refresh_defuser": {
+    "message": "delay — oprește o redirecționare automată de tip <meta http-equiv=\"refresh\">."
+  },
+  "ruleEditor_ref_set_cookie": {
+    "message": "\"name, value\" — setează un cookie."
+  },
+  "ruleEditor_ref_remove_cookie": {
+    "message": "needle — elimină cookie-urile care se potrivesc cu un model de nume."
+  },
+  "ruleEditor_ref_set_local_storage_item": {
+    "message": "\"key, value\" — setează o intrare localStorage (limitat la valori literale sigure, sau valoarea specială \"remove\" pentru a șterge cheile potrivite)."
+  },
+  "ruleEditor_ref_href_sanitizer": {
+    "message": "\"selector, source\" — rescrie atributul href al unui link pornind de la propriul text sau de la un alt atribut."
+  },
+  "ruleEditor_ref_prevent_settimeout": {
+    "message": "propsToMatch — blochează apelurile setTimeout() care se potrivesc criteriilor."
+  },
+  "ruleEditor_ref_prevent_setinterval": {
+    "message": "propsToMatch — blochează apelurile setInterval() care se potrivesc criteriilor."
+  },
+  "ruleEditor_ref_prevent_raf": {
+    "message": "propsToMatch — blochează apelurile requestAnimationFrame() care se potrivesc criteriilor."
+  },
+  "ruleEditor_ref_prevent_aeld": {
+    "message": "propsToMatch — blochează apelurile addEventListener() care se potrivesc criteriilor."
+  },
+  "ruleEditor_ref_adjust_settimeout": {
+    "message": "\"needle, delay, boost\" — accelerează/încetinește apelurile setTimeout() potrivite, în loc să le blocheze."
+  },
+  "ruleEditor_ref_adjust_setinterval": {
+    "message": "\"needle, delay, boost\" — accelerează/încetinește apelurile setInterval() potrivite, în loc să le blocheze."
+  },
+  "ruleEditor_ref_no_eval_if": {
+    "message": "pattern — blochează apelurile eval() a căror sursă se potrivește cu pattern."
+  },
+  "ruleEditor_ref_no_webrtc": {
+    "message": "Dezactivează RTCPeerConnection — blochează trucurile de pop-up/urmărire bazate pe WebRTC."
+  },
+  "ruleEditor_ref_prevent_bab": {
+    "message": "Dezamorsează scripturile de detectare anti-adblock de tip BlockAdBlock/FuckAdBlock."
+  },
+  "ruleEditor_ref_disable_newtab_links": {
+    "message": "Elimină target=\"_blank\" de pe linkurile pe care se dă clic — blochează redirecționările forțate în filă nouă."
+  },
+  "scanner_value_emptyString": {
+    "message": "Șir de caractere gol"
+  },
+  "scanner_value_emptyArray": {
+    "message": "Tablou gol"
+  },
+  "scanner_value_emptyObject": {
+    "message": "Obiect gol"
+  },
+  "scanner_value_noopFunc": {
+    "message": "Funcție goală (no-op)"
+  },
+  "scanner_value_trueFunc": {
+    "message": "Funcție care întoarce mereu true"
+  },
+  "scanner_value_falseFunc": {
+    "message": "Funcție care întoarce mereu false"
+  },
+  "scanner_btn_block": {
+    "message": "Blochează"
+  },
+  "scanner_btn_edit": {
+    "message": "Editează"
+  },
+  "scanner_btn_delete": {
+    "message": "Șterge"
+  },
+  "scanner_status_blockApplied": {
+    "message": "Blocare aplicată — salvată pentru acest site."
+  },
+  "scanner_status_editApplied": {
+    "message": "Editare aplicată — salvată pentru acest site."
+  },
+  "scanner_status_deleteApplied": {
+    "message": "Ștergere aplicată — salvată pentru acest site."
+  },
+  "scanner_block_warning": {
+    "message": "Blocarea împiedică TOATE citirile viitoare ale acestei proprietăți — poate afecta funcționalități ale paginii care depind de ea. Acest lucru nu poate fi anulat prin reîmprospătarea paginii; elimină regula din pagina Reguli globale a panoului de control pentru a reveni la starea inițială."
+  },
+  "scanner_btn_blockAnyway": {
+    "message": "Blochează oricum"
+  },
+  "scanner_edit_customOption": {
+    "message": "Personalizat…"
+  },
+  "scanner_edit_customPlaceholder": {
+    "message": "un singur token, fără spații (de ex. 42, hello, {})"
+  },
+  "scanner_edit_hintEmpty": {
+    "message": "Introdu o valoare fără spații."
+  },
+  "scanner_edit_hintNoSpaces": {
+    "message": "Spațiile nu sunt permise — vor fi respinse."
+  },
+  "scanner_edit_hintPreview": {
+    "message": "Va fi salvată ca: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "scanner_panel_title": {
+    "message": "Variabile globale ale paginii ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "scanner_filter_placeholder": {
+    "message": "Filtrează după nume…"
+  },
+  "scanner_empty": {
+    "message": "Nu s-au găsit variabile globale adăugate de pagină."
+  },
+  "scanner_footer_limitation": {
+    "message": "Vede doar variabilele globale de tip var/function și atribuirile explicite window.x = — declarațiile let/const/class sunt invizibile pentru orice scaner de pagină (limitare a limbajului JS)."
+  },
+  "scanner_loading": {
+    "message": "Se scanează variabilele globale ale paginii — apasă Esc pentru a anula"
+  },
+  "common_add": {
+    "message": "Adaugă"
+  },
+  "dashboard_pageTitle": {
+    "message": "AdBlock — Panou de control"
+  },
+  "dashboard_brand_name": {
+    "message": "AdBlock — Reclame, Trackere"
+  },
+  "dashboard_nav_overview": {
+    "message": "Prezentare generală"
+  },
+  "dashboard_nav_rules": {
+    "message": "Reguli personalizate"
+  },
+  "dashboard_nav_rulesource": {
+    "message": "Sursă de reguli"
+  },
+  "dashboard_nav_allowlist": {
+    "message": "Listă permisă"
+  },
+  "dashboard_nav_elementrules": {
+    "message": "Reguli de elemente"
+  },
+  "dashboard_nav_globalrules": {
+    "message": "Reguli globale"
+  },
+  "dashboard_nav_focus": {
+    "message": "Concentrare"
+  },
+  "dashboard_nav_settings": {
+    "message": "Setări"
+  },
+  "dashboard_sidebar_protectionOn": {
+    "message": "Protecție ACTIVĂ"
+  },
+  "dashboard_sidebar_protection": {
+    "message": "Protecție $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "ON"
+      }
+    }
+  },
+  "dashboard_donate_title": {
+    "message": "Susține dezvoltarea prin PayPal"
+  },
+  "dashboard_donate_label": {
+    "message": "Oferă-mi o cafea ☕"
+  },
+  "dashboard_toggle_on": {
+    "message": "ACTIVĂ"
+  },
+  "dashboard_toggle_off": {
+    "message": "DEZACTIVATĂ"
+  },
+  "dashboard_overview_title": {
+    "message": "Prezentare generală"
+  },
+  "dashboard_overview_subtitle": {
+    "message": "Panoul tău de protecție"
+  },
+  "dashboard_kpi_totalBlocked": {
+    "message": "Total blocate"
+  },
+  "dashboard_kpi_blockedDeltaDefault": {
+    "message": "+0% azi"
+  },
+  "dashboard_kpi_trackersStopped": {
+    "message": "Trackere oprite"
+  },
+  "dashboard_kpi_trackersDeltaDefault": {
+    "message": "+0% azi"
+  },
+  "dashboard_kpi_malwareBlocked": {
+    "message": "Malware blocat"
+  },
+  "dashboard_kpi_threatsStopped": {
+    "message": "amenințări oprite"
+  },
+  "dashboard_kpi_noThreatsDetected": {
+    "message": "Nicio amenințare detectată"
+  },
+  "dashboard_kpi_bandwidthSaved": {
+    "message": "Lățime de bandă economisită"
+  },
+  "dashboard_kpi_avgPerPage": {
+    "message": "medie per pagină"
+  },
+  "dashboard_kpi_timeSaved": {
+    "message": "Timp economisit"
+  },
+  "dashboard_kpi_thisSession": {
+    "message": "în această sesiune"
+  },
+  "dashboard_kpi_deltaPositive": {
+    "message": "+$1 azi",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_kpi_deltaNone": {
+    "message": "— azi"
+  },
+  "dashboard_kpi_deltaPercent": {
+    "message": "$1% față de ieri",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "+12"
+      }
+    }
+  },
+  "dashboard_kpi_zeroThreatsToday": {
+    "message": "0 amenințări azi"
+  },
+  "dashboard_kpi_malwareMore": {
+    "message": "$1 +$2 în plus",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "evil.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_chart_titleBlocked": {
+    "message": "Cereri blocate"
+  },
+  "dashboard_chart_titleTrackers": {
+    "message": "Cereri de tip tracker"
+  },
+  "dashboard_chart_titleMalware": {
+    "message": "Detectări de malware"
+  },
+  "dashboard_chart_range7d": {
+    "message": "7z"
+  },
+  "dashboard_chart_range14d": {
+    "message": "14z"
+  },
+  "dashboard_chart_range30d": {
+    "message": "30z"
+  },
+  "dashboard_chart_tooltipBlocked": {
+    "message": "blocate"
+  },
+  "dashboard_chart_tooltipTrackers": {
+    "message": "trackere"
+  },
+  "dashboard_chart_tooltipMalware": {
+    "message": "malware"
+  },
+  "dashboard_chart_tooltipText": {
+    "message": "$1: $2 $3",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "Aug 1"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      },
+      "3": {
+        "content": "$3",
+        "example": "blocked"
+      }
+    }
+  },
+  "dashboard_domains_titleBlocked": {
+    "message": "Cele mai blocate domenii"
+  },
+  "dashboard_domains_titleTrackers": {
+    "message": "Cele mai active domenii de tracking"
+  },
+  "dashboard_domains_titleMalware": {
+    "message": "Cele mai frecvente domenii de malware"
+  },
+  "dashboard_domains_seeAll": {
+    "message": "Vezi toate"
+  },
+  "dashboard_domains_showLess": {
+    "message": "Arată mai puțin"
+  },
+  "dashboard_domains_seeAllCount": {
+    "message": "Vezi toate ($1)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "dashboard_domains_noData": {
+    "message": "Încă nu există date."
+  },
+  "dashboard_privacy_title": {
+    "message": "Scor de confidențialitate"
+  },
+  "dashboard_privacy_adsBlocked": {
+    "message": "Reclame blocate"
+  },
+  "dashboard_privacy_trackersBlocked": {
+    "message": "Trackere blocate"
+  },
+  "dashboard_privacy_malwareProtection": {
+    "message": "Protecție împotriva malware"
+  },
+  "dashboard_privacy_referrerAnon": {
+    "message": "Anonimizarea referrer-ului"
+  },
+  "dashboard_rules_title": {
+    "message": "Reguli personalizate"
+  },
+  "dashboard_rules_subtitle": {
+    "message": "Editează în format site-rules.txt — aceeași sintaxă ca fișierul principal de reguli. Valorile sunt combinate cu regulile predefinite."
+  },
+  "dashboard_rules_clear": {
+    "message": "Golește"
+  },
+  "dashboard_confirm_clearRules": {
+    "message": "Golești toate regulile personalizate?"
+  },
+  "dashboard_customRules_template": {
+    "message": "# Reguli personalizate — același format ca site-rules.txt\n# Valorile sunt COMBINATE cu regulile predefinite (nu le înlocuiesc).\n#\n# ── Asociază un domeniu nou unei secțiuni de reguli ──────────────────────\n# [host_patterns]\n# example.com = example          ← subdomeniile sunt potrivite automat\n#\n# ── Adaugă domenii suplimentare de blocat global ─────────────────────────\n# [global]\n# ad_network_patterns = new-ad-network.com\n# tracker_network_patterns = new-tracker.com\n# direct_hide_selectors = .new-ad-class\n# no_window_open_if = /new-ad.com/ 0 blank\n#\n# ── Reguli cosmetice per site ─────────────────────────────────────────────\n# [example]\n# direct_hide_selectors = .ad-unit | #sidebar-ad\n# no_window_open_if = /.*/ 0 blank\n# labels = sponsored | promoted\n# json_prune_fetch = adData adSlots\n"
+  },
+  "dashboard_allowlist_title": {
+    "message": "Listă permisă"
+  },
+  "dashboard_allowlist_subtitle": {
+    "message": "Site-uri care ocolesc orice blocare"
+  },
+  "dashboard_allowlist_addSite": {
+    "message": "+ Adaugă site"
+  },
+  "dashboard_elementRules_title": {
+    "message": "Reguli de elemente"
+  },
+  "dashboard_elementRules_subtitle": {
+    "message": "Elemente ascunse manual prin \"Alege un element de ascuns\" — grupate pe site"
+  },
+  "dashboard_elementRules_empty": {
+    "message": "Încă nu există reguli."
+  },
+  "dashboard_elementRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_title": {
+    "message": "Reguli globale"
+  },
+  "dashboard_globalRules_subtitle": {
+    "message": "Variabile globale window blocate/editate/șterse manual prin \"Scanează pagina pentru scripturi/variabile\" — grupate pe site"
+  },
+  "dashboard_globalRules_empty": {
+    "message": "Încă nu există reguli."
+  },
+  "dashboard_globalRules_hostCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "example.com"
+      },
+      "2": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_globalRules_actionBlock": {
+    "message": "blocare"
+  },
+  "dashboard_globalRules_actionEdit": {
+    "message": "editare"
+  },
+  "dashboard_globalRules_actionDelete": {
+    "message": "ștergere"
+  },
+  "dashboard_focus_title": {
+    "message": "Mod concentrare"
+  },
+  "dashboard_focus_subtitle": {
+    "message": "Blochează site-urile care te distrag, după un program"
+  },
+  "dashboard_focus_sessionTitle": {
+    "message": "Sesiune de concentrare"
+  },
+  "dashboard_focus_statusPaused": {
+    "message": "Sesiune în pauză"
+  },
+  "dashboard_focus_statusRunning": {
+    "message": "Sesiune în desfășurare…"
+  },
+  "dashboard_focus_statusComplete": {
+    "message": "Sesiune finalizată!"
+  },
+  "dashboard_focus_dur25": {
+    "message": "25m"
+  },
+  "dashboard_focus_dur45": {
+    "message": "45m"
+  },
+  "dashboard_focus_dur60": {
+    "message": "60m"
+  },
+  "dashboard_focus_dur90": {
+    "message": "90m"
+  },
+  "dashboard_focus_customPlaceholder": {
+    "message": "Personalizat"
+  },
+  "dashboard_focus_minUnit": {
+    "message": "min"
+  },
+  "dashboard_focus_distractionTitle": {
+    "message": "Listă de distrageri"
+  },
+  "dashboard_focus_addDistraction": {
+    "message": "+ Adaugă"
+  },
+  "dashboard_prompt_addDistraction": {
+    "message": "Introdu domeniul de blocat în timpul concentrării (de ex. twitter.com):"
+  },
+  "dashboard_settings_title": {
+    "message": "Setări"
+  },
+  "dashboard_settings_subtitle": {
+    "message": "Personalizează comportamentul AdBlock"
+  },
+  "dashboard_settings_sectionBlocking": {
+    "message": "Blocare"
+  },
+  "dashboard_settings_blockAds_name": {
+    "message": "Blochează reclamele"
+  },
+  "dashboard_settings_blockAds_desc": {
+    "message": "Blocare standard a rețelelor de reclame"
+  },
+  "dashboard_settings_blockTrackers_name": {
+    "message": "Blochează trackerele"
+  },
+  "dashboard_settings_blockTrackers_desc": {
+    "message": "Blochează scripturile de analiză și urmărire"
+  },
+  "dashboard_settings_cosmetic_name": {
+    "message": "Filtrare cosmetică"
+  },
+  "dashboard_settings_cosmetic_desc": {
+    "message": "Ascunde spațiile rămase pentru reclame, prin CSS"
+  },
+  "dashboard_settings_blockMalware_name": {
+    "message": "Blochează malware"
+  },
+  "dashboard_settings_blockMalware_desc": {
+    "message": "Blochează domeniile cunoscute ca malware"
+  },
+  "dashboard_settings_sectionPrivacy": {
+    "message": "Confidențialitate"
+  },
+  "dashboard_settings_referrer_name": {
+    "message": "Anonimizarea referrer-ului"
+  },
+  "dashboard_settings_referrer_desc": {
+    "message": "Elimină anteturile referrer la cererile cross-origin"
+  },
+  "dashboard_settings_gpc_name": {
+    "message": "Global Privacy Control"
+  },
+  "dashboard_settings_gpc_desc": {
+    "message": "Trimite semnalul de renunțare GPC (antet Sec-GPC + navigator.globalPrivacyControl)"
+  },
+  "dashboard_settings_dnt_name": {
+    "message": "Antet Do Not Track"
+  },
+  "dashboard_settings_dnt_desc": {
+    "message": "Trimite antetul de cerere DNT: 1"
+  },
+  "dashboard_settings_sectionData": {
+    "message": "Date"
+  },
+  "dashboard_settings_stats_name": {
+    "message": "Colectează statistici"
+  },
+  "dashboard_settings_stats_desc": {
+    "message": "Statistici de utilizare doar locale (niciodată încărcate pe internet)"
+  },
+  "dashboard_settings_reset_name": {
+    "message": "Resetează toate datele"
+  },
+  "dashboard_settings_reset_desc": {
+    "message": "Șterge regulile, statisticile și setările"
+  },
+  "dashboard_settings_resetBtn": {
+    "message": "Resetează"
+  },
+  "dashboard_confirm_resetData": {
+    "message": "Resetezi toate datele AdBlock? Această acțiune nu poate fi anulată."
+  },
+  "dashboard_alert_dataCleared": {
+    "message": "Toate datele au fost șterse. Se reîncarcă…"
+  },
+  "dashboard_settings_sectionAbout": {
+    "message": "Despre"
+  },
+  "dashboard_settings_version_name": {
+    "message": "Versiune"
+  },
+  "dashboard_settings_checkUpdate": {
+    "message": "Verifică actualizări"
+  },
+  "dashboard_settings_checking": {
+    "message": "Se verifică…"
+  },
+  "dashboard_settings_updateAvailable_name": {
+    "message": "Este disponibilă o versiune mai nouă"
+  },
+  "dashboard_settings_viewUpdate": {
+    "message": "Vezi"
+  },
+  "dashboard_settings_lastChecked": {
+    "message": "Ultima verificare: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "8/28/2026, 3:00:00 PM"
+      }
+    }
+  },
+  "dashboard_settings_checkFailedSuffix": {
+    "message": " (eșuat — ești offline?)"
+  },
+  "dashboard_settings_neverChecked": {
+    "message": "Nu a fost verificat niciodată"
+  },
+  "dashboard_settings_versionLine": {
+    "message": "v$1 · $2",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.42"
+      },
+      "2": {
+        "content": "$2",
+        "example": "Never checked yet"
+      }
+    }
+  },
+  "dashboard_settings_updateAvailableDesc": {
+    "message": "v$1 este disponibilă (ai v$2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1.0.43"
+      },
+      "2": {
+        "content": "$2",
+        "example": "1.0.42"
+      }
+    }
+  },
+  "dashboard_ruleSource_title": {
+    "message": "Sursă de reguli"
+  },
+  "dashboard_ruleSource_subtitle": {
+    "message": "De unde preia AdBlock regulile pentru site-uri"
+  },
+  "dashboard_ruleSource_urls_name": {
+    "message": "Adrese URL de reguli la distanță"
+  },
+  "dashboard_ruleSource_urls_desc": {
+    "message": "Include sursa implicită predefinită (comutabilă, dar nu poate fi eliminată), plus orice adrese URL pe care le adaugi — toate combinate, fiecare activabilă/dezactivabilă independent."
+  },
+  "dashboard_ruleSource_urlPlaceholder": {
+    "message": "https://raw.githubusercontent.com/…/site-rules.txt"
+  },
+  "dashboard_ruleSource_addUrl": {
+    "message": "Adaugă URL"
+  },
+  "dashboard_ruleSource_files_name": {
+    "message": "Fișiere de reguli locale"
+  },
+  "dashboard_ruleSource_files_desc": {
+    "message": "Încarcă fișiere de reguli .txt — combinate cu sursele URL. Sunt acceptate mai multe fișiere."
+  },
+  "dashboard_ruleSource_addFile": {
+    "message": "Adaugă fișier…"
+  },
+  "dashboard_ruleSource_exporting": {
+    "message": "Se exportă…"
+  },
+  "dashboard_ruleSource_exportFailed": {
+    "message": "Exportul a eșuat: $1",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "network error"
+      }
+    }
+  },
+  "dashboard_ruleSource_unknownError": {
+    "message": "eroare necunoscută"
+  },
+  "dashboard_ruleSource_statsBase": {
+    "message": "$1 convertite, $2 omise din $3 reguli",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "10"
+      },
+      "3": {
+        "content": "$3",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsException": {
+    "message": "$1 reguli de excepție (fără model de anulare aici)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsProcedural": {
+    "message": "$1 selectori procedurali (:has-text, :xpath, ...)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsAdguardExtended": {
+    "message": "$1 modificatori extinși AdGuard",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnmappedScriptlet": {
+    "message": "$1 apeluri de scriptlet nemapate",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsComplexNetwork": {
+    "message": "$1 modificatori de regulă de rețea neacceptați",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsDedupSkipped": {
+    "message": "$1 deja incluse în site-rules.txt propriu al acestui repo",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "6"
+      }
+    }
+  },
+  "dashboard_ruleSource_statsUnrecognized": {
+    "message": "$1 sintaxă nerecunoscută",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedPartial": {
+    "message": "$1/$2 încărcate",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "90"
+      },
+      "2": {
+        "content": "$2",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_loadedFull": {
+    "message": "$1 încărcate",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "dashboard_ruleSource_exportBtn": {
+    "message": "Exportă"
+  },
+  "dashboard_ruleSource_exportTitle": {
+    "message": "Descarcă regulile acestei surse convertite în gramatica proprie a acestui repo"
+  },
+  "dashboard_ruleSource_groupDefault": {
+    "message": "Implicit"
+  },
+  "dashboard_ruleSource_groupEasylist": {
+    "message": "Familia EasyList"
+  },
+  "dashboard_ruleSource_groupLanguage": {
+    "message": "După limbă"
+  },
+  "dashboard_ruleSource_groupCustom": {
+    "message": "Personalizat (adresele tale URL)"
+  },
+  "dashboard_ruleSource_groupCount": {
+    "message": "$1 ($2)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "EasyList family"
+      },
+      "2": {
+        "content": "$2",
+        "example": "12"
+      }
+    }
+  },
+  "dashboard_debug_seedYesterdayAlert": {
+    "message": "S-au generat date simulate pentru $1:",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "2026-08-27"
+      }
+    }
+  },
+  "dashboard_settings_sectionGeneral": {
+    "message": "General"
+  },
+  "dashboard_settings_language_name": {
+    "message": "Limbă"
+  },
+  "dashboard_settings_language_desc": {
+    "message": "Repornește această pagină după schimbare"
+  },
+  "dashboard_settings_language_auto": {
+    "message": "Automat (limba browserului)"
+  },
+  "dashboard_nav_toggle_title": {
+    "message": "Meniu"
+  }
+}
