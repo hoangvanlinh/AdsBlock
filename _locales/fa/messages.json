@@ -104,10 +104,10 @@
     "message": "حالت تمرکز"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ توقف در این سایت"
+    "message": "توقف در این سایت"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ ازسرگیری سایت"
+    "message": "ازسرگیری سایت"
   },
   "popup_privacy_scoreLabel": {
     "message": "امتیاز حریم خصوصی"

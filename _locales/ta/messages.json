@@ -104,10 +104,10 @@
     "message": "கவனம் பயன்முறை"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ இந்த தளத்தில் இடைநிறுத்து"
+    "message": "இந்த தளத்தில் இடைநிறுத்து"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ தளத்தை மீண்டும் தொடங்கு"
+    "message": "தளத்தை மீண்டும் தொடங்கு"
   },
   "popup_privacy_scoreLabel": {
     "message": "தனியுரிமை மதிப்பெண்"

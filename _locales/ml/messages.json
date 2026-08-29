@@ -104,10 +104,10 @@
     "message": "ഫോക്കസ് മോഡ്"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ ഈ സൈറ്റിൽ താൽക്കാലികമായി നിർത്തുക"
+    "message": "ഈ സൈറ്റിൽ താൽക്കാലികമായി നിർത്തുക"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ സൈറ്റ് പുനരാരംഭിക്കുക"
+    "message": "സൈറ്റ് പുനരാരംഭിക്കുക"
   },
   "popup_privacy_scoreLabel": {
     "message": "സ്വകാര്യതാ സ്കോർ"

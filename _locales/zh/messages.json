@@ -102,10 +102,10 @@
     "message": "专注模式"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ 在此网站暂停"
+    "message": "在此网站暂停"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ 在此网站恢复"
+    "message": "在此网站恢复"
   },
   "popup_privacy_scoreLabel": {
     "message": "隐私评分"

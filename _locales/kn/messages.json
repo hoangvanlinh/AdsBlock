@@ -104,10 +104,10 @@
     "message": "ಗಮನ ಮೋಡ್"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ ಈ ಸೈಟ್‌ಗೆ ವಿರಾಮಗೊಳಿಸಿ"
+    "message": "ಈ ಸೈಟ್‌ಗೆ ವಿರಾಮಗೊಳಿಸಿ"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ ಸೈಟ್ ಪುನರಾರಂಭಿಸಿ"
+    "message": "ಸೈಟ್ ಪುನರಾರಂಭಿಸಿ"
   },
   "popup_privacy_scoreLabel": {
     "message": "ಗೌಪ್ಯತೆ ಸ್ಕೋರ್"

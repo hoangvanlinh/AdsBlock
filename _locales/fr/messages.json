@@ -102,10 +102,10 @@
     "message": "Mode concentration"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Suspendre sur ce site"
+    "message": "Suspendre sur ce site"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Reprendre sur ce site"
+    "message": "Reprendre sur ce site"
   },
   "popup_privacy_scoreLabel": {
     "message": "Score de confidentialité"

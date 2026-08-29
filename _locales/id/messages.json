@@ -104,10 +104,10 @@
     "message": "Mode fokus"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Jeda di situs ini"
+    "message": "Jeda di situs ini"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Lanjutkan situs"
+    "message": "Lanjutkan situs"
   },
   "popup_privacy_scoreLabel": {
     "message": "Skor privasi"

@@ -102,10 +102,10 @@
     "message": "Chế độ tập trung"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Tạm dừng trên trang này"
+    "message": "Tạm dừng trên trang này"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Tiếp tục trên trang này"
+    "message": "Tiếp tục trên trang này"
   },
   "popup_privacy_scoreLabel": {
     "message": "Điểm riêng tư"

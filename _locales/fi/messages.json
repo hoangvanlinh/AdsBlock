@@ -104,10 +104,10 @@
     "message": "Keskittymistila"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Keskeytä tälle sivustolle"
+    "message": "Keskeytä tälle sivustolle"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Jatka sivustoa"
+    "message": "Jatka sivustoa"
   },
   "popup_privacy_scoreLabel": {
     "message": "Yksityisyyspisteet"

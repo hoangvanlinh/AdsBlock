@@ -104,10 +104,10 @@
     "message": "फोकस मोड"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ या साइटवर विराम द्या"
+    "message": "या साइटवर विराम द्या"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ साइट पुन्हा सुरू करा"
+    "message": "साइट पुन्हा सुरू करा"
   },
   "popup_privacy_scoreLabel": {
     "message": "गोपनीयता स्कोअर"

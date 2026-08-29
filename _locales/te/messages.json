@@ -104,10 +104,10 @@
     "message": "ఫోకస్ మోడ్"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ ఈ సైట్‌లో పాజ్ చేయండి"
+    "message": "ఈ సైట్‌లో పాజ్ చేయండి"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ సైట్‌ను తిరిగి ప్రారంభించండి"
+    "message": "సైట్‌ను తిరిగి ప్రారంభించండి"
   },
   "popup_privacy_scoreLabel": {
     "message": "గోప్యతా స్కోర్"

@@ -102,10 +102,10 @@
     "message": "Način rada Koncentracija"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pauziraj na web-mjestu"
+    "message": "Pauziraj na web-mjestu"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Nastavi na web-mjestu"
+    "message": "Nastavi na web-mjestu"
   },
   "popup_privacy_scoreLabel": {
     "message": "Ocjena privatnosti"

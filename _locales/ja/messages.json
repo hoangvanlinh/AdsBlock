@@ -104,10 +104,10 @@
     "message": "集中モード"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ このサイトで一時停止"
+    "message": "このサイトで一時停止"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ サイトを再開"
+    "message": "サイトを再開"
   },
   "popup_privacy_scoreLabel": {
     "message": "プライバシースコア"

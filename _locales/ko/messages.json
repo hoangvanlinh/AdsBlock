@@ -104,10 +104,10 @@
     "message": "집중 모드"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ 이 사이트에서 일시 중지"
+    "message": "이 사이트에서 일시 중지"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ 사이트 재개"
+    "message": "사이트 재개"
   },
   "popup_privacy_scoreLabel": {
     "message": "개인정보 보호 점수"

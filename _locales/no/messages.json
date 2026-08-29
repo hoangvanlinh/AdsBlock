@@ -104,10 +104,10 @@
     "message": "Fokusmodus"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Sett på pause for nettstedet"
+    "message": "Sett på pause for nettstedet"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Gjenoppta nettstedet"
+    "message": "Gjenoppta nettstedet"
   },
   "popup_privacy_scoreLabel": {
     "message": "Personvernscore"

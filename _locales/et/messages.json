@@ -104,10 +104,10 @@
     "message": "Keskendumisrežiim"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Peata saidil"
+    "message": "Peata saidil"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Jätka saiti"
+    "message": "Jätka saiti"
   },
   "popup_privacy_scoreLabel": {
     "message": "Privaatsuse skoor"

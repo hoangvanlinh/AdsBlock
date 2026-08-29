@@ -102,10 +102,10 @@
     "message": "Režim sústredenia"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pozastaviť na stránke"
+    "message": "Pozastaviť na stránke"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Obnoviť stránku"
+    "message": "Obnoviť stránku"
   },
   "popup_privacy_scoreLabel": {
     "message": "Skóre súkromia"

@@ -376,6 +376,13 @@ body::before {
   box-shadow: 0 0 12px rgba(99,102,241,.4);
 }
 
+/* Pause/resume button icon — .active means "site is paused", so show the
+   play glyph (clicking resumes); default state shows the pause glyph
+   (clicking pauses). */
+.action-btn .icon-play { display: none; }
+.action-btn.active .icon-pause { display: none; }
+.action-btn.active .icon-play { display: block; }
+
 /* ── Privacy bar ── */
 .privacy-bar {
   background: var(--surface);

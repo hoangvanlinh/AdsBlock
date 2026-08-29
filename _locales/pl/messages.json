@@ -102,10 +102,10 @@
     "message": "Tryb skupienia"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Wstrzymaj na tej witrynie"
+    "message": "Wstrzymaj na tej witrynie"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Wznów na tej witrynie"
+    "message": "Wznów na tej witrynie"
   },
   "popup_privacy_scoreLabel": {
     "message": "Wynik prywatności"

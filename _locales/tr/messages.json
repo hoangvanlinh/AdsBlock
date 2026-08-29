@@ -102,10 +102,10 @@
     "message": "Odaklanma modu"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Sitede duraklat"
+    "message": "Sitede duraklat"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Siteyi sürdür"
+    "message": "Siteyi sürdür"
   },
   "popup_privacy_scoreLabel": {
     "message": "Gizlilik puanı"

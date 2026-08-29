@@ -102,10 +102,10 @@
     "message": "Режим фокусировки"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Приостановить на сайте"
+    "message": "Приостановить на сайте"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Возобновить на сайте"
+    "message": "Возобновить на сайте"
   },
   "popup_privacy_scoreLabel": {
     "message": "Оценка приватности"

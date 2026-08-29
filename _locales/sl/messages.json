@@ -102,10 +102,10 @@
     "message": "Način osredotočenosti"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Zaustavi na strani"
+    "message": "Zaustavi na strani"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Nadaljuj stran"
+    "message": "Nadaljuj stran"
   },
   "popup_privacy_scoreLabel": {
     "message": "Ocena zasebnosti"

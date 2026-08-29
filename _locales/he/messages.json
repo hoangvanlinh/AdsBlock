@@ -104,10 +104,10 @@
     "message": "מצב ריכוז"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ השהה עבור אתר זה"
+    "message": "השהה עבור אתר זה"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ המשך אתר"
+    "message": "המשך אתר"
   },
   "popup_privacy_scoreLabel": {
     "message": "ציון פרטיות"

@@ -104,10 +104,10 @@
     "message": "โหมดโฟกัส"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ หยุดชั่วคราวสำหรับเว็บไซต์นี้"
+    "message": "หยุดชั่วคราวสำหรับเว็บไซต์นี้"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ ดำเนินการต่อสำหรับเว็บไซต์"
+    "message": "ดำเนินการต่อสำหรับเว็บไซต์"
   },
   "popup_privacy_scoreLabel": {
     "message": "คะแนนความเป็นส่วนตัว"

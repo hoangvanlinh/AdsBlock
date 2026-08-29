@@ -104,10 +104,10 @@
     "message": "Mode concentració"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pausa en aquest lloc"
+    "message": "Pausa en aquest lloc"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Reprèn el lloc"
+    "message": "Reprèn el lloc"
   },
   "popup_privacy_scoreLabel": {
     "message": "Puntuació de privadesa"

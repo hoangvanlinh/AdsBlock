@@ -104,10 +104,10 @@
     "message": "Susikaupimo režimas"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pristabdyti šioje svetainėje"
+    "message": "Pristabdyti šioje svetainėje"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Tęsti svetainę"
+    "message": "Tęsti svetainę"
   },
   "popup_privacy_scoreLabel": {
     "message": "Privatumo įvertis"

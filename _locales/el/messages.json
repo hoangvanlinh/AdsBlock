@@ -104,10 +104,10 @@
     "message": "Λειτουργία συγκέντρωσης"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Παύση για τον ιστότοπο"
+    "message": "Παύση για τον ιστότοπο"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Συνέχιση ιστότοπου"
+    "message": "Συνέχιση ιστότοπου"
   },
   "popup_privacy_scoreLabel": {
     "message": "Βαθμολογία απορρήτου"

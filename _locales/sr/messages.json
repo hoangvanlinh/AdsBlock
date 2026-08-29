@@ -104,10 +104,10 @@
     "message": "Режим концентрације"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Паузирај за сајт"
+    "message": "Паузирај за сајт"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Настави сајт"
+    "message": "Настави сајт"
   },
   "popup_privacy_scoreLabel": {
     "message": "Оцена приватности"

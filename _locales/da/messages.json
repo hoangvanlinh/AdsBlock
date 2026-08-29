@@ -104,10 +104,10 @@
     "message": "Fokustilstand"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Sæt på pause for siden"
+    "message": "Sæt på pause for siden"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Genoptag siden"
+    "message": "Genoptag siden"
   },
   "popup_privacy_scoreLabel": {
     "message": "Privatlivsscore"

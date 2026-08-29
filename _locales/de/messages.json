@@ -104,10 +104,10 @@
     "message": "Fokusmodus"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Für diese Website pausieren"
+    "message": "Für diese Website pausieren"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Website fortsetzen"
+    "message": "Website fortsetzen"
   },
   "popup_privacy_scoreLabel": {
     "message": "Datenschutz-Wertung"

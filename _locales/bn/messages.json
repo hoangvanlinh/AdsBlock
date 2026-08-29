@@ -104,10 +104,10 @@
     "message": "ফোকাস মোড"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ সাইটে বিরতি দিন"
+    "message": "সাইটে বিরতি দিন"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ সাইট পুনরায় শুরু করুন"
+    "message": "সাইট পুনরায় শুরু করুন"
   },
   "popup_privacy_scoreLabel": {
     "message": "গোপনীয়তা স্কোর"

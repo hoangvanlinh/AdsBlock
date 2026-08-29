@@ -104,10 +104,10 @@
     "message": "फोकस मोड"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ साइट पर रोकें"
+    "message": "साइट पर रोकें"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ साइट फिर से शुरू करें"
+    "message": "साइट फिर से शुरू करें"
   },
   "popup_privacy_scoreLabel": {
     "message": "गोपनीयता स्कोर"

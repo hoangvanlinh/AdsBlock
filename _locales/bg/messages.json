@@ -104,10 +104,10 @@
     "message": "Режим на концентрация"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Пауза за сайта"
+    "message": "Пауза за сайта"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Възобнови сайта"
+    "message": "Възобнови сайта"
   },
   "popup_privacy_scoreLabel": {
     "message": "Оценка на поверителността"

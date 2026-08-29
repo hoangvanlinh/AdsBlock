@@ -104,10 +104,10 @@
     "message": "Modo concentración"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pausar en el sitio"
+    "message": "Pausar en el sitio"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Reanudar sitio"
+    "message": "Reanudar sitio"
   },
   "popup_privacy_scoreLabel": {
     "message": "Puntuación de privacidad"

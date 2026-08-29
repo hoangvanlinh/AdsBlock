@@ -104,10 +104,10 @@
     "message": "Koncentrációs mód"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Szüneteltetés a webhelyen"
+    "message": "Szüneteltetés a webhelyen"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Webhely folytatása"
+    "message": "Webhely folytatása"
   },
   "popup_privacy_scoreLabel": {
     "message": "Adatvédelmi pontszám"

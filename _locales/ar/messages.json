@@ -104,10 +104,10 @@
     "message": "وضع التركيز"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ إيقاف مؤقت لهذا الموقع"
+    "message": "إيقاف مؤقت لهذا الموقع"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ استئناف الموقع"
+    "message": "استئناف الموقع"
   },
   "popup_privacy_scoreLabel": {
     "message": "درجة الخصوصية"

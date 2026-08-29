@@ -102,10 +102,10 @@
     "message": "Modo de foco"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pausar neste site"
+    "message": "Pausar neste site"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Retomar neste site"
+    "message": "Retomar neste site"
   },
   "popup_privacy_scoreLabel": {
     "message": "Pontuação de privacidade"

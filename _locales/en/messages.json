@@ -104,10 +104,10 @@
     "message": "Focus mode"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pause on site"
+    "message": "Pause on site"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Resume site"
+    "message": "Resume site"
   },
   "popup_privacy_scoreLabel": {
     "message": "Privacy score"

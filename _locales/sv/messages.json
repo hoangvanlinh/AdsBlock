@@ -104,10 +104,10 @@
     "message": "Fokusläge"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pausa för webbplatsen"
+    "message": "Pausa för webbplatsen"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Återuppta webbplatsen"
+    "message": "Återuppta webbplatsen"
   },
   "popup_privacy_scoreLabel": {
     "message": "Integritetspoäng"

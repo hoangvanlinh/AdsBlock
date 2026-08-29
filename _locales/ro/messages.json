@@ -102,10 +102,10 @@
     "message": "Mod concentrare"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pauză pe acest site"
+    "message": "Pauză pe acest site"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Reia pe acest site"
+    "message": "Reia pe acest site"
   },
   "popup_privacy_scoreLabel": {
     "message": "Scor de confidențialitate"

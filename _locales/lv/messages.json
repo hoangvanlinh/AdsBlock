@@ -102,10 +102,10 @@
     "message": "Fokusa režīms"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Apturēt vietnē"
+    "message": "Apturēt vietnē"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Atsākt vietni"
+    "message": "Atsākt vietni"
   },
   "popup_privacy_scoreLabel": {
     "message": "Privātuma rādītājs"

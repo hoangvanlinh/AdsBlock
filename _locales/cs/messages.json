@@ -104,10 +104,10 @@
     "message": "Režim soustředění"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pozastavit na webu"
+    "message": "Pozastavit na webu"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Obnovit web"
+    "message": "Obnovit web"
   },
   "popup_privacy_scoreLabel": {
     "message": "Skóre soukromí"

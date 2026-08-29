@@ -104,10 +104,10 @@
     "message": "Focusmodus"
   },
   "popup_action_pause_emoji": {
-    "message": "⏸ Pauzeren voor deze site"
+    "message": "Pauzeren voor deze site"
   },
   "popup_action_resume_emoji": {
-    "message": "▶ Site hervatten"
+    "message": "Site hervatten"
   },
   "popup_privacy_scoreLabel": {
     "message": "Privacyscore"
