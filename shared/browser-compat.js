@@ -12,10 +12,14 @@
 // access by design and must never load this file); dashboard/popup/blocked
 // pages get it from a <script> tag before their own .js.
 if (!self.EXT) {
-  self.EXT = self.browser || self.chrome;
+  self.EXT =
+    typeof browser !== 'undefined'
+      ? browser
+      : chrome;
 }
+
 if (!self.EXT_SESSION_STORAGE) {
-  self.EXT_SESSION_STORAGE = (typeof browser !== 'undefined' && browser.storage && browser.storage.session)
-    ? browser.storage.session
-    : (chrome.storage && chrome.storage.session);
+  self.EXT_SESSION_STORAGE =
+    self.EXT?.storage?.session || null;
 }
+
