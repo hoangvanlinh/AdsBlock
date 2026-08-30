@@ -523,7 +523,16 @@ function collapseParentIfEmpty(el){
   var hasVisible=false;
   for(var i=0;i<parent.children.length;i++){
     var c=parent.children[i];
-    if(c.style.display!=='none'&&!c.hasAttribute(_HIDE_ATTR)){hasVisible=true;break;}
+    // Cheap checks first (inline style / our own JS-hide marker) — a
+    // direct_hide_selectors match is hidden PURELY by the injected
+    // stylesheet (see scan() below) and never gets either of those, so it
+    // would otherwise look "visible" here and block the parent from
+    // collapsing. getComputedStyle() is the fallback, not the common case,
+    // since it forces a style recalc (real cost, only worth paying when the
+    // cheap checks don't already have an answer).
+    if(c.style.display==='none'||c.hasAttribute(_HIDE_ATTR))continue;
+    if(getComputedStyle(c).display==='none')continue;
+    hasVisible=true;break;
   }
   if(!hasVisible){
     parent.style.setProperty('display','none','important');
@@ -568,10 +577,20 @@ function scan(root){
   // Only re-run it once per boot (root===document catches the first full
   // scan) purely to seed the "ads blocked" counter; later dynamically-added
   // matches are still hidden instantly by CSS, just not re-counted.
+  //
+  // Deliberately NOT calling hide() here (2026-08-30): these elements are
+  // already invisible via the stylesheet alone, so setting our own
+  // _HIDE_ATTR marker + inline style on them would add a live, page-JS-
+  // readable DOM signature (attribute + style mutation on the exact node an
+  // anti-adblock script would already be watching) for zero visual benefit
+  // — pure fingerprint-surface cost. collapseParentIfEmpty()'s
+  // getComputedStyle() fallback (see above) recognizes a CSS-only-hidden
+  // child without needing that marker at all, so the parent-collapse
+  // behavior is unchanged.
   if(!_directCounted&&root===document){
     _directCounted=true;
     var direct=collectFast(root,_cachedDirectStr);
-    for(var d=0;d<direct.length;d++)if(hide(direct[d]))count++;
+    for(var d=0;d<direct.length;d++){collapseParentIfEmpty(direct[d]);count++;}
   }
   var candidates=collectFast(root,_cachedCandidateStr);
   for(var i=0;i<candidates.length;i++){

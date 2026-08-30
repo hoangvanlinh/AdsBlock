@@ -2954,9 +2954,18 @@ async function applyPrivacySettings() {
 // nodes scoped under a toggle class on <html> — both the class and the
 // style ids were page-visible fingerprint markers. Instead, apply cosmetic
 // CSS via chrome.scripting.insertCSS, a privileged call that lands in the
-// browser's "user stylesheet" cascade: no <style> DOM node, not enumerable
-// via document.styleSheets, and no class needed to gate it on/off —
-// turning it off is just removeCSS.
+// browser's own stylesheet layer: no <style> DOM node, not enumerable via
+// document.styleSheets, and no class needed to gate it on/off — turning it
+// off is just removeCSS.
+//
+// origin:'USER' (Chrome only, see _CSS_ORIGIN below) places it in the
+// "user" cascade origin, which always wins over the page's own CSS
+// regardless of specificity/!important — stronger than the default
+// 'AUTHOR' origin, where our :where(...) (zero-specificity) selectors could
+// in theory still lose to a page rule that also uses !important. Matches
+// uBO's own MV3 build (platform/mv3/extension/js/background.js's insertCSS
+// handler). removeCSS must pass the same origin used at insert time, or the
+// browser won't recognize it as the same injection to remove.
 //
 // "slot" lets 3 independent CSS sources (base defaults, per-site
 // direct_hide_selectors, user custom rules) update/clear without touching
@@ -2968,18 +2977,43 @@ function _frameCssKey(tabId, frameId, slot) {
   return `${tabId}:${frameId}:${slot}`;
 }
 
+// Firefox (Gecko) throws NS_ERROR_ILLEGAL_VALUE from
+// nsIDOMWindowUtils.addSheet on EVERY chrome.scripting.insertCSS call, with
+// or without origin:'USER' — live-verified via `web-ext run` 2026-08-30,
+// reproduced even after reverting to the exact pre-origin-change call (no
+// `origin` field at all), so this is not an origin-specific bug. Firefox
+// (unlike Chrome, which dropped it for MV3) still supports the older
+// browser.tabs.insertCSS/removeCSS API under manifest_version 3, so Firefox
+// uses that instead; Chrome keeps chrome.scripting.insertCSS with
+// origin:'USER' as before. _isFirefoxInstall() is the same detection
+// checkForExtensionUpdate() already uses for this kind of per-browser fork.
+async function _insertFrameCss(tabId, frameId, css) {
+  if (_isFirefoxInstall()) {
+    await browser.tabs.insertCSS(tabId, { code: css, frameId, matchAboutBlank: true });
+  } else {
+    await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
+  }
+}
+async function _removeFrameCss(tabId, frameId, css) {
+  if (_isFirefoxInstall()) {
+    await browser.tabs.removeCSS(tabId, { code: css, frameId, matchAboutBlank: true });
+  } else {
+    await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
+  }
+}
+
 async function setFrameCss(tabId, frameId, slot, css) {
   if (tabId === undefined || frameId === undefined) return;
   const key = _frameCssKey(tabId, frameId, slot);
   const prev = _frameCss.get(key);
   if (prev === css) return; // no change — already applied (or already absent)
   if (prev) {
-    try { await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css: prev }); }
+    try { await _removeFrameCss(tabId, frameId, prev); }
     catch (e) { /* frame navigated away mid-flight — fine, nothing to clean up */ }
   }
   if (css) {
     try {
-      await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css });
+      await _insertFrameCss(tabId, frameId, css);
       _frameCss.set(key, css);
     } catch (e) { _frameCss.delete(key); }
   } else {
@@ -3003,7 +3037,7 @@ async function clearAllFrameCss(tabId, frameId) {
   const prefix = `${tabId}:${frameId}:`;
   for (const [key, css] of Array.from(_frameCss.entries())) {
     if (!key.startsWith(prefix)) continue;
-    try { await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css }); } catch (e) {}
+    try { await _removeFrameCss(tabId, frameId, css); } catch (e) {}
     _frameCss.delete(key);
   }
 }
