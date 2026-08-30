@@ -294,6 +294,21 @@ function _updateDirectCssCacheEntry(host,css){
   }catch(e){}
 }
 
+// Scope under `body ` so a broad selector can never match body/html itself
+// and blank the whole page — skipped when already root-scoped.
+function _scopedDirectRule(sel){
+  var scoped=_ALREADY_ROOT_SCOPED_RE.test(sel)?sel:'body '+sel;
+  return scoped+'{display:none!important}';
+}
+
+// Only worth the per-selector document.querySelector() cost below (each
+// call is cheap alone, but _cachedDirect can be 13,000+ entries when a site
+// has no dedicated section and inherits [global] wholesale straight from a
+// large merged ABP source like EasyList — real-measured 2026-08-30) once
+// the list is actually that large. A real site-specific direct_hide_selectors
+// list is always small (tens of entries), never worth filtering.
+var _DIRECT_FILTER_CACHE_THRESHOLD=100;
+
 function _injectDirectStyle(){
   _directAuthInjected=true; // real config wins over the fast-path guess from here on
   var host=location.hostname;
@@ -302,9 +317,6 @@ function _injectDirectStyle(){
     _updateDirectCssCacheEntry(host,'');
     return;
   }
-  // Scope under `body ` so a broad selector can never match body/html itself
-  // and blank the whole page — skipped when already root-scoped.
-  //
   // One SEPARATE rule per selector (not one combined :where(...) list) —
   // matches uBlock Origin's own actual generated CSS (vAPI.hideStyle,
   // explodeCSS — verified against their real source), and gives the same
@@ -318,15 +330,38 @@ function _injectDirectStyle(){
   // cssOrigin:'user', see background.js's setFrameCss), the element already
   // takes zero layout space and paints nothing, so the other 4 properties
   // never had anything left to add.
+  //
+  // The REAL CSS sent to the browser (below) always covers the FULL
+  // _cachedDirect list — never narrowed — so correctness never depends on
+  // which selectors happened to match at injection time (late-arriving ads
+  // are still covered). Only the SEPARATE fast-path CACHE (further down)
+  // gets narrowed, and only for the [global]-inherited case.
   var rules=[];
-  for(var i=0;i<_cachedDirect.length;i++){
-    var sel=_cachedDirect[i];
-    var scoped=_ALREADY_ROOT_SCOPED_RE.test(sel)?sel:'body '+sel;
-    rules.push(scoped+'{display:none!important}');
+  for(var i=0;i<_cachedDirect.length;i++)rules.push(_scopedDirectRule(_cachedDirect[i]));
+  _sendCssSlot('direct',rules.join('\n\n'));
+
+  // directCssFastPath's per-host cache entry (2026-08-30): a host with NO
+  // dedicated site section inherits [global].direct_hide_selectors AS-IS —
+  // live-measured over 1MB for a single host once EasyList (13,632 global
+  // selectors) is enabled, duplicated again for every OTHER such host up to
+  // _fpStorage.lruLimit entries. Caching the full list is real, unavoidable
+  // work the FIRST time this host is seen (one-time
+  // document.querySelector() pass per candidate selector, accepted cost —
+  // same "pay once, reuse cheaply after" trade _fastPathDirectStyle's
+  // whole existence already rests on) — but only the selectors that
+  // actually matched something on THIS page's DOM are worth caching for
+  // NEXT time; the other several thousand that matched nothing here almost
+  // certainly won't next time either (same site, same template).
+  var cacheSelectors=_cachedDirect;
+  if(_cachedDirect.length>_DIRECT_FILTER_CACHE_THRESHOLD){
+    cacheSelectors=[];
+    for(var j=0;j<_cachedDirect.length;j++){
+      try{if(document.querySelector(_cachedDirect[j]))cacheSelectors.push(_cachedDirect[j]);}catch(e){}
+    }
   }
-  var css=rules.join('\n\n');
-  _sendCssSlot('direct',css);
-  _updateDirectCssCacheEntry(host,css);
+  var cacheRules=[];
+  for(var k=0;k<cacheSelectors.length;k++)cacheRules.push(_scopedDirectRule(cacheSelectors[k]));
+  _updateDirectCssCacheEntry(host,cacheRules.join('\n\n'));
 }
 
 // _fastPathDirectStyle — fires the LAST successfully-computed 'direct' CSS

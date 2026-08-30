@@ -368,6 +368,23 @@ function isFreshRuleCache(entry) {
 // is dropped rather than guessed at.
 const ABP_PROCEDURAL_RE = /:has-text\(|:matches-css|:xpath\(|:min-text-length|:remove\(|:style\(|:upward\(|:min-outer-height/;
 const ABP_BARE_NETWORK_DOMAIN_RE = /^[a-z0-9.*-]+\^$/i;
+// Build-tool-generated class/id hash — e.g. styled-jsx's `.jsx-2126301199`
+// (a decimal hash of that page's OWN compiled CSS, live-caught 2026-08-30 in
+// an actual global direct_hide_selectors entry), a Unix-ms/CRC32-style
+// numeric id (`#popup-1720497466`), styled-components/emotion's
+// `.sc-xxxxxxxx`. Threshold is 8+ digits, not 6+: real ad-DIMENSION classes
+// concatenate two 3-digit numbers with no separator (`.ad-300250` = 300x250,
+// `.ad-970250` = 970x250) and land at exactly 6 digits — live-verified
+// against real EasyList/ABPVN data that 6+ false-positived on those, while
+// 8+ still catches every real hash/timestamp sample found (jsx-*, 9-10
+// digit CRC32/epoch-second ids) with zero false positives on the same
+// corpus. These hashes are worthless past the ONE build that produced them
+// (regenerated on the site's next deploy) — converting them just bloats
+// direct_hide_selectors (and, downstream, every directCssFastPath entry
+// that inherits the global list, live-measured over 1MB per host
+// 2026-08-30) for a selector that stops matching anything the moment the
+// site redeploys anyway.
+const ABP_LOW_VALUE_HASH_RE = /-\d{8,}\b/;
 
 // This repo's own grammar always opens with a [section] header (after
 // optional #/; comment lines) — ABP/uBO text uses ! comments and has no
@@ -546,7 +563,7 @@ function _abpEmptySkipStats() {
   return {
     total: 0, converted: 0, exception: 0, procedural: 0,
     adguardExtended: 0, unmappedScriptlet: 0, complexNetwork: 0,
-    dedupSkipped: 0, unrecognized: 0,
+    dedupSkipped: 0, unrecognized: 0, lowValueHash: 0,
   };
 }
 
@@ -651,6 +668,7 @@ function _abpParseFile(text, curatedPatterns, acc, stats) {
     }
 
     if (ABP_PROCEDURAL_RE.test(selectorPart)) { s.procedural++; continue; }
+    if (ABP_LOW_VALUE_HASH_RE.test(selectorPart)) { s.lowValueHash++; continue; }
 
     if (!domainPart) { globalSelectors.add(selectorPart); s.converted++; continue; }
 
