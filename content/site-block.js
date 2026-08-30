@@ -274,19 +274,38 @@ function _evictOldestLruEntry(map){
 // visit older than it could've been — self-corrects on its own next real
 // visit, same "lossy cache, not a source of truth" tolerance the rest of
 // this fast-path already relies on.
-function _updateDirectCssCacheEntry(host,css){
+//
+// Stores the raw SELECTOR ARRAY (`sel`), not pre-expanded CSS text — the
+// `body `+selector+`{display:none!important}` boilerplate around every
+// entry is identical every time, so baking it into the cached value just
+// repeats the same ~28 bytes per selector for nothing; _fastPathDirectStyle()
+// rebuilds the real CSS text from this array via _scopedDirectRule() at
+// read time (cheap — a map+join over an array that's already small by the
+// time it gets here, see _injectDirectStyle's own filtering).
+//
+// `selectors===null` (explicit clear, e.g. _cachedDirect itself is empty —
+// this host/config has nothing to hide at all) drops any stale entry.
+// `selectors===[]` is a DIFFERENT, meaningful state — "checked this host's
+// DOM against the full candidate list, confirmed zero matches" — and gets
+// STORED, not dropped: 2026-08-30, a host that legitimately matches nothing
+// used to get NO cache entry at all, so _injectDirectStyle()'s expensive
+// per-selector document.querySelector() filter pass re-ran on EVERY visit
+// forever, never benefiting from caching the way a host WITH matches does.
+// Caching the confirmed-empty result too (with the same `ts` freshness
+// _injectDirectStyle() checks before re-filtering) closes that gap.
+function _updateDirectCssCacheEntry(host,selectors){
   if(!extValid())return;
   try{
     _fpStorage.get([_DIRECT_CSS_SESSION_KEY]).then(function(res){
       var map=(res&&res[_DIRECT_CSS_SESSION_KEY])||{};
-      if(!css){
+      if(selectors===null){
         // Nothing to hide on this host — drop any stale non-empty guess from
         // an earlier visit rather than keep serving it.
         delete map[host];
       }else{
         var isNewHost=!Object.prototype.hasOwnProperty.call(map,host);
         if(isNewHost&&Object.keys(map).length>=_fpStorage.lruLimit)_evictOldestLruEntry(map);
-        map[host]={css:css,ts:Date.now()};
+        map[host]={sel:selectors,ts:Date.now()};
       }
       var payload={};payload[_DIRECT_CSS_SESSION_KEY]=map;
       _fpStorage.set(payload).catch(function(){});
@@ -294,11 +313,16 @@ function _updateDirectCssCacheEntry(host,css){
   }catch(e){}
 }
 
-// Scope under `body ` so a broad selector can never match body/html itself
-// and blank the whole page — skipped when already root-scoped.
+// 2026-08-30: `body ` root-scoping REMOVED for testing, at explicit user
+// request ("bỏ đi để tôi test") — previously prefixed every selector with
+// `body ` so a broad rule could never match <body>/<html> itself and blank
+// the whole page (_ALREADY_ROOT_SCOPED_RE above is now unused dead code,
+// left in place in case this gets reverted). Selectors are sent RAW. If a
+// site-rules.txt entry (or an ABP-converted one) ever matches body/html
+// directly, the whole page can go blank — that risk is now back, deliberately,
+// pending the user's own test results.
 function _scopedDirectRule(sel){
-  var scoped=_ALREADY_ROOT_SCOPED_RE.test(sel)?sel:'body '+sel;
-  return scoped+'{display:none!important}';
+  return sel+'{display:none!important}';
 }
 
 // Only worth the per-selector document.querySelector() cost below (each
@@ -308,13 +332,23 @@ function _scopedDirectRule(sel){
 // the list is actually that large. A real site-specific direct_hide_selectors
 // list is always small (tens of entries), never worth filtering.
 var _DIRECT_FILTER_CACHE_THRESHOLD=100;
+// How long a cached filter result (including a confirmed-EMPTY one — see
+// _updateDirectCssCacheEntry's own comment) is trusted before
+// _injectDirectStyle() pays for another full filter pass instead of
+// reusing it as-is. Bounds the "a host's ad markup genuinely changed since
+// last visit" staleness risk that comes with trusting a confirmed-empty
+// result at all — same lossy-cache tolerance the rest of this fast-path
+// system already accepts, just capped instead of "forever" (unbounded
+// staleness would mean a host that legitimately started serving ads well
+// after its first-ever visit could stay wrongly "confirmed empty" forever).
+var _DIRECT_FILTER_CACHE_STALE_MS=24*60*60*1000;
 
 function _injectDirectStyle(){
   _directAuthInjected=true; // real config wins over the fast-path guess from here on
   var host=location.hostname;
   if(!_cachedDirect.length){
     _sendCssSlot('direct','');
-    _updateDirectCssCacheEntry(host,'');
+    _updateDirectCssCacheEntry(host,null);
     return;
   }
   // One SEPARATE rule per selector (not one combined :where(...) list) —
@@ -352,16 +386,28 @@ function _injectDirectStyle(){
   // actually matched something on THIS page's DOM are worth caching for
   // NEXT time; the other several thousand that matched nothing here almost
   // certainly won't next time either (same site, same template).
-  var cacheSelectors=_cachedDirect;
-  if(_cachedDirect.length>_DIRECT_FILTER_CACHE_THRESHOLD){
-    cacheSelectors=[];
-    for(var j=0;j<_cachedDirect.length;j++){
-      try{if(document.querySelector(_cachedDirect[j]))cacheSelectors.push(_cachedDirect[j]);}catch(e){}
-    }
+  if(_cachedDirect.length<=_DIRECT_FILTER_CACHE_THRESHOLD){
+    _updateDirectCssCacheEntry(host,_cachedDirect);
+    return;
   }
-  var cacheRules=[];
-  for(var k=0;k<cacheSelectors.length;k++)cacheRules.push(_scopedDirectRule(cacheSelectors[k]));
-  _updateDirectCssCacheEntry(host,cacheRules.join('\n\n'));
+  // Large list — check for a still-fresh cached result FIRST (confirmed-
+  // empty included) before paying for another full filter pass. Without
+  // this, a host that legitimately matches nothing here would redo all
+  // 13,000+ document.querySelector() calls on every single visit forever,
+  // since a { } result never used to get cached at all — see
+  // _updateDirectCssCacheEntry's own comment.
+  try{
+    _fpStorage.get([_DIRECT_CSS_SESSION_KEY]).then(function(res){
+      var map=(res&&res[_DIRECT_CSS_SESSION_KEY])||{};
+      var existing=map[host];
+      if(existing&&(Date.now()-(existing.ts||0))<_DIRECT_FILTER_CACHE_STALE_MS)return; // still fresh — keep as-is, skip re-filtering
+      var cacheSelectors=[];
+      for(var j=0;j<_cachedDirect.length;j++){
+        try{if(document.querySelector(_cachedDirect[j]))cacheSelectors.push(_cachedDirect[j]);}catch(e){}
+      }
+      _updateDirectCssCacheEntry(host,cacheSelectors);
+    }).catch(function(){});
+  }catch(e){}
 }
 
 // _fastPathDirectStyle — fires the LAST successfully-computed 'direct' CSS
@@ -386,8 +432,11 @@ function _fastPathDirectStyle(){
       if(_directAuthInjected)return;
       var map=res&&res[_DIRECT_CSS_SESSION_KEY];
       var entry=map&&map[location.hostname];
-      var css=entry&&entry.css;
-      if(css)_sendCssSlot('direct',css);
+      var sel=entry&&entry.sel;
+      if(!sel||!sel.length)return;
+      var rules=[];
+      for(var i=0;i<sel.length;i++)rules.push(_scopedDirectRule(sel[i]));
+      _sendCssSlot('direct',rules.join('\n\n'));
     }).catch(function(){});
   }catch(e){}
 }
