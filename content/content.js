@@ -66,22 +66,13 @@ function _clearAllCss() {
 // IMPORTANT: No broad wildcard selectors like [class*="ad-"]. Those cause
 // false positives on sites like YouTube where legitimate elements contain
 // "ad" in class/id names. Every selector here targets a KNOWN ad provider
-// element. The [_HIDE_ATTR="1"] rule is belt-and-suspenders backup for
-// elements JS already hid via site-block.js's hide()/removeEl (which set
-// their own inline style directly) — this CSS rule alone is what matters
-// for any OTHER element sharing that marker.
+// element. The [_HIDE_ATTR="1"] rule is a backup for elements JS already
+// hid via site-block.js's hide()/removeEl.
 //
-// Single display:none!important property only (not also height/min-height/
-// margin/padding/border/overflow, which this block had before 2026-08-30):
-// live-verified on Firefox that a CSS block with several properties in one
-// declaration triggered NS_ERROR_ILLEGAL_VALUE from
-// nsIDOMWindowUtils.addSheet on chrome.scripting.insertCSS (Gecko-internal,
-// exact trigger still unconfirmed) — the same simplification already
-// applied to site-block.js's _injectDirectStyle() stopped reproducing it
-// there. display:none alone is sufficient regardless: once it wins the
-// cascade (origin:'USER', see background.js's setFrameCss), the element
-// already takes zero layout space, so the other properties never had
-// anything left to add.
+// Single display:none!important property — a CSS block with multiple
+// properties in one declaration was found to trigger an insertCSS crash on
+// Firefox; one property per rule avoids it, and is sufficient on its own
+// once it wins the cascade (origin:'USER', see background.js's setFrameCss).
 const BASE_CSS = `[${_HIDE_ATTR}="1"]{display:none!important}`;
 
 // ── FAST PATH: fire the base CSS off immediately (frame 0, before any

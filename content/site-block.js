@@ -89,11 +89,9 @@ var STRIP_INLINE_STYLE_KEYS=['strip_inline_styles'];
 // Selector caches — rebuilt once when _config changes, reused on every scan/mutation
 var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[], _cachedStripClasses=[], _cachedStripInlineStyles=[];
 var _cachedDirectStr='', _cachedCandidateStr='', _cachedHostStr='';
-// Pre-normalized labels/link_patterns — matchesAny()/hasMatchingLink() used
-// to re-run compactText()/normalizeText() on these same small, static
-// arrays on EVERY call, for EVERY ad-candidate element scan() finds (up to
-// 3x per candidate via isAdCandidate). Normalizing once here instead, kept
-// in sync with _cachedDirect/etc. by _rebuildSelectorCache().
+// Pre-normalized labels/link_patterns, so matchesAny()/hasMatchingLink()
+// don't re-normalize the same static arrays on every call. Kept in sync
+// with _cachedDirect/etc. by _rebuildSelectorCache().
 var _cachedLabelsCompact=[], _cachedLinkPatternsCompact=[], _cachedLinkPatternsNorm=[];
 
 function extValid(){
@@ -120,11 +118,9 @@ function compactText(value){
   return normalizeText(value).replace(/\s+/g,'');
 }
 
-// limit (optional) — stop checking FURTHER selectors once out.length hits
-// it. Only caller today (contextText) always immediately .slice(0,16)s the
-// result anyway, so once earlier (higher-priority) selectors already
-// gathered enough, later selectors' querySelectorAll calls are skipped
-// entirely instead of matching a page-wide set just to throw it away.
+// Collects elements matching any of `selectors` under `root`, deduped.
+// `limit` (optional) stops checking further selectors once enough results
+// are gathered.
 function collect(root,selectors,limit){
   var out=[],seen=new Set(),i;
   if(!root||!selectors||!selectors.length)return out;
@@ -252,11 +248,8 @@ function _sendCssSlot(slot,css){
 // Bare `body`/`html`-anchored selectors (e.g. `body:has(x) > y`) must skip
 // the auto-prefix below — 'body '+'body:has(...)' is always false.
 var _ALREADY_ROOT_SCOPED_RE=/^(body|html)(?![\w-])/i;
-// _evictOldestLruEntry — drop the least-recently-written host entry from a
-// per-host session-cache map (shared by the direct-CSS and scriptlet-rules
-// fast-path caches below) so it stays within its own LRU cap. O(n) over the
-// capped map (at most a few dozen entries) — trivial, only runs on a NEW
-// host being added while already at the cap, not on every write.
+// Drops the least-recently-written host entry from a per-host LRU map so it
+// stays within its own cap.
 function _evictOldestLruEntry(map){
   var oldestHost=null,oldestTs=Infinity;
   for(var h in map){
@@ -267,32 +260,12 @@ function _evictOldestLruEntry(map){
   if(oldestHost!==null)delete map[oldestHost];
 }
 
-// _updateDirectCssCacheEntry — read-modify-write the per-host LRU map for
-// THIS host only. A plain read-then-write (not atomic) is fine here: worst
-// case under a race is one write among several independent frames/hosts
-// gets clobbered, which just means that ONE host's fast-path guess is a
-// visit older than it could've been — self-corrects on its own next real
-// visit, same "lossy cache, not a source of truth" tolerance the rest of
-// this fast-path already relies on.
-//
-// Stores the raw SELECTOR ARRAY (`sel`), not pre-expanded CSS text — the
-// `body `+selector+`{display:none!important}` boilerplate around every
-// entry is identical every time, so baking it into the cached value just
-// repeats the same ~28 bytes per selector for nothing; _fastPathDirectStyle()
-// rebuilds the real CSS text from this array via _scopedDirectRule() at
-// read time (cheap — a map+join over an array that's already small by the
-// time it gets here, see _injectDirectStyle's own filtering).
-//
-// `selectors===null` (explicit clear, e.g. _cachedDirect itself is empty —
-// this host/config has nothing to hide at all) drops any stale entry.
-// `selectors===[]` is a DIFFERENT, meaningful state — "checked this host's
-// DOM against the full candidate list, confirmed zero matches" — and gets
-// STORED, not dropped: 2026-08-30, a host that legitimately matches nothing
-// used to get NO cache entry at all, so _injectDirectStyle()'s expensive
-// per-selector document.querySelector() filter pass re-ran on EVERY visit
-// forever, never benefiting from caching the way a host WITH matches does.
-// Caching the confirmed-empty result too (with the same `ts` freshness
-// _injectDirectStyle() checks before re-filtering) closes that gap.
+// Read-modify-write the per-host LRU map with this host's matched
+// direct_hide_selectors. Stores the raw selector array, not expanded CSS
+// text — _fastPathDirectStyle() rebuilds the CSS via _scopedDirectRule() at
+// read time. `selectors===null` clears the entry (nothing to hide at all);
+// `selectors===[]` (checked, zero matches) is stored, not cleared, so a
+// host that legitimately matches nothing still benefits from caching.
 function _updateDirectCssCacheEntry(host,selectors){
   if(!extValid())return;
   try{
@@ -313,34 +286,21 @@ function _updateDirectCssCacheEntry(host,selectors){
   }catch(e){}
 }
 
-// 2026-08-30: `body ` root-scoping REMOVED for testing, at explicit user
-// request ("bỏ đi để tôi test") — previously prefixed every selector with
-// `body ` so a broad rule could never match <body>/<html> itself and blank
-// the whole page (_ALREADY_ROOT_SCOPED_RE above is now unused dead code,
-// left in place in case this gets reverted). Selectors are sent RAW. If a
-// site-rules.txt entry (or an ABP-converted one) ever matches body/html
-// directly, the whole page can go blank — that risk is now back, deliberately,
-// pending the user's own test results.
+// Builds one CSS rule for a selector. No `body ` scoping — selectors are
+// sent as-is, so a selector matching <body>/<html> directly can blank the
+// whole page (accepted trade-off, see _ALREADY_ROOT_SCOPED_RE above, now unused).
 function _scopedDirectRule(sel){
   return sel+'{display:none!important}';
 }
 
-// Only worth the per-selector document.querySelector() cost below (each
-// call is cheap alone, but _cachedDirect can be 13,000+ entries when a site
-// has no dedicated section and inherits [global] wholesale straight from a
-// large merged ABP source like EasyList — real-measured 2026-08-30) once
-// the list is actually that large. A real site-specific direct_hide_selectors
-// list is always small (tens of entries), never worth filtering.
+// Below this many selectors, filtering isn't worth the per-selector
+// document.querySelector() cost — a real site-specific list is always
+// small; only a host inheriting [global] wholesale (thousands of merged
+// ABP selectors) needs filtering.
 var _DIRECT_FILTER_CACHE_THRESHOLD=100;
-// How long a cached filter result (including a confirmed-EMPTY one — see
-// _updateDirectCssCacheEntry's own comment) is trusted before
-// _injectDirectStyle() pays for another full filter pass instead of
-// reusing it as-is. Bounds the "a host's ad markup genuinely changed since
-// last visit" staleness risk that comes with trusting a confirmed-empty
-// result at all — same lossy-cache tolerance the rest of this fast-path
-// system already accepts, just capped instead of "forever" (unbounded
-// staleness would mean a host that legitimately started serving ads well
-// after its first-ever visit could stay wrongly "confirmed empty" forever).
+// How long a cached filter result (including a confirmed-empty one) is
+// trusted before re-filtering, so a host's cache self-corrects if its ad
+// markup changes.
 var _DIRECT_FILTER_CACHE_STALE_MS=24*60*60*1000;
 
 function _injectDirectStyle(){
@@ -351,51 +311,28 @@ function _injectDirectStyle(){
     _updateDirectCssCacheEntry(host,null);
     return;
   }
-  // One SEPARATE rule per selector (not one combined :where(...) list) —
-  // matches uBlock Origin's own actual generated CSS (vAPI.hideStyle,
-  // explodeCSS — verified against their real source), and gives the same
-  // per-selector fault tolerance :where() existed for without needing it: a
-  // syntactically invalid selector fails to parse its OWN rule only (normal
-  // CSS parse-error recovery, rule-by-rule), leaving every other rule
-  // unaffected — no O(n) synchronous document.querySelector() validation
-  // needed either way. display:none!important alone (not also visibility/
-  // height/overflow/pointer-events) — also matching uBO's vAPI.hideStyle —
-  // is sufficient on its own: once it wins the cascade (origin:'user'/
-  // cssOrigin:'user', see background.js's setFrameCss), the element already
-  // takes zero layout space and paints nothing, so the other 4 properties
-  // never had anything left to add.
+  // One separate CSS rule per selector (not a combined :where() list) —
+  // an invalid selector only breaks its own rule, not the others.
+  // display:none!important alone is enough once it wins the cascade
+  // (origin:'user'/cssOrigin:'user', see background.js's setFrameCss).
   //
-  // The REAL CSS sent to the browser (below) always covers the FULL
-  // _cachedDirect list — never narrowed — so correctness never depends on
-  // which selectors happened to match at injection time (late-arriving ads
-  // are still covered). Only the SEPARATE fast-path CACHE (further down)
-  // gets narrowed, and only for the [global]-inherited case.
+  // The CSS actually sent below always covers the FULL _cachedDirect list.
+  // Only the fast-path cache (below) gets narrowed.
   var rules=[];
   for(var i=0;i<_cachedDirect.length;i++)rules.push(_scopedDirectRule(_cachedDirect[i]));
   _sendCssSlot('direct',rules.join('\n\n'));
 
-  // directCssFastPath's per-host cache entry (2026-08-30): a host with NO
-  // dedicated site section inherits [global].direct_hide_selectors AS-IS —
-  // live-measured over 1MB for a single host once EasyList (13,632 global
-  // selectors) is enabled, duplicated again for every OTHER such host up to
-  // _fpStorage.lruLimit entries. Caching the full list is real, unavoidable
-  // work the FIRST time this host is seen (one-time
-  // document.querySelector() pass per candidate selector, accepted cost —
-  // same "pay once, reuse cheaply after" trade _fastPathDirectStyle's
-  // whole existence already rests on) — but only the selectors that
-  // actually matched something on THIS page's DOM are worth caching for
-  // NEXT time; the other several thousand that matched nothing here almost
-  // certainly won't next time either (same site, same template).
+  // Cache this host's matched selectors for next visit's fast-path guess.
+  // Small lists (real site-specific rules) are cached as-is. Large lists
+  // (a host with no dedicated section, inheriting [global] wholesale — can
+  // be thousands of selectors) are filtered down to just the ones that
+  // actually match something on this page first.
   if(_cachedDirect.length<=_DIRECT_FILTER_CACHE_THRESHOLD){
     _updateDirectCssCacheEntry(host,_cachedDirect);
     return;
   }
-  // Large list — check for a still-fresh cached result FIRST (confirmed-
-  // empty included) before paying for another full filter pass. Without
-  // this, a host that legitimately matches nothing here would redo all
-  // 13,000+ document.querySelector() calls on every single visit forever,
-  // since a { } result never used to get cached at all — see
-  // _updateDirectCssCacheEntry's own comment.
+  // Skip re-filtering if a still-fresh cached result already exists
+  // (confirmed-empty included).
   try{
     _fpStorage.get([_DIRECT_CSS_SESSION_KEY]).then(function(res){
       var map=(res&&res[_DIRECT_CSS_SESSION_KEY])||{};
@@ -513,17 +450,15 @@ function _updateScriptletCacheEntry(host,safeRules){
   }catch(e){}
 }
 
-// patterns must already be normalized (compactText) — callers pass
-// _cachedLabelsCompact/_cachedLinkPatternsCompact (see _rebuildSelectorCache),
-// never cfg.labels/cfg.link_patterns raw.
+// patterns must already be normalized via compactText().
 function matchesAny(value,normalizedPatterns){
   if(!value||!normalizedPatterns||!normalizedPatterns.length)return false;
   for(var i=0;i<normalizedPatterns.length;i++)if(value.indexOf(normalizedPatterns[i])!==-1)return true;
   return false;
 }
 
-// patterns must already be normalized (normalizeText) — callers pass
-// _cachedLinkPatternsNorm (see _rebuildSelectorCache), never cfg.link_patterns raw.
+// True if any <a href> under root contains one of the (already
+// normalizeText()-normalized) patterns.
 function hasMatchingLink(root,normalizedPatterns){
   if(!root||!root.querySelectorAll||!normalizedPatterns||!normalizedPatterns.length)return false;
   var links=root.querySelectorAll('a[href]');
@@ -642,13 +577,8 @@ function collapseParentIfEmpty(el){
   var hasVisible=false;
   for(var i=0;i<parent.children.length;i++){
     var c=parent.children[i];
-    // Cheap checks first (inline style / our own JS-hide marker) — a
-    // direct_hide_selectors match is hidden PURELY by the injected
-    // stylesheet (see scan() below) and never gets either of those, so it
-    // would otherwise look "visible" here and block the parent from
-    // collapsing. getComputedStyle() is the fallback, not the common case,
-    // since it forces a style recalc (real cost, only worth paying when the
-    // cheap checks don't already have an answer).
+    // Cheap checks first; getComputedStyle() (forces a style recalc) is
+    // the fallback for a child hidden purely by CSS, with no marker of its own.
     if(c.style.display==='none'||c.hasAttribute(_HIDE_ATTR))continue;
     if(getComputedStyle(c).display==='none')continue;
     hasVisible=true;break;
@@ -664,8 +594,8 @@ function collapseParentIfEmpty(el){
   }
 }
 
-// removeEl — fully removes element from DOM (used for known/direct ad selectors)
-// After removal checks one level up to collapse empty parent containers.
+// Keeps el itself in the DOM but clears its children and hides it — used
+// for known/direct ad selectors. Then checks the parent for collapse.
 function removeEl(el){
   if(!el)return false;
   var parent=el.parentElement;
@@ -690,37 +620,17 @@ function hide(el){
 function scan(root){
   if(!_enabled||!_config||!isEligiblePage(_config))return;
   var count=0;
-  // direct_hide_selectors are already hidden the instant they exist by the
-  // injected stylesheet (_injectDirectStyle) — re-matching the full (often
-  // large, merged-across-sources) selector string against every mutation
-  // batch bought nothing visually and got slower the more rules were enabled.
-  // Only re-run it once per boot (root===document catches the first full
-  // scan) purely to seed the "ads blocked" counter; later dynamically-added
-  // matches are still hidden instantly by CSS, just not re-counted.
-  //
-  // No DOM touch on these elements themselves (2026-08-30, 3rd attempt) —
-  // relying purely on the injected stylesheet. The 2nd attempt was
-  // live-disproven (getComputedStyle showed display:block/flex, not none)
-  // — but that was BEFORE the real root cause was found: a CSS block with
-  // several properties in one declaration was triggering
-  // NS_ERROR_ILLEGAL_VALUE (nsIDOMWindowUtils.addSheet) on Firefox, which
-  // silently failed the whole insertCSS call — not a cascade/origin
-  // problem. Both this file's CSS (_injectDirectStyle, single property per
-  // rule) and content.js's BASE_CSS were simplified to one
-  // display:none!important property per rule, and live-verified on
-  // Firefox afterward: getComputedStyle correctly read back display:none
-  // for supper_masthead/banner-ads/rich-media-banner-ads/contact-quangcao.
-  // collapseParentIfEmpty() still runs (cheap, no CSS dependency) so
-  // parent containers still collapse correctly once these are hidden.
+  // direct_hide_selectors are already hidden instantly by the injected
+  // stylesheet — only re-collected once per boot, purely to seed the "ads
+  // blocked" counter and collapse their parent containers. No inline style
+  // is set on these elements themselves; the CSS alone hides them.
   if(!_directCounted&&root===document){
     _directCounted=true;
     var direct=collectFast(root,_cachedDirectStr);
     for(var d=0;d<direct.length;d++){
-      // Skip a match already marked by an EARLIER iteration's
-      // collapseParentIfEmpty() in this same loop (e.g. direct[d] is itself
-      // the parent container a prior direct[] match just collapsed) —
-      // same double-count guard hide()'s own hasAttribute(_HIDE_ATTR)
-      // early-return used to provide before this loop stopped calling it.
+      // Skip a match already marked by an earlier iteration's
+      // collapseParentIfEmpty() in this same loop (it's itself the parent
+      // container a prior match just collapsed) — avoids double-counting.
       if(direct[d].hasAttribute(_HIDE_ATTR))continue;
       collapseParentIfEmpty(direct[d]);
       count++;

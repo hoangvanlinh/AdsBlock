@@ -368,22 +368,14 @@ function isFreshRuleCache(entry) {
 // is dropped rather than guessed at.
 const ABP_PROCEDURAL_RE = /:has-text\(|:matches-css|:xpath\(|:min-text-length|:remove\(|:style\(|:upward\(|:min-outer-height/;
 const ABP_BARE_NETWORK_DOMAIN_RE = /^[a-z0-9.*-]+\^$/i;
-// Build-tool-generated class/id hash — e.g. styled-jsx's `.jsx-2126301199`
-// (a decimal hash of that page's OWN compiled CSS, live-caught 2026-08-30 in
-// an actual global direct_hide_selectors entry), a Unix-ms/CRC32-style
-// numeric id (`#popup-1720497466`), styled-components/emotion's
-// `.sc-xxxxxxxx`. Threshold is 8+ digits, not 6+: real ad-DIMENSION classes
-// concatenate two 3-digit numbers with no separator (`.ad-300250` = 300x250,
-// `.ad-970250` = 970x250) and land at exactly 6 digits — live-verified
-// against real EasyList/ABPVN data that 6+ false-positived on those, while
-// 8+ still catches every real hash/timestamp sample found (jsx-*, 9-10
-// digit CRC32/epoch-second ids) with zero false positives on the same
-// corpus. These hashes are worthless past the ONE build that produced them
-// (regenerated on the site's next deploy) — converting them just bloats
-// direct_hide_selectors (and, downstream, every directCssFastPath entry
-// that inherits the global list, live-measured over 1MB per host
-// 2026-08-30) for a selector that stops matching anything the moment the
-// site redeploys anyway.
+// Build-tool-generated class/id hash — e.g. styled-jsx's `.jsx-2126301199`,
+// a CRC32/epoch-timestamp-style numeric id (`#popup-1720497466`),
+// styled-components/emotion's `.sc-xxxxxxxx`. These are worthless past the
+// one build that produced them (regenerated on the site's next deploy), so
+// skip converting them. Threshold is 8+ digits, not 6+: real ad-dimension
+// classes concatenate two 3-digit numbers (`.ad-300250` = 300x250) and land
+// at exactly 6 digits — 8+ avoids that false positive while still catching
+// real hashes/timestamps (9-10 digits).
 const ABP_LOW_VALUE_HASH_RE = /-\d{8,}\b/;
 
 // This repo's own grammar always opens with a [section] header (after
@@ -2976,14 +2968,11 @@ async function applyPrivacySettings() {
 // document.styleSheets, and no class needed to gate it on/off — turning it
 // off is just removeCSS.
 //
-// origin:'USER' (Chrome only, see _CSS_ORIGIN below) places it in the
-// "user" cascade origin, which always wins over the page's own CSS
-// regardless of specificity/!important — stronger than the default
-// 'AUTHOR' origin, where our :where(...) (zero-specificity) selectors could
-// in theory still lose to a page rule that also uses !important. Matches
-// uBO's own MV3 build (platform/mv3/extension/js/background.js's insertCSS
-// handler). removeCSS must pass the same origin used at insert time, or the
-// browser won't recognize it as the same injection to remove.
+// origin:'USER' places it in the "user" cascade origin, which always wins
+// over the page's own CSS regardless of specificity/!important — matches
+// uBlock Origin's own approach. removeCSS must pass the same origin used
+// at insert time, or the browser won't recognize it as the same injection
+// to remove.
 //
 // "slot" lets 3 independent CSS sources (base defaults, per-site
 // direct_hide_selectors, user custom rules) update/clear without touching
@@ -2995,18 +2984,9 @@ function _frameCssKey(tabId, frameId, slot) {
   return `${tabId}:${frameId}:${slot}`;
 }
 
-// 2026-08-30 correction: browser.tabs.insertCSS does NOT exist on this
-// Firefox (live-verified: typeof browser.tabs.insertCSS === 'undefined',
-// typeof browser.scripting.insertCSS === 'function') — the "Firefox kept
-// the old tabs API under MV3" assumption a few commits back was wrong.
-// Firefox implements the same `scripting` namespace Chrome does; there is
-// only one real API here, not two. The earlier NS_ERROR_ILLEGAL_VALUE
-// addSheet crash from chrome.scripting.insertCSS was reproduced against the
-// OLD combined :where(...) + 5-property CSS shape — since simplified to
-// separate per-selector rules with a single display:none!important
-// property (see _injectDirectStyle in site-block.js) — re-verify live
-// whether that crash still reproduces with the new shape before assuming
-// it does.
+// Firefox implements the same `scripting.insertCSS` namespace Chrome does
+// (browser.tabs.insertCSS does not exist) — one shared implementation for
+// both browsers.
 async function _insertFrameCss(tabId, frameId, css) {
   await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
 }

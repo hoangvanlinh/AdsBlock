@@ -29,21 +29,12 @@ var _usingSession=!!_sessionArea;
 var _localArea=EXT.storage&&EXT.storage.local;
 var _area=_usingSession?_sessionArea:_localArea;
 
-// _usingSession above only means "the storage.session API OBJECT exists on
-// this browser" — NOT that this content script can actually use it. The
-// access grant is a SEPARATE runtime step (background.js's setAccessLevel,
-// re-issued on every SW start, not guaranteed to survive/apply — see that
-// file's own comment for a live-reproduced case where it silently failed).
-// A denied get()/set() call REJECTS the returned promise; it does not throw
-// synchronously, so a bare try/catch around the call (the previous version
-// of this file) never sees it — and every caller in site-block.js already
-// appends its own .catch(()=>{}), so the rejection vanishes with no error
-// anywhere, while nothing is ever actually read or written (live-reported
-// 2026-08-30: no fast-path entry visible in storage at all, no console
-// error either — this is why). Retry against .local per-call instead of
-// deciding the area once at load time, so a broken session grant degrades
-// to the same "works, just less persistent" fallback this file's own
-// header comment already promises instead of a silent permanent no-op.
+// _usingSession above only means the storage.session API object exists —
+// not that this content script actually has access (a separate runtime
+// grant, background.js's setAccessLevel, that can silently fail). A denied
+// get()/set() call REJECTS the promise rather than throwing, so retry
+// against .local per-call here instead of assuming the area chosen at load
+// time still works.
 function _withLocalFallback(promise){
   if(!_usingSession||!_localArea)return promise;
   return promise.catch(function(){return null;});
