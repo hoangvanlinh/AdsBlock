@@ -19,8 +19,6 @@ var LOCAL_RULES_PATH=_CFG.RULES_LOCAL_PATH;
 var CACHE_KEY_TEXT=_CFG.RULES_CACHE_TEXT_KEY;
 var CACHE_KEY_TIME=_CFG.RULES_CACHE_TIME_KEY;
 var CACHE_TTL_MS=_CFG.RULES_CACHE_TTL_MS;
-var SITE_CFG_FP_KEY=_CFG.SITE_CONFIG_FASTPATH_KEY||'siteConfigFastPath';
-var SITE_CFG_GLOBAL_FP_KEY=_CFG.SITE_CONFIG_GLOBAL_FASTPATH_KEY||'siteConfigGlobalFastPath';
 
 function parseRules(text){
   var out={},section=null;
@@ -412,87 +410,14 @@ function _fromParsedText(text){
   return {siteKey:siteKey,global:parsed.global||{},site:(siteKey&&parsed[siteKey])||{}};
 }
 
-// _fpStorageRef — same lazy accessor pattern site-block.js uses for
-// window.__qkv1FastpathStorage: this file is listed BEFORE
-// content/fastpath-storage.js in the manifest's content_scripts array, so
-// the property doesn't exist yet while THIS file's top-level code runs —
-// but loadSiteConfig() itself is never actually CALLED until site-block.js's
-// boot() does so, well after every content_scripts file has finished
-// loading, so a lazy per-call lookup (not a module-load-time one) is safe.
-function _fpStorageRef(){
-  return window.__qkv1FastpathStorage||{get:function(){return Promise.resolve({});},set:function(){return Promise.resolve();},lruLimit:10};
-}
-
-function _evictOldestSiteCfgEntry(map){
-  var oldestHost=null,oldestTs=Infinity;
-  for(var h in map){
-    if(!Object.prototype.hasOwnProperty.call(map,h))continue;
-    var ts=(map[h]&&map[h].ts)||0;
-    if(ts<oldestTs){oldestTs=ts;oldestHost=h;}
-  }
-  if(oldestHost!==null)delete map[oldestHost];
-}
-
-// _readSiteConfigFastPath — the small-cache check _loadFallback() does
-// FIRST, before paying for a full decompress+parse. Requires a cached
-// `global` at minimum (host-independent — once ANY host has resolved
-// successfully in this browser install, every other host can reuse it);
-// `site` is genuinely per-host and simply defaults to {} when this
-// particular host has no cached entry yet (same "empty site section" shape
-// a real resolution would have for most hosts anyway — self-corrects the
-// moment a real resolution for this host lands).
-function _readSiteConfigFastPath(host){
-  var fp=_fpStorageRef();
-  return Promise.all([fp.get([SITE_CFG_FP_KEY]),fp.get([SITE_CFG_GLOBAL_FP_KEY])]).then(function(results){
-    var globalEntry=results[1]&&results[1][SITE_CFG_GLOBAL_FP_KEY];
-    if(!globalEntry)return null; // nothing cached yet anywhere — genuine first-ever resolution
-    var siteMap=(results[0]&&results[0][SITE_CFG_FP_KEY])||{};
-    var siteEntry=siteMap[host];
-    return {
-      siteKey:(siteEntry&&siteEntry.siteKey)||'',
-      global:globalEntry.global||{},
-      site:(siteEntry&&siteEntry.site)||{}
-    };
-  }).catch(function(){return null;});
-}
-
-// _writeSiteConfigFastPath — called every time loadSiteConfig() resolves a
-// REAL config (message success or the full fallback parse), refreshing both
-// caches for next time. Deliberately NOT gated on which path produced
-// `resolved` — a fallback-parsed result is exactly as real/correct as a
-// messaged one, just slower to obtain.
-function _writeSiteConfigFastPath(host,resolved){
-  var fp=_fpStorageRef();
-  try{
-    fp.get([SITE_CFG_FP_KEY]).then(function(res){
-      var map=(res&&res[SITE_CFG_FP_KEY])||{};
-      var isNewHost=!Object.prototype.hasOwnProperty.call(map,host);
-      if(isNewHost&&Object.keys(map).length>=fp.lruLimit)_evictOldestSiteCfgEntry(map);
-      map[host]={siteKey:resolved.siteKey||'',site:resolved.site||{},ts:Date.now()};
-      var payload={};payload[SITE_CFG_FP_KEY]=map;
-      fp.set(payload).catch(function(){});
-    }).catch(function(){});
-    var gPayload={};gPayload[SITE_CFG_GLOBAL_FP_KEY]={global:resolved.global||{},ts:Date.now()};
-    fp.set(gPayload).catch(function(){});
-  }catch(e){}
-}
-
 function _loadFallback(resolve){
-  var host=(location.hostname||'').toLowerCase();
-  // DEBUG_LOCAL never serves ANY cache (fast-path included) — local
-  // site-rules.txt edits must take effect on every reload, same reasoning
-  // as the isFreshCache() skip further down.
-  var fastPath=DEBUG_LOCAL?Promise.resolve(null):_readSiteConfigFastPath(host);
-  fastPath.then(function(guess){
-    if(guess){resolve(guess);return;}
-    getCachedRules().then(function(cached){
-      // DEBUG_LOCAL never serves the cache — _fetchAndMergeDirect() itself
-      // already swaps the bundled default entry for the local file when
-      // DEBUG_LOCAL is set, so a plain cache-skip here is all that's needed
-      // for local site-rules.txt edits to take effect on every reload.
-      if(!DEBUG_LOCAL&&isFreshCache(cached)){resolve(_fromParsedText(cached.text));return;}
-      _fetchAndMergeDirect(cached,function(text){resolve(_fromParsedText(text||''));});
-    });
+  getCachedRules().then(function(cached){
+    // DEBUG_LOCAL never serves the cache — _fetchAndMergeDirect() itself
+    // already swaps the bundled default entry for the local file when
+    // DEBUG_LOCAL is set, so a plain cache-skip here is all that's needed
+    // for local site-rules.txt edits to take effect on every reload.
+    if(!DEBUG_LOCAL&&isFreshCache(cached)){resolve(_fromParsedText(cached.text));return;}
+    _fetchAndMergeDirect(cached,function(text){resolve(_fromParsedText(text||''));});
   });
 }
 
@@ -512,11 +437,7 @@ function loadSiteConfig(callback){
           resolve({siteKey:res.siteKey||'',global:res.global||{},site:res.site||{}});
         });
       }catch(e){_loadFallback(resolve);}
-    }).then(function(site){
-      _site=site;
-      if(!DEBUG_LOCAL)_writeSiteConfigFastPath((location.hostname||'').toLowerCase(),site);
-      return site;
-    });
+    }).then(function(site){_site=site;return site;});
   }
   _loading.then(callback);
 }

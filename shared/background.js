@@ -2987,16 +2987,27 @@ function _frameCssKey(tabId, frameId, slot) {
 // uses that instead; Chrome keeps chrome.scripting.insertCSS with
 // origin:'USER' as before. _isFirefoxInstall() is the same detection
 // checkForExtensionUpdate() already uses for this kind of per-browser fork.
+//
+// cssOrigin:'user' (the tabs.insertCSS field's own name for the same
+// concept as scripting.insertCSS's origin:'USER') — without it, Firefox's
+// CSS landed at the default 'author' origin, where our zero-specificity
+// :where(...) selectors can lose to a page's own !important rule (this was
+// a real, live-confirmed regression: direct_hide_selectors matches like
+// vnexpress's #supper_masthead stayed visible on Firefox without hide()'s
+// inline-style fallback). Confirmed via uBlock Origin's own real source
+// (platform/common/vapi-background.js) — it unconditionally sets
+// `details.cssOrigin = 'user'` on every tabs.insertCSS/removeCSS call, on
+// every platform including Firefox, not just Chrome's newer API.
 async function _insertFrameCss(tabId, frameId, css) {
   if (_isFirefoxInstall()) {
-    await browser.tabs.insertCSS(tabId, { code: css, frameId, matchAboutBlank: true });
+    await browser.tabs.insertCSS(tabId, { code: css, frameId, matchAboutBlank: true, cssOrigin: 'user' });
   } else {
     await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
   }
 }
 async function _removeFrameCss(tabId, frameId, css) {
   if (_isFirefoxInstall()) {
-    await browser.tabs.removeCSS(tabId, { code: css, frameId, matchAboutBlank: true });
+    await browser.tabs.removeCSS(tabId, { code: css, frameId, matchAboutBlank: true, cssOrigin: 'user' });
   } else {
     await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
   }

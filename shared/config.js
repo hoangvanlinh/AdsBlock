@@ -122,28 +122,6 @@ self.ADBLOCK_CONFIG = {
   // rule arrives, since nothing ever un-installs it. See site-block.js's
   // _fastPathDispatchScriptletRules()/_dispatchScriptletRules().
   SCRIPTLET_RULES_FASTPATH_KEY: 'scriptletRulesFastPath',
-  // site-rules-loader.js's own fast path — separate from the two above.
-  // GET_SITE_CONFIG's real path (message to background) is normally fast
-  // (background memoizes the merged `global` object), but its FALLBACK path
-  // (_loadFallback, used only when that message itself fails/times out —
-  // e.g. a cold-starting service worker) previously always decompressed +
-  // fully re-parsed the ENTIRE site-rules.txt text from scratch, then
-  // re-resolved host_patterns — genuinely slow at real scale (~6.97MB/119k
-  // lines, see docs on RULES_CACHE_TEXT_KEY) even though the actual answer
-  // for THIS host rarely changes between page loads. These two keys cache
-  // the last successfully RESOLVED {siteKey, global, site} — split in two
-  // because `global` is host-independent (shared by every site, cached
-  // ONCE) while `site` is small and genuinely per-host (an LRU map, same
-  // shape as DIRECT_CSS_FASTPATH_KEY above). _loadFallback() checks these
-  // FIRST and only does the full decompress+parse when nothing is cached
-  // yet (first-ever resolution in this browser install). Same
-  // staleness-tolerance tradeoff _loadFallback's own 6h RULES_CACHE_TTL_MS
-  // already accepts — this is one more cache layer INSIDE that already-
-  // degraded fallback tier, not a new category of risk on the fast
-  // (messaging-succeeds) path, which never reads these. See
-  // site-rules-loader.js's _readSiteConfigFastPath()/_writeSiteConfigFastPath().
-  SITE_CONFIG_FASTPATH_KEY: 'siteConfigFastPath',
-  SITE_CONFIG_GLOBAL_FASTPATH_KEY: 'siteConfigGlobalFastPath',
   // fetchRemoteRuleText() (background.js) records a { [url]: message } entry
   // here for every URL source that fails to fetch, and clears it on the next
   // successful fetch of that same URL — the dashboard's Rule Source page

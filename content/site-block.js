@@ -89,6 +89,12 @@ var STRIP_INLINE_STYLE_KEYS=['strip_inline_styles'];
 // Selector caches — rebuilt once when _config changes, reused on every scan/mutation
 var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[], _cachedStripClasses=[], _cachedStripInlineStyles=[];
 var _cachedDirectStr='', _cachedCandidateStr='', _cachedHostStr='';
+// Pre-normalized labels/link_patterns — matchesAny()/hasMatchingLink() used
+// to re-run compactText()/normalizeText() on these same small, static
+// arrays on EVERY call, for EVERY ad-candidate element scan() finds (up to
+// 3x per candidate via isAdCandidate). Normalizing once here instead, kept
+// in sync with _cachedDirect/etc. by _rebuildSelectorCache().
+var _cachedLabelsCompact=[], _cachedLinkPatternsCompact=[], _cachedLinkPatternsNorm=[];
 
 function extValid(){
   try{return !!(EXT.runtime&&EXT.runtime.getManifest());}
@@ -114,10 +120,16 @@ function compactText(value){
   return normalizeText(value).replace(/\s+/g,'');
 }
 
-function collect(root,selectors){
+// limit (optional) — stop checking FURTHER selectors once out.length hits
+// it. Only caller today (contextText) always immediately .slice(0,16)s the
+// result anyway, so once earlier (higher-priority) selectors already
+// gathered enough, later selectors' querySelectorAll calls are skipped
+// entirely instead of matching a page-wide set just to throw it away.
+function collect(root,selectors,limit){
   var out=[],seen=new Set(),i;
   if(!root||!selectors||!selectors.length)return out;
   for(i=0;i<selectors.length;i++){
+    if(limit&&out.length>=limit)break;
     try{
       if(root.nodeType===1&&root.matches(selectors[i])&&!seen.has(root)){
         seen.add(root);out.push(root);
@@ -161,7 +173,12 @@ function collectFast(root,selectorStr){
 var _directCounted=false;
 function _rebuildSelectorCache(){
   _directCounted=false;
-  if(!_config){_cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedStripClasses=[];_cachedStripInlineStyles=[];_cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';return;}
+  if(!_config){
+    _cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedStripClasses=[];_cachedStripInlineStyles=[];
+    _cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';
+    _cachedLabelsCompact=[];_cachedLinkPatternsCompact=[];_cachedLinkPatternsNorm=[];
+    return;
+  }
   _cachedDirect=flattenSelectors(_config,DIRECT_HIDE_KEYS);
   _cachedCandidates=flattenSelectors(_config,CANDIDATE_KEYS);
   _cachedHosts=flattenSelectors(_config,HOST_KEYS);
@@ -170,6 +187,10 @@ function _rebuildSelectorCache(){
   _cachedDirectStr=_cachedDirect.join(',');
   _cachedCandidateStr=_cachedCandidates.join(',');
   _cachedHostStr=_cachedHosts.join(',');
+  var labels=_config.labels||[], linkPatterns=_config.link_patterns||[];
+  _cachedLabelsCompact=labels.map(compactText);
+  _cachedLinkPatternsCompact=linkPatterns.map(compactText);
+  _cachedLinkPatternsNorm=linkPatterns.map(normalizeText);
 }
 
 // _stripClassesFrom — remove any cached class from a single root element
@@ -282,17 +303,28 @@ function _injectDirectStyle(){
     return;
   }
   // Scope under `body ` so a broad selector can never match body/html itself
-  // and blank the whole page — skipped when already root-scoped. No per-selector
-  // document.querySelector() validation needed: :where() is a forgiving selector
-  // list, so the browser silently drops any invalid entry instead of invalidating
-  // the whole rule — avoids an O(n) synchronous DOM call per selector on every
-  // boot()/rules-change, which got noticeably slow with large merged selector sets.
-  var scoped=[];
+  // and blank the whole page — skipped when already root-scoped.
+  //
+  // One SEPARATE rule per selector (not one combined :where(...) list) —
+  // matches uBlock Origin's own actual generated CSS (vAPI.hideStyle,
+  // explodeCSS — verified against their real source), and gives the same
+  // per-selector fault tolerance :where() existed for without needing it: a
+  // syntactically invalid selector fails to parse its OWN rule only (normal
+  // CSS parse-error recovery, rule-by-rule), leaving every other rule
+  // unaffected — no O(n) synchronous document.querySelector() validation
+  // needed either way. display:none!important alone (not also visibility/
+  // height/overflow/pointer-events) — also matching uBO's vAPI.hideStyle —
+  // is sufficient on its own: once it wins the cascade (origin:'user'/
+  // cssOrigin:'user', see background.js's setFrameCss), the element already
+  // takes zero layout space and paints nothing, so the other 4 properties
+  // never had anything left to add.
+  var rules=[];
   for(var i=0;i<_cachedDirect.length;i++){
     var sel=_cachedDirect[i];
-    scoped.push(_ALREADY_ROOT_SCOPED_RE.test(sel)?sel:'body '+sel);
+    var scoped=_ALREADY_ROOT_SCOPED_RE.test(sel)?sel:'body '+sel;
+    rules.push(scoped+'{display:none!important}');
   }
-  var css=':where('+scoped.join(',\n')+'){display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;pointer-events:none!important}';
+  var css=rules.join('\n\n');
   _sendCssSlot('direct',css);
   _updateDirectCssCacheEntry(host,css);
 }
@@ -397,18 +429,23 @@ function _updateScriptletCacheEntry(host,safeRules){
   }catch(e){}
 }
 
-function matchesAny(value,patterns){
-  if(!value||!patterns||!patterns.length)return false;
-  for(var i=0;i<patterns.length;i++)if(value.indexOf(compactText(patterns[i]))!==-1)return true;
+// patterns must already be normalized (compactText) — callers pass
+// _cachedLabelsCompact/_cachedLinkPatternsCompact (see _rebuildSelectorCache),
+// never cfg.labels/cfg.link_patterns raw.
+function matchesAny(value,normalizedPatterns){
+  if(!value||!normalizedPatterns||!normalizedPatterns.length)return false;
+  for(var i=0;i<normalizedPatterns.length;i++)if(value.indexOf(normalizedPatterns[i])!==-1)return true;
   return false;
 }
 
-function hasMatchingLink(root,patterns){
-  if(!root||!root.querySelectorAll||!patterns||!patterns.length)return false;
+// patterns must already be normalized (normalizeText) — callers pass
+// _cachedLinkPatternsNorm (see _rebuildSelectorCache), never cfg.link_patterns raw.
+function hasMatchingLink(root,normalizedPatterns){
+  if(!root||!root.querySelectorAll||!normalizedPatterns||!normalizedPatterns.length)return false;
   var links=root.querySelectorAll('a[href]');
   for(var i=0;i<links.length;i++){
     var href=normalizeText(links[i].getAttribute('href'));
-    for(var j=0;j<patterns.length;j++)if(href.indexOf(normalizeText(patterns[j]))!==-1)return true;
+    for(var j=0;j<normalizedPatterns.length;j++)if(href.indexOf(normalizedPatterns[j])!==-1)return true;
   }
   return false;
 }
@@ -426,7 +463,7 @@ function attrBlob(el,attrKeys){
 function contextText(root,cfg){
   if(!root)return '';
   var selectors=cfg.context_selectors&&cfg.context_selectors.length?cfg.context_selectors:['header','[role="heading"]','span','a'];
-  var nodes=collect(root,selectors).slice(0,16);
+  var nodes=collect(root,selectors,16).slice(0,16);
   if(!nodes.length)nodes=[root];
   for(var i=0;i<nodes.length;i++){
     var text=compactText(nodes[i].getAttribute&&nodes[i].getAttribute('aria-label')||nodes[i].textContent);
@@ -459,11 +496,9 @@ function collectShadowHosts(root){
   return out;
 }
 
-function shadowRootHasAdSignal(shadow,cfg){
+function shadowRootHasAdSignal(shadow){
   if(!shadow)return false;
   try{
-    var labels=cfg.labels||[];
-    var patterns=cfg.link_patterns||[];
     var shadowLinks=shadow.querySelectorAll('a[href],a[aria-label],[aria-label],[slot="credit-bar"],faceplate-screen-reader-content');
     for(var i=0;i<shadowLinks.length;i++){
       var href=normalizeText(shadowLinks[i].getAttribute&&shadowLinks[i].getAttribute('href'));
@@ -471,17 +506,17 @@ function shadowRootHasAdSignal(shadow,cfg){
       var rel=compactText(shadowLinks[i].getAttribute&&shadowLinks[i].getAttribute('rel'));
       var text=compactText(shadowLinks[i].textContent);
       if(rel.indexOf('sponsored')!==-1)return true;
-      if(matchesAny(aria,labels)||matchesAny(text,labels))return true;
-      for(var j=0;j<patterns.length;j++)if(href.indexOf(normalizeText(patterns[j]))!==-1)return true;
+      if(matchesAny(aria,_cachedLabelsCompact)||matchesAny(text,_cachedLabelsCompact))return true;
+      for(var j=0;j<_cachedLinkPatternsNorm.length;j++)if(href.indexOf(_cachedLinkPatternsNorm[j])!==-1)return true;
     }
   }catch(e){}
   return false;
 }
 
-function shadowHasAdSignal(el,cfg){
+function shadowHasAdSignal(el){
   if(!el)return false;
   var hosts=collectShadowHosts(el);
-  for(var i=0;i<hosts.length;i++)if(shadowRootHasAdSignal(hosts[i].shadowRoot,cfg))return true;
+  for(var i=0;i<hosts.length;i++)if(shadowRootHasAdSignal(hosts[i].shadowRoot))return true;
   return false;
 }
 
@@ -509,11 +544,11 @@ function isEligiblePage(cfg){
 
 function isAdCandidate(el,cfg){
   if(!el)return false;
-  if(matchesAny(attrBlob(el,cfg.attr_keys),cfg.labels))return true;
-  if(matchesAny(attrBlob(el,cfg.attr_keys),cfg.link_patterns))return true;
-  if(hasMatchingLink(el,cfg.link_patterns))return true;
-  if(shadowHasAdSignal(el,cfg))return true;
-  if(matchesAny(contextText(el,cfg),cfg.labels))return true;
+  if(matchesAny(attrBlob(el,cfg.attr_keys),_cachedLabelsCompact))return true;
+  if(matchesAny(attrBlob(el,cfg.attr_keys),_cachedLinkPatternsCompact))return true;
+  if(hasMatchingLink(el,_cachedLinkPatternsNorm))return true;
+  if(shadowHasAdSignal(el))return true;
+  if(matchesAny(contextText(el,cfg),_cachedLabelsCompact))return true;
   return false;
 }
 
@@ -550,7 +585,8 @@ function collapseParentIfEmpty(el){
 function removeEl(el){
   if(!el)return false;
   var parent=el.parentElement;
-  el.remove();
+  el.replaceChildren();
+  el.style.setProperty('display','none','important');
   if(parent)collapseParentIfEmpty({parentElement:parent});
   return true;
 }
@@ -578,19 +614,24 @@ function scan(root){
   // scan) purely to seed the "ads blocked" counter; later dynamically-added
   // matches are still hidden instantly by CSS, just not re-counted.
   //
-  // Deliberately NOT calling hide() here (2026-08-30): these elements are
-  // already invisible via the stylesheet alone, so setting our own
-  // _HIDE_ATTR marker + inline style on them would add a live, page-JS-
-  // readable DOM signature (attribute + style mutation on the exact node an
-  // anti-adblock script would already be watching) for zero visual benefit
-  // — pure fingerprint-surface cost. collapseParentIfEmpty()'s
-  // getComputedStyle() fallback (see above) recognizes a CSS-only-hidden
-  // child without needing that marker at all, so the parent-collapse
-  // behavior is unchanged.
+  // Still calls removeEl() (not just collapseParentIfEmpty) despite the CSS
+  // already hiding these visually: a 2026-08-30 attempt to skip any DOM
+  // touch (collapseParentIfEmpty only, relying on CSS alone to reduce DOM
+  // fingerprint surface) caused a real regression — confirmed live by
+  // reverting that one commit. The injected stylesheet isn't a
+  // reliable-enough guarantee on its own (Firefox's CSS path has no
+  // 'user'-origin guarantee — see setFrameCss's _CSS_ORIGIN comment in
+  // background.js — so a page's own !important rule can still beat our
+  // zero-specificity :where(...) selector, and even with 'user' origin
+  // working there's still an async round-trip before it applies at all).
+  // removeEl()'s el.remove() is a synchronous, pure-DOM operation with zero
+  // dependency on any CSS cascade/origin/timing — the most reliable option
+  // available, stronger than hide()'s inline style (which a late-enough
+  // page script could still stomp on directly).
   if(!_directCounted&&root===document){
     _directCounted=true;
     var direct=collectFast(root,_cachedDirectStr);
-    for(var d=0;d<direct.length;d++){collapseParentIfEmpty(direct[d]);count++;}
+    for(var d=0;d<direct.length;d++){removeEl(direct[d]);count++;}
   }
   var candidates=collectFast(root,_cachedCandidateStr);
   for(var i=0;i<candidates.length;i++){
@@ -898,14 +939,14 @@ boot();
 // Re-scan entire document after YouTube SPA navigation.
 // MutationObserver catches individual nodes but may miss elements rendered
 // during large DOM replacements. A delayed full scan fills the gap.
-var _navScanT=0;
-function _onSpaNav(){
-  if(!_enabled||!_config)return;
-  if(_navScanT)clearTimeout(_navScanT);
-  _navScanT=setTimeout(function(){_navScanT=0;scan(document);},500);
-}
-document.addEventListener('yt-navigate-finish',_onSpaNav);
-document.addEventListener('yt-page-data-updated',_onSpaNav);
+// var _navScanT=0;
+// function _onSpaNav(){
+//   if(!_enabled||!_config)return;
+//   if(_navScanT)clearTimeout(_navScanT);
+//   _navScanT=setTimeout(function(){_navScanT=0;scan(document);},500);
+// }
+// document.addEventListener('yt-navigate-finish',_onSpaNav);
+// document.addEventListener('yt-page-data-updated',_onSpaNav);
 
 window.addEventListener('__'+_QKV1_TOKEN+'_blk__',function(e){
   if(!extValid()||!_enabled)return;
