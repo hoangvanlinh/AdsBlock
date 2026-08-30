@@ -2977,40 +2977,23 @@ function _frameCssKey(tabId, frameId, slot) {
   return `${tabId}:${frameId}:${slot}`;
 }
 
-// Firefox (Gecko) throws NS_ERROR_ILLEGAL_VALUE from
-// nsIDOMWindowUtils.addSheet on EVERY chrome.scripting.insertCSS call, with
-// or without origin:'USER' — live-verified via `web-ext run` 2026-08-30,
-// reproduced even after reverting to the exact pre-origin-change call (no
-// `origin` field at all), so this is not an origin-specific bug. Firefox
-// (unlike Chrome, which dropped it for MV3) still supports the older
-// browser.tabs.insertCSS/removeCSS API under manifest_version 3, so Firefox
-// uses that instead; Chrome keeps chrome.scripting.insertCSS with
-// origin:'USER' as before. _isFirefoxInstall() is the same detection
-// checkForExtensionUpdate() already uses for this kind of per-browser fork.
-//
-// cssOrigin:'user' (the tabs.insertCSS field's own name for the same
-// concept as scripting.insertCSS's origin:'USER') — without it, Firefox's
-// CSS landed at the default 'author' origin, where our zero-specificity
-// :where(...) selectors can lose to a page's own !important rule (this was
-// a real, live-confirmed regression: direct_hide_selectors matches like
-// vnexpress's #supper_masthead stayed visible on Firefox without hide()'s
-// inline-style fallback). Confirmed via uBlock Origin's own real source
-// (platform/common/vapi-background.js) — it unconditionally sets
-// `details.cssOrigin = 'user'` on every tabs.insertCSS/removeCSS call, on
-// every platform including Firefox, not just Chrome's newer API.
+// 2026-08-30 correction: browser.tabs.insertCSS does NOT exist on this
+// Firefox (live-verified: typeof browser.tabs.insertCSS === 'undefined',
+// typeof browser.scripting.insertCSS === 'function') — the "Firefox kept
+// the old tabs API under MV3" assumption a few commits back was wrong.
+// Firefox implements the same `scripting` namespace Chrome does; there is
+// only one real API here, not two. The earlier NS_ERROR_ILLEGAL_VALUE
+// addSheet crash from chrome.scripting.insertCSS was reproduced against the
+// OLD combined :where(...) + 5-property CSS shape — since simplified to
+// separate per-selector rules with a single display:none!important
+// property (see _injectDirectStyle in site-block.js) — re-verify live
+// whether that crash still reproduces with the new shape before assuming
+// it does.
 async function _insertFrameCss(tabId, frameId, css) {
-  if (_isFirefoxInstall()) {
-    await browser.tabs.insertCSS(tabId, { code: css, frameId, matchAboutBlank: true, cssOrigin: 'user' });
-  } else {
-    await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
-  }
+  await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
 }
 async function _removeFrameCss(tabId, frameId, css) {
-  if (_isFirefoxInstall()) {
-    await browser.tabs.removeCSS(tabId, { code: css, frameId, matchAboutBlank: true, cssOrigin: 'user' });
-  } else {
-    await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
-  }
+  await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
 }
 
 async function setFrameCss(tabId, frameId, slot, css) {

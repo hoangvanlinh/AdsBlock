@@ -614,24 +614,33 @@ function scan(root){
   // scan) purely to seed the "ads blocked" counter; later dynamically-added
   // matches are still hidden instantly by CSS, just not re-counted.
   //
-  // Still calls removeEl() (not just collapseParentIfEmpty) despite the CSS
-  // already hiding these visually: a 2026-08-30 attempt to skip any DOM
-  // touch (collapseParentIfEmpty only, relying on CSS alone to reduce DOM
-  // fingerprint surface) caused a real regression — confirmed live by
-  // reverting that one commit. The injected stylesheet isn't a
-  // reliable-enough guarantee on its own (Firefox's CSS path has no
-  // 'user'-origin guarantee — see setFrameCss's _CSS_ORIGIN comment in
-  // background.js — so a page's own !important rule can still beat our
-  // zero-specificity :where(...) selector, and even with 'user' origin
-  // working there's still an async round-trip before it applies at all).
-  // removeEl()'s el.remove() is a synchronous, pure-DOM operation with zero
-  // dependency on any CSS cascade/origin/timing — the most reliable option
-  // available, stronger than hide()'s inline style (which a late-enough
-  // page script could still stomp on directly).
+  // No DOM touch on these elements themselves (2026-08-30, 3rd attempt) —
+  // relying purely on the injected stylesheet. The 2nd attempt was
+  // live-disproven (getComputedStyle showed display:block/flex, not none)
+  // — but that was BEFORE the real root cause was found: a CSS block with
+  // several properties in one declaration was triggering
+  // NS_ERROR_ILLEGAL_VALUE (nsIDOMWindowUtils.addSheet) on Firefox, which
+  // silently failed the whole insertCSS call — not a cascade/origin
+  // problem. Both this file's CSS (_injectDirectStyle, single property per
+  // rule) and content.js's BASE_CSS were simplified to one
+  // display:none!important property per rule, and live-verified on
+  // Firefox afterward: getComputedStyle correctly read back display:none
+  // for supper_masthead/banner-ads/rich-media-banner-ads/contact-quangcao.
+  // collapseParentIfEmpty() still runs (cheap, no CSS dependency) so
+  // parent containers still collapse correctly once these are hidden.
   if(!_directCounted&&root===document){
     _directCounted=true;
     var direct=collectFast(root,_cachedDirectStr);
-    for(var d=0;d<direct.length;d++){removeEl(direct[d]);count++;}
+    for(var d=0;d<direct.length;d++){
+      // Skip a match already marked by an EARLIER iteration's
+      // collapseParentIfEmpty() in this same loop (e.g. direct[d] is itself
+      // the parent container a prior direct[] match just collapsed) —
+      // same double-count guard hide()'s own hasAttribute(_HIDE_ATTR)
+      // early-return used to provide before this loop stopped calling it.
+      if(direct[d].hasAttribute(_HIDE_ATTR))continue;
+      collapseParentIfEmpty(direct[d]);
+      count++;
+    }
   }
   var candidates=collectFast(root,_cachedCandidateStr);
   for(var i=0;i<candidates.length;i++){
@@ -939,14 +948,14 @@ boot();
 // Re-scan entire document after YouTube SPA navigation.
 // MutationObserver catches individual nodes but may miss elements rendered
 // during large DOM replacements. A delayed full scan fills the gap.
-// var _navScanT=0;
-// function _onSpaNav(){
-//   if(!_enabled||!_config)return;
-//   if(_navScanT)clearTimeout(_navScanT);
-//   _navScanT=setTimeout(function(){_navScanT=0;scan(document);},500);
-// }
-// document.addEventListener('yt-navigate-finish',_onSpaNav);
-// document.addEventListener('yt-page-data-updated',_onSpaNav);
+/// var _navScanT=0;
+/// function _onSpaNav(){
+///   if(!_enabled||!_config)return;
+///   if(_navScanT)clearTimeout(_navScanT);
+///   _navScanT=setTimeout(function(){_navScanT=0;scan(document);},500);
+/// }
+/// document.addEventListener('yt-navigate-finish',_onSpaNav);
+/// document.addEventListener('yt-page-data-updated',_onSpaNav);
 
 window.addEventListener('__'+_QKV1_TOKEN+'_blk__',function(e){
   if(!extValid()||!_enabled)return;

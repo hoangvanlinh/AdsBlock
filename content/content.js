@@ -66,21 +66,23 @@ function _clearAllCss() {
 // IMPORTANT: No broad wildcard selectors like [class*="ad-"]. Those cause
 // false positives on sites like YouTube where legitimate elements contain
 // "ad" in class/id names. Every selector here targets a KNOWN ad provider
-// element. The last block ([_HIDE_ATTR="1"]) collapses layout space for
-// elements JS already hid via site-block.js's hide()/collapseParentIfEmpty
-// — belt-and-suspenders alongside the inline styles those set directly.
-const BASE_CSS = `
-
-[${_HIDE_ATTR}="1"] {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  overflow: hidden !important;
-}
-`;
+// element. The [_HIDE_ATTR="1"] rule is belt-and-suspenders backup for
+// elements JS already hid via site-block.js's hide()/removeEl (which set
+// their own inline style directly) — this CSS rule alone is what matters
+// for any OTHER element sharing that marker.
+//
+// Single display:none!important property only (not also height/min-height/
+// margin/padding/border/overflow, which this block had before 2026-08-30):
+// live-verified on Firefox that a CSS block with several properties in one
+// declaration triggered NS_ERROR_ILLEGAL_VALUE from
+// nsIDOMWindowUtils.addSheet on chrome.scripting.insertCSS (Gecko-internal,
+// exact trigger still unconfirmed) — the same simplification already
+// applied to site-block.js's _injectDirectStyle() stopped reproducing it
+// there. display:none alone is sufficient regardless: once it wins the
+// cascade (origin:'USER', see background.js's setFrameCss), the element
+// already takes zero layout space, so the other properties never had
+// anything left to add.
+const BASE_CSS = `[${_HIDE_ATTR}="1"]{display:none!important}`;
 
 // ── FAST PATH: fire the base CSS off immediately (frame 0, before any
 // async storage read). "Send first, clear if needed" is faster than "wait
