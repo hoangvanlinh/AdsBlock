@@ -271,7 +271,9 @@ self.__test = {
   _uiLanguageMatches, _autoEnableLangDefaultSources,
   _entryUrls, _primaryUrl, _isDefaultSourceEnabled,
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
-  _isValidUrlFilter, buildQueryStripRules,
+  _isValidUrlFilter, buildQueryStripRules, buildPatternRules,
+  buildNetworkBlockRules, _abpParseNetworkOptions, _abpEncodeNetworkBlockEntry, NETWORK_BLOCK_RULE_ID_START,
+  get NETWORK_BLOCK_RULES() { return NETWORK_BLOCK_RULES; },
   RULE_SOURCE_ERRORS_KEY,
   _buildElementRulesBlock, _applyElementRules,
   _buildNoWindowOpenRulesBlock, _applyNoWindowOpenRules,
@@ -1198,8 +1200,9 @@ function check(name, cond, detail = '') {
     !converted.includes('some-unmapped-scriptlet-xyz'), converted);
   check('_maybeConvertAbpText: bare ||domain^ network rule -> ad_network_patterns',
     converted.includes('ad_network_patterns') && converted.includes('abptracker.com'), converted);
-  check('_maybeConvertAbpText: path-scoped network rule dropped, not folded in as bare abptracker.com',
-    !converted.includes('path/ads.js'), converted);
+  check('_maybeConvertAbpText: path-scoped $script network rule converts into network_block_rules, not folded into the bare abptracker.com ad_network_patterns entry',
+    converted.includes('network_block_rules') && converted.includes('abptracker.com/path/ads.js') && !/ad_network_patterns[^\n]*path\/ads\.js/.test(converted),
+    converted);
   check('_maybeConvertAbpText: [host_patterns] section present, maps the domain to a generated key',
     converted.includes('[host_patterns]') && converted.includes('abptestdomain.com'), converted);
 
@@ -1645,6 +1648,150 @@ function check(name, cond, detail = '') {
   check('buildNetworkRedirectRules: IDs start at NETWORK_REDIRECT_RULE_ID_START, dense',
     builtRedirectRules[0].id === T.NETWORK_REDIRECT_RULE_ID_START && builtRedirectRules[1].id === T.NETWORK_REDIRECT_RULE_ID_START + 1,
     JSON.stringify(builtRedirectRules.map(r => r.id)));
+
+  console.log('\n== 25gg. Path-scoped network rules ($all, third-party, $image, $domain=, $denyallow=, $method=, $removeparam=, $important) via network_block_rules ==');
+  // Real-world example that used to be silently dropped as "complexNetwork":
+  // an exact-URL block with $all (same as no options at all).
+  {
+    const stats = {};
+    const converted = await T._maybeConvertAbpText('||github.com/sooryanaga/obscure-affairs-unlocked-edition/raw/refs/heads/branch/taurobolium/unlocked-obscure-affairs-edition-3.0.zip^$all', stats);
+    check('$all path-scoped rule converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
+    check('goes to network_block_rules, NEVER ad_network_patterns (see ABP_SIMPLE_NETWORK_OPTS_RE\'s 5x-fan-out comment)',
+      converted.includes('network_block_rules') && !converted.includes('ad_network_patterns'), converted);
+    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
+    check('round-trips through parseRuleText() with the escaped || anchor intact, decoded entry has all-"*" fields',
+      entries.length === 1 && entries[0] === 'github.com/sooryanaga/obscure-affairs-unlocked-edition/raw/refs/heads/branch/taurobolium/unlocked-obscure-affairs-edition-3.0.zip^ * * * * *',
+      entries);
+    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
+    check('buildNetworkBlockRules(): exactly ONE real DNR block rule, no resourceTypes restriction',
+      rules.length === 1 && rules[0].action.type === 'block' && !rules[0].condition.resourceTypes && !rules[0].condition.excludedResourceTypes,
+      JSON.stringify(rules));
+  }
+
+  // $image (single resourceType) -> resourceTypes: ['image']
+  {
+    const stats = {};
+    const converted = await T._maybeConvertAbpText('||example.com/exact/pixel.gif^$image', stats);
+    check('$image: converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
+    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
+    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
+    check('$image: builds a real DNR block rule scoped to resourceTypes:["image"]',
+      rules.length === 1 && rules[0].condition.urlFilter === '||example.com/exact/pixel.gif^' &&
+      JSON.stringify(rules[0].condition.resourceTypes) === JSON.stringify(['image']) &&
+      !rules[0].condition.excludedResourceTypes,
+      JSON.stringify(rules[0]));
+  }
+
+  // $domain= (mixed include/exclude) -> initiatorDomains/excludedInitiatorDomains
+  {
+    const stats = {};
+    const converted = await T._maybeConvertAbpText('||tracker.example/pixel^$domain=site-a.com|~site-b.com', stats);
+    check('$domain=: converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
+    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
+    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
+    check('$domain=: builds initiatorDomains (included) + excludedInitiatorDomains (~excluded)',
+      rules.length === 1 &&
+      JSON.stringify(rules[0].condition.initiatorDomains) === JSON.stringify(['site-a.com']) &&
+      JSON.stringify(rules[0].condition.excludedInitiatorDomains) === JSON.stringify(['site-b.com']),
+      JSON.stringify(rules[0]));
+  }
+
+  // $denyallow= -> excludedRequestDomains
+  {
+    const stats = {};
+    const converted = await T._maybeConvertAbpText('||ads.example/*$script,denyallow=cdn.example.com', stats);
+    check('$denyallow=: converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
+    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
+    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
+    check('$denyallow=: builds excludedRequestDomains + still carries the $script resourceType',
+      rules.length === 1 &&
+      JSON.stringify(rules[0].condition.excludedRequestDomains) === JSON.stringify(['cdn.example.com']) &&
+      JSON.stringify(rules[0].condition.resourceTypes) === JSON.stringify(['script']),
+      JSON.stringify(rules[0]));
+  }
+
+  // $method= (mixed include/exclude) -> requestMethods/excludedRequestMethods
+  {
+    const stats = {};
+    const converted = await T._maybeConvertAbpText('||api.example/track^$method=get|~post', stats);
+    check('$method=: converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
+    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
+    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
+    check('$method=: builds requestMethods (included) + excludedRequestMethods (~excluded)',
+      rules.length === 1 &&
+      JSON.stringify(rules[0].condition.requestMethods) === JSON.stringify(['get']) &&
+      JSON.stringify(rules[0].condition.excludedRequestMethods) === JSON.stringify(['post']),
+      JSON.stringify(rules[0]));
+    const badMethod = {};
+    await T._maybeConvertAbpText('||api.example/track^$method=teleport', badMethod);
+    check('$method=: a method outside DNR\'s RequestMethod enum still drops to complexNetwork, not guessed at',
+      badMethod.complexNetwork === 1 && !badMethod.converted, badMethod);
+  }
+
+  // $removeparam= -> this repo's EXISTING strip_query_params mechanism
+  // (buildQueryStripRules), NOT network_block_rules — it's a same-origin
+  // redirect that strips the param and lets the request through, not a block.
+  {
+    const stats = {};
+    const converted = await T._maybeConvertAbpText('||youtube.com/watch^$removeparam=si', stats);
+    check('$removeparam=: converts into strip_query_params, not network_block_rules', stats.converted === 1 && !stats.complexNetwork, stats);
+    check('$removeparam=: rendered text carries strip_query_params, not network_block_rules',
+      converted.includes('strip_query_params') && !converted.includes('network_block_rules'), converted);
+    const entries = (T.parseRuleText(converted).global || {}).strip_query_params || [];
+    const stripRules = T.buildQueryStripRules(entries, 3000);
+    check('$removeparam=: buildQueryStripRules() builds a real redirect rule that strips exactly "si"',
+      stripRules.length === 1 && stripRules[0].action.type === 'redirect', JSON.stringify(stripRules));
+    const badRemoveparam = {};
+    await T._maybeConvertAbpText('||youtube.com/watch^$removeparam=~si', badRemoveparam);
+    check('$removeparam=~name (negated): still drops to complexNetwork, not guessed at',
+      badRemoveparam.complexNetwork === 1 && !badRemoveparam.converted, badRemoveparam);
+  }
+
+  // $important — no exception-priority model exists here (@@ is already
+  // unconditionally dropped), so it's silently ignored: a rule combining it
+  // with an otherwise-convertible option still converts as if it weren't there.
+  {
+    const stats = {};
+    const converted = await T._maybeConvertAbpText('||example.com/exact/beacon.gif^$image,important', stats);
+    check('$important (combined with $image): still converts, important has no effect either way',
+      stats.converted === 1 && !stats.complexNetwork, stats);
+    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
+    check('$important: does not leak into the encoded entry as if it were a resourceType',
+      entries.length === 1 && entries[0] === 'example.com/exact/beacon.gif^ image * * * *', entries);
+  }
+
+  // Still-unsupported: mixing an included AND excluded resourceType in the
+  // same rule (ABP itself doesn't do this — don't guess which side wins),
+  // and an option this repo has no DNR equivalent for at all ($csp=).
+  {
+    const mixedTypes = {};
+    await T._maybeConvertAbpText('||example.com/x.js^$script,~image', mixedTypes);
+    check('$script,~image (mixed include/exclude types): still drops to complexNetwork, not guessed at',
+      mixedTypes.complexNetwork === 1 && !mixedTypes.converted, mixedTypes);
+    const cspStats = {};
+    await T._maybeConvertAbpText('||example.com/x.js^$csp=script-src \'none\'', cspStats);
+    check('$csp= (no DNR equivalent): still drops to complexNetwork, not guessed at',
+      cspStats.complexNetwork === 1 && !cspStats.converted, cspStats);
+  }
+
+  // Shared NETWORK_RULE_BUDGET: caps total network_block_rules conversions
+  // across every source converted together, so a huge Rule Source can't
+  // blow past Chrome's dynamic rule limit (see NETWORK_RULE_BUDGET's own
+  // comment for the real-world 41,000+-rule incident this prevents).
+  {
+    const manyRules = [];
+    for (let i = 0; i < 20; i++) manyRules.push(`||budget-test-${i}.example/exact/path.js^$image`);
+    const budget = { remaining: 5 };
+    const stats = {};
+    const converted = await T._maybeConvertAbpText(manyRules.join('\n'), stats, undefined, undefined, budget);
+    check('shared budget: only 5 of 20 eligible entries convert once the budget is exhausted',
+      stats.converted === 5 && stats.complexNetwork === 15, stats);
+    check('shared budget: remaining correctly hits 0, not negative',
+      budget.remaining === 0, budget);
+    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
+    check('shared budget: exactly 5 entries actually landed in network_block_rules',
+      entries.length === 5, entries.length);
+  }
 
   console.log('\n== 25w. _isValidUrlFilter() matches Chrome DNR\'s documented urlFilter constraints (2026-08-24) ==');
   // Live-reported: adding a third-party ABP list (uAssets annoyances-others.txt)

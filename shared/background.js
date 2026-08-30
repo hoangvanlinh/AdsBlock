@@ -102,6 +102,7 @@ let TRACKER_RULE_IDS = new Set();
 let MALWARE_RULE_IDS = new Set();
 let QUERY_STRIP_RULES = [];
 let NETWORK_REDIRECT_RULES = [];
+let NETWORK_BLOCK_RULES = [];
 let _ruleConfigPromise = null;
 
 const QUERY_STRIP_RESOURCE_TYPES = ['main_frame', 'sub_frame', 'stylesheet', 'script', 'image', 'font', 'object', 'xmlhttprequest', 'ping', 'csp_report', 'media', 'websocket', 'other'];
@@ -201,6 +202,59 @@ function buildNetworkRedirectRules(entries, startId) {
   return rules;
 }
 
+// Decodes network_block_rules entries — see _abpEncodeNetworkBlockEntry's
+// own comment for the "pattern types domains denyallow methods thirdParty"
+// field layout ('*' = unrestricted, comma-separated multi-values, a '~'
+// prefix = excluded rather than included) — into real DNR block rules.
+// Always exactly ONE rule per entry, no matter how many types/domains it
+// carries — unlike ad_network_patterns' buildPatternRules, which fans a
+// single urlFilter out across one rule PER resourceType/redirect-file group
+// (see ABP_SIMPLE_NETWORK_OPTS_RE's own comment for why that matters here).
+// Same "one bad urlFilter must not reject the WHOLE updateDynamicRules()
+// call" validation every other builder here already does.
+function buildNetworkBlockRules(entries, startId) {
+  const rules = [];
+  let id = startId;
+  for (const entry of entries) {
+    const parts = String(entry || '').trim().split(/\s+/);
+    if (parts.length !== 6) continue; // malformed — don't guess, drop it
+    const [pattern, typesField, domainsField, denyallowField, methodsField, thirdPartyField] = parts;
+    const urlFilter = '||' + pattern;
+    if (!_isValidUrlFilter(urlFilter)) continue; // would reject the WHOLE updateDynamicRules() call
+    const condition = { urlFilter };
+
+    if (typesField !== '*') {
+      const tokens = typesField.split(',');
+      // _abpParseNetworkOptions never mixes included/excluded types in one
+      // rule, so either every token here is '~'-prefixed or none are.
+      if (tokens[0].charAt(0) === '~') condition.excludedResourceTypes = tokens.map(t => t.slice(1));
+      else condition.resourceTypes = tokens;
+    }
+    if (domainsField !== '*') {
+      const include = [], exclude = [];
+      for (const d of domainsField.split(',')) {
+        if (d.charAt(0) === '~') exclude.push(d.slice(1)); else include.push(d);
+      }
+      if (include.length) condition.initiatorDomains = include;
+      if (exclude.length) condition.excludedInitiatorDomains = exclude;
+    }
+    if (denyallowField !== '*') condition.excludedRequestDomains = denyallowField.split(',');
+    if (methodsField !== '*') {
+      const include = [], exclude = [];
+      for (const m of methodsField.split(',')) {
+        if (m.charAt(0) === '~') exclude.push(m.slice(1)); else include.push(m);
+      }
+      if (include.length) condition.requestMethods = include;
+      if (exclude.length) condition.excludedRequestMethods = exclude;
+    }
+    if (thirdPartyField === '1') condition.domainType = 'thirdParty';
+    else if (thirdPartyField === '0') condition.domainType = 'firstParty';
+
+    rules.push({ id: id++, priority: 1, action: { type: 'block' }, condition });
+  }
+  return rules;
+}
+
 function parseRuleText(text) {
   const out = {};
   let section = '';
@@ -263,6 +317,14 @@ function _base64ToUint8(b64) {
   return bytes;
 }
 async function _compressForStorage(text) {
+  // DEBUG_LOCAL: skip compression so chrome://extensions' storage inspector
+  // (and the SW console) show plain readable text instead of an opaque
+  // base64 blob while developing. _decompressFromStorage already has to
+  // handle this exact {format:'raw'} shape unconditionally (its own
+  // old-browser/CompressionStream-unavailable fallback below), so reading it
+  // back needs no changes, and toggling DEBUG_LOCAL on/off never breaks
+  // already-stored (possibly compressed) values either way.
+  //if (DEBUG_LOCAL) return { format: 'raw', data: text };
   try {
     if (typeof CompressionStream === 'undefined') throw new Error('CompressionStream unavailable');
     const cs = new CompressionStream('deflate-raw');
@@ -361,13 +423,174 @@ function isFreshRuleCache(entry) {
 // assets.json batch scaffolding, fs.writeFileSync output — no equivalent for
 // converting one ad-hoc fetched URL at runtime), and the network-rule half
 // (parseNetOptions/buildNetworkRule, which target the currently-unwired
-// rule/network-rules.json structured-DNR path) — simplified here to just bare
-// `||domain^` (optionally $third-party/$~third-party, no path/other modifiers)
-// collected into ad_network_patterns, matching the plain-domain-list shape
-// [global] ad_network_patterns already expects. Anything path/modifier-scoped
-// is dropped rather than guessed at.
+// rule/network-rules.json structured-DNR path) — simplified here to bare
+// `||domain^` (optionally $third-party/$~third-party/$all, no path) collected
+// into ad_network_patterns, matching the plain-domain-list shape [global]
+// ad_network_patterns already expects. A path/URL-scoped pattern (e.g.
+// `||example.com/exact/file.js^$all`, or one carrying $domain=/$denyallow=/
+// $method=/a resourceType/$important — see _abpParseNetworkOptions) is ALSO
+// converted, but into network_block_rules (buildNetworkBlockRules), NEVER
+// ad_network_patterns — see ABP_SIMPLE_NETWORK_OPTS_RE's own comment for why
+// that distinction is load-bearing, not stylistic. A bare $removeparam=name
+// goes to the EXISTING strip_query_params mechanism instead of either (see
+// the netMatch handling's own comment). Anything carrying a modifier this
+// repo can't faithfully represent at all (csp=, popup, badfilter, mixed
+// include/exclude resourceTypes, ...) is still dropped rather than guessed at.
 const ABP_PROCEDURAL_RE = /:has-text\(|:matches-css|:xpath\(|:min-text-length|:remove\(|:style\(|:upward\(|:min-outer-height/;
 const ABP_BARE_NETWORK_DOMAIN_RE = /^[a-z0-9.*-]+\^$/i;
+// Options simple enough that a BARE DOMAIN carrying them can still go into
+// ad_network_patterns's cheap, batched requestDomains path: no options at
+// all, third-party/~third-party, or $all (equivalent to no options). This
+// gate applies ONLY to the bare-domain branch below — a path-scoped pattern
+// is NEVER added to ad_network_patterns regardless of how simple its options
+// are: buildPatternRules() gives every distinct resourceType a DIFFERENT
+// bait-detector-defeating placeholder file (REDIRECT_RESOURCE_BY_TYPE), so a
+// urlFilter it's handed gets duplicated into its own rule PER TYPE-GROUP — a
+// 5x fan-out that's free for one shared domain array but catastrophic for
+// thousands of individual patterns (live-measured: real EasyList+EasyPrivacy+
+// Fanboy-Social content alone produced ~31,000 rules from ~6,300 such
+// urlFilters this way, pushing a fresh install's total dynamic rule count to
+// 41,000+ — well past Chrome's ~30,000 limit, which made updateDynamicRules()
+// reject the WHOLE batch atomically and silently keep serving whatever
+// near-empty rule set existed before). Anything more than this — a single
+// resourceType, domain=, denyallow=, method=, removeparam=, important, ... —
+// goes to network_block_rules/strip_query_params instead (a true
+// one-DNR-rule-per-entry cost — see NETWORK_RULE_BUDGET).
+const ABP_SIMPLE_NETWORK_OPTS_RE = /^(?:~?third-party|all)?$/;
+// Shared cap (one {remaining} counter threaded through every source
+// converted together in one fetchRemoteRuleText() run — see its own call
+// site) on how many network_block_rules entries get minted total, across
+// EVERY enabled Rule Source combined. network_block_rules builds exactly ONE
+// DNR rule per entry (buildNetworkBlockRules) — no multiplier — so this
+// number IS the real rule-count cost, unlike ad_network_patterns urlFilters
+// (see ABP_SIMPLE_NETWORK_OPTS_RE's comment for why those are kept out of
+// this path entirely rather than budgeted). Live-measured: real EasyList+
+// EasyPrivacy+Fanboy-Social content converts to ~7,400 such entries — 8,000
+// covers that with headroom while leaving most of Chrome's ~30,000
+// dynamic+session rule limit for the rest of the rule set (remote malware,
+// defaults, custom/focus/pause rules, ...). Once exhausted, further matches
+// fall back to complexNetwork (dropped) exactly like before this feature
+// existed, regardless of how many Rule Sources are enabled — degrading
+// gracefully instead of risking updateDynamicRules() rejecting the WHOLE
+// batch atomically.
+const NETWORK_RULE_BUDGET = 8000;
+// DNR resourceType for each ABP/uBO single-content-type option token this
+// converter understands (`$script`, `$image`, ...; `~name` negates it, e.g.
+// `$~script` means "every type except script"). Tokens with no real DNR
+// equivalent (popup, csp=, badfilter, first-party used standalone, ...) —
+// or ANY option this parser doesn't recognize at all — make the whole
+// option string `unsupported` (see _abpParseNetworkOptions), so the caller
+// drops the rule entirely rather than converting a wrong subset of it.
+const ABP_RESOURCE_TYPE_MAP = {
+  script: 'script', image: 'image', stylesheet: 'stylesheet', object: 'object',
+  xmlhttprequest: 'xmlhttprequest', xhr: 'xmlhttprequest', subdocument: 'sub_frame',
+  document: 'main_frame', font: 'font', media: 'media', websocket: 'websocket',
+  ping: 'ping', other: 'other',
+};
+// chrome.declarativeNetRequest.RequestMethod's own enum — an ABP `$method=`
+// value outside this set can't be mapped, so the whole option is unsupported.
+const ABP_REQUEST_METHODS = new Set(['connect', 'delete', 'get', 'head', 'options', 'patch', 'post', 'put']);
+
+// Parses one ABP/uBO network-rule option string (everything after the '$',
+// e.g. "script,domain=a.com|~b.com,denyallow=cdn.example.com") into the
+// pieces buildNetworkBlockRules() needs to build a real DNR condition:
+// resourceTypes/excludedResourceTypes ($script, $~script, ...),
+// initiatorDomains/excludedInitiatorDomains ($domain=), excludedRequestDomains
+// ($denyallow=), requestMethods/excludedRequestMethods ($method=), and
+// domainType ($third-party/$~third-party). `$important` is silently dropped
+// from consideration — its only real-world purpose (override a conflicting
+// `@@` exception rule) can never apply here, since `@@` exceptions are
+// already unconditionally dropped by this converter with no equivalent at
+// all, so a rule behaves identically with or without it. `$all` is likewise
+// a no-op here — it just means "no resourceType restriction," the same as
+// specifying no type option at all, which is already this function's
+// default when includeTypes/excludeTypes stay empty. `$redirect=`/
+// `$redirect-rule=`/`$removeparam=` are NOT handled here — _abpParseFile's
+// caller checks for those FIRST (they map to a different native key/action
+// entirely, not a block), so reaching this function with one of those tokens
+// still present means the caller's own more-specific handling didn't apply
+// (e.g. an unresolvable redirect target) — treated as unsupported here too,
+// same conservative "don't guess" behavior as before this function existed.
+// Returns { unsupported: true } for anything it can't faithfully represent.
+function _abpParseNetworkOptions(optsStr) {
+  const result = {
+    includeTypes: [], excludeTypes: [],
+    includeDomains: [], excludeDomains: [],
+    denyallowDomains: [],
+    includeMethods: [], excludeMethods: [],
+    thirdParty: null, // null = unspecified, true = $third-party, false = $~third-party
+  };
+  const tokens = optsStr ? optsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
+  for (const tok of tokens) {
+    if (tok === 'important' || tok === 'all') continue;
+    if (tok === 'third-party') { result.thirdParty = true; continue; }
+    if (tok === '~third-party') { result.thirdParty = false; continue; }
+    const eq = tok.indexOf('=');
+    if (eq === -1) {
+      const negated = tok.charAt(0) === '~';
+      const name = negated ? tok.slice(1) : tok;
+      const dnrType = ABP_RESOURCE_TYPE_MAP[name];
+      if (!dnrType) return { unsupported: true };
+      (negated ? result.excludeTypes : result.includeTypes).push(dnrType);
+      continue;
+    }
+    const key = tok.slice(0, eq);
+    const val = tok.slice(eq + 1);
+    if (!val) return { unsupported: true };
+    if (key === 'domain' || key === 'from') {
+      for (const d of val.split('|')) {
+        const t = d.trim();
+        if (!t) continue;
+        if (t.charAt(0) === '~') result.excludeDomains.push(t.slice(1).toLowerCase());
+        else result.includeDomains.push(t.toLowerCase());
+      }
+      continue;
+    }
+    if (key === 'denyallow') {
+      for (const d of val.split('|')) {
+        const t = d.trim();
+        if (t) result.denyallowDomains.push(t.toLowerCase());
+      }
+      continue;
+    }
+    if (key === 'method') {
+      for (const m of val.split('|')) {
+        const t = m.trim().toLowerCase();
+        if (!t) continue;
+        const negated = t.charAt(0) === '~';
+        const name = negated ? t.slice(1) : t;
+        if (!ABP_REQUEST_METHODS.has(name)) return { unsupported: true };
+        (negated ? result.excludeMethods : result.includeMethods).push(name);
+      }
+      continue;
+    }
+    return { unsupported: true }; // redirect=/redirect-rule=/removeparam= (see comment above), csp=, popup, badfilter, ...
+  }
+  if (result.includeTypes.length && result.excludeTypes.length) return { unsupported: true }; // ABP rules don't mix these — don't guess which side wins
+  return result;
+}
+
+// Encodes one _abpParseNetworkOptions() result into the single space-
+// separated string network_block_rules stores per entry (site-rules.txt's
+// own array values are '|'-joined, so a comma is used as the in-field
+// multi-value separator instead — see buildNetworkBlockRules for the
+// matching decoder). `*` marks a field as unrestricted/unspecified so every
+// entry has the same fixed field count regardless of which options were
+// actually present.
+function _abpEncodeNetworkBlockEntry(pattern, opts) {
+  const types = opts.excludeTypes.length ? opts.excludeTypes.map(t => '~' + t).join(',')
+    : opts.includeTypes.length ? opts.includeTypes.join(',')
+    : '*';
+  const domains = (opts.includeDomains.length || opts.excludeDomains.length)
+    ? [...opts.includeDomains, ...opts.excludeDomains.map(d => '~' + d)].join(',')
+    : '*';
+  const denyallow = opts.denyallowDomains.length ? opts.denyallowDomains.join(',') : '*';
+  const methods = (opts.includeMethods.length || opts.excludeMethods.length)
+    ? [...opts.includeMethods, ...opts.excludeMethods.map(m => '~' + m)].join(',')
+    : '*';
+  const thirdParty = opts.thirdParty === true ? '1' : opts.thirdParty === false ? '0' : '*';
+  return [pattern, types, domains, denyallow, methods, thirdParty].join(' ');
+}
 // Build-tool-generated class/id hash — e.g. styled-jsx's `.jsx-2126301199`,
 // a CRC32/epoch-timestamp-style numeric id (`#popup-1720497466`),
 // styled-components/emotion's `.sc-xxxxxxxx`. These are worthless past the
@@ -568,9 +791,14 @@ function _abpEmptySkipStats() {
 // visibility (a source either obviously produced nothing at all, or
 // silently dropped some fraction of its rules with no way to tell how much
 // or why short of manually diffing input against output).
-function _abpParseFile(text, curatedPatterns, acc, stats) {
-  const { domainSelectors, domainScriptlets, globalSelectors, globalScriptlets, networkDomains, networkRedirects } = acc;
+function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget) {
+  const { domainSelectors, domainScriptlets, globalSelectors, globalScriptlets, networkDomains, networkRedirects, networkBlocks, queryStrips } = acc;
   const s = stats || _abpEmptySkipStats();
+  // `networkRuleBudget` caps network_block_rules conversions — see
+  // NETWORK_RULE_BUDGET's own comment for why. Omitted (or `undefined`)
+  // defaults to unlimited — every existing single-example caller/test that
+  // isn't testing the cap itself needs no changes.
+  const budget = networkRuleBudget || { remaining: Infinity };
   const lines = String(text || '').split(/\r?\n/);
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -581,24 +809,60 @@ function _abpParseFile(text, curatedPatterns, acc, stats) {
       s.total++;
       const pattern = netMatch[1];
       const optsStr = netMatch[2] || '';
-      if (ABP_BARE_NETWORK_DOMAIN_RE.test(pattern) && (!optsStr || /^~?third-party$/.test(optsStr))) {
+      const hasSimpleOpts = ABP_SIMPLE_NETWORK_OPTS_RE.test(optsStr);
+      if (ABP_BARE_NETWORK_DOMAIN_RE.test(pattern) && hasSimpleOpts) {
+        // Bare domain — batches into ad_network_patterns' shared
+        // requestDomains array (buildPatternRules), so this stays cheap
+        // (a handful of rules total) no matter how many domains land here.
         networkDomains.add(pattern.slice(0, -1).toLowerCase());
         s.converted++;
       } else {
-        // Not a bare-domain block — the one other shape this converter
-        // preserves is a path-scoped rule carrying a $redirect=/$redirect-rule=
-        // that resolves to a resource this extension actually ships
-        // (network_redirect_rules, background.js's buildNetworkRedirectRules).
-        // Everything else about the rule (other modifiers, domain=, @@, ...)
-        // is ignored; a bare-domain redirect isn't worth its own rule since
-        // ad_network_patterns already blocks that domain outright.
-        const redirectMatch = /(?:^|,)redirect(?:-rule)?=([^,]+)/.exec(optsStr);
-        const file = redirectMatch && _resolveRedirectResourceName(redirectMatch[1]);
+        // Not a bare-domain-with-simple-opts block — three other shapes this
+        // converter preserves, ALL going to network_block_rules (never
+        // ad_network_patterns — see ABP_SIMPLE_NETWORK_OPTS_RE's own comment
+        // for why that distinction matters): (a) a path-scoped rule carrying
+        // a $redirect=/$redirect-rule= that resolves to a resource this
+        // extension actually ships (network_redirect_rules, background.js's
+        // buildNetworkRedirectRules) — a bare-domain redirect isn't worth its
+        // own rule since ad_network_patterns already blocks that domain
+        // outright, so this only fires for a genuinely path-scoped pattern;
+        // (b) a bare $removeparam=name (optionally with third-party) — maps
+        // to this repo's EXISTING strip_query_params mechanism
+        // (buildQueryStripRules) instead of a block, since removeparam=
+        // means "strip this param and let the (modified) request through,"
+        // not "block it"; (c) any other pattern whose options
+        // _abpParseNetworkOptions can represent ($domain=, $denyallow=,
+        // $method=, a single/multiple resourceType, $important, $all, or no
+        // options at all) — added to network_block_rules, which builds
+        // exactly ONE DNR rule per entry (buildNetworkBlockRules), no matter
+        // how many types/domains it carries. A negated/regex removeparam=
+        // value, removeparam= combined with anything beyond third-party, or
+        // any option outside everything above (csp=, popup, badfilter, ...)
+        // is dropped rather than guessed at.
+        const urlFilter = '||' + pattern;
+        const optTokens = optsStr ? optsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
+        const redirectTok = optTokens.find(t => /^redirect(?:-rule)?=/.test(t));
+        const file = redirectTok && _resolveRedirectResourceName(redirectTok.slice(redirectTok.indexOf('=') + 1));
+        const removeparamToks = optTokens.filter(t => t.startsWith('removeparam='));
+        const nonThirdPartyToks = optTokens.filter(t => t !== 'third-party' && t !== '~third-party');
         if (file && !ABP_BARE_NETWORK_DOMAIN_RE.test(pattern)) {
           networkRedirects.add(pattern + ' ' + file);
           s.converted++;
+        } else if (
+          removeparamToks.length === 1 && nonThirdPartyToks.length === 1 &&
+          /^removeparam=[^~/][^,]*$/.test(removeparamToks[0]) && _isValidUrlFilter(urlFilter)
+        ) {
+          queryStrips.add(pattern + ' ' + removeparamToks[0].slice('removeparam='.length));
+          s.converted++;
         } else {
-          s.complexNetwork++;
+          const opts = _abpParseNetworkOptions(optsStr);
+          if (!opts.unsupported && budget.remaining > 0 && _isValidUrlFilter(urlFilter)) {
+            networkBlocks.add(_abpEncodeNetworkBlockEntry(pattern, opts));
+            budget.remaining--;
+            s.converted++;
+          } else {
+            s.complexNetwork++;
+          }
         }
       }
       continue;
@@ -712,14 +976,23 @@ function _abpFinalizeGroups(domainSelectors, domainScriptlets) {
 // group's selector for its OTHER (unrelated) domains, which would
 // reintroduce the exact cross-source leak _abpSanitizeKey's usedKeys
 // sharing was built to close.
-function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, curatedSectionNames, sharedUsedKeys, sharedDedicatedKeyMap }) {
+function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, networkBlocks, queryStrips, curatedSectionNames, sharedUsedKeys, sharedDedicatedKeyMap }) {
   const usedKeys = sharedUsedKeys || new Set();
   const dedicatedKeyMap = sharedDedicatedKeyMap || new Map();
   const out = [];
-  if (networkDomains.size || (networkRedirects && networkRedirects.size) || globalSelectors.size || globalScriptlets.size) {
+  if (networkDomains.size || (networkRedirects && networkRedirects.size) || (networkBlocks && networkBlocks.size) ||
+      (queryStrips && queryStrips.size) || globalSelectors.size || globalScriptlets.size) {
     out.push('[global]');
+    // ad_network_patterns only ever holds bare lowercase domains here (no
+    // '|' chars) — path-scoped patterns are deliberately kept out of it (see
+    // ABP_SIMPLE_NETWORK_OPTS_RE's own comment) — so no escaping needed.
+    // network_block_rules/strip_query_params entries carry a raw pattern
+    // that CAN start with a single '|' anchor (see _isValidUrlFilter), so
+    // those ARE escaped, same as network_redirect_rules already is.
     if (networkDomains.size) out.push('ad_network_patterns = ' + [...networkDomains].sort().join(' | '));
     if (networkRedirects && networkRedirects.size) out.push('network_redirect_rules = ' + [...networkRedirects].sort().map(_abpEscapeValue).join(' | '));
+    if (networkBlocks && networkBlocks.size) out.push('network_block_rules = ' + [...networkBlocks].sort().map(_abpEscapeValue).join(' | '));
+    if (queryStrips && queryStrips.size) out.push('strip_query_params = ' + [...queryStrips].sort().map(_abpEscapeValue).join(' | '));
     if (globalSelectors.size) out.push('direct_hide_selectors = ' + [...globalSelectors].sort().map(_abpEscapeValue).join(' | '));
     for (const [scriptletKey, vals] of [...globalScriptlets.entries()].sort()) {
       out.push(scriptletKey + ' = ' + [...vals].sort().map(_abpEscapeValue).join(' | '));
@@ -830,16 +1103,17 @@ function _getCuratedDedupSets() {
   return _curatedDedupPromise;
 }
 
-async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedicatedKeyMap) {
+async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedicatedKeyMap, networkRuleBudget) {
   if (!_looksLikeAbpFormat(text)) return text;
   const { curatedPatterns, curatedSectionNames } = await _getCuratedDedupSets();
   const acc = {
     domainSelectors: new Map(), domainScriptlets: new Map(),
     globalSelectors: new Set(), globalScriptlets: new Map(),
     networkDomains: new Set(), networkRedirects: new Set(),
+    networkBlocks: new Set(), queryStrips: new Set(),
   };
   const stats = _abpEmptySkipStats();
-  try { _abpParseFile(text, curatedPatterns, acc, stats); } catch (e) {
+  try { _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget); } catch (e) {
     if (statsOut) statsOut.error = (e && e.message) || 'conversion failed';
     return text;
   }
@@ -847,7 +1121,7 @@ async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedica
   const groups = _abpFinalizeGroups(acc.domainSelectors, acc.domainScriptlets);
   return _abpRender({
     groups, globalSelectors: acc.globalSelectors, globalScriptlets: acc.globalScriptlets,
-    networkRedirects: acc.networkRedirects,
+    networkRedirects: acc.networkRedirects, networkBlocks: acc.networkBlocks, queryStrips: acc.queryStrips,
     networkDomains: acc.networkDomains, curatedSectionNames,
     sharedUsedKeys, sharedDedicatedKeyMap,
   });
@@ -981,7 +1255,7 @@ async function _autoEnableLangDefaultSources() {
 // resumes after its own internal await, its key-minting loop runs to
 // completion with no further await, so mutating the shared Set/Map from
 // several concurrent calls is safe — no two calls can be mid-loop at once.
-async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap) {
+async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap, networkRuleBudget) {
   const usedKeys = sharedUsedKeys || new Set();
   const dedicatedKeyMap = sharedDedicatedKeyMap || new Map();
   const sourceErrors = {};
@@ -996,7 +1270,7 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap)
       const raw = await res.text();
       if (!raw) return '';
       const stats = {};
-      const converted = await _maybeConvertAbpText(raw, stats, usedKeys, dedicatedKeyMap);
+      const converted = await _maybeConvertAbpText(raw, stats, usedKeys, dedicatedKeyMap, networkRuleBudget);
       if (Object.keys(stats).length) sourceStats[url] = stats;
       return converted;
     } catch (e) {
@@ -1083,8 +1357,11 @@ async function fetchRemoteRuleText() {
   // domain ever actually resolving (see _abpRender's own comment).
   const sharedAbpKeys = new Set();
   const sharedDedicatedDomains = new Map();
-  const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys, sharedDedicatedDomains);
-  const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys, sharedDedicatedDomains)));
+  // Shared across EVERY source converted in this call (urls AND fileParts) —
+  // see NETWORK_RULE_BUDGET's own comment for why this exists.
+  const networkRuleBudget = { remaining: NETWORK_RULE_BUDGET };
+  const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget);
+  const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget)));
 
   const merged = [...texts, ...convertedFileParts].filter(Boolean).join('\n');
   if (!merged && urls.length) {
@@ -1964,6 +2241,7 @@ async function ensureRuleDefinitionsLoaded() {
       AD_MAINFRAME_RULES = buildAdMainFrameRulesFromConfig(config, DEFAULT_RULES.length + MALWARE_RULES.length + 1);
       QUERY_STRIP_RULES = buildQueryStripRules(global.strip_query_params || [], QUERY_STRIP_RULE_ID_START);
       NETWORK_REDIRECT_RULES = buildNetworkRedirectRules(global.network_redirect_rules || [], NETWORK_REDIRECT_RULE_ID_START);
+      NETWORK_BLOCK_RULES = buildNetworkBlockRules(global.network_block_rules || [], NETWORK_BLOCK_RULE_ID_START);
       TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
       MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
@@ -1980,6 +2258,7 @@ async function ensureRuleDefinitionsLoaded() {
 const FOCUS_RULE_ID_START   = 2000;
 const QUERY_STRIP_RULE_ID_START = 3000;
 const NETWORK_REDIRECT_RULE_ID_START = 500000; // for network_redirect_rules
+const NETWORK_BLOCK_RULE_ID_START = 700000;  // for network_block_rules (well clear of NETWORK_REDIRECT_RULE_ID_START's own sequential counter)
 const REMOTE_MALWARE_RULE_ID_START = 100000; // for fetched blocklists
 const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
 const PAUSE_ALLOW_RULE_ID_START = 300000;    // for pause/allowlist allow-all rules
@@ -2242,6 +2521,7 @@ async function buildActiveRulesFromStorage() {
   const focusRules = await buildFocusRules(focusMode);
   const queryStripActive = blockTrackers ? QUERY_STRIP_RULES : [];
   const networkRedirectActive = blockAds ? NETWORK_REDIRECT_RULES : [];
+  const networkBlockActive = blockAds ? NETWORK_BLOCK_RULES : [];
 
   // Build allowAllRequests rules for paused + allowlisted domains.
   // These have higher priority and override ALL blocking rules for
@@ -2285,6 +2565,7 @@ async function buildActiveRulesFromStorage() {
     allRules: [
       ...activeRules, ...adMainFrameActive, ...malwareActive, ...remoteActive,
       ...customBlockRules, ...focusRules, ...pauseAllowRules, ...queryStripActive, ...networkRedirectActive,
+      ...networkBlockActive,
     ],
   };
 }
