@@ -97,6 +97,14 @@ const chromeStub = {
     onChanged: { addListener(fn) { storageChangeListeners.push(fn); } },
   },
   declarativeNetRequest: {
+    // Mutable (not plain literals) so a test can temporarily change these to
+    // exercise _trimToDynamicRuleLimits()'s backstop without actually having
+    // to generate tens of thousands of real rules — see section "25ii"
+    // below. Real Chrome/Edge 120+ values: MAX_NUMBER_OF_DYNAMIC_RULES=30000
+    // (safe rules only), MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES=5000 (redirect/
+    // modifyHeaders — a SEPARATE pool, not subtracted from the 30000).
+    MAX_NUMBER_OF_DYNAMIC_RULES: 30000,
+    MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES: 5000,
     // Real chrome.declarativeNetRequest.* calls are cross-process IPC round
     // trips with genuine (variable) latency — a same-process microtask stub
     // with no delay at all happens to serialize concurrent calls "for free"
@@ -275,6 +283,7 @@ self.__test = {
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
   _isValidUrlFilter, buildQueryStripRules, buildPatternRules,
   buildNetworkBlockRules, buildDomainNetworkBlockRules, _abpParseNetworkOptions, _abpEncodeNetworkBlockEntry, _abpSplitNetworkPattern, NETWORK_BLOCK_RULE_ID_START,
+  _trimToDynamicRuleLimits, _dynamicRuleLimits,
   get NETWORK_BLOCK_RULES() { return NETWORK_BLOCK_RULES; },
   RULE_SOURCE_ERRORS_KEY,
   _buildElementRulesBlock, _applyElementRules,
@@ -1851,6 +1860,126 @@ function check(name, cond, detail = '') {
     check('the unrelated domain\'s own section carries NO network_block_rules',
       !((parsedOther[otherKey] || {}).network_block_rules || []).length,
       JSON.stringify(parsedOther[otherKey]));
+  }
+
+  console.log('\n== 25ii. _trimToDynamicRuleLimits() hard backstop: Chrome/Edge safe+unsafe SPLIT pools vs Firefox\'s flat SHARED pool (2026-08-31, corrected same day — see memory) ==');
+  // Belt-and-suspenders on top of NETWORK_RULE_BUDGET (a hand-tuned soft cap
+  // that can go stale as filter lists grow — see the memory this session
+  // wrote after live-measuring real EasyList+EasyPrivacy+... content).
+  // First pass at this backstop wrongly assumed one flat 30000 limit shared
+  // by every browser and read the WRONG (deprecated) property — corrected
+  // same day after checking MDN + Chrome's own docs: Chrome/Edge 120+ split
+  // dynamic rules into two INDEPENDENT quotas by action.type (30000 safe /
+  // 5000 unsafe, unsafe = redirect/modifyHeaders), Firefox does NOT split —
+  // its single 5000 covers everything together (needs this backstop MORE
+  // than Chrome, not "no limit" as first assumed).
+  {
+    // Synthetic rules — deterministic, doesn't depend on the real rule
+    // pipeline's current safe/unsafe composition at this point in the file.
+    const mkSafe = id => ({ id, priority: 1, action: { type: 'block' }, condition: { urlFilter: `||safe-${id}.example^` } });
+    const mkUnsafe = id => ({ id, priority: 1, action: { type: 'redirect', redirect: { url: 'https://example.com/x' } }, condition: { urlFilter: `||unsafe-${id}.example^` } });
+    // Interleaved on purpose: 10 safe then 10 unsafe then 10 safe then 10
+    // unsafe — proves trimming is order-preserving WITHIN each pool, not
+    // just "first N of the whole array" (which would wrongly favor whichever
+    // category happens to appear first).
+    const mixed = [
+      ...Array.from({ length: 10 }, (_, i) => mkSafe(i)),
+      ...Array.from({ length: 10 }, (_, i) => mkUnsafe(100 + i)),
+      ...Array.from({ length: 10 }, (_, i) => mkSafe(20 + i)),
+      ...Array.from({ length: 10 }, (_, i) => mkUnsafe(120 + i)),
+    ]; // 20 safe total, 20 unsafe total, 40 combined
+
+    const realSafeCap = chromeStub.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES;
+    const realUnsafeCap = chromeStub.declarativeNetRequest.MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES;
+    function withLimits(safeCap, unsafeCap, hasLegacyFlat, fn) {
+      chromeStub.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES = safeCap;
+      if (unsafeCap === undefined) delete chromeStub.declarativeNetRequest.MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES;
+      else chromeStub.declarativeNetRequest.MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES = unsafeCap;
+      if (hasLegacyFlat !== undefined) chromeStub.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES = hasLegacyFlat;
+      else delete chromeStub.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES;
+      try { return fn(); }
+      finally {
+        chromeStub.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES = realSafeCap;
+        chromeStub.declarativeNetRequest.MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES = realUnsafeCap;
+        delete chromeStub.declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES;
+      }
+    }
+
+    // Chrome/Edge 120+: both split constants present -> two INDEPENDENT pools.
+    withLimits(15, 8, undefined, () => {
+      const { maxSafe, maxUnsafe, shared } = T._dynamicRuleLimits();
+      check('Chrome/Edge split pools detected: shared === false', shared === false, { maxSafe, maxUnsafe, shared });
+      const trimmed = T._trimToDynamicRuleLimits(mixed);
+      const safeIds = trimmed.filter(r => r.action.type === 'block').map(r => r.id);
+      const unsafeIds = trimmed.filter(r => r.action.type === 'redirect').map(r => r.id);
+      check('split pools: exactly 15 safe rules kept (the earliest/highest-priority 15 of the 20)',
+        safeIds.length === 15 && JSON.stringify(safeIds) === JSON.stringify([...Array(10).keys()].concat([20, 21, 22, 23, 24])),
+        safeIds);
+      check('split pools: exactly 8 unsafe rules kept, independently of the safe pool (not 15+8 minus something)',
+        unsafeIds.length === 8 && JSON.stringify(unsafeIds) === JSON.stringify([100, 101, 102, 103, 104, 105, 106, 107]),
+        unsafeIds);
+      check('split pools: total kept is 23 (15+8), well under the naive "40 combined" reading',
+        trimmed.length === 23, trimmed.length);
+    });
+
+    // Firefox (or legacy pre-split Chrome): only ONE number exposed -> flat
+    // SHARED pool, safe and unsafe rules compete for the SAME slots.
+    withLimits(12, undefined, undefined, () => {
+      const { maxSafe, maxUnsafe, shared } = T._dynamicRuleLimits();
+      check('Firefox-like (no unsafe split exposed): shared === true, maxSafe === maxUnsafe',
+        shared === true && maxSafe === 12 && maxUnsafe === 12, { maxSafe, maxUnsafe, shared });
+      const trimmed = T._trimToDynamicRuleLimits(mixed);
+      check('flat shared pool: kept EXACTLY 12 total (not 12 safe + 12 unsafe = 24)',
+        trimmed.length === 12, trimmed.length);
+      check('flat shared pool: kept in original encounter order (first 10 safe, then first 2 unsafe)',
+        JSON.stringify(trimmed) === JSON.stringify(mixed.slice(0, 12)), 'mismatch');
+    });
+
+    // Legacy-only browser (pre-Chrome-120 / pre-Firefox-126): neither modern
+    // constant exposed, only the old deprecated MAX_NUMBER_OF_DYNAMIC_AND_
+    // SESSION_RULES -> same flat-shared-pool behavior via that property.
+    withLimits(undefined, undefined, 9, () => {
+      const { maxSafe, maxUnsafe, shared } = T._dynamicRuleLimits();
+      check('legacy-only property: still resolves to a flat shared pool of 9',
+        shared === true && maxSafe === 9 && maxUnsafe === 9, { maxSafe, maxUnsafe, shared });
+      const trimmed = T._trimToDynamicRuleLimits(mixed);
+      check('legacy-only property: trims to exactly 9', trimmed.length === 9, trimmed.length);
+    });
+
+    // Nothing exposed at all (this repo's own Node test harness's default
+    // shape for a hypothetical unknown browser) -> no known cap, no trim.
+    withLimits(undefined, undefined, undefined, () => {
+      const { maxSafe, maxUnsafe } = T._dynamicRuleLimits();
+      check('no limits exposed at all: both resolve to undefined', maxSafe === undefined && maxUnsafe === undefined, { maxSafe, maxUnsafe });
+      const trimmed = T._trimToDynamicRuleLimits(mixed);
+      check('no limits exposed: input returned completely unchanged (same 40 entries)',
+        trimmed.length === 40 && trimmed === mixed, trimmed.length);
+    });
+
+    // Warning log fires only when a trim actually engages.
+    const warnCalls = [];
+    const origWarn = console.warn;
+    console.warn = (...args) => warnCalls.push(args.join(' '));
+    try {
+      withLimits(15, 8, undefined, () => T._trimToDynamicRuleLimits(mixed));
+      withLimits(1000, 1000, undefined, () => T._trimToDynamicRuleLimits(mixed)); // no overflow -> no warning
+    } finally { console.warn = origWarn; }
+    check('warns exactly once when a trim engages, not when everything already fits',
+      warnCalls.length === 1 && warnCalls[0].includes('trimmed'), warnCalls);
+  }
+  {
+    // Integration check: buildActiveRulesFromStorage() actually wires the
+    // real pipeline's output through _trimToDynamicRuleLimits(), using the
+    // REAL (unmodified) stub limits (30000 safe / 5000 unsafe) — this repo's
+    // actual rule count today is far under both, so this just confirms the
+    // call site is live and produces a result consistent with manually
+    // classifying+capping the same rules independently.
+    const { allRules } = await T.buildActiveRulesFromStorage();
+    const safeCount = allRules.filter(r => T._dynamicRuleLimits && ['block', 'allow', 'allowAllRequests', 'upgradeScheme'].includes(r.action && r.action.type)).length;
+    const unsafeCount = allRules.length - safeCount;
+    check('integration: real pipeline output stays under both real Chrome pools (30000 safe / 5000 unsafe) with today\'s content',
+      safeCount <= 30000 && unsafeCount <= 5000,
+      { safeCount, unsafeCount });
   }
 
   console.log('\n== 25w. _isValidUrlFilter() matches Chrome DNR\'s documented urlFilter constraints (2026-08-24) ==');

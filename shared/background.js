@@ -107,6 +107,85 @@ let _ruleConfigPromise = null;
 
 const QUERY_STRIP_RESOURCE_TYPES = ['main_frame', 'sub_frame', 'stylesheet', 'script', 'image', 'font', 'object', 'xmlhttprequest', 'ping', 'csp_report', 'media', 'websocket', 'other'];
 
+// Hard backstop for buildActiveRulesFromStorage()'s final rule count — belt
+// AND suspenders alongside NETWORK_RULE_BUDGET's own cap. NETWORK_RULE_BUDGET
+// is a hand-tuned SOFT preference (live-measured against today's filter-list
+// content — see [[abp-path-scoped-network-rule-conversion]] memory) that can
+// go stale as EasyList/AdGuard/etc. grow over time or new default Rule
+// Sources get added later; this reads the browser's OWN real runtime
+// constants instead of hardcoding a number, so it stays correct even if
+// those values ever change.
+//
+// 2026-08-31 correction (a first pass here wrongly assumed one flat 30000
+// limit and read the WRONG, deprecated property — see memory for the full
+// story): Chrome/Edge 120+ actually split dynamic rules into TWO INDEPENDENT
+// quotas by action.type — MAX_NUMBER_OF_DYNAMIC_RULES = 30000 for "safe"
+// rules (block/allow/allowAllRequests/upgradeScheme) and
+// MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES = 5000 for "unsafe" rules (redirect/
+// modifyHeaders/anything else) — a redirect rule does NOT compete with a
+// block rule for the same pool. This repo's DEFAULT_RULES (ad/tracker
+// bait-detector redirects), network_redirect_rules, strip_query_params, and
+// the ad/malware main_frame warning-page redirects are ALL 'redirect' type
+// — i.e. the unsafe pool, not the 30000 one. Firefox does NOT split these:
+// MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES is never exposed there, and its single
+// MAX_NUMBER_OF_DYNAMIC_RULES (5000, confirmed via MDN 2026-08-31) covers
+// EVERY dynamic rule together regardless of action type — Firefox needs
+// this backstop MORE than Chrome, not less; there is no "Firefox doesn't
+// need a limit" case. Same flat-shared-pool behavior on legacy Chrome/
+// Firefox that still only expose the older, deprecated
+// MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES (also a flat 5000, pre-Chrome-120/
+// pre-Firefox-126).
+const SAFE_DNR_ACTION_TYPES = new Set(['block', 'allow', 'allowAllRequests', 'upgradeScheme']);
+
+// Returns { maxSafe, maxUnsafe, shared }. `shared: true` means maxSafe ===
+// maxUnsafe and both action categories draw from the SAME pool (Firefox, or
+// legacy pre-split Chrome) — the trim below must track ONE combined counter
+// in that case, not two independent ones, or it would let up to
+// maxSafe+maxUnsafe total through instead of just maxSafe.
+function _dynamicRuleLimits() {
+  const dnr = EXT.declarativeNetRequest || {};
+  const num = v => (typeof v === 'number' && v > 0) ? v : undefined;
+  const safeCap = num(dnr.MAX_NUMBER_OF_DYNAMIC_RULES);
+  const unsafeCap = num(dnr.MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES);
+  if (safeCap !== undefined && unsafeCap !== undefined) {
+    return { maxSafe: safeCap, maxUnsafe: unsafeCap, shared: false };
+  }
+  const flatCap = safeCap !== undefined ? safeCap : num(dnr.MAX_NUMBER_OF_DYNAMIC_AND_SESSION_RULES);
+  return { maxSafe: flatCap, maxUnsafe: flatCap, shared: true };
+}
+
+// Trims `rules` (already ordered highest-priority-to-keep FIRST) down to
+// whatever this browser's REAL limits are, dropping lowest-priority entries
+// within whichever pool(s) actually overflow — never dropping a
+// higher-priority rule ahead of a lower-priority one within the same pool.
+// No-op (returns `rules` unchanged) when neither limit is exposed at all
+// (e.g. this repo's own Node test harness unless it stubs these).
+function _trimToDynamicRuleLimits(rules) {
+  const { maxSafe, maxUnsafe, shared } = _dynamicRuleLimits();
+  if (maxSafe === undefined && maxUnsafe === undefined) return rules;
+  const kept = [];
+  let safeCount = 0, unsafeCount = 0, sharedCount = 0;
+  let droppedSafe = 0, droppedUnsafe = 0;
+  for (const rule of rules) {
+    const isSafe = SAFE_DNR_ACTION_TYPES.has(rule.action && rule.action.type);
+    if (shared) {
+      if (maxSafe !== undefined && sharedCount >= maxSafe) { isSafe ? droppedSafe++ : droppedUnsafe++; continue; }
+      sharedCount++;
+    } else if (isSafe) {
+      if (maxSafe !== undefined && safeCount >= maxSafe) { droppedSafe++; continue; }
+      safeCount++;
+    } else {
+      if (maxUnsafe !== undefined && unsafeCount >= maxUnsafe) { droppedUnsafe++; continue; }
+      unsafeCount++;
+    }
+    kept.push(rule);
+  }
+  if (droppedSafe || droppedUnsafe) {
+    console.warn(`[AdBlock] built ${rules.length} dynamic rules, over this browser's real limit(s) — trimmed ${droppedSafe} lowest-priority safe (block/allow/allowAllRequests) + ${droppedUnsafe} lowest-priority unsafe (redirect/modifyHeaders) rules so updateDynamicRules() still succeeds instead of Chrome rejecting the whole batch`);
+  }
+  return kept;
+}
+
 // Chrome DNR's documented urlFilter constraints (developer.chrome.com/docs/
 // extensions/reference/api/declarativeNetRequest#type-RuleCondition): must
 // be non-empty ASCII, a pattern starting with "||*" is explicitly
@@ -2694,14 +2773,27 @@ async function buildActiveRulesFromStorage() {
     _pauseAllowRulesMemo = { key: pauseAllowKey, rules: pauseAllowRules };
   }
 
-  return {
-    enabled: true,
-    allRules: [
-      ...activeRules, ...adMainFrameActive, ...malwareActive, ...remoteActive,
-      ...customBlockRules, ...focusRules, ...pauseAllowRules, ...queryStripActive, ...networkRedirectActive,
-      ...networkBlockActive,
-    ],
-  };
+  // Ordered highest-priority-to-keep FIRST, lowest-priority-to-sacrifice
+  // LAST within each action-type pool — networkBlockActive (network_
+  // block_rules, all 'block'/safe) is deliberately last among the safe
+  // tiers, and queryStripActive/networkRedirectActive (both 'redirect'/
+  // unsafe) are last among the unsafe ones: these are the tiers already
+  // designed to degrade gracefully (see NETWORK_RULE_BUDGET's own comment),
+  // so they're also what _trimToDynamicRuleLimits() eats into first if a
+  // pool ever overflows what THIS browser actually allows (see its own
+  // comment for the safe/unsafe split and Firefox's flat shared pool).
+  // NETWORK_RULE_BUDGET already keeps this from triggering in the common
+  // case; this is the guarantee for when that hand-tuned number goes stale
+  // (list growth, a new default Rule Source added later, ...) instead of
+  // gambling the whole updateDynamicRules() call on it staying accurate.
+  const combinedRules = [
+    ...activeRules, ...adMainFrameActive, ...malwareActive, ...remoteActive,
+    ...customBlockRules, ...focusRules, ...pauseAllowRules, ...queryStripActive, ...networkRedirectActive,
+    ...networkBlockActive,
+  ];
+  const allRules = _trimToDynamicRuleLimits(combinedRules);
+
+  return { enabled: true, allRules };
 }
 
 // ── Apply declarativeNetRequest rules ────────────────────────────
