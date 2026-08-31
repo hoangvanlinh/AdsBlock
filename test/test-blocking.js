@@ -274,7 +274,7 @@ self.__test = {
   _entryUrls, _primaryUrl, _isDefaultSourceEnabled,
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
   _isValidUrlFilter, buildQueryStripRules, buildPatternRules,
-  buildNetworkBlockRules, _abpParseNetworkOptions, _abpEncodeNetworkBlockEntry, NETWORK_BLOCK_RULE_ID_START,
+  buildNetworkBlockRules, buildDomainNetworkBlockRules, _abpParseNetworkOptions, _abpEncodeNetworkBlockEntry, _abpSplitNetworkPattern, NETWORK_BLOCK_RULE_ID_START,
   get NETWORK_BLOCK_RULES() { return NETWORK_BLOCK_RULES; },
   RULE_SOURCE_ERRORS_KEY,
   _buildElementRulesBlock, _applyElementRules,
@@ -1202,9 +1202,17 @@ function check(name, cond, detail = '') {
     !converted.includes('some-unmapped-scriptlet-xyz'), converted);
   check('_maybeConvertAbpText: bare ||domain^ network rule -> ad_network_patterns',
     converted.includes('ad_network_patterns') && converted.includes('abptracker.com'), converted);
-  check('_maybeConvertAbpText: path-scoped $script network rule converts into network_block_rules, not folded into the bare abptracker.com ad_network_patterns entry',
-    converted.includes('network_block_rules') && converted.includes('abptracker.com/path/ads.js') && !/ad_network_patterns[^\n]*path\/ads\.js/.test(converted),
+  check('_maybeConvertAbpText: path-scoped $script network rule converts into a per-domain network_block_rules under [host_patterns], not folded into the bare abptracker.com ad_network_patterns entry',
+    converted.includes('network_block_rules') && converted.includes('/path/ads.js') &&
+    !/ad_network_patterns[^\n]*path\/ads\.js/.test(converted),
     converted);
+  {
+    const convertedParsed = T.parseRuleText(converted);
+    const trackerKey = convertedParsed.host_patterns && convertedParsed.host_patterns['abptracker.com'] && convertedParsed.host_patterns['abptracker.com'][0];
+    check('the path-scoped rule\'s network_block_rules entry lives under abptracker.com\'s OWN dedicated [host_patterns] section',
+      !!trackerKey && (convertedParsed[trackerKey].network_block_rules || []).some(e => e.startsWith('/path/ads.js')),
+      trackerKey && convertedParsed[trackerKey]);
+  }
   check('_maybeConvertAbpText: [host_patterns] section present, maps the domain to a generated key',
     converted.includes('[host_patterns]') && converted.includes('abptestdomain.com'), converted);
 
@@ -1651,22 +1659,36 @@ function check(name, cond, detail = '') {
     builtRedirectRules[0].id === T.NETWORK_REDIRECT_RULE_ID_START && builtRedirectRules[1].id === T.NETWORK_REDIRECT_RULE_ID_START + 1,
     JSON.stringify(builtRedirectRules.map(r => r.id)));
 
-  console.log('\n== 25gg. Path-scoped network rules ($all, third-party, $image, $domain=, $denyallow=, $method=, $removeparam=, $important) via network_block_rules ==');
+  console.log('\n== 25gg. Path-scoped network rules ($all, third-party, $image, $domain=, $denyallow=, $method=, $removeparam=, $important) via per-domain network_block_rules ==');
+  // network_block_rules now lives under the pattern's OWN [host_patterns]
+  // section (see _abpSplitNetworkPattern/_abpFinalizeGroups) rather than one
+  // flat [global] list — each stored entry is PATH-only, the domain is
+  // reconstructed from host_patterns at build time (buildDomainNetworkBlockRules).
+  function _domainBlockEntries(parsed, domain) {
+    const sectionKey = parsed.host_patterns && parsed.host_patterns[domain] && parsed.host_patterns[domain][0];
+    const section = sectionKey && parsed[sectionKey];
+    return (section && section.network_block_rules) || [];
+  }
+
   // Real-world example that used to be silently dropped as "complexNetwork":
   // an exact-URL block with $all (same as no options at all).
   {
     const stats = {};
     const converted = await T._maybeConvertAbpText('||github.com/sooryanaga/obscure-affairs-unlocked-edition/raw/refs/heads/branch/taurobolium/unlocked-obscure-affairs-edition-3.0.zip^$all', stats);
     check('$all path-scoped rule converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
-    check('goes to network_block_rules, NEVER ad_network_patterns (see ABP_SIMPLE_NETWORK_OPTS_RE\'s 5x-fan-out comment)',
-      converted.includes('network_block_rules') && !converted.includes('ad_network_patterns'), converted);
-    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
-    check('round-trips through parseRuleText() with the escaped || anchor intact, decoded entry has all-"*" fields',
-      entries.length === 1 && entries[0] === 'github.com/sooryanaga/obscure-affairs-unlocked-edition/raw/refs/heads/branch/taurobolium/unlocked-obscure-affairs-edition-3.0.zip^ * * * * *',
+    check('goes to a per-domain network_block_rules under [host_patterns], NEVER the flat ad_network_patterns (see ABP_SIMPLE_NETWORK_OPTS_RE\'s 5x-fan-out comment)',
+      converted.includes('network_block_rules') && converted.includes('[host_patterns]') && !converted.includes('ad_network_patterns'), converted);
+    const parsed = T.parseRuleText(converted);
+    const entries = _domainBlockEntries(parsed, 'github.com');
+    check('stored entry is PATH-only (no domain prefix), decoded fields all "*"',
+      entries.length === 1 &&
+      entries[0] === '/sooryanaga/obscure-affairs-unlocked-edition/raw/refs/heads/branch/taurobolium/unlocked-obscure-affairs-edition-3.0.zip^ * * * * *',
       entries);
-    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
-    check('buildNetworkBlockRules(): exactly ONE real DNR block rule, no resourceTypes restriction',
-      rules.length === 1 && rules[0].action.type === 'block' && !rules[0].condition.resourceTypes && !rules[0].condition.excludedResourceTypes,
+    const rules = T.buildDomainNetworkBlockRules(parsed, T.NETWORK_BLOCK_RULE_ID_START);
+    check('buildDomainNetworkBlockRules(): exactly ONE real DNR block rule, full domain+path urlFilter reconstructed, no resourceTypes restriction',
+      rules.length === 1 &&
+      rules[0].condition.urlFilter === '||github.com/sooryanaga/obscure-affairs-unlocked-edition/raw/refs/heads/branch/taurobolium/unlocked-obscure-affairs-edition-3.0.zip^' &&
+      rules[0].action.type === 'block' && !rules[0].condition.resourceTypes && !rules[0].condition.excludedResourceTypes,
       JSON.stringify(rules));
   }
 
@@ -1675,8 +1697,8 @@ function check(name, cond, detail = '') {
     const stats = {};
     const converted = await T._maybeConvertAbpText('||example.com/exact/pixel.gif^$image', stats);
     check('$image: converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
-    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
-    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
+    const parsed = T.parseRuleText(converted);
+    const rules = T.buildDomainNetworkBlockRules(parsed, T.NETWORK_BLOCK_RULE_ID_START);
     check('$image: builds a real DNR block rule scoped to resourceTypes:["image"]',
       rules.length === 1 && rules[0].condition.urlFilter === '||example.com/exact/pixel.gif^' &&
       JSON.stringify(rules[0].condition.resourceTypes) === JSON.stringify(['image']) &&
@@ -1689,9 +1711,9 @@ function check(name, cond, detail = '') {
     const stats = {};
     const converted = await T._maybeConvertAbpText('||tracker.example/pixel^$domain=site-a.com|~site-b.com', stats);
     check('$domain=: converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
-    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
-    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
-    check('$domain=: builds initiatorDomains (included) + excludedInitiatorDomains (~excluded)',
+    const parsed = T.parseRuleText(converted);
+    const rules = T.buildDomainNetworkBlockRules(parsed, T.NETWORK_BLOCK_RULE_ID_START);
+    check('$domain=: builds initiatorDomains (included) + excludedInitiatorDomains (~excluded) — note: unrelated to the TARGET domain (tracker.example) used for host_patterns grouping',
       rules.length === 1 &&
       JSON.stringify(rules[0].condition.initiatorDomains) === JSON.stringify(['site-a.com']) &&
       JSON.stringify(rules[0].condition.excludedInitiatorDomains) === JSON.stringify(['site-b.com']),
@@ -1703,8 +1725,8 @@ function check(name, cond, detail = '') {
     const stats = {};
     const converted = await T._maybeConvertAbpText('||ads.example/*$script,denyallow=cdn.example.com', stats);
     check('$denyallow=: converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
-    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
-    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
+    const parsed = T.parseRuleText(converted);
+    const rules = T.buildDomainNetworkBlockRules(parsed, T.NETWORK_BLOCK_RULE_ID_START);
     check('$denyallow=: builds excludedRequestDomains + still carries the $script resourceType',
       rules.length === 1 &&
       JSON.stringify(rules[0].condition.excludedRequestDomains) === JSON.stringify(['cdn.example.com']) &&
@@ -1717,8 +1739,8 @@ function check(name, cond, detail = '') {
     const stats = {};
     const converted = await T._maybeConvertAbpText('||api.example/track^$method=get|~post', stats);
     check('$method=: converts (was complexNetwork before)', stats.converted === 1 && !stats.complexNetwork, stats);
-    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
-    const rules = T.buildNetworkBlockRules(entries, T.NETWORK_BLOCK_RULE_ID_START);
+    const parsed = T.parseRuleText(converted);
+    const rules = T.buildDomainNetworkBlockRules(parsed, T.NETWORK_BLOCK_RULE_ID_START);
     check('$method=: builds requestMethods (included) + excludedRequestMethods (~excluded)',
       rules.length === 1 &&
       JSON.stringify(rules[0].condition.requestMethods) === JSON.stringify(['get']) &&
@@ -1733,6 +1755,7 @@ function check(name, cond, detail = '') {
   // $removeparam= -> this repo's EXISTING strip_query_params mechanism
   // (buildQueryStripRules), NOT network_block_rules — it's a same-origin
   // redirect that strips the param and lets the request through, not a block.
+  // Stays a flat [global] key (unaffected by the per-domain restructuring).
   {
     const stats = {};
     const converted = await T._maybeConvertAbpText('||youtube.com/watch^$removeparam=si', stats);
@@ -1757,9 +1780,9 @@ function check(name, cond, detail = '') {
     const converted = await T._maybeConvertAbpText('||example.com/exact/beacon.gif^$image,important', stats);
     check('$important (combined with $image): still converts, important has no effect either way',
       stats.converted === 1 && !stats.complexNetwork, stats);
-    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
+    const entries = _domainBlockEntries(T.parseRuleText(converted), 'example.com');
     check('$important: does not leak into the encoded entry as if it were a resourceType',
-      entries.length === 1 && entries[0] === 'example.com/exact/beacon.gif^ image * * * *', entries);
+      entries.length === 1 && entries[0] === '/exact/beacon.gif^ image * * * *', entries);
   }
 
   // Still-unsupported: mixing an included AND excluded resourceType in the
@@ -1779,7 +1802,9 @@ function check(name, cond, detail = '') {
   // Shared NETWORK_RULE_BUDGET: caps total network_block_rules conversions
   // across every source converted together, so a huge Rule Source can't
   // blow past Chrome's dynamic rule limit (see NETWORK_RULE_BUDGET's own
-  // comment for the real-world 41,000+-rule incident this prevents).
+  // comment for the real-world 41,000+-rule incident this prevents). Each
+  // synthetic entry here targets a DIFFERENT domain, so this also exercises
+  // 20 distinct [host_patterns] dedicated sections in one conversion.
   {
     const manyRules = [];
     for (let i = 0; i < 20; i++) manyRules.push(`||budget-test-${i}.example/exact/path.js^$image`);
@@ -1790,9 +1815,42 @@ function check(name, cond, detail = '') {
       stats.converted === 5 && stats.complexNetwork === 15, stats);
     check('shared budget: remaining correctly hits 0, not negative',
       budget.remaining === 0, budget);
-    const entries = (T.parseRuleText(converted).global || {}).network_block_rules || [];
-    check('shared budget: exactly 5 entries actually landed in network_block_rules',
-      entries.length === 5, entries.length);
+    const rules = T.buildDomainNetworkBlockRules(T.parseRuleText(converted), T.NETWORK_BLOCK_RULE_ID_START);
+    check('shared budget: exactly 5 real DNR rules built (across 5 distinct domains)',
+      rules.length === 5, rules.length);
+  }
+
+  console.log('\n== 25hh. network_block_rules under [host_patterns] merges with that domain\'s OWN cosmetic/scriptlet rules, and never buckets with an unrelated domain ==');
+  {
+    // Same domain gets BOTH a cosmetic selector (##) AND a path-scoped
+    // network block ($domain=) — must land in the SAME [host_patterns] section.
+    const mixedSnippet = [
+      'shared-target.example##.ad-banner',
+      '||shared-target.example/exact/beacon.gif^$image',
+    ].join('\n');
+    const converted = await T._maybeConvertAbpText(mixedSnippet);
+    const parsed = T.parseRuleText(converted);
+    const sectionKey = parsed.host_patterns && parsed.host_patterns['shared-target.example'] && parsed.host_patterns['shared-target.example'][0];
+    check('cosmetic selector and network_block_rules for the same domain share ONE section',
+      !!sectionKey && parsed[sectionKey] &&
+      (parsed[sectionKey].direct_hide_selectors || []).includes('.ad-banner') &&
+      (parsed[sectionKey].network_block_rules || []).length === 1,
+      JSON.stringify(parsed[sectionKey]));
+
+    // A DIFFERENT, unrelated domain with the exact SAME selector must NOT
+    // collapse into that domain's dedicated section (which would leak the
+    // network block onto it) — this is the forced-uniqueness guarantee.
+    const otherSnippet = 'other-target.example##.ad-banner\n' + mixedSnippet;
+    const convertedOther = await T._maybeConvertAbpText(otherSnippet);
+    const parsedOther = T.parseRuleText(convertedOther);
+    const otherKey = parsedOther.host_patterns && parsedOther.host_patterns['other-target.example'] && parsedOther.host_patterns['other-target.example'][0];
+    const sharedKeyAgain = parsedOther.host_patterns && parsedOther.host_patterns['shared-target.example'] && parsedOther.host_patterns['shared-target.example'][0];
+    check('an unrelated domain with the IDENTICAL selector still gets its OWN section, not merged with the network-block domain',
+      !!otherKey && otherKey !== sharedKeyAgain,
+      JSON.stringify({ otherKey, sharedKeyAgain }));
+    check('the unrelated domain\'s own section carries NO network_block_rules',
+      !((parsedOther[otherKey] || {}).network_block_rules || []).length,
+      JSON.stringify(parsedOther[otherKey]));
   }
 
   console.log('\n== 25w. _isValidUrlFilter() matches Chrome DNR\'s documented urlFilter constraints (2026-08-24) ==');

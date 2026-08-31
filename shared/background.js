@@ -255,6 +255,37 @@ function buildNetworkBlockRules(entries, startId) {
   return rules;
 }
 
+// network_block_rules entries live under each domain's OWN [host_patterns]
+// section (see _abpSplitNetworkPattern/_abpFinalizeGroups) — each entry
+// there stores only the PATH portion (the field buildNetworkBlockRules
+// expects as "pattern" is missing its domain prefix). This reconstructs the
+// full entry by walking [host_patterns]' domain -> section-key mapping,
+// prepending that domain onto every network_block_rules value found in the
+// matching section, then hands the whole flat list to buildNetworkBlockRules
+// unchanged. A '|'-joined bucket key (domainA|domainB — never produced by
+// this converter's own forced single-domain rule for network_block_rules,
+// but nothing stops a hand-written site-rules.txt from doing it) applies
+// the same path/options to every domain in the group.
+function buildDomainNetworkBlockRules(parsed, startId) {
+  const hostPatterns = parsed.host_patterns || {};
+  const entries = [];
+  for (const domainKey in hostPatterns) {
+    if (!Object.prototype.hasOwnProperty.call(hostPatterns, domainKey)) continue;
+    const sectionKey = hostPatterns[domainKey] && hostPatterns[domainKey][0];
+    const section = sectionKey && parsed[sectionKey];
+    const pathEntries = section && section.network_block_rules;
+    if (!pathEntries || !pathEntries.length) continue;
+    for (const domain of domainKey.split('|')) {
+      for (const pathEntry of pathEntries) {
+        const parts = String(pathEntry || '').trim().split(/\s+/);
+        if (parts.length !== 6) continue; // malformed — don't guess, drop it (buildNetworkBlockRules re-validates anyway)
+        entries.push([domain + parts[0], ...parts.slice(1)].join(' '));
+      }
+    }
+  }
+  return buildNetworkBlockRules(entries, startId);
+}
+
 function parseRuleText(text) {
   const out = {};
   let section = '';
@@ -324,7 +355,7 @@ async function _compressForStorage(text) {
   // old-browser/CompressionStream-unavailable fallback below), so reading it
   // back needs no changes, and toggling DEBUG_LOCAL on/off never breaks
   // already-stored (possibly compressed) values either way.
-  //if (DEBUG_LOCAL) return { format: 'raw', data: text };
+  if (DEBUG_LOCAL) return { format: 'raw', data: text };
   try {
     if (typeof CompressionStream === 'undefined') throw new Error('CompressionStream unavailable');
     const cs = new CompressionStream('deflate-raw');
@@ -594,6 +625,25 @@ function _abpEncodeNetworkBlockEntry(pattern, opts) {
   const thirdParty = opts.thirdParty === true ? '1' : opts.thirdParty === false ? '0' : '*';
   return [pattern, types, domains, denyallow, methods, thirdParty].join(' ');
 }
+
+// Splits a network-rule pattern (the part between '||' and '$', e.g.
+// "codeload.github.com/user/repo/zip/refs/heads/branch^") into its target
+// domain and the remainder, so a path-scoped network_block_rules entry can
+// be stored under that domain's own [host_patterns] section (site-rules.txt
+// grammar) instead of one flat global list — grouped the same way cosmetic
+// hide-selector/scriptlet rules already are for that domain. A domain name
+// can't itself contain '/' or '^' (those only ever appear in the path/
+// separator that follows), so the first occurrence of either character is
+// an unambiguous, lossless split point: `domain + rest` always reconstructs
+// the exact original pattern, whether rest is '' (bare domain, reached here
+// only because its OPTIONS weren't simple — see ABP_SIMPLE_NETWORK_OPTS_RE),
+// '^' alone, or a full '/path...^' suffix.
+function _abpSplitNetworkPattern(pattern) {
+  const idx = pattern.search(/[/^]/);
+  if (idx === -1) return { domain: pattern, rest: '' };
+  return { domain: pattern.slice(0, idx), rest: pattern.slice(idx) };
+}
+
 // Build-tool-generated class/id hash — e.g. styled-jsx's `.jsx-2126301199`,
 // a CRC32/epoch-timestamp-style numeric id (`#popup-1720497466`),
 // styled-components/emotion's `.sc-xxxxxxxx`. These are worthless past the
@@ -795,7 +845,7 @@ function _abpEmptySkipStats() {
 // silently dropped some fraction of its rules with no way to tell how much
 // or why short of manually diffing input against output).
 function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget) {
-  const { domainSelectors, domainScriptlets, globalSelectors, globalScriptlets, networkDomains, networkRedirects, networkBlocks, queryStrips } = acc;
+  const { domainSelectors, domainScriptlets, globalSelectors, globalScriptlets, networkDomains, networkRedirects, domainNetworkBlocks, queryStrips } = acc;
   const s = stats || _abpEmptySkipStats();
   // `networkRuleBudget` caps network_block_rules conversions — see
   // NETWORK_RULE_BUDGET's own comment for why. Omitted (or `undefined`)
@@ -821,11 +871,11 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget) {
         s.converted++;
       } else {
         // Not a bare-domain-with-simple-opts block — three other shapes this
-        // converter preserves, ALL going to network_block_rules (never
-        // ad_network_patterns — see ABP_SIMPLE_NETWORK_OPTS_RE's own comment
-        // for why that distinction matters): (a) a path-scoped rule carrying
-        // a $redirect=/$redirect-rule= that resolves to a resource this
-        // extension actually ships (network_redirect_rules, background.js's
+        // converter preserves, none of them ad_network_patterns (see
+        // ABP_SIMPLE_NETWORK_OPTS_RE's own comment for why that distinction
+        // matters): (a) a path-scoped rule carrying a $redirect=/
+        // $redirect-rule= that resolves to a resource this extension
+        // actually ships (network_redirect_rules, background.js's
         // buildNetworkRedirectRules) — a bare-domain redirect isn't worth its
         // own rule since ad_network_patterns already blocks that domain
         // outright, so this only fires for a genuinely path-scoped pattern;
@@ -836,12 +886,16 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget) {
         // not "block it"; (c) any other pattern whose options
         // _abpParseNetworkOptions can represent ($domain=, $denyallow=,
         // $method=, a single/multiple resourceType, $important, $all, or no
-        // options at all) — added to network_block_rules, which builds
-        // exactly ONE DNR rule per entry (buildNetworkBlockRules), no matter
-        // how many types/domains it carries. A negated/regex removeparam=
-        // value, removeparam= combined with anything beyond third-party, or
-        // any option outside everything above (csp=, popup, badfilter, ...)
-        // is dropped rather than guessed at.
+        // options at all) — stored as a network_block_rules entry under the
+        // pattern's OWN target domain's [host_patterns] section (see
+        // _abpSplitNetworkPattern's own comment), grouped the same way that
+        // domain's cosmetic/scriptlet rules already are, instead of one flat
+        // global list — buildNetworkBlockRules still builds exactly ONE DNR
+        // rule per entry, no matter how many types/domains it carries. A
+        // negated/regex removeparam= value, removeparam= combined with
+        // anything beyond third-party, or any option outside everything
+        // above (csp=, popup, badfilter, ...) is dropped rather than
+        // guessed at.
         const urlFilter = '||' + pattern;
         const optTokens = optsStr ? optsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
         const redirectTok = optTokens.find(t => /^redirect(?:-rule)?=/.test(t));
@@ -860,7 +914,15 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget) {
         } else {
           const opts = _abpParseNetworkOptions(optsStr);
           if (!opts.unsupported && budget.remaining > 0 && _isValidUrlFilter(urlFilter)) {
-            networkBlocks.add(_abpEncodeNetworkBlockEntry(pattern, opts));
+            const { domain: rawDomain, rest } = _abpSplitNetworkPattern(pattern);
+            // Lowercased for the same reason the bare-domain branch above
+            // does (host matching is case-insensitive; keeps this domain
+            // groupable with any OTHER rule for the same host regardless of
+            // the source text's own casing) — `rest` (the path) is left
+            // exactly as-is, since URL paths ARE case-sensitive.
+            const domain = rawDomain.toLowerCase();
+            if (!domainNetworkBlocks.has(domain)) domainNetworkBlocks.set(domain, new Set());
+            domainNetworkBlocks.get(domain).add(_abpEncodeNetworkBlockEntry(rest, opts));
             budget.remaining--;
             s.converted++;
           } else {
@@ -943,15 +1005,28 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget) {
   }
 }
 
-function _abpFinalizeGroups(domainSelectors, domainScriptlets) {
-  const allDomains = new Set([...domainSelectors.keys(), ...domainScriptlets.keys()]);
+// `domainNetworkBlocks` (optional): Map<domain, Set<entry>> of that domain's
+// own network_block_rules entries (see _abpSplitNetworkPattern). A domain
+// carrying any of these is ALWAYS forced into its own dedicated (single-
+// domain) group, never bucketed with another domain even if their
+// selectors/scriptlets happen to be identical — folding the domain's own
+// name into its signature guarantees that. Merging would otherwise apply
+// domain A's path-scoped network block to sibling domain B too, since a
+// bucket section's rules apply to every domain mapped to it.
+function _abpFinalizeGroups(domainSelectors, domainScriptlets, domainNetworkBlocks) {
+  const allDomains = new Set([
+    ...domainSelectors.keys(), ...domainScriptlets.keys(),
+    ...(domainNetworkBlocks ? domainNetworkBlocks.keys() : []),
+  ]);
   const groups = new Map();
   for (const domain of allDomains) {
     const selectors = domainSelectors.get(domain) || new Set();
     const scriptlets = domainScriptlets.get(domain) || new Map();
+    const networkBlocks = (domainNetworkBlocks && domainNetworkBlocks.get(domain)) || new Set();
     const scriptletSig = [...scriptlets.entries()].map(([k, vals]) => k + '=' + [...vals].sort().join('')).sort().join('');
-    const sig = [...selectors].sort().join(' ') + scriptletSig;
-    if (!groups.has(sig)) groups.set(sig, { domains: [], selectors, scriptlets });
+    const sig = [...selectors].sort().join(' ') + scriptletSig +
+      (networkBlocks.size ? ' netblock:' + domain : '');
+    if (!groups.has(sig)) groups.set(sig, { domains: [], selectors, scriptlets, networkBlocks });
     groups.get(sig).domains.push(domain);
   }
   return groups;
@@ -979,22 +1054,22 @@ function _abpFinalizeGroups(domainSelectors, domainScriptlets) {
 // group's selector for its OTHER (unrelated) domains, which would
 // reintroduce the exact cross-source leak _abpSanitizeKey's usedKeys
 // sharing was built to close.
-function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, networkBlocks, queryStrips, curatedSectionNames, sharedUsedKeys, sharedDedicatedKeyMap }) {
+function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, queryStrips, curatedSectionNames, sharedUsedKeys, sharedDedicatedKeyMap }) {
   const usedKeys = sharedUsedKeys || new Set();
   const dedicatedKeyMap = sharedDedicatedKeyMap || new Map();
   const out = [];
-  if (networkDomains.size || (networkRedirects && networkRedirects.size) || (networkBlocks && networkBlocks.size) ||
+  if (networkDomains.size || (networkRedirects && networkRedirects.size) ||
       (queryStrips && queryStrips.size) || globalSelectors.size || globalScriptlets.size) {
     out.push('[global]');
     // ad_network_patterns only ever holds bare lowercase domains here (no
     // '|' chars) — path-scoped patterns are deliberately kept out of it (see
     // ABP_SIMPLE_NETWORK_OPTS_RE's own comment) — so no escaping needed.
-    // network_block_rules/strip_query_params entries carry a raw pattern
-    // that CAN start with a single '|' anchor (see _isValidUrlFilter), so
-    // those ARE escaped, same as network_redirect_rules already is.
+    // strip_query_params entries carry a raw pattern that CAN start with a
+    // single '|' anchor (see _isValidUrlFilter), so those ARE escaped, same
+    // as network_redirect_rules already is. network_block_rules is rendered
+    // per-domain below, not here — see _abpFinalizeGroups' own comment.
     if (networkDomains.size) out.push('ad_network_patterns = ' + [...networkDomains].sort().join(' | '));
     if (networkRedirects && networkRedirects.size) out.push('network_redirect_rules = ' + [...networkRedirects].sort().map(_abpEscapeValue).join(' | '));
-    if (networkBlocks && networkBlocks.size) out.push('network_block_rules = ' + [...networkBlocks].sort().map(_abpEscapeValue).join(' | '));
     if (queryStrips && queryStrips.size) out.push('strip_query_params = ' + [...queryStrips].sort().map(_abpEscapeValue).join(' | '));
     if (globalSelectors.size) out.push('direct_hide_selectors = ' + [...globalSelectors].sort().map(_abpEscapeValue).join(' | '));
     for (const [scriptletKey, vals] of [...globalScriptlets.entries()].sort()) {
@@ -1024,6 +1099,14 @@ function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains,
       for (const [scriptletKey, vals] of [...g.scriptlets.entries()].sort()) {
         out.push(scriptletKey + ' = ' + [...vals].sort().map(_abpEscapeValue).join(' | '));
       }
+      // network_block_rules entries here are PATH-only (the domain is this
+      // section's own [host_patterns] mapping) — see _abpSplitNetworkPattern
+      // and buildDomainNetworkBlockRules, which reconstructs the full
+      // urlFilter from the two together at build time. A dedicated
+      // (single-domain) group is guaranteed here whenever networkBlocks is
+      // non-empty (see _abpFinalizeGroups' forced-uniqueness signature), so
+      // there's exactly one unambiguous domain to reconstruct against.
+      if (g.networkBlocks && g.networkBlocks.size) out.push('network_block_rules = ' + [...g.networkBlocks].sort().map(_abpEscapeValue).join(' | '));
       out.push('');
     });
   }
@@ -1113,7 +1196,7 @@ async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedica
     domainSelectors: new Map(), domainScriptlets: new Map(),
     globalSelectors: new Set(), globalScriptlets: new Map(),
     networkDomains: new Set(), networkRedirects: new Set(),
-    networkBlocks: new Set(), queryStrips: new Set(),
+    domainNetworkBlocks: new Map(), queryStrips: new Set(),
   };
   const stats = _abpEmptySkipStats();
   try { _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget); } catch (e) {
@@ -1121,10 +1204,10 @@ async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedica
     return text;
   }
   if (statsOut) Object.assign(statsOut, stats);
-  const groups = _abpFinalizeGroups(acc.domainSelectors, acc.domainScriptlets);
+  const groups = _abpFinalizeGroups(acc.domainSelectors, acc.domainScriptlets, acc.domainNetworkBlocks);
   return _abpRender({
     groups, globalSelectors: acc.globalSelectors, globalScriptlets: acc.globalScriptlets,
-    networkRedirects: acc.networkRedirects, networkBlocks: acc.networkBlocks, queryStrips: acc.queryStrips,
+    networkRedirects: acc.networkRedirects, queryStrips: acc.queryStrips,
     networkDomains: acc.networkDomains, curatedSectionNames,
     sharedUsedKeys, sharedDedicatedKeyMap,
   });
@@ -2260,7 +2343,7 @@ async function ensureRuleDefinitionsLoaded() {
       AD_MAINFRAME_RULES = buildAdMainFrameRulesFromConfig(config, DEFAULT_RULES.length + MALWARE_RULES.length + 1);
       QUERY_STRIP_RULES = buildQueryStripRules(global.strip_query_params || [], QUERY_STRIP_RULE_ID_START);
       NETWORK_REDIRECT_RULES = buildNetworkRedirectRules(global.network_redirect_rules || [], NETWORK_REDIRECT_RULE_ID_START);
-      NETWORK_BLOCK_RULES = buildNetworkBlockRules(global.network_block_rules || [], NETWORK_BLOCK_RULE_ID_START);
+      NETWORK_BLOCK_RULES = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
       TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
       MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
