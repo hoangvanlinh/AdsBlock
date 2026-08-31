@@ -261,7 +261,9 @@ self.__test = {
   ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules, reloadRules,
   _dedupeMalwarePriority,
   parseRuleText, buildRemoteMalwareRules, updateIcon, _incrementTabBlocked, _setTabBadge,
-  fetchMalwareBlocklists, maybeUpdateMalwareLists, DOMAIN_PATTERN_RE,
+  _updateRemoteMalwareDomains, DOMAIN_PATTERN_RE,
+  get REMOTE_MAX_PATH_PATTERNS() { return REMOTE_MAX_PATH_PATTERNS; },
+  get REMOTE_MALWARE_PATH_RULE_ID_START() { return REMOTE_MALWARE_PATH_RULE_ID_START; },
   _compressDomainsForStorage, _decompressDomainsFromStorage,
   get REMOTE_MAX_DOMAINS() { return REMOTE_MAX_DOMAINS; },
   getParsedRules, resolveSiteKey,
@@ -2170,7 +2172,7 @@ function check(name, cond, detail = '') {
   const rExportUnreachable = await sendExport({ type: 'EXPORT_CONVERTED_RULE_SOURCE', url: 'https://example.com/does-not-exist-source.txt' });
   check('a 404/unreachable url reports ok:false with an error, not a throw', rExportUnreachable.ok === false && !!rExportUnreachable.error, JSON.stringify(rExportUnreachable));
 
-  console.log('\n== 26. remoteMalwareDomains: cap raised 25k->200k + compressed storage (2026-08-25) ==');
+  console.log('\n== 26. remoteMalwareDomains: format:"hosts" RULES_REMOTE_URL entries (2026-08-31) ==');
   // The 25,000 cap used to truncate the (much larger) Phishing Army source
   // alphabetically partway through, permanently dropping most of the list
   // every day. Raised to 200,000 (Chrome's dynamic-rule COUNT quota was never
@@ -2180,28 +2182,44 @@ function check(name, cond, detail = '') {
   // doesn't reintroduce chrome.storage.local quota pressure.
   check('REMOTE_MAX_DOMAINS raised well past the old 25,000 truncation point', T.REMOTE_MAX_DOMAINS >= 100000, T.REMOTE_MAX_DOMAINS);
 
-  stubUrlTextMap['https://urlhaus.abuse.ch/downloads/hostfile/'] =
-    '# comment\n127.0.0.1 evil-host-1.example\n0.0.0.0 evil-host-2.example\nlocalhost\n';
+  // format:'hosts' entries are fetched by fetchRemoteRuleText() itself, same
+  // as every other default Rule Source, instead of a bespoke fetch loop on
+  // its own 24h alarm. Discovered dynamically from the live config (rather
+  // than hardcoded URL strings) since the exact malware sources/URLs here
+  // have changed more than once.
+  const malwareEntries = sandbox.self.ADBLOCK_CONFIG.RULES_REMOTE_URL.filter(e => e.format === 'hosts');
+  check('at least one format:"hosts" malware source is configured', malwareEntries.length >= 1, malwareEntries.map(e => e.name));
+  const malwareUrls = malwareEntries.flatMap(e => T._entryUrls(e));
   const manyDomainsLines = [];
   for (let i = 0; i < 3000; i++) manyDomainsLines.push(`phish-${i}.example`);
-  stubUrlTextMap['https://phishing.army/download/phishing_army_blocklist.txt'] =
-    '# Phishing Army header\n' + manyDomainsLines.join('\n');
+  stubUrlTextMap[malwareUrls[0]] = '# comment\n127.0.0.1 evil-host-1.example\n0.0.0.0 evil-host-2.example\nlocalhost\n';
+  for (let i = 1; i < malwareUrls.length; i++) {
+    stubUrlTextMap[malwareUrls[i]] = i === 1 ? ('# header\n' + manyDomainsLines.join('\n')) : '';
+  }
+  const expectedMalwareCount = 2 + (malwareUrls.length > 1 ? 3000 : 0);
 
-  const fetchedCount = await T.fetchMalwareBlocklists();
-  check('fetchMalwareBlocklists() parses both sources and returns the total unique count',
-    fetchedCount === 3002, fetchedCount); // 2 from URLhaus + 3000 from Phishing Army, comment/localhost excluded
+  await T.fetchRemoteRuleText();
+  const fetchedCount = storageData['malwareListCount'];
+  check(`fetchRemoteRuleText() fetches all ${malwareUrls.length} format:"hosts" source(s) and stores the total unique domain count`,
+    fetchedCount === expectedMalwareCount, fetchedCount);
+  check('no fetch errors recorded for any format:"hosts" source',
+    malwareUrls.every(u => !storageData[T.RULE_SOURCE_ERRORS_KEY]?.[u]),
+    JSON.stringify(storageData[T.RULE_SOURCE_ERRORS_KEY]));
 
   const storedWrapper = storageData['remoteMalwareDomains'];
   check('stored value is the compressed {format,data} wrapper, not a bare array',
     storedWrapper && typeof storedWrapper === 'object' && !Array.isArray(storedWrapper) && 'format' in storedWrapper,
     JSON.stringify(storedWrapper).slice(0, 120));
-  check('compressed storage is smaller than the raw JSON array would be (this dataset has enough repetition to compress)',
-    JSON.stringify(storedWrapper).length < JSON.stringify(manyDomainsLines).length,
-    `wrapper=${JSON.stringify(storedWrapper).length} raw=${JSON.stringify(manyDomainsLines).length}`);
+  if (malwareUrls.length > 1) {
+    check('compressed storage is smaller than the raw JSON array would be (this dataset has enough repetition to compress)',
+      JSON.stringify(storedWrapper).length < JSON.stringify(manyDomainsLines).length,
+      `wrapper=${JSON.stringify(storedWrapper).length} raw=${JSON.stringify(manyDomainsLines).length}`);
+  }
 
   const decompressedBack = await T._decompressDomainsFromStorage(storedWrapper);
-  check('decompressing the stored wrapper yields back all 3002 domains, byte-identical set',
-    decompressedBack.length === 3002 && decompressedBack.includes('evil-host-1.example') && decompressedBack.includes('phish-2999.example'),
+  check(`decompressing the stored wrapper yields back all ${expectedMalwareCount} domains, byte-identical set`,
+    decompressedBack.length === expectedMalwareCount && decompressedBack.includes('evil-host-1.example') &&
+    (malwareUrls.length <= 1 || decompressedBack.includes('phish-2999.example')),
     decompressedBack.length);
 
   check('backward compat: a pre-compression bare array still decompresses (passes through) correctly',
@@ -2218,11 +2236,72 @@ function check(name, cond, detail = '') {
   const activeWithRemote = await T.buildActiveRulesFromStorage();
   const remoteBlockRule = activeWithRemote.allRules.find(r => r.id >= 100000 && r.id < 200000 && r.action.type === 'block');
   check('buildActiveRulesFromStorage() decompresses the stored domains and builds real requestDomains rules from them',
-    !!remoteBlockRule && remoteBlockRule.condition.requestDomains.includes('phish-0.example'),
+    !!remoteBlockRule && remoteBlockRule.condition.requestDomains.includes('evil-host-1.example'),
     remoteBlockRule && remoteBlockRule.condition.requestDomains.slice(0, 3));
 
-  delete stubUrlTextMap['https://urlhaus.abuse.ch/downloads/hostfile/'];
-  delete stubUrlTextMap['https://phishing.army/download/phishing_army_blocklist.txt'];
+  for (const u of malwareUrls) delete stubUrlTextMap[u];
+
+  console.log('\n== 27. remoteMalwarePathPatterns: URLhaus-style mixed bare-domain + $all path-scoped lines (2026-08-31) ==');
+  // Live-reported: URLhaus's real feed mixes bare hostname lines (block the
+  // whole domain) with full ABP `||domain/path^$all` lines for shared/multi-
+  // tenant hosts (bitbucket.org, drive.google.com, web.archive.org, ...)
+  // where blocking the whole domain would take down unrelated legitimate
+  // content — ~8,400 of ~26,900 real entries are this shape and were 100%
+  // silently dropped before this section's fix (DOMAIN_PATTERN_RE rejects
+  // anything with '/' or '|', and these never went through the ABP
+  // network-rule converter at all since _updateRemoteMalwareDomains bypasses
+  // it entirely — see its own comment).
+  stubUrlTextMap[malwareUrls[0]] = [
+    '! comment',
+    'plain-malware-host.example',
+    '||bitbucket.org/evil-user/repo/payload.exe^$all',
+    '||drive.google.com/uc?export=download&id=xyz^',
+    '||shared-host.example/malicious/^$third-party',
+    // Unsupported modifier (a resourceType) on a path-scoped entry — still
+    // dropped, not guessed at, same conservative bar as _abpParseFile's own
+    // path-scoped conversion.
+    '||other-shared-host.example/bad.js^$script',
+    // Exact duplicate of the bitbucket.org entry above — dedup, not double-counted.
+    '||bitbucket.org/evil-user/repo/payload.exe^$all',
+  ].join('\n');
+  for (let i = 1; i < malwareUrls.length; i++) delete stubUrlTextMap[malwareUrls[i]]; // only source [0] carries data this time
+  await T.fetchRemoteRuleText();
+
+  const pathWrapper = storageData['remoteMalwarePathPatterns'];
+  const decompressedPaths = await T._decompressDomainsFromStorage(pathWrapper);
+  check('3 distinct path-scoped patterns extracted (bitbucket.org, drive.google.com, shared-host.example) — dup and $script dropped',
+    decompressedPaths.length === 3 &&
+    decompressedPaths.includes('||bitbucket.org/evil-user/repo/payload.exe^') &&
+    decompressedPaths.includes('||drive.google.com/uc?export=download&id=xyz^') &&
+    decompressedPaths.includes('||shared-host.example/malicious/^'),
+    decompressedPaths);
+  check('the plain bare-domain line still lands in remoteMalwareDomains, unaffected',
+    (await T._decompressDomainsFromStorage(storageData['remoteMalwareDomains'])).includes('plain-malware-host.example'));
+  check('malwareListCount includes both domains AND path patterns',
+    storageData['malwareListCount'] === 1 + 3, storageData['malwareListCount']);
+
+  Object.assign(storageData, { enabled: true, blockMalware: true });
+  const activeWithPaths = await T.buildActiveRulesFromStorage();
+  const pathRules = activeWithPaths.allRules.filter(r => r.id >= T.REMOTE_MALWARE_PATH_RULE_ID_START);
+  check('buildActiveRulesFromStorage() builds one block rule per path pattern, in the dedicated id range',
+    pathRules.length === 3 && pathRules.every(r => r.action.type === 'block'),
+    JSON.stringify(pathRules));
+  const bitbucketRule = pathRules.find(r => r.condition.urlFilter === '||bitbucket.org/evil-user/repo/payload.exe^');
+  check('a path rule has NO resourceTypes restriction (blocks every type in one rule) and no main_frame-redirect action',
+    !!bitbucketRule && !bitbucketRule.condition.resourceTypes && bitbucketRule.action.type === 'block',
+    JSON.stringify(bitbucketRule));
+  check('the whole bitbucket.org domain is NOT blocked outright — only requestDomains-based rules (the bare-hostname path) would do that',
+    !activeWithPaths.allRules.some(r => r.condition.requestDomains && r.condition.requestDomains.includes('bitbucket.org')),
+    'ok');
+
+  // Cap: REMOTE_MAX_PATH_PATTERNS bounds real Chrome dynamic-rule COUNT
+  // growth (unlike REMOTE_MAX_DOMAINS, which only bounds storage — bare
+  // domains batch REMOTE_DOMAINS_PER_RULE-per-rule, but urlFilter is
+  // singular per DNR rule, so N patterns really does mean N rules).
+  check('REMOTE_MAX_PATH_PATTERNS exists and is well above URLhaus\'s real ~8,400-pattern need',
+    T.REMOTE_MAX_PATH_PATTERNS >= 8400, T.REMOTE_MAX_PATH_PATTERNS);
+
+  for (const u of malwareUrls) delete stubUrlTextMap[u];
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

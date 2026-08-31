@@ -361,7 +361,7 @@ async function _decompressFromStorage(stored) {
   return ''; // unrecognized format — treat as a cache miss, never guess
 }
 
-// remoteMalwareDomains (see fetchMalwareBlocklists()) is an array, not text —
+// remoteMalwareDomains (see _updateRemoteMalwareDomains()) is an array, not text —
 // reuse the same deflate-raw machinery by round-tripping through JSON first.
 async function _compressDomainsForStorage(domains) {
   return _compressForStorage(JSON.stringify(domains));
@@ -464,16 +464,19 @@ const ABP_SIMPLE_NETWORK_OPTS_RE = /^(?:~?third-party|all)?$/;
 // DNR rule per entry (buildNetworkBlockRules) — no multiplier — so this
 // number IS the real rule-count cost, unlike ad_network_patterns urlFilters
 // (see ABP_SIMPLE_NETWORK_OPTS_RE's comment for why those are kept out of
-// this path entirely rather than budgeted). Live-measured: real EasyList+
-// EasyPrivacy+Fanboy-Social content converts to ~7,400 such entries — 8,000
-// covers that with headroom while leaving most of Chrome's ~30,000
-// dynamic+session rule limit for the rest of the rule set (remote malware,
-// defaults, custom/focus/pause rules, ...). Once exhausted, further matches
-// fall back to complexNetwork (dropped) exactly like before this feature
-// existed, regardless of how many Rule Sources are enabled — degrading
-// gracefully instead of risking updateDynamicRules() rejecting the WHOLE
-// batch atomically.
-const NETWORK_RULE_BUDGET = 8000;
+// this path entirely rather than budgeted). Live-measured 2026-08-31: real
+// EasyList+EasyPrivacy+Fanboy-Social content converts to ~7,480 such
+// entries (93% of the original 8,000 cap) — raised to 12,000 the same day
+// for headroom to enable more ad/tracker Rule Sources without hitting the
+// cap, while keeping the combined total (this + REMOTE_MAX_PATH_PATTERNS +
+// the cheap/batched rest of the rule set — live-measured ~17,500 total
+// today) comfortably under Chrome's ~30,000 dynamic+session rule limit with
+// a large safety margin for custom/focus/pause rules and future growth.
+// Once exhausted, further matches fall back to complexNetwork (dropped)
+// exactly like before this feature existed, regardless of how many Rule
+// Sources are enabled — degrading gracefully instead of risking
+// updateDynamicRules() rejecting the WHOLE batch atomically.
+const NETWORK_RULE_BUDGET = 12000;
 // DNR resourceType for each ABP/uBO single-content-type option token this
 // converter understands (`$script`, `$image`, ...; `~name` negates it, e.g.
 // `$~script` means "every type except script"). Tokens with no real DNR
@@ -1318,9 +1321,20 @@ async function fetchRemoteRuleText() {
   // other source — other default entries, ruleSources, customRulesText —
   // flows through this exact same fetch/merge/cache pipeline in both debug
   // and production; nothing else about them changes.
+  // Entries with format:'hosts' (URLhaus, Phishing Army — see config.js's
+  // own comment) are plain domain-per-line blocklists, not ABP filter
+  // syntax — routed to _updateRemoteMalwareDomains() below instead of the
+  // ad_network_patterns/network_block_rules/ABP-conversion path so
+  // blockMalware stays independent of blockAds and hits still redirect to
+  // the dedicated malware warning page rather than counting as an ad block.
+  const malwareUrls = [];
   const legacyAllDisabled = stored.defaultRuleSourceEnabled === false;
   for (const [i, entry] of RULES_REMOTE_URL.entries()) {
     if (!_isDefaultSourceEnabled(entry, stored.defaultRuleSourceOverrides, legacyAllDisabled)) continue;
+    if (entry.format === 'hosts') {
+      for (const u of _entryUrls(entry)) malwareUrls.push(u);
+      continue;
+    }
     if (DEBUG_LOCAL && i === 0) {
       urls.push(EXT.runtime.getURL(RULES_LOCAL_PATH));
     } else {
@@ -1362,6 +1376,11 @@ async function fetchRemoteRuleText() {
   const networkRuleBudget = { remaining: NETWORK_RULE_BUDGET };
   const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget);
   const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget)));
+  // Sequential (not Promise.all'd with the fetch above): both this and
+  // _fetchAndConvertUrls independently read-modify-write the shared
+  // RULE_SOURCE_ERRORS_KEY/RULE_SOURCE_STATS_KEY storage keys — running them
+  // concurrently would race and drop whichever one's write lands first.
+  await _updateRemoteMalwareDomains(malwareUrls);
 
   const merged = [...texts, ...convertedFileParts].filter(Boolean).join('\n');
   if (!merged && urls.length) {
@@ -1422,7 +1441,7 @@ function _hashText(s) {
 const RULE_INPUT_KEYS = [
   'enabled', 'blockAds', 'blockTrackers', 'blockMalware', 'focusMode',
   'pausedDomains', 'allowedDomains', 'rules', 'remoteMalwareDomains',
-  'remoteMalwareRules', 'distractionDomains',
+  'remoteMalwarePathPatterns', 'remoteMalwareRules', 'distractionDomains',
 ];
 let _ruleGeneration = 0; // bumped each time ensureRuleDefinitionsLoaded() actually rebuilds
 const _ruleInputHashes = {};
@@ -2260,6 +2279,7 @@ const QUERY_STRIP_RULE_ID_START = 3000;
 const NETWORK_REDIRECT_RULE_ID_START = 500000; // for network_redirect_rules
 const NETWORK_BLOCK_RULE_ID_START = 700000;  // for network_block_rules (well clear of NETWORK_REDIRECT_RULE_ID_START's own sequential counter)
 const REMOTE_MALWARE_RULE_ID_START = 100000; // for fetched blocklists
+const REMOTE_MALWARE_PATH_RULE_ID_START = 900000; // for path-scoped fetched-blocklist entries (one urlFilter rule each, see REMOTE_MAX_PATH_PATTERNS)
 const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
 const PAUSE_ALLOW_RULE_ID_START = 300000;    // for pause/allowlist allow-all rules
 
@@ -2325,8 +2345,21 @@ function _hashRule(rule) {
 // quota pressure that motivated compressing siteRulesCacheText.
 const REMOTE_MAX_DOMAINS = 200000;
 const REMOTE_DOMAINS_PER_RULE = 1000;
+// Path-scoped malware entries (e.g. URLhaus's own mirror ships full ABP
+// `||domain/path^$all` lines alongside its bare-hostname ones, for
+// shared/multi-tenant hosts like bitbucket.org/drive.google.com where
+// blocking the whole domain the way bare hostnames do would take down
+// unrelated legitimate content — see _updateRemoteMalwareDomains) each need
+// their OWN dynamic rule — DNR's condition.urlFilter is singular, unlike
+// requestDomains which batches REMOTE_DOMAINS_PER_RULE bare domains into one
+// rule — so this cap bounds real Chrome dynamic-rule-COUNT growth (not just
+// storage) unlike REMOTE_MAX_DOMAINS above. ~8,400 in URLhaus's real feed;
+// 10,000 leaves comfortable headroom while keeping the combined worst case
+// (this + NETWORK_RULE_BUDGET + the cheap/batched rest of the rule set)
+// safely under Chrome's ~30,000 dynamic+session rule limit.
+const REMOTE_MAX_PATH_PATTERNS = 10000;
 
-function buildRemoteMalwareRules(domains) {
+function buildRemoteMalwareRules(domains, pathPatterns) {
   const rules = [];
   for (let i = 0; i < domains.length; i += REMOTE_DOMAINS_PER_RULE) {
     const chunk = domains.slice(i, i + REMOTE_DOMAINS_PER_RULE);
@@ -2350,6 +2383,25 @@ function buildRemoteMalwareRules(domains) {
         resourceTypes: ['main_frame'],
       },
     });
+  }
+  // Path-scoped entries (see REMOTE_MAX_PATH_PATTERNS's own comment) — one
+  // urlFilter per rule (DNR's condition.urlFilter is singular, can't batch
+  // these the way requestDomains chunks bare domains above) covering EVERY
+  // resource type in a single plain block, not the dedicated main_frame-
+  // redirect-to-warning-page treatment the bare-domain rules above get —
+  // that page is meant for "this whole site is malicious," not one flagged
+  // payload URL on an otherwise-legitimate shared host; a direct hit here
+  // just gets Chrome's own generic net::ERR_BLOCKED_BY_CLIENT instead.
+  if (pathPatterns) {
+    let pathId = 0;
+    for (const urlFilter of pathPatterns) {
+      rules.push({
+        id: REMOTE_MALWARE_PATH_RULE_ID_START + pathId++,
+        priority: 2,
+        action: { type: 'block' },
+        condition: { urlFilter },
+      });
+    }
   }
   return rules;
 }
@@ -2449,14 +2501,12 @@ EXT.runtime.onInstalled.addListener(async () => {
 
   await applyNetworkRules();
   await applyPrivacySettings();
-  await maybeUpdateMalwareLists();
   await maybeCheckForExtensionUpdate();
 });
 
 EXT.runtime.onStartup.addListener(() => {
   applyNetworkRules();
   applyPrivacySettings();
-  maybeUpdateMalwareLists();
   maybeCheckForExtensionUpdate();
   // Cheap ETag check (304 when unchanged) — picks up urgent rules fixes
   // published while the browser was closed, instead of waiting out the TTL.
@@ -2498,8 +2548,8 @@ async function buildActiveRulesFromStorage() {
   const activeRules = [...filteredDefaultRules];
   const adMainFrameActive = blockAds ? [...AD_MAINFRAME_RULES] : [];
   const malwareActive = blockMalware ? [...MALWARE_RULES] : [];
-  const { remoteMalwareDomains, remoteMalwareRules = [] } = await EXT.storage.local.get(
-    ['remoteMalwareDomains', 'remoteMalwareRules']
+  const { remoteMalwareDomains, remoteMalwarePathPatterns, remoteMalwareRules = [] } = await EXT.storage.local.get(
+    ['remoteMalwareDomains', 'remoteMalwarePathPatterns', 'remoteMalwareRules']
   );
   // Migration: older versions stored full rule objects (one per domain).
   // Flatten them back to a domain list until the next blocklist refresh
@@ -2507,13 +2557,14 @@ async function buildActiveRulesFromStorage() {
   const remoteDomains = remoteMalwareDomains
     ? await _decompressDomainsFromStorage(remoteMalwareDomains)
     : remoteMalwareRules.flatMap(r => r.condition?.requestDomains || []);
+  const remotePathPatterns = await _decompressDomainsFromStorage(remoteMalwarePathPatterns);
   let remoteActive = [];
   if (blockMalware) {
-    const remoteKey = _ruleInputHashes.remoteMalwareDomains + '|' + _ruleInputHashes.remoteMalwareRules;
+    const remoteKey = _ruleInputHashes.remoteMalwareDomains + '|' + _ruleInputHashes.remoteMalwarePathPatterns + '|' + _ruleInputHashes.remoteMalwareRules;
     if (_remoteMalwareRulesMemo.rules && _remoteMalwareRulesMemo.key === remoteKey) {
       remoteActive = _remoteMalwareRulesMemo.rules;
     } else {
-      remoteActive = buildRemoteMalwareRules(remoteDomains);
+      remoteActive = buildRemoteMalwareRules(remoteDomains, remotePathPatterns);
       _remoteMalwareRulesMemo = { key: remoteKey, rules: remoteActive };
     }
   }
@@ -2573,10 +2624,9 @@ async function buildActiveRulesFromStorage() {
 // ── Apply declarativeNetRequest rules ────────────────────────────
 // applyNetworkRules() has many independent call sites (onInstalled,
 // onStartup, alarms, message handlers, reloadRules()) that are NOT
-// sequenced against each other — e.g. onStartup fires applyNetworkRules(),
-// maybeUpdateMalwareLists() (which itself calls applyNetworkRules() again
-// via fetchMalwareBlocklists()), and revalidateRemoteRules() (ditto via
-// reloadRules()) all in the same tick, with no await between them. Each
+// sequenced against each other — e.g. onStartup fires applyNetworkRules()
+// and revalidateRemoteRules() (which can itself call applyNetworkRules()
+// again via reloadRules()) in the same tick, with no await between them. Each
 // call does getDynamicRules() → updateDynamicRules({removeRuleIds,
 // addRules}) as two separate round trips; if two calls overlap, the second
 // one's getDynamicRules() snapshot can be taken BEFORE the first one's
@@ -2965,80 +3015,130 @@ const TRACKER_KEYWORDS = FALLBACK_RULE_CONFIG.trackerPatterns.slice();
 const MALWARE_KEYWORDS = FALLBACK_RULE_CONFIG.malwarePatterns.slice();
 
 // ── Remote malware blocklist updater ──────────────────────────────
-// Fetches community blocklists every 24 hours (or on install)
-const BLOCKLIST_SOURCES = [
-  // URLhaus: live malware URL/domain feed (abuse.ch research project)
-  { url: 'https://urlhaus.abuse.ch/downloads/hostfile/', name: 'URLhaus' },
-  // Phishing Army: aggregated phishing domains
-  { url: 'https://phishing.army/download/phishing_army_blocklist.txt', name: 'Phishing Army' },
-];
-
-async function fetchMalwareBlocklists() {
-  const allDomains = new Set();
-  for (const source of BLOCKLIST_SOURCES) {
+// Fetches config.js's format:'hosts' RULES_REMOTE_URL entries (URLhaus,
+// Phishing Army) — called from fetchRemoteRuleText() itself, so these two
+// sources share the exact same per-source enable/disable, error/stats
+// reporting, 6h cache, and 30-min ETag-revalidation cadence as every other
+// default Rule Source, instead of a bespoke 24h alarm. Output goes to
+// remoteMalwareDomains/remoteMalwarePathPatterns (consumed by
+// buildRemoteMalwareRules), never into the merged ad_network_patterns/
+// network_block_rules text, so blockMalware/the malware warning page/the
+// malwareBlocked stat category all stay independent of ad blocking.
+async function _updateRemoteMalwareDomains(urls) {
+  const domains = new Set();
+  const pathPatterns = new Set();
+  const sourceErrors = {};
+  const sourceStats = {};
+  await Promise.all(urls.map(async url => {
+    const stats = _abpEmptySkipStats();
     try {
-      const resp = await fetch(source.url, { cache: 'no-cache' });
-      if (!resp.ok) continue;
-      const text = await resp.text();
-      const lines = text.split('\n');
-      for (const line of lines) {
-        if (allDomains.size >= REMOTE_MAX_DOMAINS) break;
-        const trimmed = line.trim();
+      const res = await fetch(url, { cache: 'no-cache' });
+      if (!res.ok) { sourceErrors[url] = `HTTP ${res.status}`; return; }
+      const text = await res.text();
+      for (const rawLine of text.split('\n')) {
+        const trimmed = rawLine.trim();
         if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!')) continue;
+        stats.total++;
+
+        // Some malware-hosts feeds mix bare hostname lines with full ABP
+        // `||domain/path^$opts` lines — URLhaus's own mirror does this for
+        // shared/multi-tenant hosts (bitbucket.org, drive.google.com,
+        // web.archive.org, ...) where blocking the WHOLE domain the way a
+        // bare hostname line does would take down unrelated legitimate
+        // content; only the exact malicious path is meant to be blocked.
+        const netMatch = /^\|\|([^$]+?)(?:\$(.*))?$/.exec(trimmed);
+        if (netMatch) {
+          if (pathPatterns.size >= REMOTE_MAX_PATH_PATTERNS) { stats.unrecognized++; continue; }
+          const urlFilter = '||' + netMatch[1];
+          // Same conservative "only options that don't narrow what should
+          // match" bar as _abpParseFile's own path-scoped conversion — a
+          // modifier this code can't faithfully represent (a resourceType,
+          // domain=, ...) means dropping the entry rather than guessing.
+          if (!ABP_SIMPLE_NETWORK_OPTS_RE.test(netMatch[2] || '') || !_isValidUrlFilter(urlFilter)) {
+            stats.unrecognized++;
+            continue;
+          }
+          if (pathPatterns.has(urlFilter)) { stats.dedupSkipped++; continue; }
+          pathPatterns.add(urlFilter);
+          stats.converted++;
+          continue;
+        }
+
+        if (domains.size >= REMOTE_MAX_DOMAINS) { stats.unrecognized++; continue; }
         // Hosts file format: "127.0.0.1 domain" or "0.0.0.0 domain" or just "domain"
         let domain = trimmed;
         if (domain.startsWith('127.0.0.1') || domain.startsWith('0.0.0.0')) {
           domain = domain.split(/\s+/)[1];
         }
-        if (!domain || domain === 'localhost') continue;
+        if (!domain || domain === 'localhost') { stats.unrecognized++; continue; }
         domain = domain.toLowerCase();
-        if (!DOMAIN_PATTERN_RE.test(domain)) continue;
-        allDomains.add(domain);
+        if (!DOMAIN_PATTERN_RE.test(domain)) { stats.unrecognized++; continue; }
+        if (domains.has(domain)) { stats.dedupSkipped++; continue; }
+        domains.add(domain);
+        stats.converted++;
       }
+      sourceStats[url] = stats;
     } catch (e) {
-      console.warn(`[AdBlock] Failed to fetch ${source.name}:`, e.message);
+      sourceErrors[url] = (e && e.message) || 'fetch failed';
     }
+  }));
+
+  // Same per-URL error/stats bookkeeping fetchRemoteRuleText's own
+  // _fetchAndConvertUrls uses, so the dashboard's Rule Source rows show
+  // fetch errors/counts for these two sources exactly like any other.
+  if (urls.length) {
+    const { [RULE_SOURCE_ERRORS_KEY]: existingErrors = {}, [RULE_SOURCE_STATS_KEY]: existingStats = {} } =
+      await EXT.storage.local.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
+    const nextErrors = { ...existingErrors };
+    const nextStats = { ...existingStats };
+    for (const url of urls) {
+      if (sourceErrors[url]) nextErrors[url] = sourceErrors[url];
+      else delete nextErrors[url];
+      if (sourceStats[url]) nextStats[url] = sourceStats[url];
+      else delete nextStats[url];
+    }
+    await EXT.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
   }
 
-  const domains = Array.from(allDomains);
+  // An empty `urls` (both sources disabled from the dashboard) legitimately
+  // clears this to zero, same as a fully-disabled ad Rule Source produces no
+  // rules. But unlike the old 24h-alarm-driven fetchMalwareBlocklists(),
+  // this now runs on EVERY fetchRemoteRuleText() call — i.e. every time ANY
+  // default source's cache goes stale, several times more often than
+  // malware sources actually change — so a transient failure of BOTH
+  // sources at once (offline, a CDN outage) must NOT wipe out a
+  // previously-good list the way it would have on the old rare cadence;
+  // keep serving the last known-good domains until a fetch actually
+  // succeeds again, same as fetchRemoteRuleText() itself falls back to
+  // cached/local text rather than an empty ruleset on a total failure.
+  if (urls.length && urls.every(u => sourceErrors[u])) return;
 
-  // Store only the domain list — rules are rebuilt on apply. Storing rule
-  // objects (~150 bytes each as JSON) wasted storage; the old per-rule key
-  // is removed on first update after migration. Compressed (deflate-raw) the
-  // same way as siteRulesCacheText — necessary now that REMOTE_MAX_DOMAINS
-  // covers the real ~155k-domain combined feed instead of truncating it.
-  const compressedDomains = await _compressDomainsForStorage(domains);
+  // Store only the domain/pattern lists — rules are rebuilt on apply.
+  // Storing rule objects (~150 bytes each as JSON) wasted storage; the old
+  // per-rule key is removed on first update after migration. Compressed
+  // (deflate-raw) the same way as siteRulesCacheText — necessary now that
+  // REMOTE_MAX_DOMAINS covers the real ~155k-domain combined feed instead of
+  // truncating it. _compressDomainsForStorage/_decompressDomainsFromStorage
+  // round-trip through JSON so they work unchanged for path patterns too —
+  // it's still just "an array of strings" from their point of view.
+  const domainList = Array.from(domains);
+  const pathPatternList = Array.from(pathPatterns);
+  const [compressedDomains, compressedPathPatterns] = await Promise.all([
+    _compressDomainsForStorage(domainList),
+    _compressDomainsForStorage(pathPatternList),
+  ]);
   await EXT.storage.local.set({
     remoteMalwareDomains: compressedDomains,
+    remoteMalwarePathPatterns: compressedPathPatterns,
     malwareListLastUpdate: Date.now(),
-    malwareListCount: domains.length,
+    malwareListCount: domainList.length + pathPatternList.length,
   });
   await EXT.storage.local.remove('remoteMalwareRules');
-
-  // Re-apply all network rules
-  await applyNetworkRules();
-
-  console.log(`[AdBlock] Malware blocklist updated: ${domains.length} domains from remote sources`);
-  return domains.length;
 }
 
-// Check if blocklist needs update (every 24 hours)
-async function maybeUpdateMalwareLists() {
-  const { malwareListLastUpdate = 0 } = await EXT.storage.local.get('malwareListLastUpdate');
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-  if (Date.now() - malwareListLastUpdate > ONE_DAY) {
-    await fetchMalwareBlocklists();
-  }
-}
-
-// Schedule periodic updates via alarm
-EXT.alarms?.create('malware-list-update', { periodInMinutes: 60 * 24 });
 EXT.alarms?.create(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
 EXT.alarms?.create('extension-update-check', { periodInMinutes: 60 * 24 });
 EXT.alarms?.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'malware-list-update') {
-    await fetchMalwareBlocklists();
-  }
   if (alarm.name === RULES_REVALIDATE_ALARM) {
     await revalidateRemoteRules();
   }
@@ -4277,8 +4377,12 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'UPDATE_MALWARE_LISTS': {
-        const count = await fetchMalwareBlocklists();
-        sendResponse({ ok: true, count });
+        // Malware sources are just RULES_REMOTE_URL entries now — a manual
+        // refresh forces the same full pipeline the dashboard's "Reload
+        // rules" and the 30-min ETag revalidation alarm already use.
+        await reloadRules();
+        const { malwareListCount = 0 } = await EXT.storage.local.get('malwareListCount');
+        sendResponse({ ok: true, count: malwareListCount });
         break;
       }
 

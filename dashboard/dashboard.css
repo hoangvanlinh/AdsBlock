@@ -1030,7 +1030,7 @@ details.rules-source-group[open] summary.rules-source-group-summary::before {
 }
 .source-stats {
   flex-shrink: 0;
-  color: var(--text-3);
+  color: var(--text-2); /* match .source-label's tone — was --text-3 (too dim next to the row's own name text) */
   font-size: 11px;
   white-space: nowrap;
 }

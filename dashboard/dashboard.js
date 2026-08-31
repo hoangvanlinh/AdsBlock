@@ -1183,7 +1183,11 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stat
       (stats.complexNetwork ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsComplexNetwork', [String(stats.complexNetwork)]) : '') +
       (stats.dedupSkipped ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsDedupSkipped', [String(stats.dedupSkipped)]) : '') +
       (stats.unrecognized ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsUnrecognized', [String(stats.unrecognized)]) : '');
-    statSpan.textContent = skipped ? EXT.i18n.getMessage('dashboard_ruleSource_loadedPartial', [String(stats.converted), String(stats.total)]) : EXT.i18n.getMessage('dashboard_ruleSource_loadedFull', [String(stats.total)]);
+    // Always show as "converted/total" (even at 100%, e.g. "26866/26866
+    // loaded") rather than collapsing to a bare total when nothing was
+    // skipped — so a fully-clean source is visibly confirmed as such, not
+    // just assumed from the absence of a fraction.
+    statSpan.textContent = EXT.i18n.getMessage('dashboard_ruleSource_loadedPartial', [String(stats.converted), String(stats.total)]);
     row.appendChild(statSpan);
     // Only ever meaningful alongside the stats badge above — RULE_SOURCE_STATS_KEY
     // is set only for a source that WAS detected as ABP-format and actually
@@ -1226,10 +1230,11 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stat
 const _RULE_SOURCE_GROUP_LABEL_KEYS = {
   default: 'dashboard_ruleSource_groupDefault',
   easylist: 'dashboard_ruleSource_groupEasylist',
+  malware: 'dashboard_ruleSource_groupMalware',
   language: 'dashboard_ruleSource_groupLanguage',
   custom: 'dashboard_ruleSource_groupCustom',
 };
-const _RULE_SOURCE_GROUP_ORDER = ['default', 'easylist', 'language'];
+const _RULE_SOURCE_GROUP_ORDER = ['default', 'easylist', 'malware', 'language'];
 // Groups this large collapse behind a <details> (closed unless the user
 // already has one of its entries enabled, so their own active choice is
 // never hidden) — small groups (default, easylist) just get a plain label.

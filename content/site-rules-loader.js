@@ -223,6 +223,15 @@ function _fetchAndMergeDirect(cached, resolve){
       var entryUrls=_entryUrls(entry);
       entryUrls.forEach(function(u){defaultUrlSet[u]=true;});
       if(!_isDefaultSourceEnabled(entry,res.defaultRuleSourceOverrides,legacyAllDisabled))return;
+      // format:'hosts' entries (URLhaus, Phishing Army) are plain domain-per-
+      // line malware blocklists, not ABP/site-rules syntax — background.js's
+      // fetchRemoteRuleText() routes them into remoteMalwareDomains/
+      // remoteMalwarePathPatterns instead of this merged site-config text
+      // (see config.js's own comment), and malware blocking itself is pure
+      // declarativeNetRequest (no content-script involvement at all), so
+      // fetching them here would just waste a request for text this path
+      // can never do anything useful with.
+      if(entry.format==='hosts')return;
       if(DEBUG_LOCAL&&i===0){
         urls.push(EXT.runtime.getURL(LOCAL_RULES_PATH));
       }else{

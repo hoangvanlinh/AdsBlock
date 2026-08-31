@@ -28,6 +28,20 @@ self.ADBLOCK_CONFIG = {
   // 'regions' to refresh this set instead of hand-editing entries in place.
   RULES_REMOTE_URL: [
     { name: 'Default site rules', url: 'https://raw.githubusercontent.com/hoangvanlinh/AdsBlock/refs/heads/main/rule/site-rules.txt', enable: true, group: "default" },
+    // `format: "hosts"` marks a plain domain-per-line blocklist (URLhaus,
+    // Phishing Army both ship this way — one hostname per line, optionally
+    // hosts-file-prefixed with "0.0.0.0 "/"127.0.0.1 ") rather than ABP
+    // filter syntax. background.js's fetchRemoteRuleText() routes these
+    // straight into remoteMalwareDomains/remoteMalwarePathPatterns
+    // (_updateRemoteMalwareDomains) instead of the ABP-conversion path every
+    // other entry here goes through — the ABP converter only recognizes
+    // `||domain^` lines, so a bare "example.com" line would otherwise
+    // silently produce zero rules. Keeping malware domains out of
+    // ad_network_patterns/network_block_rules also preserves blockMalware as
+    // a toggle independent of blockAds. Still fetched/cached/ETag-revalidated
+    // /dashboard-toggleable exactly like every other entry below.
+    { name: 'URLhaus Malware Filter', url: 'https://malware-filter.gitlab.io/malware-filter/urlhaus-filter.txt', enable: true, group: "malware", format: "hosts" },
+    { name: 'UBlock Badware Filter', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/badware.txt', enable: true, group: "malware", format: "hosts" },
     { name: 'EasyList', url: 'https://easylist.to/easylist/easylist.txt', enable: true, group: "easylist" },
     { name: 'EasyPrivacy', url: 'https://easylist.to/easylist/easyprivacy.txt', enable: true, group: "easylist" },
     { name: 'EasyList Cookie List', url: 'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt', enable: false, group: "easylist" },
