@@ -32,10 +32,14 @@ function check(label, cond, extra) {
 const storageData = {};
 const sessionStorageData = {};
 
-function makeSandbox() {
+function makeSandbox(opts) {
+  const simulateFirefox = opts && opts.simulateFirefox;
   const noopEvent = { addListener() {} };
   const messageListeners = [];
   const chromeStub = {
+    // Present only when simulating Firefox — _hasWebRequestBlocking() feature-
+    // detects this, same as the real manifest.firefox.json permission grant.
+    ...(simulateFirefox ? { webRequest: { onBeforeRequest: { addListener() {}, removeListener() {} } } } : {}),
     storage: {
       local: {
         async get(keys) {
@@ -91,7 +95,12 @@ function makeSandbox() {
   };
   sandbox.self = sandbox; sandbox.globalThis = sandbox;
   const ctx = vm.createContext(sandbox);
-  vm.runInContext(bgSrc + '\nself.__test = { getParsedRules, resolveSiteKey, PARSED_RULES_SESSION_KEY };', ctx, { filename: 'background.js' });
+  vm.runInContext(bgSrc + `\nself.__test = {
+    getParsedRules, resolveSiteKey, PARSED_RULES_SESSION_KEY,
+    ensureRuleDefinitionsLoaded, BUILT_RULES_SESSION_KEY, _hasWebRequestBlocking,
+    get DEFAULT_RULES(){return DEFAULT_RULES;}, get NETWORK_BLOCK_RULES(){return NETWORK_BLOCK_RULES;},
+    get NETWORK_BLOCK_MATCHER(){return NETWORK_BLOCK_MATCHER;}, get TRACKER_RULE_IDS(){return TRACKER_RULE_IDS;},
+  };`, ctx, { filename: 'background.js' });
   const t = sandbox.__test;
   // Dispatches a message through the REAL chrome.runtime.onMessage listener
   // this SW instance registered (background.js's own top-level listener) —
@@ -195,6 +204,78 @@ function makeSandbox() {
   check('a restart AFTER the no-op edit still gets served from the (still-valid) warm session cache',
     (parsedT6.global && parsedT6.global.direct_hide_selectors || []).includes('.rule-B-marker'), parsedT6.global);
   console.log(`  (restart after a no-op edit, still warm-cache-served: ${t6Ms}ms)`);
+
+  console.log('\n== Cross-SW-restart BUILT rules cache (2026-08-31) — one layer deeper than getParsedRules() ==');
+  for (const k of Object.keys(storageData)) delete storageData[k];
+  for (const k of Object.keys(sessionStorageData)) delete sessionStorageData[k];
+  // Custom rule with a network_block_rules entry so NETWORK_BLOCK_MATCHER
+  // (the RegExp-carrying, non-trivially-serializable part of this cache)
+  // actually gets exercised, not left an empty Map the whole test through.
+  storageData.customRulesText = [
+    '[global]',
+    '[host_patterns]',
+    'built-cache-test.example = bctsite',
+    '',
+    '[bctsite]',
+    'network_block_rules = /exact/beacon.gif image * * * *',
+    '',
+  ].join('\n');
+
+  const B1 = makeSandbox({ simulateFirefox: true }); // cold start #1, Firefox — session cache starts empty
+  await B1.ensureRuleDefinitionsLoaded();
+  check('cold start #1 (Firefox): NETWORK_BLOCK_MATCHER built from the custom rule',
+    B1.NETWORK_BLOCK_MATCHER.has('built-cache-test.example'), [...B1.NETWORK_BLOCK_MATCHER.keys()]);
+  check('cold start #1 (Firefox): NETWORK_BLOCK_RULES (DNR array) stays empty — this tier is matcher-only here',
+    B1.NETWORK_BLOCK_RULES.length === 0, B1.NETWORK_BLOCK_RULES.length);
+  check('cold start #1 wrote the built-rules session cache', !!sessionStorageData[B1.BUILT_RULES_SESSION_KEY]);
+  const defaultRulesJson1 = JSON.stringify(B1.DEFAULT_RULES);
+  const trackerIds1 = [...B1.TRACKER_RULE_IDS].sort();
+
+  const B2 = makeSandbox({ simulateFirefox: true }); // cold start #2, FRESH VM, SAME sessionStorageData — real SW restart
+  const t0b = Date.now();
+  await B2.ensureRuleDefinitionsLoaded();
+  const b2Ms = Date.now() - t0b;
+  check('cold start #2 (warm built-rules cache): DEFAULT_RULES byte-identical to the real build',
+    JSON.stringify(B2.DEFAULT_RULES) === defaultRulesJson1);
+  check('cold start #2: TRACKER_RULE_IDS rehydrated as an equivalent Set',
+    JSON.stringify([...B2.TRACKER_RULE_IDS].sort()) === JSON.stringify(trackerIds1));
+  check('cold start #2: NETWORK_BLOCK_MATCHER rehydrated with a WORKING (not just structurally-present) RegExp',
+    B2.NETWORK_BLOCK_MATCHER.has('built-cache-test.example') &&
+    B2.NETWORK_BLOCK_MATCHER.get('built-cache-test.example')[0].regex.test('https://built-cache-test.example/exact/beacon.gif') &&
+    !B2.NETWORK_BLOCK_MATCHER.get('built-cache-test.example')[0].regex.test('https://built-cache-test.example/other/path.gif'),
+    B2.NETWORK_BLOCK_MATCHER.get('built-cache-test.example'));
+  check('cold start #2: rehydrated matcher entry\'s resourceTypes survived the round-trip',
+    JSON.stringify([...B2.NETWORK_BLOCK_MATCHER.get('built-cache-test.example')[0].resourceTypes]) === JSON.stringify(['image']));
+  console.log(`  (cold start #2, served from the warm built-rules cache: ${b2Ms}ms)`);
+
+  const B3 = makeSandbox({ simulateFirefox: false }); // Chrome/Edge — DIFFERENT cache key ('dnr' suffix, not 'wr')
+  await B3.ensureRuleDefinitionsLoaded();
+  check('a Chrome-mode cold start does NOT reuse the Firefox-shaped cache entry — builds real DNR rules instead',
+    B3.NETWORK_BLOCK_RULES.length > 0 && B3.NETWORK_BLOCK_MATCHER.size === 0,
+    { rules: B3.NETWORK_BLOCK_RULES.length, matcherSize: B3.NETWORK_BLOCK_MATCHER.size });
+
+  // Staleness: once the rules text changes, the built-cache key no longer
+  // matches — must rebuild, not keep serving the stale matcher. Also clear
+  // siteRulesCacheText/Time (what reloadRules() does in production) — that's
+  // a SEPARATE text-level cache from customRulesText, and getRulesText()
+  // would otherwise keep serving the now-stale merged text regardless of
+  // the customRulesText edit below, same as production behavior.
+  storageData.customRulesText += '\n[global]\ntracker_network_patterns = staleness-marker.example\n';
+  delete storageData.siteRulesCacheText;
+  delete storageData.siteRulesCacheTime;
+  const B4 = makeSandbox({ simulateFirefox: true });
+  await B4.ensureRuleDefinitionsLoaded();
+  check('after the rules text changes, a new cold start rebuilds instead of serving the stale built-cache',
+    B4.DEFAULT_RULES.some(r => JSON.stringify(r.condition).includes('staleness-marker.example')),
+    JSON.stringify(B4.DEFAULT_RULES));
+
+  // Corruption safety — matches PARSED_RULES_SESSION_KEY's own established behavior.
+  sessionStorageData[B4.BUILT_RULES_SESSION_KEY] = { key: 'not-a-real-key', compressed: 'garbage-not-base64!!' };
+  const B5 = makeSandbox({ simulateFirefox: true });
+  let corruptOk = true;
+  try { await B5.ensureRuleDefinitionsLoaded(); } catch { corruptOk = false; }
+  check('a corrupted built-cache entry falls through to a real rebuild instead of throwing',
+    corruptOk && B5.DEFAULT_RULES.length > 0, corruptOk);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

@@ -867,7 +867,7 @@
     "message": "Chặn script phân tích & theo dõi"
   },
   "dashboard_settings_cosmetic_name": {
-    "message": "Lọc thẩm mỹ"
+    "message": "Lọc phần tử"
   },
   "dashboard_settings_cosmetic_desc": {
     "message": "Ẩn phần khoảng trống quảng cáo còn sót lại bằng CSS"

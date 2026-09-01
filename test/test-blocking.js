@@ -1225,6 +1225,37 @@ function check(name, cond, detail = '') {
   check('_maybeConvertAbpText: [host_patterns] section present, maps the domain to a generated key',
     converted.includes('[host_patterns]') && converted.includes('abptestdomain.com'), converted);
 
+  console.log('\n== 25kk. isTracker: a Rule Source marked category:\'tracker\' (e.g. EasyPrivacy) converts bare domains into tracker_network_patterns, not ad_network_patterns (2026-08-31) ==');
+  {
+    const trackerSnippet = '||abpprivacytracker.com^\n||abpprivacytracker2.com^$third-party';
+    const convertedAsTracker = await T._maybeConvertAbpText(trackerSnippet, undefined, undefined, undefined, undefined, true);
+    check('isTracker=true: bare-domain rules land in tracker_network_patterns',
+      convertedAsTracker.includes('tracker_network_patterns') && convertedAsTracker.includes('abpprivacytracker.com'), convertedAsTracker);
+    check('isTracker=true: does NOT also land in ad_network_patterns',
+      !convertedAsTracker.includes('ad_network_patterns'), convertedAsTracker);
+    check('isTracker=true: $third-party (a "simple opts" case) still converts as bare-domain, same as the non-tracker path',
+      convertedAsTracker.includes('abpprivacytracker2.com'), convertedAsTracker);
+
+    const convertedAsAd = await T._maybeConvertAbpText(trackerSnippet); // isTracker omitted -> default false, existing behavior
+    check('isTracker omitted (default false): same content still lands in ad_network_patterns as before — no behavior change for untagged sources',
+      convertedAsAd.includes('ad_network_patterns') && !convertedAsAd.includes('tracker_network_patterns'), convertedAsAd);
+  }
+  {
+    // _fetchAndConvertUrls: per-URL isTracker via a trackerUrls Set — proves
+    // the wiring fetchRemoteRuleText() relies on (config.js's `category:
+    // 'tracker'` -> per-url Set membership) actually reaches _maybeConvertAbpText.
+    const urlA = 'https://abp-test-source.txt';
+    stubAbpSourceText = '||fetchandconverttracker.example^'; // fetchStub() above serves this for any url containing 'abp-test-source.txt'
+    const trackerUrls = new Set([urlA]);
+    const texts = await T._fetchAndConvertUrls([urlA], undefined, undefined, undefined, trackerUrls);
+    check('_fetchAndConvertUrls: a URL present in trackerUrls converts into tracker_network_patterns',
+      texts.some(t => t.includes('tracker_network_patterns')), texts);
+    const textsNotTracker = await T._fetchAndConvertUrls([urlA], undefined, undefined, undefined, new Set());
+    check('_fetchAndConvertUrls: the SAME url, empty trackerUrls -> ad_network_patterns as before (no regression for untagged sources)',
+      textsNotTracker.some(t => t.includes('ad_network_patterns')) && !textsNotTracker.some(t => t.includes('tracker_network_patterns')),
+      textsNotTracker);
+  }
+
   // 25c. Native site-rules.txt text passes through completely unchanged (no re-render).
   const nativeText = '[global]\nad_network_patterns = a.com | b.com\n';
   const passthrough = await T._maybeConvertAbpText(nativeText);

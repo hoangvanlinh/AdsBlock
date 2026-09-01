@@ -216,6 +216,48 @@ function _isValidUrlFilter(f) {
   return true;
 }
 
+// Converts a Chrome DNR urlFilter (already validated by _isValidUrlFilter)
+// into an equivalent JS RegExp, tested against a full URL string — needed
+// ONLY for the webRequestBlocking engine (buildNetworkBlockMatcher() below):
+// Firefox's plain webRequest API hands a raw URL string per request, not
+// Chrome's own native urlFilter matcher, so this repo has to reimplement
+// DNR's mini-language itself for that one path. Per Chrome's docs
+// (developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest
+// #type-RuleCondition): '||' at the very start anchors to a hostname label
+// boundary (matches the scheme + optional "sub.domain." prefix immediately
+// before the literal text that follows); a lone leading '|' anchors to the
+// start of the whole URL; a trailing '|' anchors to the end; '*' matches any
+// run of characters (including none); '^' matches a single "separator"
+// character (anything that ISN'T a letter/digit/_/-/./%) OR end-of-string;
+// every other character is literal. Deliberately NOT case-insensitive
+// end-to-end: the domain portion is already lowercased wherever this repo
+// builds one of these entries (matching a browser-normalized-lowercase
+// request hostname), but the PATH portion stays case-sensitive on purpose —
+// URL paths ARE case-sensitive (see _abpSplitNetworkPattern's own comment).
+function _urlFilterToRegExp(urlFilter) {
+  let i = 0;
+  const end0 = urlFilter.length;
+  let out = '';
+  if (urlFilter.startsWith('||')) {
+    out += '^[a-zA-Z][a-zA-Z0-9+.-]*:\\/\\/([^\\/]*\\.)?';
+    i = 2;
+  } else if (urlFilter.startsWith('|')) {
+    out += '^';
+    i = 1;
+  }
+  let end = end0;
+  if (end > i && urlFilter[end - 1] === '|') end -= 1; // trailing anchor, handled after the loop
+  for (; i < end; i++) {
+    const c = urlFilter[i];
+    if (c === '*') out += '.*';
+    else if (c === '^') out += '(?:[^a-zA-Z0-9_.%-]|$)';
+    else if (c === '|') out += '\\|'; // mid-string '|' — shouldn't occur (see _isValidUrlFilter), escape defensively
+    else out += c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  if (end !== end0) out += '$';
+  return new RegExp(out);
+}
+
 // strip_query_params entries: "host[/pathSubstr] param1,param2[ doc]"
 // — same-origin query-param removal (tracking IDs like YouTube's ?si=/?is=),
 // doesn't need host permissions since the redirect target stays same-origin.
@@ -363,6 +405,213 @@ function buildDomainNetworkBlockRules(parsed, startId) {
     }
   }
   return buildNetworkBlockRules(entries, startId);
+}
+
+// Firefox-only sibling of buildDomainNetworkBlockRules() — same source data
+// (parsed.host_patterns' per-domain network_block_rules entries) and the
+// same 6-field decode as buildNetworkBlockRules() above, but the OUTPUT is a
+// Map<domain, Array<matcherEntry>> for the webRequestBlocking listener to
+// walk per-request, instead of DNR rule objects — Chrome/Edge keep using
+// buildDomainNetworkBlockRules() unchanged; this function is never called on
+// those browsers (gated by _hasWebRequestBlocking() at the call site).
+// `regex` is built from the FULL '||domain+path' urlFilter (not just the
+// path suffix) via _urlFilterToRegExp() — matching the whole request URL
+// against one self-contained regex per entry mirrors Chrome's own anchored
+// matching semantics exactly, rather than risking subtle drift from
+// splitting "domain already matched via the Map key" from "now match just
+// the remaining path" as two separate steps. The Map is purely a fast
+// pre-filter (only test entries bucketed under a domain the request
+// actually targets), not part of the match semantics itself.
+function buildNetworkBlockMatcher(parsed) {
+  const hostPatterns = parsed.host_patterns || {};
+  const matcher = new Map();
+  for (const domainKey in hostPatterns) {
+    if (!Object.prototype.hasOwnProperty.call(hostPatterns, domainKey)) continue;
+    const sectionKey = hostPatterns[domainKey] && hostPatterns[domainKey][0];
+    const section = sectionKey && parsed[sectionKey];
+    const pathEntries = section && section.network_block_rules;
+    if (!pathEntries || !pathEntries.length) continue;
+    for (const domain of domainKey.split('|')) {
+      for (const pathEntry of pathEntries) {
+        const parts = String(pathEntry || '').trim().split(/\s+/);
+        if (parts.length !== 6) continue; // malformed — don't guess, drop it
+        const [path, typesField, domainsField, denyallowField, methodsField, thirdPartyField] = parts;
+        const urlFilter = '||' + domain + path;
+        if (!_isValidUrlFilter(urlFilter)) continue;
+        const entry = { regex: _urlFilterToRegExp(urlFilter) };
+        if (typesField !== '*') {
+          const tokens = typesField.split(',');
+          if (tokens[0].charAt(0) === '~') entry.excludedResourceTypes = new Set(tokens.map(t => t.slice(1)));
+          else entry.resourceTypes = new Set(tokens);
+        }
+        if (domainsField !== '*') {
+          const include = new Map(), exclude = new Map();
+          for (const d of domainsField.split(',')) { if (d.charAt(0) === '~') exclude.set(d.slice(1), true); else include.set(d, true); }
+          if (include.size) entry.initiatorDomains = include;
+          if (exclude.size) entry.excludedInitiatorDomains = exclude;
+        }
+        if (denyallowField !== '*') entry.excludedRequestDomains = new Map(denyallowField.split(',').map(d => [d, true]));
+        if (methodsField !== '*') {
+          const include = [], exclude = [];
+          for (const m of methodsField.split(',')) { if (m.charAt(0) === '~') exclude.push(m.slice(1)); else include.push(m); }
+          if (include.length) entry.requestMethods = new Set(include.map(m => m.toLowerCase()));
+          if (exclude.length) entry.excludedRequestMethods = new Set(exclude.map(m => m.toLowerCase()));
+        }
+        if (thirdPartyField === '1') entry.domainType = 'thirdParty';
+        else if (thirdPartyField === '0') entry.domainType = 'firstParty';
+        if (!matcher.has(domain)) matcher.set(domain, []);
+        matcher.get(domain).push(entry);
+      }
+    }
+  }
+  return matcher;
+}
+
+// Walks host's own registrable-domain suffixes ("sub.ads.example.com" ->
+// "sub.ads.example.com", "ads.example.com", "example.com", "com") looking
+// for a Map key — same technique content/content.js's _domainSetMatches()
+// already uses for stats classification, reimplemented here (not literally
+// imported) since content.js is a content-script file that never loads into
+// the background page at all; the algorithm itself is only ~8 lines.
+function _walkDomainMatches(map, host) {
+  let h = host;
+  while (h) {
+    if (map.has(h)) return h;
+    const dot = h.indexOf('.');
+    if (dot === -1) break;
+    h = h.slice(dot + 1);
+  }
+  return null;
+}
+
+// Extracts the registrable-ish initiating domain from a webRequest details
+// object for $domain=/$denyallow=/thirdParty matching. Chrome's webRequest
+// exposes `details.initiator` (origin string); Firefox's exposes
+// `details.documentUrl` (the requesting frame/document's own URL) instead —
+// try both rather than assuming one, so this stays correct regardless of
+// which of the two ever actually reaches this code path.
+function _requestInitiatorHost(details) {
+  const raw = details.initiator || details.documentUrl || details.originUrl;
+  if (!raw || raw === 'null') return null;
+  try { return new URL(raw).hostname.toLowerCase(); } catch { return null; }
+}
+
+// The webRequestBlocking engine itself — Firefox-only (see
+// _hasWebRequestBlocking()). Replaces TWO DNR tiers that independently
+// exceed Firefox's flat 5000 dynamic-rule cap on their own: network_block_
+// rules (buildDomainNetworkBlockRules/NETWORK_BLOCK_RULES) and the
+// path-scoped half of remoteMalwarePathPatterns (buildRemoteMalwareRules'
+// one-urlFilter-per-rule branch — live-measured 2026-08-31: URLhaus alone
+// contributes ~9,857 of these). Every OTHER tier (ads/trackers, malware
+// bare-domain blocks, custom rules, focus mode, network_redirect_rules,
+// strip_query_params, privacy headers, pause/allow) stays on
+// declarativeNetRequest unchanged on every browser, Firefox included. No
+// rule-count ceiling applies to either matcher below — see
+// NETWORK_RULE_BUDGET's own comment and fetchRemoteRuleText()'s/
+// buildActiveRulesFromStorage()'s conditional handling of each.
+let NETWORK_BLOCK_MATCHER = new Map();
+// Map<domain, Array<RegExp>> — much simpler shape than NETWORK_BLOCK_MATCHER
+// since remoteMalwarePathPatterns entries carry no options at all (no
+// resourceTypes/domain=/method=/thirdParty — see buildRemoteMalwareRules'
+// own comment: "one urlFilter per rule ... covering EVERY resource type in
+// a single plain block").
+let MALWARE_PATH_MATCHER = new Map();
+
+// Same source/shape buildRemoteMalwareRules()'s path-pattern branch reads
+// (already-full `||domain/path...^` urlFilter strings, no further
+// decoding needed) — just compiled into regexes and bucketed by domain
+// (via _abpSplitNetworkPattern, purely for fast lookup, same technique
+// buildNetworkBlockMatcher() uses) instead of built into DNR rule objects.
+function buildMalwarePathMatcher(pathPatterns) {
+  const matcher = new Map();
+  for (const urlFilter of pathPatterns || []) {
+    if (!_isValidUrlFilter(urlFilter)) continue;
+    const bare = urlFilter.startsWith('||') ? urlFilter.slice(2) : urlFilter;
+    const { domain } = _abpSplitNetworkPattern(bare);
+    const key = domain.toLowerCase();
+    if (!key) continue;
+    if (!matcher.has(key)) matcher.set(key, []);
+    matcher.get(key).push(_urlFilterToRegExp(urlFilter));
+  }
+  return matcher;
+}
+
+// Total entry count across a Map<domain, Array<...>> matcher (NETWORK_BLOCK_
+// MATCHER/MALWARE_PATH_MATCHER) — used by GET_RULE_COUNT so the popup's
+// displayed count means "how many rules are actually enforced" on every
+// browser, not just "how many are registered with declarativeNetRequest".
+function _matcherEntryCount(map) {
+  let n = 0;
+  for (const arr of map.values()) n += arr.length;
+  return n;
+}
+
+function _matchesNetworkBlockEntry(entry, details, requestHost) {
+  if (!entry.regex.test(details.url)) return false;
+  if (entry.resourceTypes && !entry.resourceTypes.has(details.type)) return false;
+  if (entry.excludedResourceTypes && entry.excludedResourceTypes.has(details.type)) return false;
+  if (entry.requestMethods || entry.excludedRequestMethods) {
+    const method = String(details.method || 'get').toLowerCase();
+    if (entry.requestMethods && !entry.requestMethods.has(method)) return false;
+    if (entry.excludedRequestMethods && entry.excludedRequestMethods.has(method)) return false;
+  }
+  const needsInitiator = entry.initiatorDomains || entry.excludedInitiatorDomains || entry.domainType || entry.excludedRequestDomains;
+  if (needsInitiator) {
+    const initiatorHost = _requestInitiatorHost(details);
+    if (entry.initiatorDomains && !(initiatorHost && _walkDomainMatches(entry.initiatorDomains, initiatorHost))) return false;
+    if (entry.excludedInitiatorDomains && initiatorHost && _walkDomainMatches(entry.excludedInitiatorDomains, initiatorHost)) return false;
+    if (entry.excludedRequestDomains && _walkDomainMatches(entry.excludedRequestDomains, requestHost)) return false;
+    if (entry.domainType) {
+      const isThirdParty = !initiatorHost || !(initiatorHost === requestHost || initiatorHost.endsWith('.' + requestHost) || requestHost.endsWith('.' + initiatorHost));
+      if (entry.domainType === 'thirdParty' && !isThirdParty) return false;
+      if (entry.domainType === 'firstParty' && isThirdParty) return false;
+    }
+  }
+  return true;
+}
+
+function _networkBlockRequestHandler(details) {
+  let host;
+  try { host = new URL(details.url).hostname.toLowerCase(); } catch { return {}; }
+  let h = host;
+  while (h) {
+    const entries = NETWORK_BLOCK_MATCHER.get(h);
+    if (entries) {
+      for (const entry of entries) {
+        if (_matchesNetworkBlockEntry(entry, details, host)) {
+          _incrementTabBlocked(details.tabId, 1);
+          updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
+          return { cancel: true };
+        }
+      }
+    }
+    const malwareRegexes = MALWARE_PATH_MATCHER.get(h);
+    if (malwareRegexes) {
+      for (const re of malwareRegexes) {
+        if (re.test(details.url)) {
+          _incrementTabBlocked(details.tabId, 1);
+          updateDailyStats({ blocked: 1, ads: 0, trackers: 0, malware: 1 });
+          return { cancel: true };
+        }
+      }
+    }
+    const dot = h.indexOf('.');
+    if (dot === -1) break;
+    h = h.slice(dot + 1);
+  }
+  return {};
+}
+
+let _networkBlockListenerRegistered = false;
+function _updateNetworkBlockListener(enable) {
+  if (!_hasWebRequestBlocking()) return;
+  if (enable && !_networkBlockListenerRegistered) {
+    EXT.webRequest.onBeforeRequest.addListener(_networkBlockRequestHandler, { urls: ['<all_urls>'] }, ['blocking']);
+    _networkBlockListenerRegistered = true;
+  } else if (!enable && _networkBlockListenerRegistered) {
+    EXT.webRequest.onBeforeRequest.removeListener(_networkBlockRequestHandler);
+    _networkBlockListenerRegistered = false;
+  }
 }
 
 function parseRuleText(text) {
@@ -923,8 +1172,19 @@ function _abpEmptySkipStats() {
 // visibility (a source either obviously produced nothing at all, or
 // silently dropped some fraction of its rules with no way to tell how much
 // or why short of manually diffing input against output).
-function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget) {
-  const { domainSelectors, domainScriptlets, globalSelectors, globalScriptlets, networkDomains, networkRedirects, domainNetworkBlocks, queryStrips } = acc;
+// `isTracker` (optional, default false): marks EVERY bare-domain entry this
+// call converts as belonging to `[global] tracker_network_patterns` instead
+// of `ad_network_patterns` — set per-SOURCE (config.js's RULES_REMOTE_URL
+// entries can carry `category: 'tracker'`, e.g. EasyPrivacy) by the caller,
+// never inferred from the pattern text itself. Path-scoped conversions
+// (network_block_rules/network_redirect_rules/strip_query_params) are NOT
+// split by this flag — they stay a single shared pool regardless of source,
+// since network_block_rules is already gated by blockAds only (see
+// buildActiveRulesFromStorage's own networkBlockActive) and splitting that
+// too would need a parallel tracker_block_rules key/builder/gate this
+// session's request didn't ask for.
+function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isTracker) {
+  const { domainSelectors, domainScriptlets, globalSelectors, globalScriptlets, networkDomains, trackerDomains, networkRedirects, domainNetworkBlocks, queryStrips } = acc;
   const s = stats || _abpEmptySkipStats();
   // `networkRuleBudget` caps network_block_rules conversions — see
   // NETWORK_RULE_BUDGET's own comment for why. Omitted (or `undefined`)
@@ -943,10 +1203,11 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget) {
       const optsStr = netMatch[2] || '';
       const hasSimpleOpts = ABP_SIMPLE_NETWORK_OPTS_RE.test(optsStr);
       if (ABP_BARE_NETWORK_DOMAIN_RE.test(pattern) && hasSimpleOpts) {
-        // Bare domain — batches into ad_network_patterns' shared
+        // Bare domain — batches into ad_network_patterns' (or, for a
+        // tracker-marked source, tracker_network_patterns') shared
         // requestDomains array (buildPatternRules), so this stays cheap
         // (a handful of rules total) no matter how many domains land here.
-        networkDomains.add(pattern.slice(0, -1).toLowerCase());
+        (isTracker ? trackerDomains : networkDomains).add(pattern.slice(0, -1).toLowerCase());
         s.converted++;
       } else {
         // Not a bare-domain-with-simple-opts block — three other shapes this
@@ -1133,21 +1394,23 @@ function _abpFinalizeGroups(domainSelectors, domainScriptlets, domainNetworkBloc
 // group's selector for its OTHER (unrelated) domains, which would
 // reintroduce the exact cross-source leak _abpSanitizeKey's usedKeys
 // sharing was built to close.
-function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, networkRedirects, queryStrips, curatedSectionNames, sharedUsedKeys, sharedDedicatedKeyMap }) {
+function _abpRender({ groups, globalSelectors, globalScriptlets, networkDomains, trackerDomains, networkRedirects, queryStrips, curatedSectionNames, sharedUsedKeys, sharedDedicatedKeyMap }) {
   const usedKeys = sharedUsedKeys || new Set();
   const dedicatedKeyMap = sharedDedicatedKeyMap || new Map();
   const out = [];
-  if (networkDomains.size || (networkRedirects && networkRedirects.size) ||
+  if (networkDomains.size || (trackerDomains && trackerDomains.size) || (networkRedirects && networkRedirects.size) ||
       (queryStrips && queryStrips.size) || globalSelectors.size || globalScriptlets.size) {
     out.push('[global]');
-    // ad_network_patterns only ever holds bare lowercase domains here (no
-    // '|' chars) — path-scoped patterns are deliberately kept out of it (see
-    // ABP_SIMPLE_NETWORK_OPTS_RE's own comment) — so no escaping needed.
-    // strip_query_params entries carry a raw pattern that CAN start with a
-    // single '|' anchor (see _isValidUrlFilter), so those ARE escaped, same
-    // as network_redirect_rules already is. network_block_rules is rendered
-    // per-domain below, not here — see _abpFinalizeGroups' own comment.
+    // ad_network_patterns/tracker_network_patterns only ever hold bare
+    // lowercase domains here (no '|' chars) — path-scoped patterns are
+    // deliberately kept out of both (see ABP_SIMPLE_NETWORK_OPTS_RE's own
+    // comment) — so no escaping needed. strip_query_params entries carry a
+    // raw pattern that CAN start with a single '|' anchor (see
+    // _isValidUrlFilter), so those ARE escaped, same as network_redirect_
+    // rules already is. network_block_rules is rendered per-domain below,
+    // not here — see _abpFinalizeGroups' own comment.
     if (networkDomains.size) out.push('ad_network_patterns = ' + [...networkDomains].sort().join(' | '));
+    if (trackerDomains && trackerDomains.size) out.push('tracker_network_patterns = ' + [...trackerDomains].sort().join(' | '));
     if (networkRedirects && networkRedirects.size) out.push('network_redirect_rules = ' + [...networkRedirects].sort().map(_abpEscapeValue).join(' | '));
     if (queryStrips && queryStrips.size) out.push('strip_query_params = ' + [...queryStrips].sort().map(_abpEscapeValue).join(' | '));
     if (globalSelectors.size) out.push('direct_hide_selectors = ' + [...globalSelectors].sort().map(_abpEscapeValue).join(' | '));
@@ -1268,17 +1531,17 @@ function _getCuratedDedupSets() {
   return _curatedDedupPromise;
 }
 
-async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedicatedKeyMap, networkRuleBudget) {
+async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedicatedKeyMap, networkRuleBudget, isTracker) {
   if (!_looksLikeAbpFormat(text)) return text;
   const { curatedPatterns, curatedSectionNames } = await _getCuratedDedupSets();
   const acc = {
     domainSelectors: new Map(), domainScriptlets: new Map(),
     globalSelectors: new Set(), globalScriptlets: new Map(),
-    networkDomains: new Set(), networkRedirects: new Set(),
+    networkDomains: new Set(), trackerDomains: new Set(), networkRedirects: new Set(),
     domainNetworkBlocks: new Map(), queryStrips: new Set(),
   };
   const stats = _abpEmptySkipStats();
-  try { _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget); } catch (e) {
+  try { _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isTracker); } catch (e) {
     if (statsOut) statsOut.error = (e && e.message) || 'conversion failed';
     return text;
   }
@@ -1287,7 +1550,7 @@ async function _maybeConvertAbpText(text, statsOut, sharedUsedKeys, sharedDedica
   return _abpRender({
     groups, globalSelectors: acc.globalSelectors, globalScriptlets: acc.globalScriptlets,
     networkRedirects: acc.networkRedirects, queryStrips: acc.queryStrips,
-    networkDomains: acc.networkDomains, curatedSectionNames,
+    networkDomains: acc.networkDomains, trackerDomains: acc.trackerDomains, curatedSectionNames,
     sharedUsedKeys, sharedDedicatedKeyMap,
   });
 }
@@ -1420,7 +1683,13 @@ async function _autoEnableLangDefaultSources() {
 // resumes after its own internal await, its key-minting loop runs to
 // completion with no further await, so mutating the shared Set/Map from
 // several concurrent calls is safe — no two calls can be mid-loop at once.
-async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap, networkRuleBudget) {
+// `trackerUrls` (optional Set<url>): URLs in here get isTracker=true passed
+// to _maybeConvertAbpText, so their bare-domain patterns land in
+// tracker_network_patterns instead of ad_network_patterns — see
+// _abpParseFile's own comment. Membership is decided by the CALLER
+// (fetchRemoteRuleText(), from config.js's RULES_REMOTE_URL `category:
+// 'tracker'` field), never inferred here from the URL/content itself.
+async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap, networkRuleBudget, trackerUrls) {
   const usedKeys = sharedUsedKeys || new Set();
   const dedicatedKeyMap = sharedDedicatedKeyMap || new Map();
   const sourceErrors = {};
@@ -1435,7 +1704,7 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap,
       const raw = await res.text();
       if (!raw) return '';
       const stats = {};
-      const converted = await _maybeConvertAbpText(raw, stats, usedKeys, dedicatedKeyMap, networkRuleBudget);
+      const converted = await _maybeConvertAbpText(raw, stats, usedKeys, dedicatedKeyMap, networkRuleBudget, !!(trackerUrls && trackerUrls.has(url)));
       if (Object.keys(stats).length) sourceStats[url] = stats;
       return converted;
     } catch (e) {
@@ -1490,6 +1759,12 @@ async function fetchRemoteRuleText() {
   // blockMalware stays independent of blockAds and hits still redirect to
   // the dedicated malware warning page rather than counting as an ad block.
   const malwareUrls = [];
+  // Entries carrying `category: 'tracker'` (e.g. EasyPrivacy in config.js)
+  // convert their bare-domain patterns into tracker_network_patterns instead
+  // of ad_network_patterns — see _abpParseFile's own comment. A plain Set of
+  // urls, not entries, since that's what _fetchAndConvertUrls/urls already
+  // key on.
+  const trackerUrls = new Set();
   const legacyAllDisabled = stored.defaultRuleSourceEnabled === false;
   for (const [i, entry] of RULES_REMOTE_URL.entries()) {
     if (!_isDefaultSourceEnabled(entry, stored.defaultRuleSourceOverrides, legacyAllDisabled)) continue;
@@ -1500,7 +1775,10 @@ async function fetchRemoteRuleText() {
     if (DEBUG_LOCAL && i === 0) {
       urls.push(EXT.runtime.getURL(RULES_LOCAL_PATH));
     } else {
-      for (const u of _entryUrls(entry)) urls.push(u);
+      for (const u of _entryUrls(entry)) {
+        urls.push(u);
+        if (entry.category === 'tracker') trackerUrls.add(u);
+      }
     }
   }
 
@@ -1534,9 +1812,15 @@ async function fetchRemoteRuleText() {
   const sharedAbpKeys = new Set();
   const sharedDedicatedDomains = new Map();
   // Shared across EVERY source converted in this call (urls AND fileParts) —
-  // see NETWORK_RULE_BUDGET's own comment for why this exists.
-  const networkRuleBudget = { remaining: NETWORK_RULE_BUDGET };
-  const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget);
+  // see NETWORK_RULE_BUDGET's own comment for why this exists. This runs
+  // per-install (each browser fetches+converts its OWN copy, nothing shared
+  // server-side), so the budget itself can be conditional: on a browser with
+  // webRequestBlocking (Firefox — see _hasWebRequestBlocking()),
+  // network_block_rules never becomes a DNR rule at all (buildNetworkBlockMatcher()
+  // instead), so there's no DNR rule-count ceiling to protect here — every
+  // eligible entry converts, uncapped. Chrome/Edge keep the real cap.
+  const networkRuleBudget = { remaining: _hasWebRequestBlocking() ? Infinity : NETWORK_RULE_BUDGET };
+  const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget, trackerUrls);
   const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget)));
   // Sequential (not Promise.all'd with the fetch above): both this and
   // _fetchAndConvertUrls independently read-modify-write the shared
@@ -1779,6 +2063,25 @@ function _isNewerVersion(remote, local) {
 // CURRENT manifests — a coincidence, not a guarantee).
 function _isFirefoxInstall() {
   return navigator.userAgent.includes('Firefox/');
+}
+
+// True only where the webRequest/webRequestBlocking permissions were
+// actually granted — Firefox, after manifest.firefox.json requested them
+// (Chrome/Edge MV3 never grants blocking webRequest, so this always resolves
+// false there with no UA sniffing needed). Feature-detection instead of
+// _isFirefoxInstall()-style UA checking on purpose: it self-corrects if a
+// future manifest change adds/drops the permission, and it's what actually
+// determines whether EXT.webRequest.onBeforeRequest is even callable.
+// network_block_rules is the one DNR tier this backs OUT of on this browser
+// (see buildNetworkBlockMatcher()/the webRequest listener below) — Firefox's
+// declarativeNetRequest dynamic-rule cap is a flat 5000 covering every OTHER
+// tier combined too (confirmed live 2026-08-31, see
+// [[abp-path-scoped-network-rule-conversion]] memory), and network_block_
+// rules alone routinely exceeds that on its own — moving just this one tier
+// to webRequestBlocking (no rule-count ceiling at all) fixes it without
+// touching manifest_version or any other tier's DNR-based logic.
+function _hasWebRequestBlocking() {
+  return !!(EXT.webRequest && EXT.webRequest.onBeforeRequest && EXT.webRequest.onBeforeRequest.addListener);
 }
 
 async function checkForExtensionUpdate() {
@@ -2175,6 +2478,65 @@ let _parsedRulesPromise = null;
 // breaks anything).
 const PARSED_RULES_SESSION_KEY = 'parsedRulesSessionCache'; // { hash, compressed }
 
+// Cross-SW-restart cache for ensureRuleDefinitionsLoaded()'s OUTPUT (2026-08-31)
+// — same idea as PARSED_RULES_SESSION_KEY above, one layer deeper. That cache
+// only saves parseRuleText() (text -> parsed object); everything BUILT from
+// the parsed object (DEFAULT_RULES, MALWARE_RULES, AD_MAINFRAME_RULES,
+// QUERY_STRIP_RULES, NETWORK_REDIRECT_RULES, NETWORK_BLOCK_RULES/
+// NETWORK_BLOCK_MATCHER) lived in plain module-level `let`s that don't
+// survive a SW restart, so the FULL build reran every single cold start —
+// live-measured 2026-08-31 at a real default-enabled-sources scale: ~99ms
+// per restart, unchanged regardless of how many restarts happen with
+// identical input (MV3 restarts the SW after a short idle timeout, far more
+// often than the rules text itself changes). Same fix, same pattern: store
+// compressed in chrome.storage.session, keyed by the SAME content hash
+// getParsedRules() already computes — one hash invalidates both caches
+// together the instant the underlying text actually changes.
+const BUILT_RULES_SESSION_KEY = 'builtRulesSessionCache'; // { hash, compressed }
+
+// NETWORK_BLOCK_MATCHER's entries carry a compiled RegExp (`regex`) plus
+// Set/Map fields (resourceTypes, initiatorDomains, ...) — none of those
+// round-trip through JSON.stringify/parse as-is (a RegExp serializes to
+// `{}`, a Set/Map to `{}` too). Convert to/from plain arrays + the regex's
+// SOURCE string; _urlFilterToRegExp's caller already only ever needs
+// `new RegExp(source)` back, not the exact same object reference.
+function _serializeMatcherEntry(e) {
+  const out = { regexSource: e.regex.source };
+  if (e.resourceTypes) out.resourceTypes = [...e.resourceTypes];
+  if (e.excludedResourceTypes) out.excludedResourceTypes = [...e.excludedResourceTypes];
+  if (e.initiatorDomains) out.initiatorDomains = [...e.initiatorDomains.keys()];
+  if (e.excludedInitiatorDomains) out.excludedInitiatorDomains = [...e.excludedInitiatorDomains.keys()];
+  if (e.excludedRequestDomains) out.excludedRequestDomains = [...e.excludedRequestDomains.keys()];
+  if (e.requestMethods) out.requestMethods = [...e.requestMethods];
+  if (e.excludedRequestMethods) out.excludedRequestMethods = [...e.excludedRequestMethods];
+  if (e.domainType) out.domainType = e.domainType;
+  return out;
+}
+function _rehydrateMatcherEntry(o) {
+  const e = { regex: new RegExp(o.regexSource) };
+  if (o.resourceTypes) e.resourceTypes = new Set(o.resourceTypes);
+  if (o.excludedResourceTypes) e.excludedResourceTypes = new Set(o.excludedResourceTypes);
+  if (o.initiatorDomains) e.initiatorDomains = new Map(o.initiatorDomains.map(d => [d, true]));
+  if (o.excludedInitiatorDomains) e.excludedInitiatorDomains = new Map(o.excludedInitiatorDomains.map(d => [d, true]));
+  if (o.excludedRequestDomains) e.excludedRequestDomains = new Map(o.excludedRequestDomains.map(d => [d, true]));
+  if (o.requestMethods) e.requestMethods = new Set(o.requestMethods);
+  if (o.excludedRequestMethods) e.excludedRequestMethods = new Set(o.excludedRequestMethods);
+  if (o.domainType) e.domainType = o.domainType;
+  return e;
+}
+function _serializeMatcherMap(map) {
+  const out = {};
+  for (const [domain, entries] of map) out[domain] = entries.map(_serializeMatcherEntry);
+  return out;
+}
+function _rehydrateMatcherMap(obj) {
+  const map = new Map();
+  for (const domain in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, domain)) map.set(domain, obj[domain].map(_rehydrateMatcherEntry));
+  }
+  return map;
+}
+
 async function getParsedRules() {
   if (_parsedRules) return _parsedRules;
   if (!_parsedRulesPromise) {
@@ -2402,10 +2764,65 @@ function _dedupeMalwarePriority(config) {
   };
 }
 
+// Rehydrates ensureRuleDefinitionsLoaded()'s module-level output from
+// BUILT_RULES_SESSION_KEY. Returns true on a real cache hit (module vars are
+// now populated, caller should return without doing a real build); false on
+// any miss/corruption/unavailable-storage (caller falls through to the real
+// build path — never blocks or breaks anything, same philosophy
+// PARSED_RULES_SESSION_KEY already established).
+async function _loadBuiltRulesFromCache(cacheKey) {
+  try {
+    const { [BUILT_RULES_SESSION_KEY]: cached } = await _sessionStorage.get(BUILT_RULES_SESSION_KEY);
+    if (!(cached && cached.key === cacheKey && cached.compressed)) return false;
+    const json = await _decompressFromStorage(cached.compressed);
+    if (!json) return false;
+    const data = JSON.parse(json);
+    DEFAULT_RULES = data.DEFAULT_RULES;
+    MALWARE_RULES = data.MALWARE_RULES;
+    AD_MAINFRAME_RULES = data.AD_MAINFRAME_RULES;
+    QUERY_STRIP_RULES = data.QUERY_STRIP_RULES;
+    NETWORK_REDIRECT_RULES = data.NETWORK_REDIRECT_RULES;
+    NETWORK_BLOCK_RULES = data.NETWORK_BLOCK_RULES;
+    NETWORK_BLOCK_MATCHER = _rehydrateMatcherMap(data.NETWORK_BLOCK_MATCHER);
+    TRACKER_RULE_IDS = new Set(data.TRACKER_RULE_IDS);
+    MALWARE_RULE_IDS = new Set(data.MALWARE_RULE_IDS);
+    AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...data.AD_KEYWORDS);
+    TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...data.TRACKER_KEYWORDS);
+    MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...data.MALWARE_KEYWORDS);
+    _ruleGeneration++;
+    return true;
+  } catch { return false; } // corrupt cache, storage.session unavailable, etc. — fall through to a real build
+}
+
+async function _saveBuiltRulesToCache(cacheKey) {
+  try {
+    const data = {
+      DEFAULT_RULES, MALWARE_RULES, AD_MAINFRAME_RULES, QUERY_STRIP_RULES,
+      NETWORK_REDIRECT_RULES, NETWORK_BLOCK_RULES,
+      NETWORK_BLOCK_MATCHER: _serializeMatcherMap(NETWORK_BLOCK_MATCHER),
+      TRACKER_RULE_IDS: [...TRACKER_RULE_IDS], MALWARE_RULE_IDS: [...MALWARE_RULE_IDS],
+      AD_KEYWORDS: [...AD_KEYWORDS], TRACKER_KEYWORDS: [...TRACKER_KEYWORDS], MALWARE_KEYWORDS: [...MALWARE_KEYWORDS],
+    };
+    const compressed = await _compressForStorage(JSON.stringify(data));
+    await _sessionStorage.set({ [BUILT_RULES_SESSION_KEY]: { key: cacheKey, compressed } });
+  } catch { /* best-effort — a failed write just means the next restart rebuilds again, same as today */ }
+}
+
 async function ensureRuleDefinitionsLoaded() {
   if (DEFAULT_RULES.length && MALWARE_RULES.length && AD_MAINFRAME_RULES.length) return;
   if (!_ruleConfigPromise) {
     _ruleConfigPromise = (async () => {
+      // Cheap (raw-text-sized, not the full parsed-object-sized
+      // PARSED_RULES_SESSION_KEY cache) — compute this BEFORE calling
+      // getParsedRules() so a built-rules cache hit skips that heavier read
+      // entirely, not just the build step. `_hasWebRequestBlocking()` is
+      // folded into the key so a Chrome-shaped (DNR rules) cache entry can
+      // never be misread as a Firefox-shaped (webRequest matcher) one or
+      // vice versa — constant per install in practice, just defensive.
+      const text = await getRulesText();
+      const cacheKey = _hashText(text) + '|' + (_hasWebRequestBlocking() ? 'wr' : 'dnr');
+      if (await _loadBuiltRulesFromCache(cacheKey)) return;
+
       const parsed = await getParsedRules();
       const global = parsed.global || {};
       const config = _dedupeMalwarePriority({
@@ -2422,13 +2839,24 @@ async function ensureRuleDefinitionsLoaded() {
       AD_MAINFRAME_RULES = buildAdMainFrameRulesFromConfig(config, DEFAULT_RULES.length + MALWARE_RULES.length + 1);
       QUERY_STRIP_RULES = buildQueryStripRules(global.strip_query_params || [], QUERY_STRIP_RULE_ID_START);
       NETWORK_REDIRECT_RULES = buildNetworkRedirectRules(global.network_redirect_rules || [], NETWORK_REDIRECT_RULE_ID_START);
-      NETWORK_BLOCK_RULES = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
+      // network_block_rules: DNR rule objects for Chrome/Edge (and Firefox
+      // when webRequestBlocking isn't available), OR a webRequest matcher
+      // Map for Firefox when it is — never both, see _hasWebRequestBlocking()
+      // and buildActiveRulesFromStorage()'s own gating of networkBlockActive.
+      if (_hasWebRequestBlocking()) {
+        NETWORK_BLOCK_RULES = [];
+        NETWORK_BLOCK_MATCHER = buildNetworkBlockMatcher(parsed);
+      } else {
+        NETWORK_BLOCK_RULES = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
+        NETWORK_BLOCK_MATCHER = new Map();
+      }
       TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
       MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
       TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...config.trackerPatterns);
       MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...config.malwarePatterns);
       _ruleGeneration++; // invalidates _ruleFingerprint() — static rule defs just changed
+      await _saveBuiltRulesToCache(cacheKey);
     })().finally(() => {
       _ruleConfigPromise = null;
     });
@@ -2698,7 +3126,15 @@ async function buildActiveRulesFromStorage() {
     ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'blockAds', 'blockTrackers', 'blockMalware']
   );
 
-  if (!enabled) return { enabled: false, allRules: [] };
+  if (!enabled) {
+    _updateNetworkBlockListener(false);
+    return { enabled: false, allRules: [] };
+  }
+  // Same gates networkBlockActive/remoteActive's path-pattern half (DNR
+  // path) use for these two tiers below — kept in sync here since the
+  // webRequestBlocking listener is a replacement for both, not an addition
+  // (see _hasWebRequestBlocking()'s own comment).
+  _updateNetworkBlockListener(blockAds || blockMalware);
 
   const AD_RULE_IDS = new Set(DEFAULT_RULES.filter(r => !TRACKER_RULE_IDS.has(r.id)).map(r => r.id));
   const filteredDefaultRules = DEFAULT_RULES.filter(r => {
@@ -2726,9 +3162,18 @@ async function buildActiveRulesFromStorage() {
     if (_remoteMalwareRulesMemo.rules && _remoteMalwareRulesMemo.key === remoteKey) {
       remoteActive = _remoteMalwareRulesMemo.rules;
     } else {
-      remoteActive = buildRemoteMalwareRules(remoteDomains, remotePathPatterns);
+      // On Firefox (webRequestBlocking), the path-scoped half routes through
+      // MALWARE_PATH_MATCHER instead (see its own comment for why — up to
+      // 10,000 individual DNR rules on its own easily exceeds Firefox's flat
+      // 5000 cap). Pass an empty array here so buildRemoteMalwareRules()
+      // still builds the small, batched bare-domain DNR rules but skips the
+      // path ones entirely on this browser.
+      remoteActive = buildRemoteMalwareRules(remoteDomains, _hasWebRequestBlocking() ? [] : remotePathPatterns);
       _remoteMalwareRulesMemo = { key: remoteKey, rules: remoteActive };
+      MALWARE_PATH_MATCHER = _hasWebRequestBlocking() ? buildMalwarePathMatcher(remotePathPatterns) : new Map();
     }
+  } else {
+    MALWARE_PATH_MATCHER = new Map();
   }
   const customBlockRules = await buildCustomBlockRules();
   const focusRules = await buildFocusRules(focusMode);
@@ -4521,7 +4966,17 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'GET_RULE_COUNT': {
         const rules = await EXT.declarativeNetRequest.getDynamicRules();
-        sendResponse({ count: rules.length, rules: rules.map(r => r.id) });
+        // On Firefox (webRequestBlocking), network_block_rules and the
+        // path-scoped half of remoteMalwarePathPatterns are matched via
+        // NETWORK_BLOCK_MATCHER/MALWARE_PATH_MATCHER instead of DNR — see
+        // _hasWebRequestBlocking()'s own comment — so getDynamicRules()
+        // alone massively UNDER-reports real coverage there (live-reported
+        // 2026-08-31: popup showed "155" on Firefox vs "17526" on Chrome for
+        // equivalent protection). Add both matchers' entry counts so the
+        // displayed total means the same thing on every browser — on
+        // Chrome/Edge both Maps are always empty, so this is a no-op there.
+        const matcherCount = _matcherEntryCount(NETWORK_BLOCK_MATCHER) + _matcherEntryCount(MALWARE_PATH_MATCHER);
+        sendResponse({ count: rules.length + matcherCount, rules: rules.map(r => r.id) });
         break;
       }
 
