@@ -325,11 +325,13 @@ function injectCustomCssRules() {
           selectors.push(`[id*="${r.pattern}"]`);
         }
 
-        _sendCss('custom', selectors.join(',\n') + ` {
-        display: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-      }`);
+        // One rule per selector, single display:none!important property —
+        // a combined selector list sharing one multi-property declaration
+        // was found to trigger an insertCSS crash on Firefox (same class of
+        // bug already fixed for BASE_CSS and site-block.js's
+        // _scopedDirectRule; this slot was missed). Splitting also means an
+        // invalid selector only breaks its own rule, not the whole list.
+        _sendCss('custom', selectors.map(sel => `${sel}{display:none!important}`).join('\n\n'));
       } catch { /* extension context invalidated */ }
     });
   } catch { /* extension context invalidated */ }
