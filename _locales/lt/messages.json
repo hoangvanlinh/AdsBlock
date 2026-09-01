@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList šeima"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Kenkėjiškos programos ir sukčiavimas"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Pagal kalbą"
   },

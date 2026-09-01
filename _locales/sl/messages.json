@@ -1138,6 +1138,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "Družina EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Zlonamerna programska oprema in lažno predstavljanje"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Po jeziku"
   },

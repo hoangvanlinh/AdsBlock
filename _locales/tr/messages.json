@@ -1138,6 +1138,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList ailesi"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Kötü amaçlı yazılım ve kimlik avı"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Dile göre"
   },

@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList породица"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Малвер и пецање"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "По језику"
   },

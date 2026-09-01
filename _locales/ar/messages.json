@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "عائلة EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "البرمجيات الخبيثة والتصيد الاحتيالي"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "حسب اللغة"
   },

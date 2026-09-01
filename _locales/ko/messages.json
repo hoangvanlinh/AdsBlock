@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList 계열"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "멀웨어 및 피싱"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "언어별"
   },

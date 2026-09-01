@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "خانوادهٔ EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "بدافزار و فیشینگ"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "بر اساس زبان"
   },

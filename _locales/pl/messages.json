@@ -1138,6 +1138,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "Rodzina EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Złośliwe oprogramowanie i phishing"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Według języka"
   },

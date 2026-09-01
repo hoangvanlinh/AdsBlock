@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "Семейство EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Зловреден софтуер и фишинг"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "По език"
   },

@@ -1138,6 +1138,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList saime"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Ļaunatūra un pikšķerēšana"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Pēc valodas"
   },

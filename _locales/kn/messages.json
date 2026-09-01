@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList ಕುಟುಂಬ"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "ಮಾಲ್‌ವೇರ್ ಮತ್ತು ಫಿಶಿಂಗ್"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "ಭಾಷೆಯ ಪ್ರಕಾರ"
   },

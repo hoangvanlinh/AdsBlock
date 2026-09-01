@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "Rodina EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Malware a phishing"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Podle jazyka"
   },

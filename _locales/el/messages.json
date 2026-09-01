@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "Οικογένεια EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Κακόβουλο λογισμικό & phishing"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Κατά γλώσσα"
   },

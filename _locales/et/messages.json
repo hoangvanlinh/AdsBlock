@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyListi perekond"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Pahavara ja andmepüük"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Keele järgi"
   },

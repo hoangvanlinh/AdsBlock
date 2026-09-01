@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList குடும்பம்"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "தீம்பொருள் & ஃபிஷிங்"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "மொழி வாரியாக"
   },

@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "Família EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Programari maliciós i pesca"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Per idioma"
   },

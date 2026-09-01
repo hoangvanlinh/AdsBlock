@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "กลุ่ม EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "มัลแวร์และฟิชชิง"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "ตามภาษา"
   },

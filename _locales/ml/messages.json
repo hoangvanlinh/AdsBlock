@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList കുടുംബം"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "മാൽവെയറും ഫിഷിംഗും"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "ഭാഷ പ്രകാരം"
   },

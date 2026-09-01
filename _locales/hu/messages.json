@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList család"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Kártevők és adathalászat"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Nyelv szerint"
   },

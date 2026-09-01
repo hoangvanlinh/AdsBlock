@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList-perhe"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Haittaohjelmat ja tietojenkalastelu"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Kielen mukaan"
   },

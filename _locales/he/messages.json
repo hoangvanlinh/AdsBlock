@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "משפחת EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "תוכנות זדוניות ודיוג"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "לפי שפה"
   },

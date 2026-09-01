@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "EasyList-familien"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Skadevare og phishing"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Etter språk"
   },

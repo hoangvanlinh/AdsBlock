@@ -1140,6 +1140,9 @@
   "dashboard_ruleSource_groupEasylist": {
     "message": "Keluarga EasyList"
   },
+  "dashboard_ruleSource_groupMalware": {
+    "message": "Perisian hasad & pancingan data"
+  },
   "dashboard_ruleSource_groupLanguage": {
     "message": "Mengikut bahasa"
   },
