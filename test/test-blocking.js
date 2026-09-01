@@ -21,6 +21,8 @@ const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'shared/browser-compat.
 // call would hang forever against this harness's Promise-only storage stub.
 const utilsSrc = fs.readFileSync(path.join(ROOT, 'shared/utils.js'), 'utf8');
 const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'shared/scriptlet-alias-map.js'), 'utf8');
+const localStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/local-storage.js'), 'utf8');
+const sessionStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/session-storage.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'shared/background.js'), 'utf8');
 
 // ── chrome stub ───────────────────────────────────────────────────
@@ -253,6 +255,10 @@ const sandbox = {
       vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 'scriptlet-alias-map.js' });
     } else if (name && name.includes('browser-compat')) {
       vm.runInContext(browserCompatSrc, ctx, { filename: 'browser-compat.js' });
+    } else if (name && name.includes('local-storage')) {
+      vm.runInContext(localStorageSrc, ctx, { filename: 'local-storage.js' });
+    } else if (name && name.includes('session-storage')) {
+      vm.runInContext(sessionStorageSrc, ctx, { filename: 'session-storage.js' });
     } else if (name && name.includes('utils')) {
       vm.runInContext(utilsSrc, ctx, { filename: 'utils.js' });
     } else {

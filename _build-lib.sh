@@ -72,6 +72,8 @@ copy_static_files() {
     # dev-only tooling, never copied here.
     cp "$PROJECT_DIR/shared/config.js" "$DEST/shared/"
     cp "$PROJECT_DIR/shared/browser-compat.js" "$DEST/shared/"
+    cp "$PROJECT_DIR/shared/local-storage.js" "$DEST/shared/"
+    cp "$PROJECT_DIR/shared/session-storage.js" "$DEST/shared/"
     cp "$PROJECT_DIR/shared/scriptlet-alias-map.js" "$DEST/shared/"
     cp "$PROJECT_DIR/shared/utils.js" "$DEST/shared/"
     cp "$PROJECT_DIR/shared/i18n.js" "$DEST/shared/"

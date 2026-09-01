@@ -16,6 +16,8 @@ const ROOT = path.join(__dirname, '..');
 const configSrc = fs.readFileSync(path.join(ROOT, 'shared/config.js'), 'utf8');
 const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'shared/browser-compat.js'), 'utf8');
 const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'shared/scriptlet-alias-map.js'), 'utf8');
+const localStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/local-storage.js'), 'utf8');
+const sessionStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/session-storage.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'shared/background.js'), 'utf8');
 const localRules = fs.readFileSync(path.join(ROOT, 'rule/site-rules.txt'), 'utf8');
 
@@ -90,6 +92,8 @@ function makeSandbox(opts) {
     importScripts(name) {
       if (name && name.includes('scriptlet-alias-map')) vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 's.js' });
       else if (name && name.includes('browser-compat')) vm.runInContext(browserCompatSrc, ctx, { filename: 'b.js' });
+      else if (name && name.includes('local-storage')) vm.runInContext(localStorageSrc, ctx, { filename: 'ls.js' });
+      else if (name && name.includes('session-storage')) vm.runInContext(sessionStorageSrc, ctx, { filename: 'ss.js' });
       else vm.runInContext(configSrc, ctx, { filename: 'c.js' });
     },
   };

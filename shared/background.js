@@ -38,6 +38,19 @@ if (typeof importScripts === 'function' && !self.EXT_I18N_READY) {
 if (typeof importScripts === 'function' && !self.SCRIPTLET_ALIAS_MAP) {
   importScripts('scriptlet-alias-map.js');
 }
+// local-storage.js (repo root shared/, same dual-loading story) — must load
+// AFTER browser-compat.js (needs self.EXT) and BEFORE session-storage.js
+// (its own storage.local fallback calls into this module).
+if (typeof importScripts === 'function' && !self.LocalStorage) {
+  importScripts('local-storage.js');
+}
+// session-storage.js (repo root shared/, same dual-loading story) — must
+// load AFTER browser-compat.js (needs self.EXT_SESSION_STORAGE) and
+// local-storage.js (its own local fallback uses self.LocalStorage), and
+// before any of this file's own top-level code touches self.SessionStorage.
+if (typeof importScripts === 'function' && !self.SessionStorage) {
+  importScripts('session-storage.js');
+}
 const {
   RULES_REMOTE_URL,
   RULES_LOCAL_PATH,
@@ -739,7 +752,7 @@ async function _decompressDomainsFromStorage(stored) {
 
 async function getCachedRuleText() {
   try {
-    const cached = await EXT.storage.local.get([RULES_CACHE_TEXT_KEY, RULES_CACHE_TIME_KEY]);
+    const cached = await LocalStorage.get([RULES_CACHE_TEXT_KEY, RULES_CACHE_TIME_KEY]);
     if (!cached[RULES_CACHE_TEXT_KEY]) return null;
     const text = await _decompressFromStorage(cached[RULES_CACHE_TEXT_KEY]);
     if (!text) return null;
@@ -756,7 +769,7 @@ async function setCachedRuleText(text) {
   if (!text) return;
   try {
     const stored = await _compressForStorage(text);
-    await EXT.storage.local.set({
+    await LocalStorage.set({
       [RULES_CACHE_TEXT_KEY]: stored,
       [RULES_CACHE_TIME_KEY]: Date.now(),
     });
@@ -1640,7 +1653,7 @@ function _primaryUrl(entry) {
 async function _autoEnableLangDefaultSources() {
   const matches = RULES_REMOTE_URL.filter(e => _entryLangs(e).some(l => _uiLanguageMatches(l)));
   if (!matches.length) return;
-  const { defaultRuleSourceOverrides = {} } = await EXT.storage.local.get('defaultRuleSourceOverrides');
+  const { defaultRuleSourceOverrides = {} } = await LocalStorage.get('defaultRuleSourceOverrides');
   const updated = { ...defaultRuleSourceOverrides };
   let changed = false;
   for (const entry of matches) {
@@ -1651,7 +1664,7 @@ async function _autoEnableLangDefaultSources() {
     }
   }
   if (!changed) return;
-  await EXT.storage.local.set({
+  await LocalStorage.set({
     defaultRuleSourceOverrides: updated,
     // Bust the rules cache so the newly-enabled source is actually fetched
     // by the applyNetworkRules() call onInstalled makes right after this —
@@ -1714,7 +1727,7 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap,
   }));
   if (urls.length) {
     const { [RULE_SOURCE_ERRORS_KEY]: existingErrors = {}, [RULE_SOURCE_STATS_KEY]: existingStats = {} } =
-      await EXT.storage.local.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
+      await LocalStorage.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
     const nextErrors = { ...existingErrors };
     const nextStats = { ...existingStats };
     for (const url of urls) {
@@ -1723,13 +1736,13 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap,
       if (sourceStats[url]) nextStats[url] = sourceStats[url];
       else delete nextStats[url]; // not ABP-format (or fetch failed) — nothing to report for it now
     }
-    await EXT.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
+    await LocalStorage.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
   }
   return texts;
 }
 
 async function fetchRemoteRuleText() {
-  const stored = await EXT.storage.local.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
+  const stored = await LocalStorage.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
   const sources = stored.ruleSources;
   const urls = [];
   const fileParts = [];
@@ -1895,14 +1908,12 @@ let _sessionAllowedDomainsHash = '';
 function _hashValue(v) {
   return _hashText(JSON.stringify(v === undefined ? null : v));
 }
-EXT.storage.local.get(RULE_INPUT_KEYS).then(r => {
+LocalStorage.get(RULE_INPUT_KEYS).then(r => {
   for (const key of RULE_INPUT_KEYS) _ruleInputHashes[key] = _hashValue(r[key]);
 }).catch(() => {});
-try {
-  _sessionStorage.get('sessionAllowedDomains').then(r => {
-    _sessionAllowedDomainsHash = _hashValue(r.sessionAllowedDomains);
-  }).catch(() => {});
-} catch { /* storage.session unavailable (old browser) — best-effort only */ }
+SessionStorage.get('sessionAllowedDomains').then(r => {
+  _sessionAllowedDomainsHash = _hashValue(r.sessionAllowedDomains);
+});
 EXT.storage.onChanged.addListener((changes, area) => {
   if (area === 'session') {
     if (changes.sessionAllowedDomains) _sessionAllowedDomainsHash = _hashValue(changes.sessionAllowedDomains.newValue);
@@ -1920,7 +1931,7 @@ function _ruleFingerprint() {
 // Full reload pipeline — shared by the dashboard's RULES_CHANGED message and
 // the revalidation alarm: drop caches, rebuild DNR rules, notify all tabs.
 async function reloadRules() {
-  await EXT.storage.local.set({
+  await LocalStorage.set({
     [RULES_CACHE_TEXT_KEY]: '',
     [RULES_CACHE_TIME_KEY]: 0,
   });
@@ -1967,7 +1978,7 @@ function debouncedReloadRules() {
 
 async function revalidateRemoteRules() {
   try {
-    const stored = await EXT.storage.local.get([
+    const stored = await LocalStorage.get([
       'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides',
       RULES_REMOTE_ETAG_KEY, RULES_REMOTE_HASH_KEY,
     ]);
@@ -2006,14 +2017,14 @@ async function revalidateRemoteRules() {
         } catch { /* this url failed — keep checking the rest of the group and other sources */ }
       }
     }
-    await EXT.storage.local.set({
+    await LocalStorage.set({
       [RULES_REMOTE_ETAG_KEY]: nextEtags,
       [RULES_REMOTE_HASH_KEY]: nextHashes,
     });
     if (!changed) {
       // Nothing changed (all 304s / failures) — keep serving the cache and
       // push its expiry out.
-      await EXT.storage.local.set({ [RULES_CACHE_TIME_KEY]: Date.now() });
+      await LocalStorage.set({ [RULES_CACHE_TIME_KEY]: Date.now() });
       return false;
     }
     // At least one source's content actually changed — run the full
@@ -2098,21 +2109,21 @@ async function checkForExtensionUpdate() {
       lastChecked: Date.now(),
       lastCheckOk: true,
     };
-    await EXT.storage.local.set({ updateInfo });
+    await LocalStorage.set({ updateInfo });
     return updateInfo;
   } catch {
     // Offline / repo unreachable — keep whatever was last known, just stamp
     // the failed attempt so the UI can show "last checked: failed just now"
     // instead of silently reusing a possibly stale success from days ago.
-    const { updateInfo: prev = {} } = await EXT.storage.local.get('updateInfo');
+    const { updateInfo: prev = {} } = await LocalStorage.get('updateInfo');
     const updateInfo = { ...prev, lastChecked: Date.now(), lastCheckOk: false };
-    await EXT.storage.local.set({ updateInfo });
+    await LocalStorage.set({ updateInfo });
     return updateInfo;
   }
 }
 
 async function maybeCheckForExtensionUpdate() {
-  const { updateInfo = {} } = await EXT.storage.local.get('updateInfo');
+  const { updateInfo = {} } = await LocalStorage.get('updateInfo');
   const ONE_DAY = 24 * 60 * 60 * 1000;
   if (Date.now() - (updateInfo.lastChecked || 0) > ONE_DAY) {
     await checkForExtensionUpdate();
@@ -2435,7 +2446,7 @@ async function getRulesText() {
   } catch {
     // Fallback: use cached/local rules, but still append customRulesText
     const baseText = (cached && cached.text) || await fetchLocalRuleText();
-    const { customRulesText: customText = '' } = await EXT.storage.local.get('customRulesText');
+    const { customRulesText: customText = '' } = await LocalStorage.get('customRulesText');
     const text = customText ? baseText + '\n' + customText : baseText;
     if (text) await setCachedRuleText(text);
     return text;
@@ -2543,16 +2554,14 @@ async function getParsedRules() {
     _parsedRulesPromise = (async () => {
       const text = await getRulesText();
       const textHash = _hashText(text);
-      try {
-        const { [PARSED_RULES_SESSION_KEY]: cached } = await _sessionStorage.get(PARSED_RULES_SESSION_KEY);
-        if (cached && cached.hash === textHash && cached.compressed) {
-          const json = await _decompressFromStorage(cached.compressed);
-          if (json) {
-            _parsedRules = JSON.parse(json);
-            return _parsedRules;
-          }
+      const { [PARSED_RULES_SESSION_KEY]: cached } = await SessionStorage.get(PARSED_RULES_SESSION_KEY);
+      if (cached && cached.hash === textHash && cached.compressed) {
+        const json = await _decompressFromStorage(cached.compressed);
+        if (json) {
+          _parsedRules = JSON.parse(json);
+          return _parsedRules;
         }
-      } catch { /* chrome.storage.session unavailable, or corrupt cache — fall through to a real parse */ }
+      }
       _parsedRules = parseRuleText(text);
       // Compressed, not the bare object (2026-08-25 live measurement: a real
       // multi-source config's parsed object hit 14.84MB — OVER
@@ -2565,10 +2574,8 @@ async function getParsedRules() {
       // reduction vs reparsing from scratch. The extra stringify+compress
       // cost on write (~378ms measured) doesn't matter: it happens once per
       // rules change, not on the cold-start hot path this cache exists for.
-      try {
-        const compressed = await _compressForStorage(JSON.stringify(_parsedRules));
-        await _sessionStorage.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, compressed } });
-      } catch { /* best-effort — a failed cache write just means the next cold start re-parses */ }
+      const compressed = await _compressForStorage(JSON.stringify(_parsedRules));
+      await SessionStorage.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, compressed } });
       return _parsedRules;
     })().finally(() => { _parsedRulesPromise = null; });
   }
@@ -2772,7 +2779,10 @@ function _dedupeMalwarePriority(config) {
 // PARSED_RULES_SESSION_KEY already established).
 async function _loadBuiltRulesFromCache(cacheKey) {
   try {
-    const { [BUILT_RULES_SESSION_KEY]: cached } = await _sessionStorage.get(BUILT_RULES_SESSION_KEY);
+    // SessionStorage.get() itself never rejects (resolves {} on failure,
+    // already logged there) — this try/catch is for JSON.parse/decompress/
+    // rehydrate below throwing on a genuinely corrupt cache entry.
+    const { [BUILT_RULES_SESSION_KEY]: cached } = await SessionStorage.get(BUILT_RULES_SESSION_KEY);
     if (!(cached && cached.key === cacheKey && cached.compressed)) return false;
     const json = await _decompressFromStorage(cached.compressed);
     if (!json) return false;
@@ -2791,7 +2801,7 @@ async function _loadBuiltRulesFromCache(cacheKey) {
     MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...data.MALWARE_KEYWORDS);
     _ruleGeneration++;
     return true;
-  } catch { return false; } // corrupt cache, storage.session unavailable, etc. — fall through to a real build
+  } catch (e) { console.warn('[AdBlock] storage.session read (built-rules cache) failed — falling through to a real build:', e); return false; }
 }
 
 async function _saveBuiltRulesToCache(cacheKey) {
@@ -2804,8 +2814,8 @@ async function _saveBuiltRulesToCache(cacheKey) {
       AD_KEYWORDS: [...AD_KEYWORDS], TRACKER_KEYWORDS: [...TRACKER_KEYWORDS], MALWARE_KEYWORDS: [...MALWARE_KEYWORDS],
     };
     const compressed = await _compressForStorage(JSON.stringify(data));
-    await _sessionStorage.set({ [BUILT_RULES_SESSION_KEY]: { key: cacheKey, compressed } });
-  } catch { /* best-effort — a failed write just means the next restart rebuilds again, same as today */ }
+    await SessionStorage.set({ [BUILT_RULES_SESSION_KEY]: { key: cacheKey, compressed } });
+  } catch (e) { console.warn('[AdBlock] storage.session write (built-rules cache) failed — next restart will just rebuild again:', e); }
 }
 
 async function ensureRuleDefinitionsLoaded() {
@@ -3062,13 +3072,13 @@ EXT.runtime.onInstalled.addListener(async () => {
   // cache TTL.
   await _autoEnableLangDefaultSources();
   // Seed default settings
-  const existing = await EXT.storage.local.get([
+  const existing = await LocalStorage.get([
     'enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'stats', 'rules',
     'referrerAnonymization', 'collectStats',
     'blockAds', 'blockTrackers', 'cosmeticFiltering', 'blockMalware',
     'installDate', 'totalBlockedAllTime', 'reviewPromptState',
   ]);
-  await EXT.storage.local.set({
+  await LocalStorage.set({
     enabled:                existing.enabled                ?? true,
     pausedDomains:          existing.pausedDomains          ?? [],
     allowedDomains:         existing.allowedDomains         ?? [],
@@ -3122,7 +3132,7 @@ async function buildActiveRulesFromStorage() {
   const {
     enabled, pausedDomains = [], allowedDomains = [], focusMode = false,
     blockAds = true, blockTrackers = true, blockMalware = true,
-  } = await EXT.storage.local.get(
+  } = await LocalStorage.get(
     ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'blockAds', 'blockTrackers', 'blockMalware']
   );
 
@@ -3146,7 +3156,7 @@ async function buildActiveRulesFromStorage() {
   const activeRules = [...filteredDefaultRules];
   const adMainFrameActive = blockAds ? [...AD_MAINFRAME_RULES] : [];
   const malwareActive = blockMalware ? [...MALWARE_RULES] : [];
-  const { remoteMalwareDomains, remoteMalwarePathPatterns, remoteMalwareRules = [] } = await EXT.storage.local.get(
+  const { remoteMalwareDomains, remoteMalwarePathPatterns, remoteMalwareRules = [] } = await LocalStorage.get(
     ['remoteMalwareDomains', 'remoteMalwarePathPatterns', 'remoteMalwareRules']
   );
   // Migration: older versions stored full rule objects (one per domain).
@@ -3194,10 +3204,7 @@ async function buildActiveRulesFromStorage() {
   // back to the warning page, without permanently allowlisting it the way
   // checking that box does (that goes into `allowedDomains` instead, via
   // the PROCEED_BLOCKED_HOST message handler below).
-  let sessionAllowedDomains = [];
-  try {
-    ({ sessionAllowedDomains = [] } = await _sessionStorage.get('sessionAllowedDomains'));
-  } catch { /* storage.session unavailable (old browser) — best-effort only */ }
+  const { sessionAllowedDomains = [] } = await SessionStorage.get('sessionAllowedDomains');
   const pauseAllowKey = _ruleInputHashes.pausedDomains + '|' + _ruleInputHashes.allowedDomains + '|' + _sessionAllowedDomainsHash;
   let pauseAllowRules;
   if (_pauseAllowRulesMemo.rules && _pauseAllowRulesMemo.key === pauseAllowKey) {
@@ -3277,7 +3284,7 @@ async function _applyNetworkRulesImpl() {
     if (removeIds.length) {
       await EXT.declarativeNetRequest.updateDynamicRules({ removeRuleIds: removeIds, addRules: [] });
     }
-    await EXT.storage.local.remove(DNR_RULES_HASH_KEY);
+    await LocalStorage.remove(DNR_RULES_HASH_KEY);
     activeStatsRules = [];
     _lastFingerprint = null;
     _lastRuleHashById = null;
@@ -3304,7 +3311,7 @@ async function _applyNetworkRulesImpl() {
   // extra, cheap guard against silent drift (rules cleared by something
   // other than this function since the hash was stored).
   const newHash = _ruleFingerprint();
-  const { [DNR_RULES_HASH_KEY]: storedHash } = await EXT.storage.local.get(DNR_RULES_HASH_KEY);
+  const { [DNR_RULES_HASH_KEY]: storedHash } = await LocalStorage.get(DNR_RULES_HASH_KEY);
   if (existing.length === allRules.length && storedHash === newHash) {
     // Same fingerprint as our own last successful run within this SW
     // lifetime (statsRulesInitialized true, _lastFingerprint matches) means
@@ -3348,7 +3355,7 @@ async function _applyNetworkRulesImpl() {
     }
   }
   _lastRuleHashById = nextHashById;
-  await EXT.storage.local.set({ [DNR_RULES_HASH_KEY]: newHash });
+  await LocalStorage.set({ [DNR_RULES_HASH_KEY]: newHash });
 
   activeStatsRules = allRules.filter(rule => rule.action?.type === 'block');
   _lastFingerprint = newHash;
@@ -3421,7 +3428,7 @@ let _customBlockRulesMemo = { hash: undefined, rules: null };
 async function buildCustomBlockRules() {
   const hash = _ruleInputHashes.rules;
   if (_customBlockRulesMemo.rules && _customBlockRulesMemo.hash === hash) return _customBlockRulesMemo.rules;
-  const { rules = [] } = await EXT.storage.local.get('rules');
+  const { rules = [] } = await LocalStorage.get('rules');
   const blockRules = rules.filter(r => r.active && r.action === 'block');
   // Stable id (Phase 3a) keyed on the rule's own type+pattern, not array
   // position — removing one custom rule no longer shifts every other
@@ -3470,7 +3477,7 @@ async function buildFocusRules(focusMode) {
   if (!focusMode) return [];
   const key = focusMode + '|' + _ruleInputHashes.distractionDomains;
   if (_focusRulesMemo.rules && _focusRulesMemo.key === key) return _focusRulesMemo.rules;
-  const { distractionDomains = DISTRACTION_DEFAULTS } = await EXT.storage.local.get('distractionDomains');
+  const { distractionDomains = DISTRACTION_DEFAULTS } = await LocalStorage.get('distractionDomains');
   // Stable id (Phase 3a) keyed on the domain itself, not array position.
   const withIds = _assignStableIds(distractionDomains, domain => domain, FOCUS_RULE_ID_START, FOCUS_ID_RANGE);
   const result = withIds.map(({ item: domain, id }) => ({
@@ -3549,7 +3556,7 @@ function _enqueueStatWrite(fn) {
 }
 
 async function _writeDomainStatDelta(domain, delta) {
-  const { stats = {} } = await EXT.storage.local.get('stats');
+  const { stats = {} } = await LocalStorage.get('stats');
   if (!stats[domain]) {
     stats[domain] = { blocked: 0, adsBlocked: 0, cosmeticHidden: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0 };
   }
@@ -3567,12 +3574,12 @@ async function _writeDomainStatDelta(domain, delta) {
     domainKeys.sort((a, b) => (stats[a].totalSeen || 0) - (stats[b].totalSeen || 0));
     for (const k of domainKeys.slice(0, domainKeys.length - 200)) delete stats[k];
   }
-  await EXT.storage.local.set({ stats });
+  await LocalStorage.set({ stats });
 }
 
 async function _writeDailyStatDelta(delta) {
   const key = todayKey();
-  const { dailyStats = {}, totalBlockedAllTime = 0 } = await EXT.storage.local.get(['dailyStats', 'totalBlockedAllTime']);
+  const { dailyStats = {}, totalBlockedAllTime = 0 } = await LocalStorage.get(['dailyStats', 'totalBlockedAllTime']);
   if (!dailyStats[key]) dailyStats[key] = { blocked: 0, ads: 0, trackers: 0, malware: 0 };
   dailyStats[key].blocked  += delta.blocked  || 0;
   dailyStats[key].ads      += delta.ads      || 0;
@@ -3582,7 +3589,7 @@ async function _writeDailyStatDelta(delta) {
   while (keys.length > 30) { delete dailyStats[keys.shift()]; }
   // Unlike dailyStats (pruned to 30 days), this never resets — it's the
   // review-prompt milestone counter (see popup.js maybeShowReviewPrompt).
-  await EXT.storage.local.set({ dailyStats, totalBlockedAllTime: totalBlockedAllTime + (delta.blocked || 0) });
+  await LocalStorage.set({ dailyStats, totalBlockedAllTime: totalBlockedAllTime + (delta.blocked || 0) });
 }
 
 // ── Icon badge count — PER TAB, uBO-style ───────────────────────────
@@ -3708,7 +3715,7 @@ async function _updateRemoteMalwareDomains(urls) {
   // fetch errors/counts for these two sources exactly like any other.
   if (urls.length) {
     const { [RULE_SOURCE_ERRORS_KEY]: existingErrors = {}, [RULE_SOURCE_STATS_KEY]: existingStats = {} } =
-      await EXT.storage.local.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
+      await LocalStorage.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
     const nextErrors = { ...existingErrors };
     const nextStats = { ...existingStats };
     for (const url of urls) {
@@ -3717,7 +3724,7 @@ async function _updateRemoteMalwareDomains(urls) {
       if (sourceStats[url]) nextStats[url] = sourceStats[url];
       else delete nextStats[url];
     }
-    await EXT.storage.local.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
+    await LocalStorage.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
   }
 
   // An empty `urls` (both sources disabled from the dashboard) legitimately
@@ -3747,13 +3754,13 @@ async function _updateRemoteMalwareDomains(urls) {
     _compressDomainsForStorage(domainList),
     _compressDomainsForStorage(pathPatternList),
   ]);
-  await EXT.storage.local.set({
+  await LocalStorage.set({
     remoteMalwareDomains: compressedDomains,
     remoteMalwarePathPatterns: compressedPathPatterns,
     malwareListLastUpdate: Date.now(),
     malwareListCount: domainList.length + pathPatternList.length,
   });
-  await EXT.storage.local.remove('remoteMalwareRules');
+  await LocalStorage.remove('remoteMalwareRules');
 }
 
 EXT.alarms?.create(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
@@ -3767,7 +3774,7 @@ EXT.alarms?.onAlarm.addListener(async (alarm) => {
   }
   if (alarm.name === 'focus-end') {
     // Auto-disable focus mode when timer expires
-    await EXT.storage.local.set({ focusMode: false, focusEndTime: null });
+    await LocalStorage.set({ focusMode: false, focusEndTime: null });
     await applyNetworkRules();
   }
 });
@@ -3954,7 +3961,7 @@ async function applyDntHeader(enabled) {
 // Apply saved privacy settings on startup
 async function applyPrivacySettings() {
   const { referrerAnonymization = true, gpcSignal = true, dntHeader = true } =
-    await EXT.storage.local.get(['referrerAnonymization', 'gpcSignal', 'dntHeader']);
+    await LocalStorage.get(['referrerAnonymization', 'gpcSignal', 'dntHeader']);
   await applyReferrerAnonymization(referrerAnonymization);
   await applyGpcHeader(gpcSignal);
   await applyDntHeader(dntHeader);
@@ -4068,7 +4075,7 @@ const _settingsCache = {
   gpcSignal: true, referrerAnonymization: true,
   pausedDomains: new Set(), allowedDomains: new Set(),
 };
-EXT.storage.local.get([..._SETTINGS_CACHE_SCALAR_KEYS, 'pausedDomains', 'allowedDomains']).then(r => {
+LocalStorage.get([..._SETTINGS_CACHE_SCALAR_KEYS, 'pausedDomains', 'allowedDomains']).then(r => {
   Object.assign(_settingsCache, r);
   _settingsCache.pausedDomains = new Set(r.pausedDomains || []);
   _settingsCache.allowedDomains = new Set(r.allowedDomains || []);
@@ -4246,7 +4253,7 @@ async function _getExistingHostPatternsExcludingBlock(marker, endMarker) {
 }
 
 async function _applyElementRules(elementRules) {
-  const { customRulesText = '' } = await EXT.storage.local.get('customRulesText');
+  const { customRulesText = '' } = await LocalStorage.get('customRulesText');
   const startIdx = customRulesText.indexOf(ELEMENT_RULES_MARKER);
   const endIdx = customRulesText.indexOf(ELEMENT_RULES_END_MARKER);
   let before, after;
@@ -4267,7 +4274,7 @@ async function _applyElementRules(elementRules) {
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
-  await EXT.storage.local.set({ customRulesText: newText, elementRules });
+  await LocalStorage.set({ customRulesText: newText, elementRules });
   await reloadRules();
 }
 
@@ -4323,7 +4330,7 @@ function _buildNoWindowOpenRulesBlock(noWindowOpenRules, existingHostPatterns) {
 }
 
 async function _applyNoWindowOpenRules(noWindowOpenRules) {
-  const { customRulesText = '' } = await EXT.storage.local.get('customRulesText');
+  const { customRulesText = '' } = await LocalStorage.get('customRulesText');
   const startIdx = customRulesText.indexOf(NO_WINDOW_OPEN_RULES_MARKER);
   const endIdx = customRulesText.indexOf(NO_WINDOW_OPEN_RULES_END_MARKER);
   let before, after;
@@ -4344,7 +4351,7 @@ async function _applyNoWindowOpenRules(noWindowOpenRules) {
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
-  await EXT.storage.local.set({ customRulesText: newText, noWindowOpenRules });
+  await LocalStorage.set({ customRulesText: newText, noWindowOpenRules });
   await reloadRules();
 }
 
@@ -4429,7 +4436,7 @@ function _buildGlobalRulesBlock(globalScopeRules, existingHostPatterns) {
 }
 
 async function _applyGlobalRules(globalScopeRules) {
-  const { customRulesText = '' } = await EXT.storage.local.get('customRulesText');
+  const { customRulesText = '' } = await LocalStorage.get('customRulesText');
   const startIdx = customRulesText.indexOf(GLOBAL_RULES_MARKER);
   const endIdx = customRulesText.indexOf(GLOBAL_RULES_END_MARKER);
   let before, after;
@@ -4450,7 +4457,7 @@ async function _applyGlobalRules(globalScopeRules) {
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
-  await EXT.storage.local.set({ customRulesText: newText, globalScopeRules });
+  await LocalStorage.set({ customRulesText: newText, globalScopeRules });
   await reloadRules();
 }
 
@@ -4516,7 +4523,7 @@ function _buildSiteRuleTextBlock(siteRuleText, existingHostPatterns) {
 }
 
 async function _applySiteRuleText(siteRuleText) {
-  const { customRulesText = '' } = await EXT.storage.local.get('customRulesText');
+  const { customRulesText = '' } = await LocalStorage.get('customRulesText');
   const startIdx = customRulesText.indexOf(SITE_RULE_TEXT_MARKER);
   const endIdx = customRulesText.indexOf(SITE_RULE_TEXT_END_MARKER);
   let before, after;
@@ -4537,7 +4544,7 @@ async function _applySiteRuleText(siteRuleText) {
   let newText = before;
   if (block) newText += (before ? '\n\n' : '') + block;
   if (after) newText += (newText ? '\n\n' : '') + after;
-  await EXT.storage.local.set({ customRulesText: newText, siteRuleText });
+  await LocalStorage.set({ customRulesText: newText, siteRuleText });
   await reloadRules();
 }
 
@@ -4574,21 +4581,21 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'TOGGLE': {
-        await EXT.storage.local.set({ enabled: msg.enabled });
+        await LocalStorage.set({ enabled: msg.enabled });
         await applyNetworkRules();
         sendResponse({ ok: true });
         break;
       }
 
       case 'PAUSE_DOMAIN': {
-        const { pausedDomains = [] } = await EXT.storage.local.get('pausedDomains');
+        const { pausedDomains = [] } = await LocalStorage.get('pausedDomains');
         if (msg.paused && !pausedDomains.includes(msg.domain)) {
           pausedDomains.push(msg.domain);
         } else if (!msg.paused) {
           const idx = pausedDomains.indexOf(msg.domain);
           if (idx !== -1) pausedDomains.splice(idx, 1);
         }
-        await EXT.storage.local.set({ pausedDomains });
+        await LocalStorage.set({ pausedDomains });
         await applyNetworkRules();
         // Update badge on the active tab immediately
         const [activeTab] = await EXT.tabs.query({ active: true, currentWindow: true });
@@ -4612,7 +4619,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           break;
         }
         const safeSelector = selector.replace(/\|/g, '\\|');
-        const { elementRules = {} } = await EXT.storage.local.get('elementRules');
+        const { elementRules = {} } = await LocalStorage.get('elementRules');
         const list = elementRules[host] || [];
         if (!list.includes(safeSelector)) list.push(safeSelector);
         elementRules[host] = list;
@@ -4624,7 +4631,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'REMOVE_ELEMENT_RULE': {
         const host = String(msg.host || '').toLowerCase();
         if (!host) { sendResponse({ ok: false }); break; }
-        const { elementRules = {} } = await EXT.storage.local.get('elementRules');
+        const { elementRules = {} } = await LocalStorage.get('elementRules');
         if (msg.selector) {
           const list = (elementRules[host] || []).filter(s => s !== msg.selector);
           if (list.length) elementRules[host] = list;
@@ -4650,7 +4657,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           sendResponse({ ok: false });
           break;
         }
-        const { noWindowOpenRules = {} } = await EXT.storage.local.get('noWindowOpenRules');
+        const { noWindowOpenRules = {} } = await LocalStorage.get('noWindowOpenRules');
         const list = noWindowOpenRules[openerHost] || [];
         if (!list.includes(adHost)) list.push(adHost);
         noWindowOpenRules[openerHost] = list;
@@ -4679,7 +4686,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           if (!value || value.length > 500 || /\s/.test(value)) { sendResponse({ ok: false }); break; }
           value = value.replace(/\|/g, '\\|');
         }
-        const { globalScopeRules = {} } = await EXT.storage.local.get('globalScopeRules');
+        const { globalScopeRules = {} } = await LocalStorage.get('globalScopeRules');
         const list = globalScopeRules[host] || [];
         const idx = list.findIndex(r => r.chain === chain);
         const entry = { chain, action };
@@ -4694,7 +4701,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'REMOVE_GLOBAL_RULE': {
         const host = String(msg.host || '').toLowerCase();
         if (!host) { sendResponse({ ok: false }); break; }
-        const { globalScopeRules = {} } = await EXT.storage.local.get('globalScopeRules');
+        const { globalScopeRules = {} } = await LocalStorage.get('globalScopeRules');
         if (msg.chain) {
           const list = (globalScopeRules[host] || []).filter(r => r.chain !== msg.chain);
           if (list.length) globalScopeRules[host] = list;
@@ -4710,7 +4717,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'GET_SITE_RULE_TEXT': {
         const host = String(msg.host || '').toLowerCase();
         if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
-        const { siteRuleText = {} } = await EXT.storage.local.get('siteRuleText');
+        const { siteRuleText = {} } = await LocalStorage.get('siteRuleText');
         // `existingText` is the FULL resolved section for this host — built-in
         // rule/site-rules.txt content, plus anything already added via the
         // element picker / global-scope picker / this same rule editor,
@@ -4741,7 +4748,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
         if (String(msg.text ?? '').length > SITE_RULE_TEXT_MAX_LEN) { sendResponse({ ok: false }); break; }
         const text = _sanitizeSiteRuleText(msg.text);
-        const { siteRuleText = {} } = await EXT.storage.local.get('siteRuleText');
+        const { siteRuleText = {} } = await LocalStorage.get('siteRuleText');
         // Saving an empty (or header-only) textarea is the "clear this
         // site's rules" gesture — no separate REMOVE message needed, unlike
         // the other two pickers' per-item add/remove model.
@@ -4752,10 +4759,10 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'FOCUS_MODE': {
-        await EXT.storage.local.set({ focusMode: msg.enabled });
+        await LocalStorage.set({ focusMode: msg.enabled });
         if (msg.enabled) {
           // Set alarm to auto-disable focus when timer expires (even if dashboard is closed)
-          const { focusEndTime } = await EXT.storage.local.get('focusEndTime');
+          const { focusEndTime } = await LocalStorage.get('focusEndTime');
           if (focusEndTime) {
             const delayMs = focusEndTime - Date.now();
             if (delayMs > 0) {
@@ -4787,17 +4794,15 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const host = String(msg.host || '').toLowerCase();
         if (!host) { sendResponse({ ok: false }); break; }
         if (msg.permanent) {
-          const { allowedDomains: current = [] } = await EXT.storage.local.get('allowedDomains');
+          const { allowedDomains: current = [] } = await LocalStorage.get('allowedDomains');
           if (!current.includes(host)) {
-            await EXT.storage.local.set({ allowedDomains: [...current, host] });
+            await LocalStorage.set({ allowedDomains: [...current, host] });
           }
         } else {
-          try {
-            const { sessionAllowedDomains: current = [] } = await _sessionStorage.get('sessionAllowedDomains');
-            if (!current.includes(host)) {
-              await _sessionStorage.set({ sessionAllowedDomains: [...current, host] });
-            }
-          } catch { /* storage.session unavailable — proceed will just re-warn next time */ }
+          const { sessionAllowedDomains: current = [] } = await SessionStorage.get('sessionAllowedDomains');
+          if (!current.includes(host)) {
+            await SessionStorage.set({ sessionAllowedDomains: [...current, host] });
+          }
         }
         await applyNetworkRules();
         sendResponse({ ok: true });
@@ -4841,7 +4846,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // msg: { setting: 'referrerAnonymization' | 'gpcSignal' | 'dntHeader', value: bool }
         const allowed = ['referrerAnonymization', 'gpcSignal', 'dntHeader'];
         if (!allowed.includes(msg.setting)) { sendResponse({ ok: false }); break; }
-        await EXT.storage.local.set({ [msg.setting]: msg.value });
+        await LocalStorage.set({ [msg.setting]: msg.value });
         if (msg.setting === 'referrerAnonymization') await applyReferrerAnonymization(msg.value);
         if (msg.setting === 'gpcSignal') await applyGpcHeader(msg.value);
         if (msg.setting === 'dntHeader') await applyDntHeader(msg.value);
@@ -4860,7 +4865,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // msg: { setting: 'blockAds' | 'blockTrackers' | 'cosmeticFiltering' | 'blockMalware', value: bool }
         const allowedKeys = ['blockAds', 'blockTrackers', 'cosmeticFiltering', 'blockMalware'];
         if (!allowedKeys.includes(msg.setting)) { sendResponse({ ok: false }); break; }
-        await EXT.storage.local.set({ [msg.setting]: msg.value });
+        await LocalStorage.set({ [msg.setting]: msg.value });
         if (msg.setting === 'cosmeticFiltering') {
           // Notify all tabs to enable/disable cosmetic CSS
           const tabs = await EXT.tabs.query({});
@@ -4914,7 +4919,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'COSMETIC_HIDDEN': {
         // Sent by content.js / site-block.js when cosmetic filtering hides ad elements.
-        const { collectStats: collectCH = true } = await EXT.storage.local.get('collectStats');
+        const { collectStats: collectCH = true } = await LocalStorage.get('collectStats');
         if (!collectCH) { sendResponse({ ok: true }); break; }
 
         const chDomain = (msg.url ? new URL(msg.url).hostname : null) || '_global';
@@ -4947,7 +4952,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         )];
 
         // Also include user custom block rules (domain + keyword types)
-        const { rules = [] } = await EXT.storage.local.get('rules');
+        const { rules = [] } = await LocalStorage.get('rules');
         for (const r of rules) {
           if (!r.active || r.action !== 'block') continue;
           if (r.type === 'domain' && r.pattern)  adPatterns.push(r.pattern);
@@ -4959,7 +4964,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'GET_STATS': {
-        const { stats = {} } = await EXT.storage.local.get('stats');
+        const { stats = {} } = await LocalStorage.get('stats');
         sendResponse({ stats });
         break;
       }
@@ -4981,7 +4986,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'GET_UPDATE_STATUS': {
-        const { updateInfo = {} } = await EXT.storage.local.get('updateInfo');
+        const { updateInfo = {} } = await LocalStorage.get('updateInfo');
         sendResponse({
           ok: true,
           currentVersion: EXT.runtime.getManifest().version,
@@ -5011,7 +5016,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // refresh forces the same full pipeline the dashboard's "Reload
         // rules" and the 30-min ETag revalidation alarm already use.
         await reloadRules();
-        const { malwareListCount = 0 } = await EXT.storage.local.get('malwareListCount');
+        const { malwareListCount = 0 } = await LocalStorage.get('malwareListCount');
         sendResponse({ ok: true, count: malwareListCount });
         break;
       }
@@ -5076,7 +5081,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'GET_MALWARE_STATUS': {
         await ensureRuleDefinitionsLoaded();
-        const { malwareListLastUpdate = 0, malwareListCount = 0 } = await EXT.storage.local.get(['malwareListLastUpdate', 'malwareListCount']);
+        const { malwareListLastUpdate = 0, malwareListCount = 0 } = await LocalStorage.get(['malwareListLastUpdate', 'malwareListCount']);
         // Grouped rules (block + main_frame redirect) share the same domain
         // list — count unique domains, not per-rule entries.
         const builtinMalwareCount = new Set(
@@ -5091,7 +5096,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // redirected to the warning page — the only way such blocks get counted.
         const host = String(msg.host || '').toLowerCase();
         if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
-        const { collectStats: collectMB = true } = await EXT.storage.local.get('collectStats');
+        const { collectStats: collectMB = true } = await LocalStorage.get('collectStats');
         if (!collectMB) { sendResponse({ ok: true }); break; }
         _enqueueStatWrite(() => _writeDomainStatDelta(host, { malwareBlocked: 1, totalSeen: 1 }));
         updateDailyStats({ blocked: 1, ads: 0, trackers: 0, malware: 1 });
@@ -5106,7 +5111,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // the only way such blocks get counted, same as MALWARE_PAGE_BLOCKED.
         const host = String(msg.host || '').toLowerCase();
         if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
-        const { collectStats: collectAB = true } = await EXT.storage.local.get('collectStats');
+        const { collectStats: collectAB = true } = await LocalStorage.get('collectStats');
         if (!collectAB) { sendResponse({ ok: true }); break; }
         _enqueueStatWrite(() => _writeDomainStatDelta(host, { adsBlocked: 1, totalSeen: 1 }));
         updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
@@ -5116,7 +5121,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case 'RESET': {
-        await EXT.storage.local.clear();
+        await LocalStorage.clear();
         await EXT.declarativeNetRequest.updateDynamicRules({
           removeRuleIds: (await EXT.declarativeNetRequest.getDynamicRules()).map(r => r.id),
           addRules: [],

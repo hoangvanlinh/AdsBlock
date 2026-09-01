@@ -34,7 +34,7 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "scripts": ["shared/config.js", "shared/browser-compat.js", "shared/utils.js", "shared/i18n.js", "shared/scriptlet-alias-map.js", "shared/background.js"],
+    "scripts": ["shared/config.js", "shared/browser-compat.js", "shared/local-storage.js", "shared/session-storage.js", "shared/utils.js", "shared/i18n.js", "shared/scriptlet-alias-map.js", "shared/background.js"],
     "type": "module"
   },
   "content_scripts": [
