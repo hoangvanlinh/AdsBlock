@@ -3129,8 +3129,19 @@ let _pauseAllowRulesMemo = { key: undefined, rules: null };
 
 async function buildActiveRulesFromStorage() {
   await ensureRuleDefinitionsLoaded();
+  // `enabled` gets the same `= true` default its blockAds/blockTrackers/
+  // blockMalware siblings already have here — onInstalled seeds `enabled:
+  // true` (see below), but that only runs on an actual install/update
+  // event, never on a manual storage.local.clear() (dashboard's "Reset
+  // Data" button, or storage cleared by any other means). Without this
+  // default, a missing key after such a clear was read as `undefined` ->
+  // falsy -> `!enabled` below -> this function returns `allRules: []` ->
+  // _applyNetworkRulesImpl() then actively REMOVES every existing DNR
+  // dynamic rule and updateIcon(false)'s the badge, live-reported as the
+  // popup showing "0 network rules loaded" until something explicitly
+  // re-writes `enabled` to storage.
   const {
-    enabled, pausedDomains = [], allowedDomains = [], focusMode = false,
+    enabled = true, pausedDomains = [], allowedDomains = [], focusMode = false,
     blockAds = true, blockTrackers = true, blockMalware = true,
   } = await LocalStorage.get(
     ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'blockAds', 'blockTrackers', 'blockMalware']
@@ -4002,8 +4013,39 @@ async function _removeFrameCss(tabId, frameId, css) {
   await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
 }
 
+// _dedupeCssRules — content.js/site-block.js build a slot's CSS text by
+// joining one rule per selector (see BASE_CSS / _scopedDirectRule); merged
+// config sources ([site] + [global], or two Rule Sources sharing a
+// dedicated-domain selector) can hand back the exact same selector twice,
+// producing the exact same rule text twice. insertCSS doesn't care (the
+// cascade just re-applies an identical rule), but it's wasted bytes across
+// the privileged call and wasted browser-side parse work, so split on rule
+// boundaries and keep only one copy of each exact rule text — unparsed
+// cruft (a stray blank chunk) is dropped along with it.
+//
+// Sorted, not first-occurrence order: setFrameCss is called repeatedly
+// across a page's lifetime (mutation-observer rescans, config reloads) with
+// what is semantically the SAME rule set but possibly a different array
+// order upstream (e.g. _cachedDirect's own order shifting). A stable,
+// order-independent output means two calls carrying an equivalent rule set
+// produce the exact same string, so setFrameCss's `prev === css` check
+// correctly recognizes "nothing actually changed" and skips a needless
+// removeCSS+insertCSS round trip — the expensive part on Firefox.
+function _dedupeCssRules(css) {
+  if (!css) return css;
+  const parts = css.split('}');
+  const seen = new Set();
+  for (let i = 0; i < parts.length; i++) {
+    const rule = parts[i].trim();
+    if (!rule) continue;
+    seen.add(rule + '}');
+  }
+  return Array.from(seen).sort().join('\n\n');
+}
+
 async function setFrameCss(tabId, frameId, slot, css) {
   if (tabId === undefined || frameId === undefined) return;
+  css = _dedupeCssRules(css);
   const key = _frameCssKey(tabId, frameId, slot);
   const prev = _frameCss.get(key);
   if (prev === css) return; // no change — already applied (or already absent)
@@ -4070,9 +4112,15 @@ EXT.tabs.onRemoved.addListener((tabId) => {
 // which were already indexed/cached earlier the same day — no longer does
 // its own chrome.storage.local.get() round-trip on every single call.
 const _SETTINGS_CACHE_SCALAR_KEYS = ['enabled', 'collectStats', 'blockAds', 'blockTrackers', 'blockMalware', 'gpcSignal', 'referrerAnonymization'];
-const _settingsCache = {
+// Single source of truth for each scalar's fallback — both the initial
+// object below AND the onChanged listener's "key was removed" branch read
+// from this, so the two paths can never disagree with each other.
+const _SETTINGS_CACHE_DEFAULTS = {
   enabled: true, collectStats: true, blockAds: true, blockTrackers: true, blockMalware: true,
   gpcSignal: true, referrerAnonymization: true,
+};
+const _settingsCache = {
+  ..._SETTINGS_CACHE_DEFAULTS,
   pausedDomains: new Set(), allowedDomains: new Set(),
 };
 LocalStorage.get([..._SETTINGS_CACHE_SCALAR_KEYS, 'pausedDomains', 'allowedDomains']).then(r => {
@@ -4082,8 +4130,17 @@ LocalStorage.get([..._SETTINGS_CACHE_SCALAR_KEYS, 'pausedDomains', 'allowedDomai
 }).catch(() => {});
 EXT.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
+  // storage.local.clear()/.remove() fires onChanged with newValue===undefined
+  // for every key it drops — falling back to the same default a fresh
+  // module load would use (instead of leaving the cache holding a bare
+  // `undefined`, which reads as "disabled") is what keeps ad/tracker/malware
+  // blocking from silently going dark the instant local storage is cleared,
+  // until the service worker happens to restart and re-reads from scratch.
   for (const key of _SETTINGS_CACHE_SCALAR_KEYS) {
-    if (changes[key]) _settingsCache[key] = changes[key].newValue;
+    if (changes[key]) {
+      const { newValue } = changes[key];
+      _settingsCache[key] = newValue !== undefined ? newValue : _SETTINGS_CACHE_DEFAULTS[key];
+    }
   }
   for (const key of ['pausedDomains', 'allowedDomains']) {
     if (changes[key]) _settingsCache[key] = new Set(changes[key].newValue || []);

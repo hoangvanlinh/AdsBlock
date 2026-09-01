@@ -574,7 +574,7 @@ function isAdCandidate(el,cfg){
 function collapseParentIfEmpty(el){
   var parent=el&&el.parentElement;
   if(!parent||parent===document.body||parent===document.documentElement)return;
-  var hasVisible=false;
+  // var hasVisible=false;
   for(var i=0;i<parent.children.length;i++){
     var c=parent.children[i];
     // Cheap checks first; getComputedStyle() (forces a style recalc) is
@@ -583,15 +583,15 @@ function collapseParentIfEmpty(el){
     if(getComputedStyle(c).display==='none')continue;
     hasVisible=true;break;
   }
-  if(!hasVisible){
-    parent.style.setProperty('display','none','important');
-    parent.style.setProperty('height','0','important');
-    parent.style.setProperty('min-height','0','important');
-    parent.style.setProperty('margin','0','important');
-    parent.style.setProperty('padding','0','important');
-    parent.style.setProperty('overflow','hidden','important');
-    parent.setAttribute(_HIDE_ATTR,'1');
-  }
+  // if(!hasVisible){
+  //   parent.style.setProperty('display','none','important');
+  //   parent.style.setProperty('height','0','important');
+  //   parent.style.setProperty('min-height','0','important');
+  //   parent.style.setProperty('margin','0','important');
+  //   parent.style.setProperty('padding','0','important');
+  //   parent.style.setProperty('overflow','hidden','important');
+  //   parent.setAttribute(_HIDE_ATTR,'1');
+  // }
 }
 
 // Keeps el itself in the DOM but clears its children and hides it — used

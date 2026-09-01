@@ -38,6 +38,7 @@ const tabsUpdatedListeners = [];
 const storageChangeListeners = [];
 let lastBadgeText;
 const badgeTextByTab = new Map(); // tabId -> last text set FOR that tabId specifically
+const scriptingCalls = []; // { op: 'insert'|'remove', css } — setFrameCss test spy
 
 function _ipcDelay() { return new Promise(r => setTimeout(r, 2)); }
 
@@ -63,7 +64,16 @@ const chromeStub = {
         Object.assign(storageData, obj);
         for (const fn of storageChangeListeners) fn(changes, 'local');
       },
-      async clear() { for (const k of Object.keys(storageData)) delete storageData[k]; },
+      async clear() {
+        // Real chrome.storage.local.clear() fires onChanged once per removed
+        // key, each with newValue===undefined (same shape as remove()) — the
+        // stub must reproduce that so a test can catch a listener that
+        // mishandles a cleared-away key (see _settingsCache's onChanged
+        // listener in background.js, fixed 2026-09-01 for exactly this).
+        const changes = {};
+        for (const k of Object.keys(storageData)) { changes[k] = { oldValue: storageData[k] }; delete storageData[k]; }
+        for (const fn of storageChangeListeners) fn(changes, 'local');
+      },
       async remove(k) {
         const keys = Array.isArray(k) ? k : [k];
         const changes = {};
@@ -171,8 +181,8 @@ const chromeStub = {
     onCreated: { addListener(fn) { tabsCreatedListeners.push(fn); } },
   },
   scripting: {
-    insertCSS: async () => {},
-    removeCSS: async () => {},
+    insertCSS: async (opts) => { scriptingCalls.push({ op: 'insert', css: opts.css }); },
+    removeCSS: async (opts) => { scriptingCalls.push({ op: 'remove', css: opts.css }); },
   },
   action: {
     setIcon() {},
@@ -304,6 +314,8 @@ self.__test = {
   get MALWARE_RULE_IDS() { return MALWARE_RULE_IDS; },
   get statsChain() { return _statsWriteChain; },
   get tabBlockedCounts() { return _tabBlockedCounts; },
+  _dedupeCssRules, setFrameCss, get frameCss() { return _frameCss; },
+  get settingsCache() { return _settingsCache; },
 };`;
 vm.runInContext(bgSrc + '\n' + exportSnippet, ctx, { filename: 'background.js' });
 const T = sandbox.__test;
@@ -2526,6 +2538,89 @@ function check(name, cond, detail = '') {
     T.REMOTE_MAX_PATH_PATTERNS >= 8400, T.REMOTE_MAX_PATH_PATTERNS);
 
   for (const u of malwareUrls) delete stubUrlTextMap[u];
+
+  // ── _dedupeCssRules / setFrameCss duplicate-rule filtering ─────────
+  check('_dedupeCssRules drops an exact-duplicate rule, keeps the first occurrence',
+    T._dedupeCssRules('.ad{display:none!important}\n\n.ad{display:none!important}\n\n.other{display:none!important}') ===
+    '.ad{display:none!important}\n\n.other{display:none!important}');
+  check('_dedupeCssRules leaves already-unique rules untouched',
+    T._dedupeCssRules('.a{display:none!important}\n\n.b{display:none!important}') ===
+    '.a{display:none!important}\n\n.b{display:none!important}');
+  check('_dedupeCssRules collapses 3 repeats of the same rule down to 1',
+    T._dedupeCssRules('.x{display:none!important}.x{display:none!important}.x{display:none!important}') ===
+    '.x{display:none!important}');
+  check('_dedupeCssRules on empty/falsy input returns it as-is', T._dedupeCssRules('') === '' && T._dedupeCssRules(undefined) === undefined);
+
+  scriptingCalls.length = 0;
+  T.frameCss.clear();
+  await T.setFrameCss(9001, 0, 'direct', '.dup{display:none!important}\n\n.dup{display:none!important}\n\n.uniq{display:none!important}');
+  check('setFrameCss inserts the deduped CSS text (no repeated rule reaches insertCSS)',
+    scriptingCalls.length === 1 && scriptingCalls[0].op === 'insert' &&
+    scriptingCalls[0].css === '.dup{display:none!important}\n\n.uniq{display:none!important}',
+    JSON.stringify(scriptingCalls));
+  check('setFrameCss bookkeeping stores the deduped text, not the raw one with repeats',
+    T.frameCss.get('9001:0:direct') === '.dup{display:none!important}\n\n.uniq{display:none!important}');
+
+  scriptingCalls.length = 0;
+  await T.setFrameCss(9001, 0, 'direct', '.dup{display:none!important}\n\n.dup{display:none!important}\n\n.uniq{display:none!important}');
+  check('re-sending the identical raw (still-duplicated) rule set dedupes to the same text as last time — no insert/remove call',
+    scriptingCalls.length === 0, JSON.stringify(scriptingCalls));
+  T.frameCss.clear();
+
+  // Same rule SET, different upstream order — e.g. a mutation-observer
+  // rescan or config reload handing back the equivalent selectors in a
+  // different array order. _dedupeCssRules sorts, so the resulting text is
+  // identical either way and setFrameCss must treat the 2nd call as a no-op
+  // instead of paying a needless removeCSS+insertCSS round trip.
+  check('_dedupeCssRules is order-independent: same rule set, different input order, same output text',
+    T._dedupeCssRules('.z{display:none!important}\n\n.a{display:none!important}\n\n.m{display:none!important}') ===
+    T._dedupeCssRules('.m{display:none!important}\n\n.z{display:none!important}\n\n.a{display:none!important}'));
+
+  scriptingCalls.length = 0;
+  await T.setFrameCss(9001, 0, 'direct', '.z{display:none!important}\n\n.a{display:none!important}\n\n.m{display:none!important}');
+  check('first call with a fresh 3-rule set inserts once', scriptingCalls.length === 1, JSON.stringify(scriptingCalls));
+  scriptingCalls.length = 0;
+  await T.setFrameCss(9001, 0, 'direct', '.m{display:none!important}\n\n.z{display:none!important}\n\n.a{display:none!important}');
+  check('repeat call with the SAME rules in a DIFFERENT order is recognized as unchanged — no insert/remove call',
+    scriptingCalls.length === 0, JSON.stringify(scriptingCalls));
+  T.frameCss.clear();
+
+  // ── _settingsCache survives storage.local.clear() with correct defaults ──
+  // Live-reported (2026-09-01): clearing storage.local/session made ad
+  // blocking work "sometimes, sometimes not". Root cause: storage.local.
+  // clear() fires onChanged once per removed key with newValue===undefined,
+  // and the listener used to write that undefined straight into
+  // _settingsCache — turning `enabled`/`blockAds`/etc. falsy in the live
+  // service worker's memory until it happened to restart, even though a
+  // fresh module load defaults every one of them to true.
+  await chromeStub.storage.local.set({ enabled: true, blockAds: true, blockTrackers: true, blockMalware: true, collectStats: true, gpcSignal: true, referrerAnonymization: true });
+  check('settingsCache reflects explicit true values before the clear',
+    T.settingsCache.enabled === true && T.settingsCache.blockAds === true, JSON.stringify(T.settingsCache));
+  await chromeStub.storage.local.clear();
+  check('storage.local.clear() does NOT leave settingsCache scalars as bare undefined — falls back to the documented default (true) instead',
+    T.settingsCache.enabled === true &&
+    T.settingsCache.collectStats === true &&
+    T.settingsCache.blockAds === true &&
+    T.settingsCache.blockTrackers === true &&
+    T.settingsCache.blockMalware === true &&
+    T.settingsCache.gpcSignal === true &&
+    T.settingsCache.referrerAnonymization === true,
+    JSON.stringify(T.settingsCache));
+  check('storage.local.clear() resets pausedDomains/allowedDomains to empty Sets, not left over from before',
+    T.settingsCache.pausedDomains.size === 0 && T.settingsCache.allowedDomains.size === 0);
+
+  // ── buildActiveRulesFromStorage() must default `enabled` too, not just
+  // blockAds/blockTrackers/blockMalware — a missing `enabled` key (e.g.
+  // right after the storage.local.clear() above, before onInstalled's
+  // seeding ever runs again) used to be read as disabled, which strips
+  // every DNR dynamic rule; live-reported as the popup showing "0 network
+  // rules loaded" after a storage clear/reset.
+  check('enabled key is genuinely absent from storage after the clear above',
+    !('enabled' in storageData));
+  const activeAfterClear = await T.buildActiveRulesFromStorage();
+  check('buildActiveRulesFromStorage() treats a MISSING enabled key as enabled:true (matches onInstalled\'s own default), not disabled',
+    activeAfterClear.enabled === true && activeAfterClear.allRules.length > 0,
+    JSON.stringify({ enabled: activeAfterClear.enabled, ruleCount: activeAfterClear.allRules.length }));
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
