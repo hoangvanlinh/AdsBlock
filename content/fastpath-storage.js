@@ -10,10 +10,11 @@
 // the page's own localStorage, so no fingerprint exposure either way.
 //
 // Exposes window.__qkv1FastpathStorage — read by site-block.js the same way
-// content.js's window.__qkv1HideAttr already is (isolated-world content
-// scripts in the SAME content_scripts entry share one `window`, per the
-// fixed manifest.json/manifest.firefox.json load order: this file is listed
-// before site-block.js so the property is already set by the time it runs).
+// site-block.js's own window.__qkv1UnhideAll is later read by content.js
+// (isolated-world content scripts in the SAME content_scripts entry share
+// one `window`, per the fixed manifest.json/manifest.firefox.json load
+// order: this file is listed before site-block.js so the property is
+// already set by the time it runs).
 (function(){
 if(window.__qkv1FastpathStorage)return; // idempotent if ever listed twice
 

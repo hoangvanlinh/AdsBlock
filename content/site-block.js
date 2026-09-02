@@ -25,7 +25,7 @@ var _directAuthInjected=false;
 // could resolve to Firefox's native, Promise-only browser.storage.session).
 // Falls back to an inert no-op stub if fastpath-storage.js somehow didn't
 // run first (defensive — should never happen given the fixed manifest.json
-// load order, same defensive fallback style as _HIDE_ATTR below).
+// load order).
 var _fpStorage=window.__qkv1FastpathStorage||{get:function(){return Promise.resolve({});},set:function(){return Promise.resolve();},lruLimit:10,usingSession:false};
 // Per-host LRU-capped map (NOT a single shared slot — neither storage.session
 // nor storage.local is naturally per-origin the way localStorage is, so this
@@ -99,16 +99,40 @@ function extValid(){
   catch(e){return false;}
 }
 
-// Marker attribute for elements already hidden by hide()/collapseParentIfEmpty
-// (dedup + collapse-propagation state, see below). Generated fresh per page
-// load by content.js (runs earlier in this same content_scripts entry — see
-// its own comment for why) and read back here off the shared isolated-world
-// `window`, NOT computed from the build-static _QKV1_TOKEN above — a value
-// that changes every navigation is worthless to a page that only ever
-// observes one load. Falls back to the old build-token derivation only if
-// content.js somehow didn't run first (defensive — should never happen
-// given the fixed manifest.json load order).
-var _HIDE_ATTR=window.__qkv1HideAttr||('h'+_QKV1_TOKEN);
+// Elements hidden by hide()/collapseParentIfEmpty (dedup + collapse-
+// propagation state, see below). Used to be a DOM attribute stamped on each
+// element (`_HIDE_ATTR`, random per page load) so a plain CSS backup rule
+// and querySelectorAll could find them — but that meant a page-visible,
+// DOM-enumerable marker, callable out by any anti-adblock script walking
+// element attributes in DevTools or via a MutationObserver. A plain Set
+// living only in this closure's JS memory does the exact same job (O(1)
+// "have I already touched this element" checks) without ever touching the
+// DOM, so there is nothing for page script to observe. Strong references
+// (not a WeakSet) are required: disableCosmeticCss() (content.js, via
+// window.__qkv1UnhideAll below) needs to actually ENUMERATE every hidden
+// element to undo the inline styles hide()/collapseParentIfEmpty set, and
+// WeakSet isn't iterable. Reset naturally on navigation (fresh closure per
+// page load) — a long-lived SPA that hides/removes thousands of elements
+// over one page's lifetime without ever calling unhideAll() would grow this
+// unboundedly, same trade-off uBO's own per-page cosmetic-filtering state
+// already accepts.
+var _hiddenEls=new Set();
+// Exposed for content.js's disableCosmeticCss() (pause/disable toggle) to
+// call — see that file's own comment for why a plain function reference,
+// looked up at call time off the shared isolated-world `window`, replaces
+// the old `document.querySelectorAll('[' + _HIDE_ATTR + ']')` sweep.
+window.__qkv1UnhideAll=function(){
+  _hiddenEls.forEach(function(el){
+    el.style.removeProperty('display');
+    el.style.removeProperty('visibility');
+    el.style.removeProperty('height');
+    el.style.removeProperty('min-height');
+    el.style.removeProperty('margin');
+    el.style.removeProperty('padding');
+    el.style.removeProperty('overflow');
+  });
+  _hiddenEls.clear();
+};
 
 function normalizeText(value){
   return (value||'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -574,24 +598,24 @@ function isAdCandidate(el,cfg){
 function collapseParentIfEmpty(el){
   var parent=el&&el.parentElement;
   if(!parent||parent===document.body||parent===document.documentElement)return;
-  // var hasVisible=false;
+  var hasVisible=false;
   for(var i=0;i<parent.children.length;i++){
     var c=parent.children[i];
     // Cheap checks first; getComputedStyle() (forces a style recalc) is
     // the fallback for a child hidden purely by CSS, with no marker of its own.
-    if(c.style.display==='none'||c.hasAttribute(_HIDE_ATTR))continue;
+    if(c.style.display==='none'||_hiddenEls.has(c))continue;
     if(getComputedStyle(c).display==='none')continue;
     hasVisible=true;break;
   }
-  // if(!hasVisible){
-  //   parent.style.setProperty('display','none','important');
-  //   parent.style.setProperty('height','0','important');
-  //   parent.style.setProperty('min-height','0','important');
-  //   parent.style.setProperty('margin','0','important');
-  //   parent.style.setProperty('padding','0','important');
-  //   parent.style.setProperty('overflow','hidden','important');
-  //   parent.setAttribute(_HIDE_ATTR,'1');
-  // }
+  if(!hasVisible){
+    parent.style.setProperty('display','none','important');
+    parent.style.setProperty('height','0','important');
+    parent.style.setProperty('min-height','0','important');
+    parent.style.setProperty('margin','0','important');
+    parent.style.setProperty('padding','0','important');
+    parent.style.setProperty('overflow','hidden','important');
+    _hiddenEls.add(parent);
+  }
 }
 
 // Keeps el itself in the DOM but clears its children and hides it — used
@@ -606,13 +630,13 @@ function removeEl(el){
 }
 
 function hide(el){
-  if(!el||el.hasAttribute(_HIDE_ATTR))return false;
+  if(!el||_hiddenEls.has(el))return false;
   // Never hide the page itself — a broad rule (e.g. *:has(>[ad-attr]))
   // can match body/html when an ad script appends straight into <body>.
   if(el===document.body||el===document.documentElement)return false;
   el.style.setProperty('display','none','important');
   el.style.setProperty('visibility','hidden','important');
-  el.setAttribute(_HIDE_ATTR,'1');
+  _hiddenEls.add(el);
   collapseParentIfEmpty(el);
   return true;
 }
@@ -631,7 +655,7 @@ function scan(root){
       // Skip a match already marked by an earlier iteration's
       // collapseParentIfEmpty() in this same loop (it's itself the parent
       // container a prior match just collapsed) — avoids double-counting.
-      if(direct[d].hasAttribute(_HIDE_ATTR))continue;
+      if(_hiddenEls.has(direct[d]))continue;
       collapseParentIfEmpty(direct[d]);
       count++;
     }

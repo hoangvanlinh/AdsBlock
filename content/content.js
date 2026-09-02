@@ -18,29 +18,6 @@ function extValid() {
 // match content/scriptlets.js's own copy of the same placeholder exactly.
 const _QKV1_TOKEN = '__QKV1_BUILD_TOKEN__';
 
-// Marker attribute for elements already hidden by site-block.js's
-// hide()/collapseParentIfEmpty (dedup + collapse-propagation state, see that
-// file). Random PER PAGE LOAD (not a build-time constant like _QKV1_TOKEN
-// above) — a page can enumerate this attribute's NAME (it's on the DOM), so
-// unlike the event names/localStorage key (which stay inside JS and never
-// touch the DOM), a static name of any kind is eventually observable by
-// whoever's loaded THIS specific page. Regenerating it every navigation
-// means an observed value is worthless on the next page load.
-// content.js and site-block.js are separate closures but run in the SAME
-// content_scripts entry (isolated world) in the order listed in
-// manifest.json — content.js runs first and stashes the value on the
-// isolated-world `window` (confirmed NOT page-visible: isolated-world
-// content scripts get their own separate `window`, distinct from the page's
-// real one) for site-block.js to read synchronously — no chrome.storage /
-// message round-trip, so this doesn't delay the "fire CSS immediately"
-// fast path below.
-const _HIDE_ATTR = 'h' + (
-  window.crypto && window.crypto.randomUUID
-    ? window.crypto.randomUUID().replace(/-/g, '')
-    : Math.random().toString(36).slice(2) + Date.now().toString(36)
-);
-window.__qkv1HideAttr = _HIDE_ATTR;
-
 // _sendCss — forwards CSS text to background, which applies it via
 // chrome.scripting.insertCSS (the browser's privileged "user stylesheet"
 // layer). This never creates a page-visible <style> DOM node and never
@@ -62,23 +39,23 @@ function _clearAllCss() {
   try { EXT.runtime.sendMessage({ type: 'CSS_CLEAR_ALL' }).catch(() => {}); } catch { /* invalidated */ }
 }
 
-// ── Base cosmetic CSS (default known-ad-provider selectors) ────────
-// IMPORTANT: No broad wildcard selectors like [class*="ad-"]. Those cause
-// false positives on sites like YouTube where legitimate elements contain
-// "ad" in class/id names. Every selector here targets a KNOWN ad provider
-// element. The [_HIDE_ATTR="1"] rule is a backup for elements JS already
-// hid via site-block.js's hide()/removeEl.
-//
-// Single display:none!important property — a CSS block with multiple
-// properties in one declaration was found to trigger an insertCSS crash on
-// Firefox; one property per rule avoids it, and is sufficient on its own
-// once it wins the cascade (origin:'USER', see background.js's setFrameCss).
-const BASE_CSS = `[${_HIDE_ATTR}="1"]{display:none!important}`;
+// ── Base cosmetic CSS ────────────────────────────────────────────
+// Used to carry a `[_HIDE_ATTR="1"]` backup rule for elements JS already
+// hid via site-block.js's hide()/removeEl — dropped (2026-09-01) along with
+// the whole _HIDE_ATTR DOM-attribute marker system (it was page-visible,
+// enumerable in DevTools; site-block.js now tracks hidden elements in a
+// JS-only Set instead, see its own comment). BASE_CSS is empty going
+// forward — kept as a named constant (rather than inlining '') so the slot
+// stays self-documenting if a real base-level selector list is ever added.
+const BASE_CSS = '';
 
 // ── FAST PATH: fire the base CSS off immediately (frame 0, before any
-// async storage read). "Send first, clear if needed" is faster than "wait
-// then send" for the 99% case where adblock is active. `fresh: true`
-// resets background's per-tab/frame bookkeeping for a brand-new document.
+// async storage read). Even though BASE_CSS is empty, this send's
+// `fresh: true` is still load-bearing: it's what tells background to wipe
+// any per-tab/frame CSS bookkeeping left over from the PREVIOUS document
+// (see background.js's clearFrameCss) before 'direct'/'custom' slots start
+// sending real content — losing this call would let stale entries leak
+// across navigations, not just skip an empty rule.
 let _baseActive = true;
 _sendCss('base', BASE_CSS, true);
 
@@ -281,17 +258,14 @@ function disableCosmeticCss() {
   _clearAllCss();
   // Stop observing DOM mutations
   disconnectObserver();
-  // Unhide any elements already hidden by JS (site-block.js / collapseParentIfEmpty)
-  document.querySelectorAll(`[${_HIDE_ATTR}]`).forEach(el => {
-    el.style.removeProperty('display');
-    el.style.removeProperty('visibility');
-    el.style.removeProperty('height');
-    el.style.removeProperty('min-height');
-    el.style.removeProperty('margin');
-    el.style.removeProperty('padding');
-    el.style.removeProperty('overflow');
-    el.removeAttribute(_HIDE_ATTR);
-  });
+  // Unhide any elements already hidden by JS (site-block.js's hide()/
+  // collapseParentIfEmpty). site-block.js tracks which elements it hid in
+  // its own JS-only Set (no DOM attribute to query for anymore — see that
+  // file's _hiddenEls) and exposes the undo as window.__qkv1UnhideAll,
+  // looked up at call time since site-block.js (loaded after this file,
+  // same content_scripts entry/isolated-world `window`) has always finished
+  // setting it by the time any message can trigger disableCosmeticCss().
+  if (typeof window.__qkv1UnhideAll === 'function') window.__qkv1UnhideAll();
 }
 
 function enableCosmeticCss() {
