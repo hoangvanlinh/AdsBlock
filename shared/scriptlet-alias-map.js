@@ -23,7 +23,21 @@ const SCRIPTLET_ALIAS_MAP = {
   'aost':                       { key: 'abort_on_stack_trace',    sep: 'comma', maxArgs: 2, confidence: 'low' },
   'nano-sib':                   { key: 'adjust_setinterval',      sep: 'comma', maxArgs: 3, confidence: 'low' },
   'nano-stb':                   { key: 'adjust_settimeout',       sep: 'comma', maxArgs: 3, confidence: 'low' },
-  'nostif':                     { key: 'prevent_setinterval',     sep: 'comma', maxArgs: 1, confidence: 'high' },
+  // 'nostif' = "no-SetTimeout-If" — was wrongly mapped to prevent_setinterval
+  // (2026-09-03: found live via tinhte.vn's real anti-adblock counter-measure,
+  // uAssets filters-general.txt: `tinhte.vn##+js(nostif, .getComputedStyle)` —
+  // silently converted to the WRONG timer API, letting the site's actual
+  // setTimeout-based getComputedStyle poll run unimpeded). Verified against
+  // real uBO source (u-src/js/resources/prevent-settimeout.js): 'nostif'/
+  // 'no-setTimeout-if'/'setTimeout-defuser' are ALL aliases of
+  // prevent-setTimeout; the setInterval-targeting siblings are the
+  // DIFFERENTLY-spelled 'nosiif'/'no-setInterval-if'/'setInterval-defuser'.
+  'nostif':                     { key: 'prevent_settimeout',      sep: 'comma', maxArgs: 1, confidence: 'high' },
+  'no-setTimeout-if':           { key: 'prevent_settimeout',      sep: 'comma', maxArgs: 1, confidence: 'high' },
+  'setTimeout-defuser':         { key: 'prevent_settimeout',      sep: 'comma', maxArgs: 1, confidence: 'high' },
+  'nosiif':                     { key: 'prevent_setinterval',     sep: 'comma', maxArgs: 1, confidence: 'high' },
+  'no-setInterval-if':          { key: 'prevent_setinterval',     sep: 'comma', maxArgs: 1, confidence: 'high' },
+  'setInterval-defuser':        { key: 'prevent_setinterval',     sep: 'comma', maxArgs: 1, confidence: 'high' },
   'nostf':                      { key: 'prevent_settimeout',      sep: 'comma', maxArgs: 1, confidence: 'high' },
   'norafif':                    { key: 'prevent_raf',             sep: 'comma', maxArgs: 1, confidence: 'high' },
   'nowoif':                     { key: 'no_window_open_if',       sep: 'space', maxArgs: 3, confidence: 'low' },

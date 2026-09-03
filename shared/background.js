@@ -480,6 +480,51 @@ function buildNetworkBlockMatcher(parsed) {
   return matcher;
 }
 
+// Firefox-only: HTML_FILTER_MATCHER's build step. Reuses direct_hide_
+// selectors directly (2026-09-03 — was a separate opt-in `html_filter_
+// selectors` key at first; folded into direct_hide_selectors so a site
+// only needs ONE curated selector list, not two kept in sync by hand).
+// Buffering+reparsing a whole HTML response body is a real memory/latency
+// cost — worth it for a site whose ad markup is confirmed server-rendered
+// directly into the initial HTML response, so no amount of CSS-injection
+// speed can ever prevent the flash (see uBlock Origin's own ##^
+// HTML-filter syntax, `src/js/traffic.js`'s htmlFilteringEngine, for the
+// same idea) — but paying it for every ABP-converted "bucket" section
+// (one `domainA|domainB|...|domainN = sitekey` line covering hundreds of
+// loosely related sites, the shape EasyList/EasyPrivacy/region lists
+// produce by the thousand once several large Rule Sources are enabled) is
+// a real regression: it would apply the buffer+reparse cost to essentially
+// every site the user visits, not the small hand-picked set this feature
+// was built for. Only single-domain host_patterns entries — i.e. a
+// DEDICATED, curated section for exactly that one site (`[tinhte]`,
+// `[vnexpress]`, ...) — are eligible; a `|`-joined bucket key is skipped
+// entirely regardless of what its section's direct_hide_selectors contain.
+// Same domain -> sectionKey resolution as buildNetworkBlockMatcher above,
+// but the VALUE here is just the plain selector array itself — no
+// per-entry options to compile, so no custom serialize/rehydrate is needed
+// the way NETWORK_BLOCK_MATCHER's RegExp-bearing entries do (see
+// _saveBuiltRulesToCache/_loadBuiltRulesFromCache: this Map round-trips
+// through plain JSON). Raw-regex ("/.../") and wildcard-TLD ("domain.*")
+// host_patterns forms are skipped too — same reasoning buildNetworkBlockMatcher
+// itself doesn't need for its own purpose, kept simple here too.
+function buildHtmlFilterMatcher(parsed) {
+  const hostPatterns = parsed.host_patterns || {};
+  const matcher = new Map();
+  for (const domainKey in hostPatterns) {
+    if (!Object.prototype.hasOwnProperty.call(hostPatterns, domainKey)) continue;
+    if (domainKey.charAt(0) === '/') continue; // raw-regex form — skip
+    if (domainKey.indexOf('|') !== -1) continue; // bucket key (shared by many domains) — skip, dedicated single-domain entries only
+    const domain = domainKey.trim().toLowerCase();
+    if (!domain || domain.slice(-2) === '.*') continue; // wildcard-TLD — skip
+    const sectionKey = hostPatterns[domainKey] && hostPatterns[domainKey][0];
+    const section = sectionKey && parsed[sectionKey];
+    const selectors = section && section.direct_hide_selectors;
+    if (!selectors || !selectors.length) continue;
+    matcher.set(domain, selectors);
+  }
+  return matcher;
+}
+
 // Walks host's own registrable-domain suffixes ("sub.ads.example.com" ->
 // "sub.ads.example.com", "ads.example.com", "example.com", "com") looking
 // for a Map key — same technique content/content.js's _domainSetMatches()
@@ -529,6 +574,12 @@ let NETWORK_BLOCK_MATCHER = new Map();
 // own comment: "one urlFilter per rule ... covering EVERY resource type in
 // a single plain block").
 let MALWARE_PATH_MATCHER = new Map();
+// Map<domain, Array<string selector>> for the HTML stream-filter (Firefox
+// only — see buildHtmlFilterMatcher's own comment further down and
+// _htmlFilterRequestHandler's registration comment). Built unconditionally
+// regardless of browser (cheap, just Map assignments) but only ever
+// consulted where _hasHtmlStreamFilter() gates the listener's registration.
+let HTML_FILTER_MATCHER = new Map();
 
 // Same source/shape buildRemoteMalwareRules()'s path-pattern branch reads
 // (already-full `||domain/path...^` urlFilter strings, no further
@@ -625,6 +676,178 @@ function _updateNetworkBlockListener(enable) {
     EXT.webRequest.onBeforeRequest.removeListener(_networkBlockRequestHandler);
     _networkBlockListenerRegistered = false;
   }
+}
+
+// ── HTML stream filter (Firefox only) ───────────────────────────────
+// For sites whose ad markup is server-rendered directly into the initial
+// HTML response (confirmed via view-source, tinhte.vn being the first
+// case) — no amount of cosmetic-CSS speed can ever prevent the flash for
+// this category, since the browser paints from the raw HTML bytes before
+// ANY extension code runs at all. browser.webRequest.filterResponseData()
+// is a Firefox-exclusive StreamFilter API (not available in Chrome/Edge —
+// gated below) that lets an extension rewrite a response's bytes before
+// the browser ever parses them.
+//
+// Real uBlock Origin has a matching mechanism (src/js/html-filtering.js,
+// driven by a deliberately separate ##^ syntax) that DOES fully remove the
+// matched DOM node (node.remove(), confirmed by reading their source) — but
+// their own filter lists don't actually use it for tinhte.vn (no ##^ rule
+// exists there; only regular ## CSS-hide selectors + a nostif anti-
+// detection scriptlet, live-verified: real uBO visibly leaves the ad's
+// <ins>/wrapper element in place, just display:none'd). Rather than
+// reimplementing removal (which needs a real DOM — DOMParser().parseFromString
+// + querySelectorAll + reserialize — and this MV3 background context's
+// DOMParser/Gecko :has()/serializer semantics were never independently
+// verified against the real thing), this applies the SAME strategy uBO's
+// own maintainers settled on for this site: inject a <style> block into the
+// raw response text instead. A CSS rule is harmless even where it matches
+// nothing on the page, so there's no need to parse the document at all to
+// know WHETHER something matched — just splice one <style> block in right
+// after the opening <head> tag, string-only, no DOM involved. It still
+// wins the same race removal would (the rule is live from the very first
+// bytes the browser's own renderer sees, long before it gets to painting
+// any matching element), while leaving the element itself in the DOM —
+// safer for any page script that expects it to still exist, and exactly
+// the visibility profile this project's own direct_hide_selectors CSS path
+// already has everywhere else.
+function _hasHtmlStreamFilter() {
+  return !!(EXT.webRequest && typeof EXT.webRequest.filterResponseData === 'function');
+}
+
+function _htmlFilterSelectorsForHost(host) {
+  let h = host;
+  while (h) {
+    const sel = HTML_FILTER_MATCHER.get(h);
+    if (sel) return sel;
+    const dot = h.indexOf('.');
+    if (dot === -1) break;
+    h = h.slice(dot + 1);
+  }
+  return null;
+}
+
+// Buffer-then-filter, not incremental streaming (simpler, matches uBlock's
+// own Session/ondata/onstop pattern) — a whole HTML document is small
+// enough in practice that the extra latency of waiting for the full body
+// before first paint is an accepted trade-off for correctness (an
+// incremental string search risks splitting the <head> tag itself across a
+// chunk boundary). HTML_FILTER_MAX_BYTES is a hard size guard: a
+// Content-Length pre-check happens at the call site (_htmlFilterRequestHandler,
+// onHeadersReceived) as a cheap first filter, and this function's own
+// caller (_attachHtmlFilter's ondata) re-checks against the REAL
+// accumulated byte count as a backstop against a missing or lying header.
+const HTML_FILTER_MAX_BYTES = 5 * 1024 * 1024; // 5MB
+
+// Returns the replacement HTML string, or null if there's no <head> tag to
+// anchor the injected <style> on — null is the ONE fallback signal the
+// caller needs to know "write the original bytes back unchanged" (see
+// _attachHtmlFilter's onstop). Never throws — pure string operations.
+function _applyHtmlFilterSelectors(html, selectors) {
+  const headMatch = /<head[^>]*>/i.exec(html);
+  if (!headMatch) return null;
+  const css = selectors.map(sel => `${sel}{display:none!important}`).join('');
+  const insertAt = headMatch.index + headMatch[0].length;
+  return html.slice(0, insertAt) + `<style>${css}</style>` + html.slice(insertAt);
+}
+
+function _concatHtmlFilterChunks(chunks) {
+  let total = 0;
+  for (const c of chunks) total += c.byteLength;
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) { out.set(new Uint8Array(c), offset); offset += c.byteLength; }
+  return out;
+}
+
+// Safety contract: always either write() the replacement bytes or write()
+// the untouched original bytes, then close() — NEVER call disconnect()
+// after ondata has already delivered bytes to us (per MDN, that silently
+// drops whatever was buffered-but-not-yet-written, truncating the page).
+// `aborted` (the running-byte-count guard tripping mid-stream) switches to
+// pure passthrough for the REST of the stream rather than dropping
+// anything — every chunk from that point on, including the one that
+// tripped the guard, is written straight through immediately.
+function _attachHtmlFilter(requestId, selectors) {
+  let filter;
+  try { filter = EXT.webRequest.filterResponseData(requestId); }
+  catch { return; }
+  let chunks = [];
+  let totalBytes = 0;
+  let aborted = false;
+  filter.ondata = (event) => {
+    if (aborted) { filter.write(event.data); return; }
+    totalBytes += event.data.byteLength;
+    if (totalBytes > HTML_FILTER_MAX_BYTES) {
+      aborted = true;
+      for (const chunk of chunks) filter.write(chunk);
+      chunks = [];
+      filter.write(event.data);
+      return;
+    }
+    chunks.push(event.data);
+  };
+  filter.onstop = () => {
+    if (aborted) { filter.close(); return; } // already streamed through in ondata
+    try {
+      const bytes = _concatHtmlFilterChunks(chunks);
+      const html = new TextDecoder('utf-8').decode(bytes);
+      const replacement = _applyHtmlFilterSelectors(html, selectors);
+      filter.write(new TextEncoder().encode(replacement !== null ? replacement : html));
+    } catch {
+      // Any failure here — write back the untouched original bytes rather
+      // than dropping them (see the contract note above).
+      for (const chunk of chunks) filter.write(chunk);
+    }
+    filter.close();
+  };
+  filter.onerror = () => { try { filter.close(); } catch { /* already closed/disconnected */ } };
+}
+
+// This rewrites real page markup — a much more visible effect than
+// _networkBlockRequestHandler's outright cancel, which is why (unlike that
+// handler) this one DOES check enabled/blockAds/pausedDomains/
+// allowedDomains directly on every call rather than through a toggled
+// registration: pausing a domain (or flipping blockAds) must restore the
+// original page on the very next reload, not just on the next full rules
+// rebuild — and per-request state checks are cheap enough (a few Set/
+// property reads) that gating registration itself buys nothing but an
+// earlier chance to miss the very first navigation (see below).
+function _htmlFilterRequestHandler(details) {
+  if (details.type !== 'main_frame' && details.type !== 'sub_frame') return {};
+  if (!_settingsCache.enabled || !_settingsCache.blockAds) return {};
+  let host;
+  try { host = new URL(details.url).hostname.toLowerCase(); } catch { return {}; }
+  if (_settingsCache.pausedDomains.has(host) || _settingsCache.allowedDomains.has(host)) return {};
+  const selectors = _htmlFilterSelectorsForHost(host);
+  if (!selectors) return {};
+  const cl = (details.responseHeaders || []).find(h => h.name.toLowerCase() === 'content-length');
+  if (cl && Number(cl.value) > HTML_FILTER_MAX_BYTES) return {};
+  _attachHtmlFilter(details.requestId, selectors);
+  return {};
+}
+
+// Registered ONCE, unconditionally, right here at module top-level — not
+// gated behind ensureRuleDefinitionsLoaded()/buildActiveRulesFromStorage()
+// the way HTML_FILTER_MATCHER's own CONTENT is built. The handler above
+// already re-checks enabled/blockAds/pausedDomains/allowedDomains on every
+// call, and _htmlFilterSelectorsForHost() just reads whatever
+// HTML_FILTER_MATCHER currently holds (empty Map until the first real
+// build finishes, same as any other in-flight state) — so there's nothing
+// registration-time needs to wait for. Registering here means the browser
+// can never be mid-navigation with this listener not yet attached: JS is
+// single-threaded, so this line runs to completion before the event loop
+// gets a chance to deliver ANY webRequest event, closing what would
+// otherwise be a real gap on a cold background-script start (SW/event-page
+// just woke up, first navigation races the async rule-build chain — that
+// one request would silently skip the stream filter, falling back to
+// direct_hide_selectors' CSS-only path, exactly the flash this feature
+// exists to prevent).
+if (_hasHtmlStreamFilter()) {
+  EXT.webRequest.onHeadersReceived.addListener(
+    _htmlFilterRequestHandler,
+    { urls: ['<all_urls>'], types: ['main_frame', 'sub_frame'] },
+    ['blocking', 'responseHeaders']
+  );
 }
 
 function parseRuleText(text) {
@@ -988,11 +1211,16 @@ function _abpSplitNetworkPattern(pattern) {
 // Build-tool-generated class/id hash — e.g. styled-jsx's `.jsx-2126301199`,
 // a CRC32/epoch-timestamp-style numeric id (`#popup-1720497466`),
 // styled-components/emotion's `.sc-xxxxxxxx`. These are worthless past the
-// one build that produced them (regenerated on the site's next deploy), so
-// skip converting them. Threshold is 8+ digits, not 6+: real ad-dimension
-// classes concatenate two 3-digit numbers (`.ad-300250` = 300x250) and land
-// at exactly 6 digits — 8+ avoids that false positive while still catching
-// real hashes/timestamps (9-10 digits).
+// one build that produced them (regenerated on the site's next deploy).
+// Threshold is 8+ digits, not 6+: real ad-dimension classes concatenate two
+// 3-digit numbers (`.ad-300250` = 300x250) and land at exactly 6 digits —
+// 8+ avoids that false positive while still catching real hashes/
+// timestamps (9-10 digits). Only applied to global/bucket selectors (see
+// _abpParseFile's own comment on isDedicatedSingleDomain) — a dedicated
+// single-domain rule keeps a hash-qualified selector even though it may go
+// stale on the next rebuild, since it costs nothing outside that one site
+// and is sometimes the only way to pin down an element on a page that
+// otherwise reuses generic classes everywhere.
 const ABP_LOW_VALUE_HASH_RE = /-\d{8,}\b/;
 
 // This repo's own grammar always opens with a [section] header (after
@@ -1342,11 +1570,28 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
     }
 
     if (ABP_PROCEDURAL_RE.test(selectorPart)) { s.procedural++; continue; }
-    if (ABP_LOW_VALUE_HASH_RE.test(selectorPart)) { s.lowValueHash++; continue; }
 
-    if (!domainPart) { globalSelectors.add(selectorPart); s.converted++; continue; }
+    if (!domainPart) {
+      // No domain at all -> the [global] pool, shared across every site
+      // that inherits it wholesale. A volatile per-build hash class here
+      // would be dead weight for the vast majority of sites it never
+      // actually matches, so the low-value filter always applies.
+      if (ABP_LOW_VALUE_HASH_RE.test(selectorPart)) { s.lowValueHash++; continue; }
+      globalSelectors.add(selectorPart); s.converted++; continue;
+    }
 
     const { domains, hasGlobal, dedupSkipped } = _abpParseDomainPart(domainPart, curatedPatterns);
+    // A line naming exactly ONE specific domain (not a `,`-joined bucket,
+    // not `*`) is that domain's OWN dedicated rule — unlike a bucket/global
+    // selector, it can never leak into an unrelated site's ruleset, so a
+    // volatile per-build hash class (e.g. tinhte.vn's styled-jsx
+    // `jsx-XXXXXXXXXX` scoping classes) is worth keeping even though it may
+    // go stale on the next site rebuild: it costs nothing elsewhere, and a
+    // hash-qualified compound selector (".main.jsx-2126301199") is often
+    // the ONLY way a filter-list author had to pin down one specific
+    // element on a site that reuses generic classes everywhere.
+    const isDedicatedSingleDomain = domains.length === 1 && !hasGlobal;
+    if (!isDedicatedSingleDomain && ABP_LOW_VALUE_HASH_RE.test(selectorPart)) { s.lowValueHash++; continue; }
     if (hasGlobal) globalSelectors.add(selectorPart);
     for (const d of domains) {
       if (!domainSelectors.has(d)) domainSelectors.set(d, new Set());
@@ -2794,6 +3039,10 @@ async function _loadBuiltRulesFromCache(cacheKey) {
     NETWORK_REDIRECT_RULES = data.NETWORK_REDIRECT_RULES;
     NETWORK_BLOCK_RULES = data.NETWORK_BLOCK_RULES;
     NETWORK_BLOCK_MATCHER = _rehydrateMatcherMap(data.NETWORK_BLOCK_MATCHER);
+    // Plain string-array values — no per-entry RegExp/Set to rehydrate,
+    // unlike NETWORK_BLOCK_MATCHER above (see buildHtmlFilterMatcher's own
+    // comment), so a bare `new Map(Object.entries(...))` round-trips it.
+    HTML_FILTER_MATCHER = new Map(Object.entries(data.HTML_FILTER_MATCHER || {}));
     TRACKER_RULE_IDS = new Set(data.TRACKER_RULE_IDS);
     MALWARE_RULE_IDS = new Set(data.MALWARE_RULE_IDS);
     AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...data.AD_KEYWORDS);
@@ -2810,6 +3059,7 @@ async function _saveBuiltRulesToCache(cacheKey) {
       DEFAULT_RULES, MALWARE_RULES, AD_MAINFRAME_RULES, QUERY_STRIP_RULES,
       NETWORK_REDIRECT_RULES, NETWORK_BLOCK_RULES,
       NETWORK_BLOCK_MATCHER: _serializeMatcherMap(NETWORK_BLOCK_MATCHER),
+      HTML_FILTER_MATCHER: Object.fromEntries(HTML_FILTER_MATCHER),
       TRACKER_RULE_IDS: [...TRACKER_RULE_IDS], MALWARE_RULE_IDS: [...MALWARE_RULE_IDS],
       AD_KEYWORDS: [...AD_KEYWORDS], TRACKER_KEYWORDS: [...TRACKER_KEYWORDS], MALWARE_KEYWORDS: [...MALWARE_KEYWORDS],
     };
@@ -2860,6 +3110,17 @@ async function ensureRuleDefinitionsLoaded() {
         NETWORK_BLOCK_RULES = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
         NETWORK_BLOCK_MATCHER = new Map();
       }
+      // Unconditional (unlike NETWORK_BLOCK_MATCHER above) — building the
+      // MAP itself is cheap regardless of browser (just copying selector
+      // array references per host_patterns entry, no per-request work);
+      // only the LISTENER is gated by _hasHtmlStreamFilter() (registered
+      // once at module load — see _htmlFilterRequestHandler's own
+      // comment), so there's nothing to branch on here. The real cost this
+      // pays for is at REQUEST time on Firefox (buffer+reparse a whole
+      // HTML response) — see buildHtmlFilterMatcher's own comment on
+      // reusing direct_hide_selectors wholesale instead of a separate
+      // opt-in key.
+      HTML_FILTER_MATCHER = buildHtmlFilterMatcher(parsed);
       TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
       MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
@@ -3149,6 +3410,10 @@ async function buildActiveRulesFromStorage() {
 
   if (!enabled) {
     _updateNetworkBlockListener(false);
+    // No _updateHtmlFilterListener call here — that listener is registered
+    // once, unconditionally, at module load (see _htmlFilterRequestHandler's
+    // own comment for why) and enforces enabled/blockAds/pausedDomains/
+    // allowedDomains itself on every request instead.
     return { enabled: false, allRules: [] };
   }
   // Same gates networkBlockActive/remoteActive's path-pattern half (DNR
@@ -4006,6 +4271,12 @@ function _frameCssKey(tabId, frameId, slot) {
 // Firefox implements the same `scripting.insertCSS` namespace Chrome does
 // (browser.tabs.insertCSS does not exist) — one shared implementation for
 // both browsers.
+// ██████ TEMP DEBUG (2026-09-03): CSS injection disabled on purpose to
+// ██████ isolate-test whether the HTML stream filter alone can hide
+// ██████ vnexpress.net's banner, with no CSS fallback masking the result.
+// ██████ MUST be restored (uncomment the real body, delete this block)
+// ██████ before shipping — leaving this off broke cosmetic hiding on
+// ██████ EVERY site the last time it was left commented out by mistake.
 async function _insertFrameCss(tabId, frameId, css) {
   await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
 }

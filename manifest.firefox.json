@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "default_locale": "en",
   "name": "__MSG_extName__",
-  "version": "1.0.53",
+  "version": "1.0.54",
   "description": "__MSG_extDescription__",
   "browser_specific_settings": {
     "gecko": {
@@ -16,7 +16,7 @@
       "strict_min_version": "115.0"
     }
   },
-  "permissions": ["storage", "declarativeNetRequest", "webRequest", "webRequestBlocking", "alarms", "scripting", "contextMenus"],
+  "permissions": ["storage", "declarativeNetRequest", "webRequest", "webRequestBlocking", "webRequestFilterResponse", "alarms", "scripting", "contextMenus"],
     "host_permissions": [
     "<all_urls>"
   ],
