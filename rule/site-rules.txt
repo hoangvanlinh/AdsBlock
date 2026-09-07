@@ -29,6 +29,10 @@ pinterest.com = pinterest
 quora.com = quora
 amazon.* = amazon
 google.* = google
+twinfinite.net = twinfinite
+
+[global]
+network_redirect_rules = getadmiral.com AdmiralJerk.user.js | eventexistence.com AdmiralJerk.user.js | merequartz.com AdmiralJerk.user.js | inventorycache.com AdmiralJerk.user.js | succeedscene.com AdmiralJerk.user.js | cdn.privacy-mgmt.com/unified/wrapperMessagingWithoutDetection.js AdmiralJerk.user.js | consent.*/?pid= AdmiralJerk.user.js
 
 
 [youtube]
@@ -122,5 +126,8 @@ query_keys = k | field-keywords
 direct_hide_selectors = #tads | #tadsb | #bottomads | #rhsads | div[data-text-ad] | div[data-ta-slot] | .commercial-unit-desktop-top | .commercial-unit-desktop-rhs | #tvcap | div[data-sokoban-feature] | .ads-ad | li.g:has([data-text-ad]) | #google-s-ad | .uEierd | .cu-container | .commercial-unit-mobile-top > div[data-pla="1"] | div[data-ads-title="1"] | div[data-is-ad="1"] | div[data-section-type="ads"] | #atvcap | div[data-is-promoted-hotel-ad="true"] | body#yDmH0d [data-is-promoted="true"] | .OcdnDb | .ltJjte
 paths = /search
 query_keys = q
+
+[twinfinite]
+direct_hide_selectors = .DCDOr
 
 
