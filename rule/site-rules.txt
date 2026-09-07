@@ -32,8 +32,7 @@ google.* = google
 twinfinite.net = twinfinite
 
 [global]
-network_redirect_rules = getadmiral.com AdmiralJerk.user.js | eventexistence.com AdmiralJerk.user.js | merequartz.com AdmiralJerk.user.js | inventorycache.com AdmiralJerk.user.js | succeedscene.com AdmiralJerk.user.js | cdn.privacy-mgmt.com/unified/wrapperMessagingWithoutDetection.js AdmiralJerk.user.js | consent.*/?pid= AdmiralJerk.user.js
-
+ad_network_patterns = inventorycache.com | succeedscene.com
 
 [youtube]
 json_prune_xhr = playerResponse.adPlacements playerResponse.playerAds playerResponse.adSlots adPlacements playerAds adSlots  contents.twoColumnBrowseResultsRenderer.tabs.[].tabRenderer.content.richGridRenderer.contents.[-].richItemRenderer.content.adSlotRenderer entries.[-].command.reelWatchEndpoint.adClientParams.isAd, , /playlist\?list=\|player\?\|watch\?[tv]=\|get_watch\?/ | [?..userAgent*="adunit"]..client[?.clientName=="WEB"]+={"clientScreen":"ADUNIT"}, , /player?/ | [?..userAgent*="instream"]..playbackContext[?.contentPlaybackContext]+={"adPlaybackContext":{"adType":"AD_TYPE_INSTREAM"}}, , /player?/ | [?..userAgent*="eafg"]+={"params":"eAFgAQ"}, , /player?/
