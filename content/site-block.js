@@ -74,6 +74,15 @@ var DEFAULT_ATTR_KEYS=['aria-label','data-promoted','post-type','recommendation-
 var CANDIDATE_KEYS=['selectors','feed_selectors','market_selectors','right_rail_selectors','post_selectors'];
 var HOST_KEYS=['ad_host_selectors'];
 var DIRECT_HIDE_KEYS=['direct_hide_selectors'];
+// direct_style_rules — AdGuard '#$#selector { declarations }' CSS-injection
+// rules background.js's converter couldn't map to display:none/
+// strip_inline_styles (force-showing an element via display:block, or any
+// other single/compound declaration block — see _abpClassifyCssInjection's
+// own comment, 2026-09-07). Each entry is ALREADY a complete
+// 'selector{declarations}' CSS rule string (unlike DIRECT_HIDE_KEYS' bare
+// selectors, auto-wrapped in '{display:none!important}' below) — injected
+// verbatim into the exact same 'direct' CSS slot.
+var DIRECT_STYLE_KEYS=['direct_style_rules'];
 // strip_page_classes — class names some pages toggle on <html>/<body> to drive
 // a CSS-only takeover overlay (e.g. Taboola's "Explore More" gray backdrop).
 // Hiding the element itself doesn't help when the backdrop is painted purely
@@ -87,7 +96,7 @@ var STRIP_PAGE_CLASS_KEYS=['strip_page_classes'];
 // the cascade regardless of what class is or isn't present.
 var STRIP_INLINE_STYLE_KEYS=['strip_inline_styles'];
 // Selector caches — rebuilt once when _config changes, reused on every scan/mutation
-var _cachedDirect=[], _cachedCandidates=[], _cachedHosts=[], _cachedStripClasses=[], _cachedStripInlineStyles=[];
+var _cachedDirect=[], _cachedDirectStyle=[], _cachedCandidates=[], _cachedHosts=[], _cachedStripClasses=[], _cachedStripInlineStyles=[];
 var _cachedDirectStr='', _cachedCandidateStr='', _cachedHostStr='';
 // Pre-normalized labels/link_patterns, so matchesAny()/hasMatchingLink()
 // don't re-normalize the same static arrays on every call. Kept in sync
@@ -164,6 +173,38 @@ function collect(root,selectors,limit){
   return out;
 }
 
+// _stripPathScope — decodes an optional '\x01<pathRegexSource>\x01' prefix
+// background.js's ABP/AdGuard converter encodes onto a direct_hide_selectors
+// entry or scriptlet value when the source rule carried AdGuard's own
+// '[$path=...]' modifier (see background.js's _abpEncodePathScope/
+// _abpPathModifierToRegexSource for the encode side and why a control
+// character — never appears in real CSS selectors or scriptlet args — is
+// used as the delimiter instead of something printable). This repo's
+// site-rules.txt grammar has no separate key for "only on pages whose path
+// matches X", so the condition rides along INSIDE the string itself, and
+// this is the one place it gets peeled off: the content script, which
+// already knows the current page's real location.pathname (background.js's
+// service-worker context never does).
+// Returns null when this entry's path condition does NOT match the current
+// page — callers must skip/omit it entirely, never pass null through to the
+// stylesheet or the scriptlet dispatch bridge. A value with no marker at all
+// (the overwhelming majority — no '$path=' on the source rule) is returned
+// completely unchanged, first character check only, no regex work at all.
+var _pathScopeRegexCache=new Map();
+function _stripPathScope(raw){
+  if(!raw||raw.charAt(0)!=='\x01')return raw;
+  var end=raw.indexOf('\x01',1);
+  if(end===-1)return raw; // malformed marker — treat the whole thing as a literal rather than throw
+  var source=raw.slice(1,end);
+  var re=_pathScopeRegexCache.get(source);
+  if(re===undefined){
+    try{re=new RegExp(source);}catch(e){re=null;}
+    _pathScopeRegexCache.set(source,re);
+  }
+  if(!re||!re.test(location.pathname))return null;
+  return raw.slice(end+1);
+}
+
 function flattenSelectors(cfg,keys){
   var out=[],seen=new Set(),i,j,list;
   for(i=0;i<keys.length;i++){
@@ -194,12 +235,19 @@ var _directCounted=false;
 function _rebuildSelectorCache(){
   _directCounted=false;
   if(!_config){
-    _cachedDirect=[];_cachedCandidates=[];_cachedHosts=[];_cachedStripClasses=[];_cachedStripInlineStyles=[];
+    _cachedDirect=[];_cachedDirectStyle=[];_cachedCandidates=[];_cachedHosts=[];_cachedStripClasses=[];_cachedStripInlineStyles=[];
     _cachedDirectStr='';_cachedCandidateStr='';_cachedHostStr='';
     _cachedLabelsCompact=[];_cachedLinkPatternsCompact=[];_cachedLinkPatternsNorm=[];
     return;
   }
-  _cachedDirect=flattenSelectors(_config,DIRECT_HIDE_KEYS);
+  // .filter(Boolean) after _stripPathScope: a '\x01'-marked entry whose path
+  // condition does NOT match location.pathname decodes to null (see that
+  // function's own comment) and must never reach the stylesheet — only
+  // DIRECT_HIDE_KEYS/DIRECT_STYLE_KEYS ever carry this marker (background.js's
+  // converter never encodes it onto CANDIDATE_KEYS/HOST_KEYS/strip_* values),
+  // so stripping is scoped to just these two calls, not flattenSelectors itself.
+  _cachedDirect=flattenSelectors(_config,DIRECT_HIDE_KEYS).map(_stripPathScope).filter(Boolean);
+  _cachedDirectStyle=flattenSelectors(_config,DIRECT_STYLE_KEYS).map(_stripPathScope).filter(Boolean);
   _cachedCandidates=flattenSelectors(_config,CANDIDATE_KEYS);
   _cachedHosts=flattenSelectors(_config,HOST_KEYS);
   _cachedStripClasses=flattenSelectors(_config,STRIP_PAGE_CLASS_KEYS);
@@ -330,7 +378,7 @@ var _DIRECT_FILTER_CACHE_STALE_MS=24*60*60*1000;
 function _injectDirectStyle(){
   _directAuthInjected=true; // real config wins over the fast-path guess from here on
   var host=location.hostname;
-  if(!_cachedDirect.length){
+  if(!_cachedDirect.length&&!_cachedDirectStyle.length){
     _sendCssSlot('direct','');
     _updateDirectCssCacheEntry(host,null);
     return;
@@ -344,6 +392,14 @@ function _injectDirectStyle(){
   // Only the fast-path cache (below) gets narrowed.
   var rules=[];
   for(var i=0;i<_cachedDirect.length;i++)rules.push(_scopedDirectRule(_cachedDirect[i]));
+  // _cachedDirectStyle entries are ALREADY complete 'selector{declarations}'
+  // CSS rules (see DIRECT_STYLE_KEYS' own comment) — appended verbatim into
+  // the same stylesheet, not run through _scopedDirectRule. Not part of the
+  // fast-path LRU cache below (_updateDirectCssCacheEntry/_scopedDirectRule
+  // only ever reconstruct bare hide selectors) — these arrive slightly later,
+  // once this real GET_SITE_CONFIG-driven call runs, same as every other
+  // capability this repo has added since the fast-path cache shape was fixed.
+  for(var k=0;k<_cachedDirectStyle.length;k++)rules.push(_cachedDirectStyle[k]);
   _sendCssSlot('direct',rules.join('\n\n'));
 
   // Cache this host's matched selectors for next visit's fast-path guess.
@@ -871,12 +927,31 @@ var _SCRIPTLET_SAFE_CACHE_SET={};
 var _scriptletRulesActive=false;
 function _dispatchScriptletRules(cfg){
   _scriptletAuthDispatched=true; // real config wins over the fast-path guess from here on
-  var rules={},safeRules={},hasAny=false,hasSafe=false,k,i;
+  var rules={},safeRules={},hasAny=false,hasSafe=false,k,i,j,raw,val,filtered,safeCandidates;
   for(i=0;i<SCRIPTLET_KEYS.length;i++){
     k=SCRIPTLET_KEYS[i];
-    if(cfg[k]&&cfg[k].length){
-      rules[k]=cfg[k];hasAny=true;
-      if(_SCRIPTLET_SAFE_CACHE_SET[k]){safeRules[k]=cfg[k];hasSafe=true;}
+    raw=cfg[k];
+    if(raw&&raw.length){
+      // A '\x01'-marked value (background.js's converter, see
+      // _stripPathScope's own comment) is resolved fresh against THIS
+      // page's real location.pathname for the immediate dispatch below, but
+      // deliberately EXCLUDED from safeCandidates — SCRIPTLET_SAFE_CACHE_KEYS
+      // exists to REPLAY a cached value on a LATER page load before the real
+      // config round-trip resolves, which could land on a different
+      // pathname than the one this value's condition was resolved against;
+      // always re-resolving it fresh avoids ever replaying a stale
+      // (wrongly-scoped) value from a previous path.
+      filtered=[];safeCandidates=[];
+      for(j=0;j<raw.length;j++){
+        if(raw[j].charAt(0)==='\x01'){
+          val=_stripPathScope(raw[j]);
+          if(val!==null)filtered.push(val);
+        }else{
+          filtered.push(raw[j]);safeCandidates.push(raw[j]);
+        }
+      }
+      if(filtered.length){rules[k]=filtered;hasAny=true;}
+      if(safeCandidates.length&&_SCRIPTLET_SAFE_CACHE_SET[k]){safeRules[k]=safeCandidates;hasSafe=true;}
     }
   }
   if(hasAny){

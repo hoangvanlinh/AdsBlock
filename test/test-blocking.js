@@ -1336,7 +1336,11 @@ function check(name, cond, detail = '') {
       '@@||convertible.example^',                 // exception
       'convertible.example#@#.something',         // exception (plain cosmetic exception)
       'convertible.example##:has-text(buy now)',  // procedural
-      '[$path=/ads]convertible.example##.x',      // adguard extended
+      // '$path=' itself is supported now (2026-09-07, see the 25k-quinquies
+      // section below) — use a genuinely still-unsupported AdGuard modifier
+      // here instead, to keep testing that OTHER '[$...]' modifiers are
+      // still correctly dropped.
+      '[$domain=other.example]convertible.example##.x', // adguard extended (still unsupported)
       'convertible.example#$#totallyUnknownScriptletXyz()', // unmapped-ish (not a real +js() call, falls to unrecognized)
       'convertible.example##+js(totally-unmapped-scriptlet-xyz)', // unmapped scriptlet
       '||convertible.example/path/to/ads.js$redirect=some-resource-nobody-ships', // complex network, unresolvable redirect
@@ -1636,6 +1640,198 @@ function check(name, cond, detail = '') {
     excJsConverted.includes('trusted_replace_script_text') && excJsConverted.includes('needle()'), excJsConverted);
   check('#@#.selector (plain cosmetic exception, no +js): still dropped, no cancellation model',
     !excJsConverted.includes('some-selector-that-should-still-be-dropped'), excJsConverted);
+
+  console.log('\n== 25k-bis. AdGuard \'#%#//scriptlet(...)\' syntax (2026-09-07) ==');
+
+  // Real-world snippet (AdGuard's own Yandex rules) that motivated this:
+  // uses the full canonical scriptlet name ('abort-on-property-write',
+  // 'json-prune'), not uBO's short alias ('aopw'), and mixes in the
+  // '[$path=...]' extended-modifier prefix on two lines — now SUPPORTED
+  // (2026-09-07, see 25k-quinquies below for the dedicated path-scoping
+  // tests) rather than dropped, so these convert too.
+  const adgSnippet = [
+    '! Title: ADG syntax test',
+    "meteum.ai,ya.ru,yandex.*#%#//scriptlet('abort-on-property-write', '__pcodeAllActiveTestIds')",
+    'yandex.kz##.main-home-banner',
+    '[$path=/images]ya.ru,yandex.*##div[style="max-width: 100%;"]',
+    "[$path=/images]ya.ru,yandex.*#%#//scriptlet('json-prune', 'seatbid rtb direct')",
+    '[$path=/images]ya.ru,yandex.*##.AdvMastHead',
+  ].join('\n');
+  const adgConverted = await T._maybeConvertAbpText(adgSnippet);
+  check('#%#//scriptlet(...): mapped by its FULL AdGuard name (abort-on-property-write, not just short alias aopw) -> abort_on_property_write',
+    adgConverted.includes('abort_on_property_write') && adgConverted.includes('__pcodeAllActiveTestIds'), adgConverted);
+  check('#%#//scriptlet(...): plain \'##\' cosmetic line on the same source still converts normally',
+    adgConverted.includes('main-home-banner'), adgConverted);
+  check('[$path=/images]#%#//scriptlet(...): converts, carrying the encoded path condition (\\x01^/images\\x01) ahead of the real value',
+    adgConverted.includes('\x01^/images\x01') && adgConverted.includes('seatbid'), adgConverted);
+  check('[$path=/images]##selector: converts too, same path-condition encoding on direct_hide_selectors',
+    adgConverted.includes('\x01^/images\x01') && adgConverted.includes('AdvMastHead'), adgConverted);
+
+  const adgExcSnippet = [
+    "example.com#@%#//scriptlet('json-prune', 'ads')",
+  ].join('\n');
+  const adgExcConverted = await T._maybeConvertAbpText(adgExcSnippet);
+  check("#@%#//scriptlet(...) (AdGuard exception-syntax form): converts the same as '#%#//scriptlet(...)' — no cancellation model here either",
+    adgExcConverted.includes('json_prune') && adgExcConverted.includes('ads'), adgExcConverted);
+
+  const adgUnmappedSnippet = [
+    "example.com#%#//scriptlet('some-unmapped-adg-scriptlet-xyz', 'arg1')",
+  ].join('\n');
+  const adgUnmappedConverted = await T._maybeConvertAbpText(adgUnmappedSnippet);
+  check('#%#//scriptlet(...): unmapped scriptlet name dropped entirely (not guessed at), same as the uBO +js(...) path',
+    !adgUnmappedConverted.includes('some-unmapped-adg-scriptlet-xyz'), adgUnmappedConverted);
+
+  // Two more full-AdGuard-name aliases added 2026-09-07 alongside the
+  // '$path=' work, found auditing real usage against antiadblock.txt.
+  const adgMoreAliasesSnippet = [
+    "prevent-eval.example#%#//scriptlet('prevent-eval-if', 'adsBlocked')",
+    // Real 2-arg AdGuard shape (property, search) — reuses abort_current_script
+    // (see that alias's own comment on why 2 args is exactly its own
+    // "no ctx/src filter" behavior, not a truncation).
+    "acis.example#%#//scriptlet('abort-current-inline-script', 'document.createElement', 'googletag')",
+  ].join('\n');
+  const adgMoreAliasesConverted = await T._maybeConvertAbpText(adgMoreAliasesSnippet);
+  check("prevent-eval-if: maps to the same no_eval_if key as uBO's 'noeval-if'",
+    adgMoreAliasesConverted.includes('no_eval_if') && adgMoreAliasesConverted.includes('adsBlocked'), adgMoreAliasesConverted);
+  check("abort-current-inline-script: maps to abort_current_script with its 2 real args intact (no 3rd ctx arg to worry about)",
+    adgMoreAliasesConverted.includes('abort_current_script') &&
+    adgMoreAliasesConverted.includes('document.createElement, googletag'), adgMoreAliasesConverted);
+
+  const adgMalformedSnippet = [
+    'example.com#%#window.open = null;', // bare arbitrary JS, not a //scriptlet(...) call
+    "example.com2#%#//scriptlet('json-prune', 'ads'", // missing closing paren
+  ].join('\n');
+  const adgMalformedConverted = await T._maybeConvertAbpText(adgMalformedSnippet);
+  check('#%#<bare arbitrary JS> (not a //scriptlet(...) call): no equivalent here, dropped, never misread as a CSS selector',
+    !adgMalformedConverted.includes('window.open') && !adgMalformedConverted.includes('example.com') , adgMalformedConverted);
+  check('#%#//scriptlet(...) missing its closing paren: dropped as unrecognized, not misread as a CSS selector to hide',
+    !adgMalformedConverted.includes('example.com2') && !adgMalformedConverted.includes('json_prune'), adgMalformedConverted);
+
+  console.log('\n== 25k-ter. AdGuard \'#?#\' (ExtendedCSS elemhide) syntax (2026-09-07) ==');
+
+  const extCssSnippet = [
+    'example.com#?#.ad-banner:has(> .inner)',
+    'example.com#@?#.some-selector-still-dropped', // plain ExtCSS exception, no scriptlet — same fate as plain #@#
+  ].join('\n');
+  const extCssConverted = await T._maybeConvertAbpText(extCssSnippet);
+  check("#?#selector: converts to direct_hide_selectors exactly like '##' would",
+    extCssConverted.includes('direct_hide_selectors') && extCssConverted.includes('.ad-banner:has(> .inner)'), extCssConverted);
+  check('#@?#selector (plain ExtCSS exception, no scriptlet): still dropped, no cancellation model here either',
+    !extCssConverted.includes('some-selector-still-dropped'), extCssConverted);
+
+  console.log('\n== 25k-quater. AdGuard \'#$#\' (CSS-injection) syntax (2026-09-07) ==');
+
+  // Real-world snippet shapes audited from AdguardTeam/AdguardFilters'
+  // antiadblock.txt: single-declaration display:none/visibility:hidden/
+  // remove:true (-> direct_hide_selectors) and non-'hidden' overflow
+  // (-> the EXISTING strip_inline_styles mechanism) still reuse existing
+  // machinery; everything else (force-show, compound declarations,
+  // arbitrary property tweaks) now converts too, via the NEW
+  // direct_style_rules verbatim-CSS-injection key (2026-09-07).
+  const cssInjSnippet = [
+    'hideme.example#$#.ad-slot { display: none !important; }',
+    'hideme2.example#$#.ad-slot2 { visibility:hidden!important }', // no space before !important, no trailing ;
+    'removeme.example#$?#.ad-slot3 { remove: true; }', // AdGuard's own removal directive — routed to hide, not literal CSS
+    'scrolllock.example#$#body { overflow: auto !important; }',
+    'scrolllock2.example#$#html { overflow-y: visible; }', // no !important at all — still fine
+    'stayslocked.example#$#body { overflow: hidden !important; }', // LOCKS scroll — opposite intent, no equivalent
+    'showme.example#$#.hidden-ad { display: block !important; }', // force-show — NEW: converts via direct_style_rules
+    'compound.example#$#.thing { position: absolute !important; left: -3000px !important; }', // 2 decls — NEW: converts verbatim
+    'other.example#$#.thing { width: 10px !important; }', // NEW: converts verbatim
+    'garbage.example#$#.thing { not-a-declaration-at-all }', // fails the 'prop: value' sanity check — still dropped
+  ].join('\n');
+  const cssInjConverted = await T._maybeConvertAbpText(cssInjSnippet);
+  check('#$#selector { display: none !important; }: converts to direct_hide_selectors',
+    cssInjConverted.includes('direct_hide_selectors') && cssInjConverted.includes('.ad-slot'), cssInjConverted);
+  check('#$#selector { visibility:hidden!important } (no space, no trailing ;): still converts to direct_hide_selectors',
+    cssInjConverted.includes('.ad-slot2'), cssInjConverted);
+  check("#$?#selector { remove: true; }: AdGuard's removal directive routes to direct_hide_selectors (display:none achieves the same practical effect)",
+    cssInjConverted.includes('.ad-slot3') && !cssInjConverted.includes('remove: true') && !cssInjConverted.includes('remove:true'), cssInjConverted);
+  check("#$#body { overflow: auto !important; }: converts to the EXISTING strip_inline_styles mechanism, not direct_style_rules",
+    cssInjConverted.includes('strip_inline_styles') && cssInjConverted.includes('overflow'), cssInjConverted);
+  check('#$#html { overflow-y: visible; } (no !important): overflow-y also recognized, converts',
+    // Both scrolllock.example (plain 'overflow') and scrolllock2.example
+    // ('overflow-y') resolve to the identical strip_inline_styles=overflow
+    // output, so _abpFinalizeGroups correctly MERGES them into one shared
+    // [host_patterns] section (existing grouping behavior, not a bug) —
+    // assert both domain names made it into that shared section rather than
+    // expecting two separate 'strip_inline_styles' lines.
+    cssInjConverted.includes('scrolllock.example') && cssInjConverted.includes('scrolllock2.example'), cssInjConverted);
+  check('#$#body { overflow: hidden !important; }: excluded from strip-overflow (locking, not unlocking, intent) but still converts verbatim via direct_style_rules — a real, valid CSS rule, just not an unlock',
+    cssInjConverted.includes('stayslocked') && cssInjConverted.includes('direct_style_rules') && cssInjConverted.includes('overflow: hidden !important'), cssInjConverted);
+  check('#$#selector { display: block !important; } (force-show): NEW — converts verbatim via direct_style_rules',
+    cssInjConverted.includes('direct_style_rules') &&
+    cssInjConverted.includes('.hidden-ad{display: block !important;}'), cssInjConverted);
+  check('#$#selector { propA; propB; } (compound declaration): NEW — converts verbatim, both declarations intact',
+    cssInjConverted.includes('.thing{position: absolute !important; left: -3000px !important;}'), cssInjConverted);
+  check('#$#selector { width: ... } (single unrelated property): NEW — converts verbatim too',
+    cssInjConverted.includes('other.example') && cssInjConverted.includes('width: 10px !important'), cssInjConverted);
+  check("#$#selector { not-a-declaration-at-all } (fails the 'prop: value' shape check): still dropped, not injected as garbage CSS",
+    !cssInjConverted.includes('garbage'), cssInjConverted);
+
+  const cssInjExcSnippet = [
+    'exc.example#@$#.ad-slot { display: none !important; }',
+  ].join('\n');
+  const cssInjExcConverted = await T._maybeConvertAbpText(cssInjExcSnippet);
+  check("#@\$#selector { ... } (CSS-injection exception form): converts the same as '#\$#' — no cancellation model here either",
+    cssInjExcConverted.includes('direct_hide_selectors') && cssInjExcConverted.includes('.ad-slot'), cssInjExcConverted);
+
+  const cssInjMalformedSnippet = [
+    'broken.example#$#.selector { display: none !important', // missing closing }
+    '[$path=/x]pathscoped.example#$#.selector { display: none !important; }', // $path= now supported — converts
+  ].join('\n');
+  const cssInjMalformedConverted = await T._maybeConvertAbpText(cssInjMalformedSnippet);
+  check('#$#selector { ... missing closing brace: dropped as unrecognized, not misread as a plain selector',
+    !cssInjMalformedConverted.includes('broken'), cssInjMalformedConverted);
+  check('[$path=/x]#$#selector { display: none !important; }: converts with the path condition encoded (\\x01^/x\\x01)',
+    cssInjMalformedConverted.includes('\x01^/x\x01') && cssInjMalformedConverted.includes('pathscoped'), cssInjMalformedConverted);
+
+  console.log('\n== 25k-quinquies. AdGuard \'[$path=...]\' extended-modifier support (2026-09-07) ==');
+
+  // Plain (non-regex) path value -> a PREFIX match, regex-escaped then
+  // anchored ('^' + escape(value)) — real AdGuard convention: a value NOT
+  // wrapped in '/.../' is a plain string, not a regex.
+  const pathPrefixSnippet = [
+    '[$path=/images]prefix.example##.ad-in-images',
+  ].join('\n');
+  const pathPrefixConverted = await T._maybeConvertAbpText(pathPrefixSnippet);
+  check("[\$path=/images] (plain prefix form): encodes as '\\x01^/images\\x01' ahead of the real selector",
+    pathPrefixConverted.includes('\x01^/images\x01.ad-in-images'), pathPrefixConverted);
+
+  // Regex form: a value wrapped in '/.../' — source used as-is (delimiters
+  // stripped), NOT re-escaped by _abpPathModifierToRegexSource itself. The
+  // rendered site-rules.txt TEXT still runs it through _abpEscapeValue like
+  // every other value (protecting the ' | ' list-separator — this source's
+  // '|' alternation gets written as '\|'), so check the round-tripped
+  // PARSED value (parseRuleText un-escapes '\|' back to '|') rather than the
+  // raw rendered text, same pattern the network_block_rules test above uses.
+  const pathRegexSnippet = [
+    String.raw`[$path=/\/(maps|navi)\//]regex.example##.ad-on-maps-or-navi`,
+  ].join('\n');
+  const pathRegexConverted = await T._maybeConvertAbpText(pathRegexSnippet);
+  const pathRegexParsed = T.parseRuleText(pathRegexConverted);
+  const pathRegexSelectors = (pathRegexParsed.abp_regex && pathRegexParsed.abp_regex.direct_hide_selectors) || [];
+  check("[\$path=/regex/] (regex form): source used verbatim (delimiters stripped) once round-tripped through parseRuleText",
+    pathRegexSelectors.some(s => s === '\x01\\/(maps|navi)\\/\x01.ad-on-maps-or-navi'), pathRegexSelectors);
+
+  // Malformed regex source (unbalanced group) — must not compile a broken
+  // RegExp anywhere; dropped as unrecognized instead.
+  const pathBadRegexSnippet = [
+    String.raw`[$path=/(unclosed/]badregex.example##.selector`,
+  ].join('\n');
+  const pathBadRegexConverted = await T._maybeConvertAbpText(pathBadRegexSnippet);
+  check('[$path=/(unclosed/] (regex that fails to compile): dropped as unrecognized, not shipped broken',
+    !pathBadRegexConverted.includes('badregex') && !pathBadRegexConverted.includes('unclosed'), pathBadRegexConverted);
+
+  // A DIFFERENT AdGuard extended modifier ('$domain=', not '$path=') is
+  // still genuinely unsupported — must keep being dropped, not accidentally
+  // swept up by the new '$path=' parsing.
+  const pathOtherModifierSnippet = [
+    '[$domain=other.example]otherdomain.example##.selector',
+  ].join('\n');
+  const pathOtherModifierConverted = await T._maybeConvertAbpText(pathOtherModifierSnippet);
+  check("[\$domain=...] (a DIFFERENT modifier, not \$path=): still dropped as adguardExtended, unaffected by the new \$path= support",
+    !pathOtherModifierConverted.includes('otherdomain'), pathOtherModifierConverted);
 
   console.log('\n== 25l. Skip updateDynamicRules() when the rule set is unchanged (2026-08-22) ==');
 

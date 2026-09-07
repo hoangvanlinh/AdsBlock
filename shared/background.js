@@ -1241,6 +1241,19 @@ function _looksLikeAbpFormat(text) {
     // real-world ABP list misdetects as "already native" here and silently
     // converts to nothing.
     if (/^\[adblock plus[^\]]*\]$/i.test(line)) continue;
+    // A bracket-prefixed line with more content AFTER its closing ']' can
+    // never be this repo's own [section] header (always exactly "[name]",
+    // the WHOLE line, nothing trailing) — it's some other bracket-leading
+    // syntax instead, most commonly AdGuard's own '[$path=...]'-style
+    // extended-modifier prefix on an otherwise-ordinary rule (e.g.
+    // '[$path=/images]domain##selector'). Finding one this early is
+    // decisive proof of ABP format, same reasoning as the Adblock Plus
+    // version-marker check just above for a different '['-starting shape —
+    // without this, a source whose very FIRST rule happens to carry this
+    // modifier misdetects as "already native" and never converts at all
+    // (live-reproduced 2026-09-07 while adding '$path=' support itself).
+    const closeIdx = line.indexOf(']');
+    if (line.charAt(0) === '[' && closeIdx !== -1 && closeIdx !== line.length - 1) return true;
     return line.charAt(0) !== '[';
   }
   return false;
@@ -1388,6 +1401,87 @@ function _abpFormatTrustedReplaceScriptText(args) {
   return [nodeName, pattern, ...extras, replacement].filter(a => a !== '').join(', ');
 }
 
+// Classifies an AdGuard '#$#selector { declarations }' CSS-injection rule
+// body. Three real destinations:
+//   'hide'          — direct_hide_selectors (existing mechanism, unchanged)
+//   'strip-overflow'— the existing strip_inline_styles mechanism (unchanged)
+//   'force'         — NEW (2026-09-07): direct_style_rules, a verbatim CSS
+//                      injection primitive (see its own handling below) for
+//                      everything else this repo previously left unsupported
+//                      — force-showing an element via display:block, and any
+//                      other single or COMPOUND declaration block. Safe to
+//                      inject as literal CSS text unexamined: unlike a
+//                      scriptlet, CSS can't execute code, navigate, or read
+//                      page data — worst case is a wrong visual on one site,
+//                      the same risk direct_hide_selectors' arbitrary
+//                      selectors already carry, not a new category of harm.
+// Only 'remove: true' (AdGuard's own element-REMOVAL directive, not a real
+// CSS property — would silently no-op as literal CSS) gets special-cased to
+// 'hide' instead of 'force': display:none achieves the same practical
+// "gone" effect without this repo needing actual DOM-removal machinery.
+// Audited against a real-world AdGuard list (AdguardTeam/AdguardFilters'
+// AnnoyancesFilter/Popups/sections/antiadblock.txt, 2026-09-07).
+function _abpClassifyCssInjection(declText) {
+  const decls = declText.split(';').map(d => d.trim()).filter(Boolean);
+  if (!decls.length) return null;
+  if (decls.length === 1) {
+    const m = /^([a-z-]+)\s*:\s*(.+?)\s*(?:!important)?$/i.exec(decls[0]);
+    if (m) {
+      const prop = m[1].toLowerCase();
+      const value = m[2].trim().toLowerCase();
+      if (prop === 'display' && value.startsWith('none')) return 'hide';
+      if (prop === 'visibility' && value.startsWith('hidden')) return 'hide';
+      if (prop === 'remove' && value === 'true') return 'hide';
+      // Restoring scroll only makes sense as NOT 'hidden' — a rule that
+      // itself sets overflow:hidden is the opposite intent (locking, not
+      // unlocking) and has no equivalent mechanism here either.
+      if ((prop === 'overflow' || prop === 'overflow-x' || prop === 'overflow-y') && !value.startsWith('hidden')) return 'strip-overflow';
+    }
+  }
+  // Fallback: 'force', but only if every declaration at least LOOKS like
+  // real CSS ('prop: value') — rejects genuine garbage (e.g. AdGuard's own
+  // 'remove: true' already peeled off above, or a stray non-declaration
+  // token) rather than injecting it verbatim.
+  if (!decls.every(d => /^[a-z-]+\s*:\s*\S/i.test(d))) return null;
+  return 'force';
+}
+
+// AdGuard's own '$path=' extended-modifier value: a value wrapped in
+// '/.../' is a regex (its source used as-is, delimiters stripped); any other
+// value is a plain string meaning a path PREFIX — escaped here so any
+// regex-special characters in it (e.g. a literal '.' in '/pogoda.html') are
+// matched literally, then anchored at the start. Returns null for a regex
+// value that doesn't actually compile (malformed source in the wild), so
+// the caller can drop the line instead of shipping a broken RegExp.
+function _abpPathModifierToRegexSource(value) {
+  if (value.length > 1 && value.charAt(0) === '/' && value.charAt(value.length - 1) === '/') {
+    const source = value.slice(1, -1);
+    try { new RegExp(source); } catch { return null; }
+    return source;
+  }
+  return '^' + value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Encodes an optional path-condition onto a direct_hide_selectors/scriptlet
+// value string — this repo's site-rules.txt grammar has no separate key for
+// "only on pages whose path matches X" (AdGuard's own '$path=' modifier, see
+// _abpPathModifierToRegexSource above), so the condition rides along INSIDE
+// the string itself using a control character (0x01) as the delimiter —
+// never appears in real CSS selectors or scriptlet arguments, unlike any
+// printable choice ('::' collides with real CSS pseudo-elements like
+// '::before', for instance). content/site-block.js's _stripPathScope() is
+// the matching decode side — the ONE place (content script, not the service
+// worker) that already knows the current page's real location.pathname —
+// and is the only consumer that ever needs to understand this format; every
+// other reader of these values (parseRuleText, the dashboard's raw-text
+// views, _abpEscapeValue's '|'-only escaping) treats it as an opaque string
+// and passes it through untouched, exactly as before. A prefix with an empty
+// pathRegexSource (the overwhelmingly common case — no '$path=' on the
+// source rule) is a no-op, returning `value` completely unchanged.
+function _abpEncodePathScope(pathRegexSource, value) {
+  return pathRegexSource ? '\x01' + pathRegexSource + '\x01' + value : value;
+}
+
 // Empty/zeroed skip-stats shape — one bucket per reason a rule LINE (not
 // blank lines/comments — those are just noise, not filter rules) ends up
 // contributing nothing to the converted output, plus `converted` for lines
@@ -1526,24 +1620,112 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
     // at all, that distinction is moot here — a '#@#+js(...)' scriptlet
     // call behaves identically to a '##+js(...)' one, so it's handled the
     // same way instead of being dropped like a plain cosmetic exception.
+    // AdGuard's own JS-injection separators: '#%#//scriptlet(...)' (apply)
+    // and '#@%#//scriptlet(...)' (exception form — same "no cancellation
+    // model here, so it behaves identically to the apply form" reasoning as
+    // '#@#+js(...)' above). Only the standardized //scriptlet(name, args...)
+    // call wrapper is recognized — that's what AdGuard's own public filter
+    // lists use for cross-engine portability with uBO/ABP; bare
+    // '#%#<arbitrary JS>' has no equivalent here (same as an arbitrary '#@#'
+    // cosmetic exception) and falls through to unrecognized below. Checked
+    // as its own marker pair (not folded into the '##'/'#@#' pair) because
+    // its content starts right after an already-consumed '(' rather than
+    // needing the '+js(' prefix check '##'-based scriptlet calls use.
+    const ADG_SCRIPTLET_MARKER = '#%#//scriptlet(';
+    const ADG_SCRIPTLET_EXC_MARKER = '#@%#//scriptlet(';
+    // AdGuard's ExtendedCSS elemhide markers ('#?#'/'#@?#') — semantically
+    // IDENTICAL to '##'/'#@#' (same direct_hide_selectors destination, same
+    // ABP_PROCEDURAL_RE filtering of genuinely ExtCSS-only operators below);
+    // AdGuard just uses a different marker to tell its OWN engine "run this
+    // through the ExtendedCSS matcher, not native querySelectorAll" — a
+    // distinction this repo's dispatch (native CSS engine only) doesn't need
+    // to make, so these fall through the exact same code path as '##'.
+    const EXTCSS_HIDE_MARKER = '#?#';
+    const EXTCSS_HIDE_EXC_MARKER = '#@?#';
+    // AdGuard's CSS-injection markers ('#$#'/'#@$#' plain, '#$?#'/'#@$?#'
+    // ExtendedCSS-selector variant) — carry a full 'selector { declarations }'
+    // CSS rule rather than a bare selector, so unlike every marker above they
+    // get their OWN handling block below (_abpClassifyCssInjection) instead
+    // of falling into the plain-selector path.
+    const CSS_INJECT_MARKER = '#$#';
+    const CSS_INJECT_EXC_MARKER = '#@$#';
+    const CSS_INJECT_EXTCSS_MARKER = '#$?#';
+    const CSS_INJECT_EXTCSS_EXC_MARKER = '#@$?#';
     const excIdx = line.indexOf('#@#');
     const hideIdx = line.indexOf('##');
-    let sepIdx = -1, sepLen = 0, isException = false;
-    if (hideIdx !== -1 && (excIdx === -1 || hideIdx < excIdx)) { sepIdx = hideIdx; sepLen = 2; }
-    else if (excIdx !== -1) { sepIdx = excIdx; sepLen = 3; isException = true; }
+    const adgIdx = line.indexOf(ADG_SCRIPTLET_MARKER);
+    const adgExcIdx = line.indexOf(ADG_SCRIPTLET_EXC_MARKER);
+    const extcssIdx = line.indexOf(EXTCSS_HIDE_MARKER);
+    const extcssExcIdx = line.indexOf(EXTCSS_HIDE_EXC_MARKER);
+    const cssInjIdx = line.indexOf(CSS_INJECT_MARKER);
+    const cssInjExcIdx = line.indexOf(CSS_INJECT_EXC_MARKER);
+    const cssInjExtcssIdx = line.indexOf(CSS_INJECT_EXTCSS_MARKER);
+    const cssInjExtcssExcIdx = line.indexOf(CSS_INJECT_EXTCSS_EXC_MARKER);
+    let sepIdx = -1, sepLen = 0, isException = false, isAdgScriptletMarker = false, isCssInjectionMarker = false;
+    for (const cand of [
+      { idx: hideIdx, len: 2, exc: false, adg: false, css: false },
+      { idx: excIdx, len: 3, exc: true, adg: false, css: false },
+      { idx: adgIdx, len: ADG_SCRIPTLET_MARKER.length, exc: false, adg: true, css: false },
+      { idx: adgExcIdx, len: ADG_SCRIPTLET_EXC_MARKER.length, exc: true, adg: true, css: false },
+      { idx: extcssIdx, len: EXTCSS_HIDE_MARKER.length, exc: false, adg: false, css: false },
+      { idx: extcssExcIdx, len: EXTCSS_HIDE_EXC_MARKER.length, exc: true, adg: false, css: false },
+      { idx: cssInjIdx, len: CSS_INJECT_MARKER.length, exc: false, adg: false, css: true },
+      { idx: cssInjExcIdx, len: CSS_INJECT_EXC_MARKER.length, exc: true, adg: false, css: true },
+      { idx: cssInjExtcssIdx, len: CSS_INJECT_EXTCSS_MARKER.length, exc: false, adg: false, css: true },
+      { idx: cssInjExtcssExcIdx, len: CSS_INJECT_EXTCSS_EXC_MARKER.length, exc: true, adg: false, css: true },
+    ]) {
+      if (cand.idx !== -1 && (sepIdx === -1 || cand.idx < sepIdx)) {
+        sepIdx = cand.idx; sepLen = cand.len; isException = cand.exc; isAdgScriptletMarker = cand.adg; isCssInjectionMarker = cand.css;
+      }
+    }
     if (sepIdx === -1) { s.total++; s.unrecognized++; continue; }
 
-    const domainPart = line.slice(0, sepIdx);
+    let domainPart = line.slice(0, sepIdx);
     const selectorPart = line.slice(sepIdx + sepLen);
 
     if (!selectorPart) { s.total++; s.unrecognized++; continue; }
     s.total++;
-    const isScriptletCall = selectorPart.indexOf('+js(') === 0 && selectorPart.charAt(selectorPart.length - 1) === ')';
-    if (isException && !isScriptletCall) { s.exception++; continue; } // plain cosmetic exception — unsupported, dropped
-    if (domainPart.trim().charAt(0) === '[') { s.adguardExtended++; continue; } // AdGuard extended modifier syntax — not supported
+    const isUboScriptletCall = selectorPart.indexOf('+js(') === 0 && selectorPart.charAt(selectorPart.length - 1) === ')';
+    // The ADG marker already consumed the '//scriptlet(' opening above —
+    // selectorPart just needs a matching trailing ')' to be well-formed.
+    const isAdgScriptletCall = isAdgScriptletMarker && selectorPart.charAt(selectorPart.length - 1) === ')';
+    const isScriptletCall = isUboScriptletCall || isAdgScriptletCall;
+    // A '#%#'/'#@%#' line is ALWAYS a scriptlet attempt, never a cosmetic
+    // selector — unlike the '##'/'#@#' path below, there's no legitimate
+    // fallback interpretation for a malformed one, so drop it here instead
+    // of letting it fall through to the cosmetic-selector handling further
+    // down (which would otherwise wrongly treat raw JS/malformed scriptlet
+    // text as a CSS selector to hide).
+    if (isAdgScriptletMarker && !isScriptletCall) { s.unrecognized++; continue; }
+    // CSS-injection exception markers ('#@$#'/'#@$?#') get the same "no
+    // cancellation model, behaves like the apply form" treatment as
+    // '#@#+js(...)'/'#@%#//scriptlet(...)' above — exempted from the
+    // plain-exception drop below so they reach the CSS-injection handling
+    // block instead.
+    if (isException && !isScriptletCall && !isCssInjectionMarker) { s.exception++; continue; } // plain cosmetic exception — unsupported, dropped
+    // AdGuard's own '[$...]' extended-modifier prefix — only '[$path=...]'
+    // is understood (see _abpPathModifierToRegexSource); any OTHER modifier
+    // ('$domain=', '$app=', ...) is left unsupported/dropped exactly as
+    // before, rather than guessed at. A matched '[$path=...]' is stripped
+    // off domainPart (so every downstream _abpParseDomainPart call below
+    // sees the real domain list, not the bracket) and its compiled regex
+    // source rides along on the eventual selector/scriptlet value instead —
+    // see _abpEncodePathScope's own comment for why (this repo's grammar has
+    // no separate "path condition" key), decoded and enforced entirely by
+    // content/site-block.js's _stripPathScope() at apply time, the one place
+    // that actually knows the current page's location.pathname.
+    let pathPrefix = '';
+    if (domainPart.trim().charAt(0) === '[') {
+      const pathMatch = /^\[\$path=(.*)\]/.exec(domainPart.trim());
+      if (!pathMatch) { s.adguardExtended++; continue; }
+      const regexSource = _abpPathModifierToRegexSource(pathMatch[1]);
+      if (!regexSource) { s.unrecognized++; continue; }
+      pathPrefix = regexSource;
+      domainPart = domainPart.trim().slice(pathMatch[0].length);
+    }
 
     if (isScriptletCall) {
-      const inner = selectorPart.slice(4, -1);
+      const inner = isUboScriptletCall ? selectorPart.slice(4, -1) : selectorPart.slice(0, -1);
       const parts = _abpSplitScriptletArgs(inner);
       const name = (parts.shift() || '').trim();
       const mapping = self.SCRIPTLET_ALIAS_MAP && self.SCRIPTLET_ALIAS_MAP[name];
@@ -1553,15 +1735,96 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
         : _abpFormatScriptletValue(mapping, parts);
       if (value === null) { s.unmappedScriptlet++; continue; }
       const { domains, hasGlobal, dedupSkipped } = _abpParseDomainPart(domainPart, curatedPatterns);
+      const encodedValue = _abpEncodePathScope(pathPrefix, value);
       if (hasGlobal) {
         if (!globalScriptlets.has(mapping.key)) globalScriptlets.set(mapping.key, new Set());
-        globalScriptlets.get(mapping.key).add(value);
+        globalScriptlets.get(mapping.key).add(encodedValue);
       }
       for (const d of domains) {
         if (!domainScriptlets.has(d)) domainScriptlets.set(d, new Map());
         const perKey = domainScriptlets.get(d);
         if (!perKey.has(mapping.key)) perKey.set(mapping.key, new Set());
-        perKey.get(mapping.key).add(value);
+        perKey.get(mapping.key).add(encodedValue);
+      }
+      if (domains.length || hasGlobal) s.converted++;
+      else if (dedupSkipped) s.dedupSkipped++;
+      else s.unrecognized++;
+      continue;
+    }
+
+    if (isCssInjectionMarker) {
+      // selectorPart is the raw 'selector { declarations }' body. Only a
+      // single trailing rule block is accepted — anything before an
+      // unmatched '{' or after the closing '}' means this isn't the simple
+      // one-rule shape this repo can safely interpret.
+      const cssMatch = /^(.*)\{([^{}]*)\}\s*$/.exec(selectorPart);
+      if (!cssMatch) { s.unrecognized++; continue; }
+      const cssSelector = cssMatch[1].trim();
+      const declText = cssMatch[2].trim();
+      if (!cssSelector || !declText) { s.unrecognized++; continue; }
+      if (ABP_PROCEDURAL_RE.test(cssSelector)) { s.procedural++; continue; }
+      const kind = _abpClassifyCssInjection(declText);
+      if (!kind) { s.unrecognized++; continue; } // still-unrecognized declaration shape (fails even the basic 'prop: value' sanity check)
+      const { domains, hasGlobal, dedupSkipped } = _abpParseDomainPart(domainPart, curatedPatterns);
+      if (kind === 'hide') {
+        const isDedicatedSingleDomain = domains.length === 1 && !hasGlobal;
+        if (!isDedicatedSingleDomain && ABP_LOW_VALUE_HASH_RE.test(cssSelector)) { s.lowValueHash++; continue; }
+        const encodedSelector = _abpEncodePathScope(pathPrefix, cssSelector);
+        if (hasGlobal) globalSelectors.add(encodedSelector);
+        for (const d of domains) {
+          if (!domainSelectors.has(d)) domainSelectors.set(d, new Set());
+          domainSelectors.get(d).add(encodedSelector);
+        }
+      } else if (kind === 'force') {
+        // NEW (2026-09-07): direct_style_rules — a verbatim-CSS-injection
+        // key, content/site-block.js appends each entry's ALREADY-COMPLETE
+        // 'selector{declarations}' text straight into the same 'direct' CSS
+        // slot direct_hide_selectors already uses (just not auto-wrapped in
+        // '{display:none!important}' the way a bare hide selector is — this
+        // one already carries its own full declaration block). Reuses the
+        // SAME low-value-hash guard as 'hide' above, keyed off the selector
+        // half only (a volatile per-build hash class is exactly as
+        // low-value here as it is for a plain hide rule).
+        const isDedicatedSingleDomain = domains.length === 1 && !hasGlobal;
+        if (!isDedicatedSingleDomain && ABP_LOW_VALUE_HASH_RE.test(cssSelector)) { s.lowValueHash++; continue; }
+        const DIRECT_STYLE_RULES_KEY = 'direct_style_rules';
+        const ruleText = _abpEncodePathScope(pathPrefix, cssSelector + '{' + declText + '}');
+        if (hasGlobal) {
+          if (!globalScriptlets.has(DIRECT_STYLE_RULES_KEY)) globalScriptlets.set(DIRECT_STYLE_RULES_KEY, new Set());
+          globalScriptlets.get(DIRECT_STYLE_RULES_KEY).add(ruleText);
+        }
+        for (const d of domains) {
+          if (!domainScriptlets.has(d)) domainScriptlets.set(d, new Map());
+          const perKey = domainScriptlets.get(d);
+          if (!perKey.has(DIRECT_STYLE_RULES_KEY)) perKey.set(DIRECT_STYLE_RULES_KEY, new Set());
+          perKey.get(DIRECT_STYLE_RULES_KEY).add(ruleText);
+        }
+      } else {
+        // pathPrefix is deliberately NOT applied here — strip_inline_styles
+        // isn't selector-scoped at apply time either (see its own comment
+        // below), so a per-rule path condition wouldn't have anywhere
+        // meaningful to attach; no real-world source has combined '$path='
+        // with an overflow-restore '#$#' rule so far (audited 2026-09-07).
+        // 'strip-overflow' — reuses the EXISTING strip_inline_styles
+        // mechanism (content/site-block.js: removes a matching inline style
+        // property found on a scanned element) instead of a new primitive.
+        // Not selector-scoped there (it's a flat per-site property list, see
+        // its own comment), so cssSelector itself isn't used beyond having
+        // proven this is a genuine single-declaration overflow-restore rule —
+        // safe even when the site actually locks scroll via a CSS class
+        // rather than an inline style: this then simply strips nothing
+        // (no-op), never the wrong thing.
+        const STRIP_INLINE_STYLES_KEY = 'strip_inline_styles';
+        if (hasGlobal) {
+          if (!globalScriptlets.has(STRIP_INLINE_STYLES_KEY)) globalScriptlets.set(STRIP_INLINE_STYLES_KEY, new Set());
+          globalScriptlets.get(STRIP_INLINE_STYLES_KEY).add('overflow');
+        }
+        for (const d of domains) {
+          if (!domainScriptlets.has(d)) domainScriptlets.set(d, new Map());
+          const perKey = domainScriptlets.get(d);
+          if (!perKey.has(STRIP_INLINE_STYLES_KEY)) perKey.set(STRIP_INLINE_STYLES_KEY, new Set());
+          perKey.get(STRIP_INLINE_STYLES_KEY).add('overflow');
+        }
       }
       if (domains.length || hasGlobal) s.converted++;
       else if (dedupSkipped) s.dedupSkipped++;
@@ -1577,7 +1840,7 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
       // would be dead weight for the vast majority of sites it never
       // actually matches, so the low-value filter always applies.
       if (ABP_LOW_VALUE_HASH_RE.test(selectorPart)) { s.lowValueHash++; continue; }
-      globalSelectors.add(selectorPart); s.converted++; continue;
+      globalSelectors.add(_abpEncodePathScope(pathPrefix, selectorPart)); s.converted++; continue;
     }
 
     const { domains, hasGlobal, dedupSkipped } = _abpParseDomainPart(domainPart, curatedPatterns);
@@ -1592,10 +1855,11 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
     // element on a site that reuses generic classes everywhere.
     const isDedicatedSingleDomain = domains.length === 1 && !hasGlobal;
     if (!isDedicatedSingleDomain && ABP_LOW_VALUE_HASH_RE.test(selectorPart)) { s.lowValueHash++; continue; }
-    if (hasGlobal) globalSelectors.add(selectorPart);
+    const encodedSelectorPart = _abpEncodePathScope(pathPrefix, selectorPart);
+    if (hasGlobal) globalSelectors.add(encodedSelectorPart);
     for (const d of domains) {
       if (!domainSelectors.has(d)) domainSelectors.set(d, new Set());
-      domainSelectors.get(d).add(selectorPart);
+      domainSelectors.get(d).add(encodedSelectorPart);
     }
     if (domains.length || hasGlobal) s.converted++;
     else if (dedupSkipped) s.dedupSkipped++;
@@ -2497,6 +2761,13 @@ const REDIRECT_RESOURCE_FILES = {
   'adthrive_abd.js': [],
   'noeval.js': [],
   'noeval-silent.js': [],
+  // Not a bait-request placeholder like everything else here — a real
+  // active script (DOM/network-API patching + overlay removal) that runs
+  // IN PLACE of Admiral's own loader once network_redirect_rules below
+  // points Admiral's real URLs at it (2026-09-07, see that key's own
+  // comment for which URLs and why each one is Admiral's, verified live
+  // against twinfinite.net).
+  'AdmiralJerk.user.js': ['admiral-killer', 'admiraljerk'],
 };
 const REDIRECT_RESOURCE_ALIASES = new Map();
 for (const [file, aliases] of Object.entries(REDIRECT_RESOURCE_FILES)) {
