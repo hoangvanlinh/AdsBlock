@@ -41,3 +41,93 @@ function langCandidates() {
   return out;
 }
 try { self.langCandidates = langCandidates; } catch (e) {}
+
+// timezoneLangCandidates() — a SECOND, independent signal, deliberately kept
+// OUT of langCandidates() above so shared/i18n.js's UI-language "Auto"
+// resolution (a first-match-wins, order-sensitive consumer of
+// langCandidates() — see _matchCandidateLocale() there) is completely
+// unaffected by it. Only background.js's _candidateUILanguages() merges this
+// in, and only for the regional-filter-list auto-enable feature.
+//
+// Browser UI/content language reflects what the user CHOSE to read/install
+// in, not where they actually are — someone who leaves their browser in
+// English while living in Vietnam never gets the Vietnam Rule Source
+// suggested. IANA timezone (Intl.DateTimeFormat().resolvedOptions().
+// timeZone) is a free, local, zero-network proxy for "which region is this
+// browser probably in" that doesn't depend on any language preference at
+// all. It's approximate (VPNs, travel, multi-country zones like
+// Asia/Kolkata) and intentionally covers only the countries/regions this
+// repo already ships a matching Rule Source for (config.js's
+// RULES_REMOTE_URL `lang` entries) — not every IANA zone or minority
+// language, just enough to catch the "UI language disagrees with actual
+// current region" gap the same way navigator.language catches "UI language
+// disagrees with content language" above.
+var TIMEZONE_LANG_MAP = {
+  'Asia/Ho_Chi_Minh': ['vi'], 'Asia/Saigon': ['vi'],
+  'Asia/Shanghai': ['zh'], 'Asia/Chongqing': ['zh'], 'Asia/Harbin': ['zh'],
+  'Asia/Urumqi': ['zh', 'ug'], 'Asia/Kashgar': ['ug'],
+  'Asia/Taipei': ['zh'], 'Asia/Hong_Kong': ['zh'], 'Asia/Macau': ['zh'],
+  'Asia/Tokyo': ['ja'],
+  'Asia/Seoul': ['ko'],
+  'Asia/Bangkok': ['th'],
+  'Asia/Jakarta': ['id'], 'Asia/Makassar': ['id'], 'Asia/Jayapura': ['id'], 'Asia/Pontianak': ['id'],
+  'Asia/Kuala_Lumpur': ['ms'], 'Asia/Kuching': ['ms'],
+  'Asia/Kolkata': ['hi', 'bn', 'gu', 'kn', 'ml', 'mr', 'pa', 'ta', 'te', 'as'],
+  'Asia/Colombo': ['si', 'ta'],
+  'Asia/Kathmandu': ['ne'],
+  'Asia/Dhaka': ['bn'],
+  'Asia/Kabul': ['ps', 'fa'],
+  'Asia/Dushanbe': ['tg'],
+  'Asia/Tehran': ['fa'],
+  'Asia/Baghdad': ['ar'], 'Asia/Riyadh': ['ar'], 'Asia/Dubai': ['ar'], 'Asia/Kuwait': ['ar'],
+  'Asia/Qatar': ['ar'], 'Asia/Bahrain': ['ar'], 'Asia/Muscat': ['ar'], 'Asia/Aden': ['ar'],
+  'Asia/Amman': ['ar'], 'Asia/Beirut': ['ar'], 'Asia/Damascus': ['ar'], 'Asia/Gaza': ['ar'], 'Asia/Hebron': ['ar'],
+  'Asia/Jerusalem': ['he'], 'Asia/Tel_Aviv': ['he'],
+  'Asia/Nicosia': ['el'], 'Asia/Famagusta': ['el'],
+  'Asia/Almaty': ['kk'], 'Asia/Qyzylorda': ['kk'], 'Asia/Aqtau': ['kk'], 'Asia/Aqtobe': ['kk'],
+  'Asia/Tashkent': ['uz'], 'Asia/Samarkand': ['uz'],
+  'Asia/Yekaterinburg': ['ru'], 'Asia/Novosibirsk': ['ru'], 'Asia/Krasnoyarsk': ['ru'],
+  'Asia/Irkutsk': ['ru'], 'Asia/Vladivostok': ['ru'],
+  'Europe/Moscow': ['ru'], 'Europe/Kaliningrad': ['ru'], 'Europe/Samara': ['ru'],
+  'Europe/Kyiv': ['uk'], 'Europe/Kiev': ['uk'], 'Europe/Simferopol': ['uk'],
+  'Europe/Minsk': ['be'],
+  'Africa/Algiers': ['ar', 'kab'], 'Africa/Tunis': ['ar'], 'Africa/Tripoli': ['ar'], 'Africa/Casablanca': ['ar'],
+  'Africa/Cairo': ['ar'], 'Africa/Khartoum': ['ar'], 'Africa/Nouakchott': ['ar'], 'Africa/Djibouti': ['ar'],
+  'Europe/Tirane': ['sq'],
+  'Europe/Sofia': ['bg'], 'Europe/Skopje': ['mk'],
+  'Europe/Prague': ['cs'], 'Europe/Bratislava': ['sk'],
+  'Europe/Berlin': ['de'], 'Europe/Vienna': ['de'], 'Europe/Zurich': ['de'],
+  'Europe/Luxembourg': ['de', 'lb', 'fr'], 'Europe/Busingen': ['de'],
+  'Europe/Tallinn': ['et'],
+  'Europe/Helsinki': ['fi'],
+  'Europe/Paris': ['fr'], 'Europe/Brussels': ['fr', 'nl'], 'America/Montreal': ['fr'], 'America/Toronto': ['fr'],
+  'Indian/Reunion': ['fr'], 'Pacific/Noumea': ['fr'],
+  'Europe/Athens': ['el'],
+  'Europe/Zagreb': ['hr'], 'Europe/Belgrade': ['sr'], 'Europe/Sarajevo': ['bs'], 'Europe/Podgorica': ['sr'],
+  'Europe/Budapest': ['hu'],
+  'Atlantic/Reykjavik': ['is'],
+  'Europe/Rome': ['it'], 'Europe/San_Marino': ['it'], 'Europe/Vatican': ['it'],
+  'Europe/Vilnius': ['lt'],
+  'Europe/Riga': ['lv'],
+  'Europe/Amsterdam': ['nl'],
+  'Europe/Oslo': ['nb', 'no'], 'Europe/Copenhagen': ['da'],
+  'Europe/Warsaw': ['pl'],
+  'Europe/Bucharest': ['ro'], 'Europe/Chisinau': ['ro'],
+  'Europe/Madrid': ['es'], 'Atlantic/Canary': ['es'],
+  'America/Mexico_City': ['es'], 'America/Bogota': ['es'], 'America/Argentina/Buenos_Aires': ['es'],
+  'America/Lima': ['es'], 'America/Santiago': ['es'], 'America/Caracas': ['es'],
+  'Europe/Lisbon': ['pt'], 'Atlantic/Madeira': ['pt'], 'America/Sao_Paulo': ['pt'],
+  'Europe/Ljubljana': ['sl'],
+  'Europe/Stockholm': ['sv'],
+  'Europe/Istanbul': ['tr'],
+};
+try { self.TIMEZONE_LANG_MAP = TIMEZONE_LANG_MAP; } catch (e) {}
+
+function timezoneLangCandidates() {
+  try {
+    if (typeof Intl === 'undefined' || !Intl.DateTimeFormat) return [];
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return (tz && TIMEZONE_LANG_MAP[tz]) || [];
+  } catch (e) { return []; }
+}
+try { self.timezoneLangCandidates = timezoneLangCandidates; } catch (e) {}

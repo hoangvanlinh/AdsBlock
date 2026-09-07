@@ -1832,8 +1832,23 @@ function _isDefaultSourceEnabled(entry, overrides, legacyAllDisabled) {
 // getUILanguage()-vs-navigator.language gap closed but from contexts this
 // file never loads into (content scripts, HTML pages). This wrapper just
 // keeps the name every call site below already uses.
+//
+// Also appends utils.js's timezoneLangCandidates() (IANA timezone -> region
+// language, e.g. Asia/Ho_Chi_Minh -> 'vi') AFTER the language-preference
+// candidates — a region proxy for users whose browser UI/content language
+// doesn't reflect where they actually are. Appended last, and ONLY here
+// (never inside langCandidates() itself), so shared/i18n.js's UI-language
+// "Auto" picker — a first-match-wins consumer of langCandidates() — is
+// completely unaffected; this only ever adds NEW match possibilities for
+// _uiLanguageMatches() below, never changes which candidate wins first.
 function _candidateUILanguages() {
-  try { return langCandidates(); } catch (e) { return []; }
+  let out = [];
+  try { out = langCandidates(); } catch (e) { /* ignore */ }
+  try {
+    const tzLangs = typeof timezoneLangCandidates === 'function' ? timezoneLangCandidates() : [];
+    if (tzLangs && tzLangs.length) out = out.concat(tzLangs);
+  } catch (e) { /* ignore */ }
+  return out;
 }
 
 // True if any candidate language matches a RULES_REMOTE_URL entry's `lang`

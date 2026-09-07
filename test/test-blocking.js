@@ -211,6 +211,10 @@ let stubRulesRemoteUnreachable = false;
 let stubAbpSourceText = '';
 // Simulated browser UI language for _autoEnableLangDefaultSources() tests.
 let stubUILanguage = 'en-US';
+// Simulated IANA timezone (Intl.DateTimeFormat().resolvedOptions().timeZone)
+// for timezoneLangCandidates()/_candidateUILanguages() tests — a US zone by
+// default so it never accidentally matches a region Rule Source's `lang`.
+let stubTimeZone = 'America/Los_Angeles';
 // Generic url -> response-text map for ad-hoc tests that need arbitrary
 // URLs served without writing bespoke substring-matching branches below
 // (checked first, before every other hardcoded branch in fetchStub).
@@ -260,6 +264,10 @@ const sandbox = {
   // available as real Node globals (v18+), same semantics as in a browser.
   CompressionStream, DecompressionStream, Response, TextEncoder, TextDecoder, btoa, atob, Uint8Array,
   navigator: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' },
+  // Minimal stub — only the resolvedOptions().timeZone shape
+  // timezoneLangCandidates() (shared/utils.js) actually reads. Mutable via
+  // stubTimeZone so tests can simulate different browser timezones.
+  Intl: { DateTimeFormat: () => ({ resolvedOptions: () => ({ timeZone: stubTimeZone }) }) },
   importScripts(name) {
     if (name && name.includes('scriptlet-alias-map')) {
       vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 'scriptlet-alias-map.js' });
@@ -294,7 +302,7 @@ self.__test = {
   getCachedRuleText, setCachedRuleText, _compressForStorage, _decompressFromStorage,
   _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
   _abpEmptySkipStats, _fetchAndConvertUrls, RULE_SOURCE_STATS_KEY,
-  _uiLanguageMatches, _autoEnableLangDefaultSources,
+  _uiLanguageMatches, _autoEnableLangDefaultSources, _candidateUILanguages, timezoneLangCandidates,
   _entryUrls, _primaryUrl, _isDefaultSourceEnabled,
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
   _isValidUrlFilter, buildQueryStripRules, buildPatternRules,
@@ -2142,6 +2150,51 @@ function check(name, cond, detail = '') {
 
   await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} }); // leave state clean for any later section
   stubUILanguage = 'en-US';
+
+  console.log('\n== 25n. timezoneLangCandidates()/_candidateUILanguages(): IANA timezone as a region fallback signal (2026-09-07) ==');
+
+  stubTimeZone = 'America/Los_Angeles';
+  check('timezoneLangCandidates: an unmapped/neutral timezone yields no candidates',
+    Array.isArray(T.timezoneLangCandidates()) && T.timezoneLangCandidates().length === 0, T.timezoneLangCandidates());
+
+  stubTimeZone = 'Asia/Ho_Chi_Minh';
+  check('timezoneLangCandidates: Asia/Ho_Chi_Minh maps to "vi"',
+    T.timezoneLangCandidates().includes('vi'), T.timezoneLangCandidates());
+
+  stubTimeZone = 'Asia/Kolkata';
+  check('timezoneLangCandidates: a shared multi-language zone returns all of its languages',
+    ['hi', 'bn', 'ta', 'te'].every(l => T.timezoneLangCandidates().includes(l)), T.timezoneLangCandidates());
+
+  // _candidateUILanguages() must append the timezone signal AFTER the
+  // language-preference ones (getUILanguage/navigator.language) — it only
+  // ever adds new candidates, never displaces existing ones.
+  stubUILanguage = 'en-US';
+  stubTimeZone = 'Asia/Ho_Chi_Minh';
+  const combined = T._candidateUILanguages();
+  check('_candidateUILanguages: UI language still comes first even with a matching timezone',
+    combined[0] === 'en-US' && combined.includes('vi'), combined);
+
+  stubTimeZone = 'America/Los_Angeles';
+  check('_candidateUILanguages: a non-matching timezone contributes nothing extra',
+    T._candidateUILanguages().length === 1 && T._candidateUILanguages()[0] === 'en-US', T._candidateUILanguages());
+
+  // End-to-end: a browser left in English but physically in Vietnam (no
+  // navigator.language override either) must still auto-enable the "vi"
+  // default source via timezone alone — the exact gap this feature closes.
+  stubUILanguage = 'en-US';
+  stubTimeZone = 'Asia/Ho_Chi_Minh';
+  check('_uiLanguageMatches: en-US UI + Asia/Ho_Chi_Minh timezone still matches entry lang "vi"',
+    T._uiLanguageMatches('vi') === true);
+  await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} });
+  await T._autoEnableLangDefaultSources();
+  let { defaultRuleSourceOverrides: afterTzOnly } = await chromeStub.storage.local.get('defaultRuleSourceOverrides');
+  check('_autoEnableLangDefaultSources: timezone-only match (English UI, Vietnam timezone) auto-enables the "vi" source',
+    afterTzOnly && afterTzOnly['https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt'] === true,
+    afterTzOnly);
+
+  await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} }); // leave state clean for any later section
+  stubUILanguage = 'en-US';
+  stubTimeZone = 'America/Los_Angeles';
 
   console.log('\n== 25o. _dedupeMalwarePriority: malware wins DNR same-priority redirect tie-break (2026-08-23) ==');
   // A domain in BOTH malwareNetworkDomains and adNetworkPatterns/
