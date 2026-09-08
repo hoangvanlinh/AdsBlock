@@ -85,6 +85,20 @@ async function clear() {
   }
 }
 
+// getBytesInUse() — null means "unknown" (API unavailable or the call
+// itself failed), NOT 0. Callers doing a quota-safety check before a write
+// must treat null as "assume worst case, skip the write" — never as an
+// empty area, since that would let a write through with no real guarantee.
+async function getBytesInUse() {
+  if (!_localArea || typeof _localArea.getBytesInUse !== 'function') return null;
+  try {
+    return await _localArea.getBytesInUse(null);
+  } catch (e) {
+    _log('getBytesInUse', '*', e);
+    return null;
+  }
+}
+
 function _keysLabel(keys) {
   if (keys == null) return 'null';
   if (typeof keys === 'string') return keys;
@@ -92,5 +106,5 @@ function _keysLabel(keys) {
   try { return Object.keys(keys).join(','); } catch (e) { return String(keys); }
 }
 
-self.LocalStorage = { get: get, set: set, remove: remove, clear: clear };
+self.LocalStorage = { get: get, set: set, remove: remove, clear: clear, getBytesInUse: getBytesInUse };
 })();

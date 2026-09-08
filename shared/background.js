@@ -57,6 +57,8 @@ const {
   RULES_CACHE_TEXT_KEY,
   RULES_CACHE_TIME_KEY,
   RULES_CACHE_TTL_MS,
+  NETWORK_BLOCK_MATCHER_CACHE_KEY,
+  MALWARE_PATH_MATCHER_CACHE_KEY,
   RULE_SOURCE_ERRORS_KEY,
   RULE_SOURCE_STATS_KEY,
   DEBUG_LOCAL,
@@ -450,6 +452,54 @@ function buildDomainNetworkBlockRules(parsed, startId) {
   return buildNetworkBlockRules(entries, startId);
 }
 
+// NETWORK_BLOCK_MATCHER entries carry a compiled RegExp (`regex`) plus
+// Set/Map fields (resourceTypes, initiatorDomains, ...) — none of those
+// round-trip through JSON.stringify/parse as-is (a RegExp serializes to
+// `{}`, a Set/Map to `{}` too). Convert to/from plain arrays + the regex's
+// SOURCE string. Used only by _saveMatcherCacheToLocal()/
+// _loadMatcherCacheFromLocal()'s NETWORK_BLOCK_MATCHER_CACHE_KEY entry (a
+// per-matcher chrome.storage.local cache, restored 2026-09-08 in a narrower
+// form after the earlier whole-ensureRuleDefinitionsLoaded()-output session
+// cache was removed for being too big to fit chrome.storage.session's fixed
+// 10MB cap — see _saveMatcherCacheToLocal's own comment for why only this
+// matcher and MALWARE_PATH_MATCHER, not everything, get persisted now).
+function _serializeMatcherEntry(e) {
+  const out = { regexSource: e.regex.source };
+  if (e.resourceTypes) out.resourceTypes = [...e.resourceTypes];
+  if (e.excludedResourceTypes) out.excludedResourceTypes = [...e.excludedResourceTypes];
+  if (e.initiatorDomains) out.initiatorDomains = [...e.initiatorDomains.keys()];
+  if (e.excludedInitiatorDomains) out.excludedInitiatorDomains = [...e.excludedInitiatorDomains.keys()];
+  if (e.excludedRequestDomains) out.excludedRequestDomains = [...e.excludedRequestDomains.keys()];
+  if (e.requestMethods) out.requestMethods = [...e.requestMethods];
+  if (e.excludedRequestMethods) out.excludedRequestMethods = [...e.excludedRequestMethods];
+  if (e.domainType) out.domainType = e.domainType;
+  return out;
+}
+function _rehydrateMatcherEntry(o) {
+  const e = { regex: new RegExp(o.regexSource) };
+  if (o.resourceTypes) e.resourceTypes = new Set(o.resourceTypes);
+  if (o.excludedResourceTypes) e.excludedResourceTypes = new Set(o.excludedResourceTypes);
+  if (o.initiatorDomains) e.initiatorDomains = new Map(o.initiatorDomains.map(d => [d, true]));
+  if (o.excludedInitiatorDomains) e.excludedInitiatorDomains = new Map(o.excludedInitiatorDomains.map(d => [d, true]));
+  if (o.excludedRequestDomains) e.excludedRequestDomains = new Map(o.excludedRequestDomains.map(d => [d, true]));
+  if (o.requestMethods) e.requestMethods = new Set(o.requestMethods);
+  if (o.excludedRequestMethods) e.excludedRequestMethods = new Set(o.excludedRequestMethods);
+  if (o.domainType) e.domainType = o.domainType;
+  return e;
+}
+function _serializeMatcherMap(map) {
+  const out = {};
+  for (const [domain, entries] of map) out[domain] = entries.map(_serializeMatcherEntry);
+  return out;
+}
+function _rehydrateMatcherMap(obj) {
+  const map = new Map();
+  for (const domain in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, domain)) map.set(domain, obj[domain].map(_rehydrateMatcherEntry));
+  }
+  return map;
+}
+
 // Firefox-only sibling of buildDomainNetworkBlockRules() — same source data
 // (parsed.host_patterns' per-domain network_block_rules entries) and the
 // same 6-field decode as buildNetworkBlockRules() above, but the OUTPUT is a
@@ -546,10 +596,8 @@ function buildNetworkBlockMatcher(parsed) {
 // entirely regardless of what its section's direct_hide_selectors contain.
 // Same domain -> sectionKey resolution as buildNetworkBlockMatcher above,
 // but the VALUE here is just the plain selector array itself — no
-// per-entry options to compile, so no custom serialize/rehydrate is needed
-// the way NETWORK_BLOCK_MATCHER's RegExp-bearing entries do (see
-// _saveBuiltRulesToCache/_loadBuiltRulesFromCache: this Map round-trips
-// through plain JSON). Raw-regex ("/.../") and wildcard-TLD ("domain.*")
+// per-entry options to compile, unlike NETWORK_BLOCK_MATCHER's RegExp-bearing
+// entries. Raw-regex ("/.../") and wildcard-TLD ("domain.*")
 // host_patterns forms are skipped too — same reasoning buildNetworkBlockMatcher
 // itself doesn't need for its own purpose, kept simple here too.
 function buildHtmlFilterMatcher(parsed) {
@@ -625,6 +673,22 @@ let MALWARE_PATH_MATCHER = new Map();
 // regardless of browser (cheap, just Map assignments) but only ever
 // consulted where _hasHtmlStreamFilter() gates the listener's registration.
 let HTML_FILTER_MATCHER = new Map();
+
+// MALWARE_PATH_MATCHER's local cache counterpart to _serializeMatcherMap/
+// _rehydrateMatcherMap above — much simpler since entries here are bare
+// RegExp with no options fields to round-trip.
+function _serializeRegexMatcherMap(map) {
+  const out = {};
+  for (const [domain, regexes] of map) out[domain] = regexes.map(r => r.source);
+  return out;
+}
+function _rehydrateRegexMatcherMap(obj) {
+  const map = new Map();
+  for (const domain in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, domain)) map.set(domain, obj[domain].map(s => new RegExp(s)));
+  }
+  return map;
+}
 
 // Same source/shape buildRemoteMalwareRules()'s path-pattern branch reads
 // (already-full `||domain/path...^` urlFilter strings, no further
@@ -1014,6 +1078,62 @@ async function _decompressDomainsFromStorage(stored) {
     return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
     return []; // corrupted/unreadable — treat as empty rather than guess
+  }
+}
+
+// Leaves real headroom under chrome.storage.local's ~10MB default quota
+// (no unlimitedStorage permission in either manifest — see
+// _saveMatcherCacheToLocal's own comment) for siteRulesCacheText itself,
+// which alone has measured ~7MB at real multi-source scale.
+const LOCAL_STORAGE_SAFE_LIMIT_BYTES = 9 * 1024 * 1024;
+
+// Generic load/save for the two Firefox-only (webRequestBlocking) matcher
+// caches — NETWORK_BLOCK_MATCHER_CACHE_KEY and MALWARE_PATH_MATCHER_CACHE_KEY.
+// 2026-09-08: this project previously cached the ENTIRE
+// ensureRuleDefinitionsLoaded() output (DEFAULT_RULES, MALWARE_RULES, both
+// matchers, ...) in chrome.storage.session, keyed by a content hash —
+// removed the same day because at "every Rule Source enabled" scale it
+// measured ~20.69MB even compressed, over storage.session's fixed ~10MB cap
+// (unlike storage.local, unlimitedStorage can't lift that one). Restored
+// here in a narrower form: ONLY the two matchers that actually do per-entry
+// RegExp compilation (NETWORK_BLOCK_MATCHER, MALWARE_PATH_MATCHER) are
+// persisted — HTML_FILTER_MATCHER and the DNR-array builders (DEFAULT_RULES
+// etc.) are cheap Map/array copies with no regex compile, not worth caching
+// — and in chrome.storage.local instead of .session, since unlimitedStorage
+// CAN raise that quota if ever needed. No such permission is requested here
+// though: instead, every write is guarded by a real LocalStorage.getBytesInUse()
+// check so this can never be the write that pushes storage.local over quota
+// (siteRulesCacheText's own write is far more important to protect than this
+// purely-a-speed-optimization cache is to keep). A null bytesInUse reading
+// (API unavailable, or the call itself failed) is treated as "assume worst
+// case" — skip the write — never as "assume empty." Skipping just means that
+// cold start rebuilds the matcher from scratch, same as if this cache never
+// existed; it never blocks or breaks anything.
+async function _loadMatcherCacheFromLocal(storageKey, cacheKey, rehydrateFn) {
+  try {
+    const { [storageKey]: cached } = await LocalStorage.get(storageKey);
+    if (!(cached && cached.key === cacheKey && cached.compressed)) return null;
+    const json = await _decompressFromStorage(cached.compressed);
+    if (!json) return null;
+    return rehydrateFn(JSON.parse(json));
+  } catch (e) {
+    console.warn('[AdBlock] local matcher cache read (' + storageKey + ') failed — falling through to a real build:', e);
+    return null;
+  }
+}
+async function _saveMatcherCacheToLocal(storageKey, cacheKey, serializedObj) {
+  try {
+    const compressed = await _compressForStorage(JSON.stringify(serializedObj));
+    const payload = { [storageKey]: { key: cacheKey, compressed } };
+    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload)).length;
+    const bytesInUse = await LocalStorage.getBytesInUse();
+    if (bytesInUse === null || bytesInUse + payloadBytes > LOCAL_STORAGE_SAFE_LIMIT_BYTES) {
+      if (DEBUG_LOCAL) console.log('[AdBlock][DEBUG_LOCAL] skipping local matcher cache write (' + storageKey + ') — would risk exceeding storage.local quota', { bytesInUse, payloadBytes });
+      return;
+    }
+    await LocalStorage.set(payload);
+  } catch (e) {
+    console.warn('[AdBlock] local matcher cache write (' + storageKey + ') failed — next restart will just rebuild again:', e);
   }
 }
 
@@ -3059,152 +3179,33 @@ async function getRulesText() {
 // instead of by every content-script frame. Reset on RULES_CHANGED.
 let _parsedRules = null;
 let _parsedRulesPromise = null;
+// Hash of the raw text getParsedRules() last parsed — a cheap byproduct
+// exposed as the cache key for NETWORK_BLOCK_MATCHER_CACHE_KEY (see
+// ensureRuleDefinitionsLoaded()), NOT a reintroduction of the removed
+// parsedRulesSessionCache: nothing here is persisted, this is just a hash
+// string kept alongside the in-memory _parsedRules for this SW's lifetime.
+let _parsedRulesTextHash = null;
 
-// Cross-SW-restart parse cache (2026-08-23, compressed 2026-08-25).
-// `_parsedRules` above only survives ONE service-worker lifetime — a real
-// user with several large Rule Sources enabled can have a multi-MB merged
-// siteRulesCacheText, and MV3 service workers restart on a short idle
-// timeout, far more often than the rules text itself actually changes. That
-// means the custom line-by-line parseRuleText() reran on EVERY cold start
-// even though its input was identical — measured live 654.6ms at a real
-// 18.79MB/344,586-line multi-source config, once per restart.
-// chrome.storage.session (cleared on browser restart, NOT on SW restart, and
-// a SEPARATE quota pool from chrome.storage.local — doesn't worsen local's
-// already-tight usage) lets the ALREADY-PARSED object itself survive a cold
-// start. Stored COMPRESSED (deflate-raw, same _compressForStorage/
-// _decompressFromStorage helpers as siteRulesCacheText), not the bare
-// object: at that same real scale, the raw parsed object was 14.84MB —
-// OVER chrome.storage.session's 10MB quota, so an uncompressed write
-// silently failed every time (caught by the try/catch below) and this cache
-// never populated at all — every cold start paid the full parse cost above
-// for zero benefit, invisibly. Compressed, that object measured 5.40MB
-// (fits), and decompress+JSON.parse read-back measured 116.4ms — an 82%
-// reduction vs re-parsing from scratch. The extra stringify+compress cost on
-// write (~378ms measured) doesn't matter: it happens once per rules change,
-// not on the cold-start hot path this cache exists for. Keyed by a content
-// hash of the raw rules text so it's self-invalidating the moment that text
-// actually changes (reloadRules() doesn't need to explicitly clear this —
-// the hash simply won't match next time, same self-invalidation style the
-// hash-based caches elsewhere in this file already use), and best-effort
-// (old-browser session-storage-unavailable, corrupt/undersized cache, or any
-// read/write failure just falls through to a real parse — never blocks or
-// breaks anything).
-const PARSED_RULES_SESSION_KEY = 'parsedRulesSessionCache'; // { hash, compressed }
-
-// Cross-SW-restart cache for ensureRuleDefinitionsLoaded()'s OUTPUT (2026-08-31)
-// — same idea as PARSED_RULES_SESSION_KEY above, one layer deeper. That cache
-// only saves parseRuleText() (text -> parsed object); everything BUILT from
-// the parsed object (DEFAULT_RULES, MALWARE_RULES, AD_MAINFRAME_RULES,
-// QUERY_STRIP_RULES, NETWORK_REDIRECT_RULES, NETWORK_BLOCK_RULES/
-// NETWORK_BLOCK_MATCHER) lived in plain module-level `let`s that don't
-// survive a SW restart, so the FULL build reran every single cold start —
-// live-measured 2026-08-31 at a real default-enabled-sources scale: ~99ms
-// per restart, unchanged regardless of how many restarts happen with
-// identical input (MV3 restarts the SW after a short idle timeout, far more
-// often than the rules text itself changes). Same fix, same pattern: store
-// compressed in chrome.storage.session, keyed by the SAME content hash
-// getParsedRules() already computes — one hash invalidates both caches
-// together the instant the underlying text actually changes.
-const BUILT_RULES_SESSION_KEY = 'builtRulesSessionCache'; // { hash, compressed }
-
-// NETWORK_BLOCK_MATCHER's entries carry a compiled RegExp (`regex`) plus
-// Set/Map fields (resourceTypes, initiatorDomains, ...) — none of those
-// round-trip through JSON.stringify/parse as-is (a RegExp serializes to
-// `{}`, a Set/Map to `{}` too). Convert to/from plain arrays + the regex's
-// SOURCE string; _urlFilterToRegExp's caller already only ever needs
-// `new RegExp(source)` back, not the exact same object reference.
-function _serializeMatcherEntry(e) {
-  const out = { regexSource: e.regex.source };
-  if (e.resourceTypes) out.resourceTypes = [...e.resourceTypes];
-  if (e.excludedResourceTypes) out.excludedResourceTypes = [...e.excludedResourceTypes];
-  if (e.initiatorDomains) out.initiatorDomains = [...e.initiatorDomains.keys()];
-  if (e.excludedInitiatorDomains) out.excludedInitiatorDomains = [...e.excludedInitiatorDomains.keys()];
-  if (e.excludedRequestDomains) out.excludedRequestDomains = [...e.excludedRequestDomains.keys()];
-  if (e.requestMethods) out.requestMethods = [...e.requestMethods];
-  if (e.excludedRequestMethods) out.excludedRequestMethods = [...e.excludedRequestMethods];
-  if (e.domainType) out.domainType = e.domainType;
-  return out;
-}
-function _rehydrateMatcherEntry(o) {
-  const e = { regex: new RegExp(o.regexSource) };
-  if (o.resourceTypes) e.resourceTypes = new Set(o.resourceTypes);
-  if (o.excludedResourceTypes) e.excludedResourceTypes = new Set(o.excludedResourceTypes);
-  if (o.initiatorDomains) e.initiatorDomains = new Map(o.initiatorDomains.map(d => [d, true]));
-  if (o.excludedInitiatorDomains) e.excludedInitiatorDomains = new Map(o.excludedInitiatorDomains.map(d => [d, true]));
-  if (o.excludedRequestDomains) e.excludedRequestDomains = new Map(o.excludedRequestDomains.map(d => [d, true]));
-  if (o.requestMethods) e.requestMethods = new Set(o.requestMethods);
-  if (o.excludedRequestMethods) e.excludedRequestMethods = new Set(o.excludedRequestMethods);
-  if (o.domainType) e.domainType = o.domainType;
-  return e;
-}
-function _serializeMatcherMap(map) {
-  const out = {};
-  for (const [domain, entries] of map) out[domain] = entries.map(_serializeMatcherEntry);
-  return out;
-}
-function _rehydrateMatcherMap(obj) {
-  const map = new Map();
-  for (const domain in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, domain)) map.set(domain, obj[domain].map(_rehydrateMatcherEntry));
-  }
-  return map;
-}
-
+// Cross-SW-restart session caching (parsedRulesSessionCache) was removed
+// 2026-09-08: at "every Rule Source enabled" scale the parsed object
+// measured ~17MB even compressed — over chrome.storage.session's fixed
+// ~10MB cap (unlike storage.local, unlimitedStorage does NOT raise this),
+// so the cache never actually populated there anyway, just spent CPU on a
+// doomed stringify+compress+write every single cold start and logged a
+// warning each time. Explicit user call: keep siteRulesCacheText (avoids
+// the network refetch, the expensive part) and accept re-parsing the text
+// on every cold start instead of also trying to persist the parsed form.
+// _parsedRules/_parsedRulesPromise below still memoize IN-MEMORY for this
+// SW's own lifetime — repeated calls within one cold start (or one
+// message burst) still only parse once, same as before; only the
+// cross-restart persistence is gone.
 async function getParsedRules() {
   if (_parsedRules) return _parsedRules;
   if (!_parsedRulesPromise) {
     _parsedRulesPromise = (async () => {
       const text = await getRulesText();
-      const textHash = _hashText(text);
-      const { [PARSED_RULES_SESSION_KEY]: cached } = await SessionStorage.get(PARSED_RULES_SESSION_KEY);
-      if (cached && cached.hash === textHash && cached.compressed) {
-        const json = await _decompressFromStorage(cached.compressed);
-        if (json) {
-          _parsedRules = JSON.parse(json);
-          return _parsedRules;
-        }
-      }
+      _parsedRulesTextHash = _hashText(text);
       _parsedRules = parseRuleText(text);
-      // Compressed, not the bare object (2026-08-25 live measurement: a real
-      // multi-source config's parsed object hit 14.84MB — OVER
-      // chrome.storage.session's 10MB quota, so the uncompressed write
-      // silently failed and this cache never populated at all, meaning every
-      // cold start paid the full parseRuleText() cost — 654.6ms measured —
-      // for zero benefit. Compressed (deflate-raw, same helper as
-      // siteRulesCacheText) that same object measured 5.40MB — fits — and
-      // read-back (decompress + JSON.parse) measured 116.4ms, an 82%
-      // reduction vs reparsing from scratch. The extra stringify+compress
-      // cost on write (~378ms measured) doesn't matter: it happens once per
-      // rules change, not on the cold-start hot path this cache exists for.
-      // Dev-only per-section size breakdown — answers "which section of the
-      // merged rules text actually bloats this cache" instead of guessing
-      // (2026-09-08, motivated by a live-reported quota overflow at ~17MB
-      // with every Rule Source enabled). Sections are the top-level
-      // site-rules.txt [section] keys — 'global' plus one per curated/
-      // ABP-dedicated domain — summed separately from 'global's own
-      // sub-keys (ad_network_patterns/tracker_network_patterns are the
-      // usual suspects there) so both "one huge section" and "thousands of
-      // small dedicated sections" show up distinctly.
-      if (DEBUG_LOCAL) {
-        const byteSize = (v) => new TextEncoder().encode(JSON.stringify(v)).length;
-        const sectionSizes = {};
-        let dedicatedCount = 0, dedicatedBytes = 0;
-        for (const [section, body] of Object.entries(_parsedRules)) {
-          const size = byteSize(body);
-          if (section === 'global' || section === 'host_patterns') sectionSizes[section] = size;
-          else { dedicatedCount++; dedicatedBytes += size; }
-        }
-        sectionSizes['—all other (dedicated per-domain) sections combined'] = dedicatedBytes;
-        sectionSizes['—dedicated section count'] = dedicatedCount;
-        console.log('[AdBlock][DEBUG_LOCAL] parsed-rules cache top-level section sizes (bytes, pre-compression)', sectionSizes);
-        if (_parsedRules.global) {
-          const globalKeySizes = {};
-          for (const [k, v] of Object.entries(_parsedRules.global)) globalKeySizes[k] = byteSize(v);
-          console.log('[AdBlock][DEBUG_LOCAL] parsed-rules cache [global] section, per-key sizes (bytes)', globalKeySizes);
-        }
-      }
-      const compressed = await _compressForStorage(JSON.stringify(_parsedRules));
-      await SessionStorage.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, compressed } });
       return _parsedRules;
     })().finally(() => { _parsedRulesPromise = null; });
   }
@@ -3400,83 +3401,21 @@ function _dedupeMalwarePriority(config) {
   };
 }
 
-// Rehydrates ensureRuleDefinitionsLoaded()'s module-level output from
-// BUILT_RULES_SESSION_KEY. Returns true on a real cache hit (module vars are
-// now populated, caller should return without doing a real build); false on
-// any miss/corruption/unavailable-storage (caller falls through to the real
-// build path — never blocks or breaks anything, same philosophy
-// PARSED_RULES_SESSION_KEY already established).
-async function _loadBuiltRulesFromCache(cacheKey) {
-  try {
-    // SessionStorage.get() itself never rejects (resolves {} on failure,
-    // already logged there) — this try/catch is for JSON.parse/decompress/
-    // rehydrate below throwing on a genuinely corrupt cache entry.
-    const { [BUILT_RULES_SESSION_KEY]: cached } = await SessionStorage.get(BUILT_RULES_SESSION_KEY);
-    if (!(cached && cached.key === cacheKey && cached.compressed)) return false;
-    const json = await _decompressFromStorage(cached.compressed);
-    if (!json) return false;
-    const data = JSON.parse(json);
-    DEFAULT_RULES = data.DEFAULT_RULES;
-    MALWARE_RULES = data.MALWARE_RULES;
-    AD_MAINFRAME_RULES = data.AD_MAINFRAME_RULES;
-    QUERY_STRIP_RULES = data.QUERY_STRIP_RULES;
-    NETWORK_REDIRECT_RULES = data.NETWORK_REDIRECT_RULES;
-    NETWORK_BLOCK_RULES = data.NETWORK_BLOCK_RULES;
-    NETWORK_BLOCK_MATCHER = _rehydrateMatcherMap(data.NETWORK_BLOCK_MATCHER);
-    // Plain string-array values — no per-entry RegExp/Set to rehydrate,
-    // unlike NETWORK_BLOCK_MATCHER above (see buildHtmlFilterMatcher's own
-    // comment), so a bare `new Map(Object.entries(...))` round-trips it.
-    HTML_FILTER_MATCHER = new Map(Object.entries(data.HTML_FILTER_MATCHER || {}));
-    TRACKER_RULE_IDS = new Set(data.TRACKER_RULE_IDS);
-    MALWARE_RULE_IDS = new Set(data.MALWARE_RULE_IDS);
-    AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...data.AD_KEYWORDS);
-    TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...data.TRACKER_KEYWORDS);
-    MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...data.MALWARE_KEYWORDS);
-    _ruleGeneration++;
-    return true;
-  } catch (e) { console.warn('[AdBlock] storage.session read (built-rules cache) failed — falling through to a real build:', e); return false; }
-}
-
-async function _saveBuiltRulesToCache(cacheKey) {
-  try {
-    const data = {
-      DEFAULT_RULES, MALWARE_RULES, AD_MAINFRAME_RULES, QUERY_STRIP_RULES,
-      NETWORK_REDIRECT_RULES, NETWORK_BLOCK_RULES,
-      NETWORK_BLOCK_MATCHER: _serializeMatcherMap(NETWORK_BLOCK_MATCHER),
-      HTML_FILTER_MATCHER: Object.fromEntries(HTML_FILTER_MATCHER),
-      TRACKER_RULE_IDS: [...TRACKER_RULE_IDS], MALWARE_RULE_IDS: [...MALWARE_RULE_IDS],
-      AD_KEYWORDS: [...AD_KEYWORDS], TRACKER_KEYWORDS: [...TRACKER_KEYWORDS], MALWARE_KEYWORDS: [...MALWARE_KEYWORDS],
-    };
-    // Dev-only per-field size breakdown — answers "which field actually
-    // bloats this cache" instead of guessing, same spirit as
-    // buildActiveRulesFromStorage()'s own DEBUG_LOCAL rule-build summary
-    // (2026-09-08, motivated by the same live-reported quota overflow).
-    if (DEBUG_LOCAL) {
-      const byteSize = (v) => new TextEncoder().encode(JSON.stringify(v)).length;
-      const breakdown = {};
-      for (const [k, v] of Object.entries(data)) breakdown[k] = byteSize(v);
-      console.log('[AdBlock][DEBUG_LOCAL] built-rules cache field sizes (bytes, pre-compression)', breakdown);
-    }
-    const compressed = await _compressForStorage(JSON.stringify(data));
-    await SessionStorage.set({ [BUILT_RULES_SESSION_KEY]: { key: cacheKey, compressed } });
-  } catch (e) { console.warn('[AdBlock] storage.session write (built-rules cache) failed — next restart will just rebuild again:', e); }
-}
-
+// Cross-SW-restart caching of this function's OUTPUT (builtRulesSessionCache)
+// was removed 2026-09-08 for the same reason as getParsedRules()'s own
+// removed cache (see that function's comment): at "every Rule Source
+// enabled" scale it measured ~20.69MB even compressed, over
+// chrome.storage.session's fixed ~10MB cap, so it never actually cached
+// anything at that scale — just a doomed stringify+compress+write and a
+// warning log on every single cold start. Explicit user call: rebuild from
+// the (in-memory-memoized-per-lifetime) parsed rules every cold start
+// instead. The in-memory early-return two lines below (DEFAULT_RULES.length
+// etc.) still skips rebuilding more than once per SW lifetime, same as
+// before — only the cross-restart persistence is gone.
 async function ensureRuleDefinitionsLoaded() {
   if (DEFAULT_RULES.length && MALWARE_RULES.length && AD_MAINFRAME_RULES.length) return;
   if (!_ruleConfigPromise) {
     _ruleConfigPromise = (async () => {
-      // Cheap (raw-text-sized, not the full parsed-object-sized
-      // PARSED_RULES_SESSION_KEY cache) — compute this BEFORE calling
-      // getParsedRules() so a built-rules cache hit skips that heavier read
-      // entirely, not just the build step. `_hasWebRequestBlocking()` is
-      // folded into the key so a Chrome-shaped (DNR rules) cache entry can
-      // never be misread as a Firefox-shaped (webRequest matcher) one or
-      // vice versa — constant per install in practice, just defensive.
-      const text = await getRulesText();
-      const cacheKey = _hashText(text) + '|' + (_hasWebRequestBlocking() ? 'wr' : 'dnr');
-      if (await _loadBuiltRulesFromCache(cacheKey)) return;
-
       const parsed = await getParsedRules();
       const global = parsed.global || {};
       const config = _dedupeMalwarePriority({
@@ -3499,7 +3438,16 @@ async function ensureRuleDefinitionsLoaded() {
       // and buildActiveRulesFromStorage()'s own gating of networkBlockActive.
       if (_hasWebRequestBlocking()) {
         NETWORK_BLOCK_RULES = [];
-        NETWORK_BLOCK_MATCHER = buildNetworkBlockMatcher(parsed);
+        // Cross-SW-restart cache (chrome.storage.local, quota-guarded) for
+        // this specifically — the only per-entry-RegExp-compiling build in
+        // this function — see _saveMatcherCacheToLocal's own comment.
+        const cachedNetworkBlockMatcher = await _loadMatcherCacheFromLocal(NETWORK_BLOCK_MATCHER_CACHE_KEY, _parsedRulesTextHash, _rehydrateMatcherMap);
+        if (cachedNetworkBlockMatcher) {
+          NETWORK_BLOCK_MATCHER = cachedNetworkBlockMatcher;
+        } else {
+          NETWORK_BLOCK_MATCHER = buildNetworkBlockMatcher(parsed);
+          await _saveMatcherCacheToLocal(NETWORK_BLOCK_MATCHER_CACHE_KEY, _parsedRulesTextHash, _serializeMatcherMap(NETWORK_BLOCK_MATCHER));
+        }
       } else {
         NETWORK_BLOCK_RULES = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
         NETWORK_BLOCK_MATCHER = new Map();
@@ -3521,7 +3469,6 @@ async function ensureRuleDefinitionsLoaded() {
       TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...config.trackerPatterns);
       MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...config.malwarePatterns);
       _ruleGeneration++; // invalidates _ruleFingerprint() — static rule defs just changed
-      await _saveBuiltRulesToCache(cacheKey);
     })().finally(() => {
       _ruleConfigPromise = null;
     });
@@ -3850,7 +3797,21 @@ async function buildActiveRulesFromStorage() {
       // path ones entirely on this browser.
       remoteActive = buildRemoteMalwareRules(remoteDomains, _hasWebRequestBlocking() ? [] : remotePathPatterns);
       _remoteMalwareRulesMemo = { key: remoteKey, rules: remoteActive };
-      MALWARE_PATH_MATCHER = _hasWebRequestBlocking() ? buildMalwarePathMatcher(remotePathPatterns) : new Map();
+      if (_hasWebRequestBlocking()) {
+        // Same cross-SW-restart local-storage cache pattern as
+        // NETWORK_BLOCK_MATCHER in ensureRuleDefinitionsLoaded() — this is
+        // the other per-entry-RegExp-compiling matcher, keyed off the same
+        // remoteKey already used for the in-memory _remoteMalwareRulesMemo.
+        const cachedMalwarePathMatcher = await _loadMatcherCacheFromLocal(MALWARE_PATH_MATCHER_CACHE_KEY, remoteKey, _rehydrateRegexMatcherMap);
+        if (cachedMalwarePathMatcher) {
+          MALWARE_PATH_MATCHER = cachedMalwarePathMatcher;
+        } else {
+          MALWARE_PATH_MATCHER = buildMalwarePathMatcher(remotePathPatterns);
+          await _saveMatcherCacheToLocal(MALWARE_PATH_MATCHER_CACHE_KEY, remoteKey, _serializeRegexMatcherMap(MALWARE_PATH_MATCHER));
+        }
+      } else {
+        MALWARE_PATH_MATCHER = new Map();
+      }
     }
   } else {
     MALWARE_PATH_MATCHER = new Map();

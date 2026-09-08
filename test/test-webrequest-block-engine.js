@@ -31,6 +31,10 @@ function check(label, cond, extra) {
 const storageData = {};
 const sessionStorageData = {};
 let dynamicRules = [];
+// Overridable by tests exercising _saveMatcherCacheToLocal()'s quota guard —
+// default 0 (plenty of headroom) so every other section's cache writes just
+// work.
+let bytesInUseOverride = 0;
 const onBeforeRequestListeners = [];
 const badgeTextByTab = new Map();
 const storageChangeListeners = [];
@@ -58,6 +62,7 @@ const chromeStub = {
         for (const fn of storageChangeListeners) fn(changes, 'local');
       },
       async remove(k) { for (const key of (Array.isArray(k) ? k : [k])) delete storageData[key]; },
+      async getBytesInUse() { return bytesInUseOverride; },
     },
     session: {
       async get(keys) {
@@ -143,6 +148,11 @@ self.__test = {
   _networkBlockRequestHandler, _updateNetworkBlockListener,
   ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules,
   buildMalwarePathMatcher, _matcherEntryCount,
+  _loadMatcherCacheFromLocal, _saveMatcherCacheToLocal,
+  _serializeMatcherMap, _rehydrateMatcherMap,
+  _serializeRegexMatcherMap, _rehydrateRegexMatcherMap,
+  NETWORK_BLOCK_MATCHER_CACHE_KEY, MALWARE_PATH_MATCHER_CACHE_KEY,
+  LOCAL_STORAGE_SAFE_LIMIT_BYTES,
   get NETWORK_BLOCK_MATCHER() { return NETWORK_BLOCK_MATCHER; },
   set NETWORK_BLOCK_MATCHER(v) { NETWORK_BLOCK_MATCHER = v; },
   get MALWARE_PATH_MATCHER() { return MALWARE_PATH_MATCHER; },
@@ -305,6 +315,9 @@ const T = sandbox.__test;
     check('network_block_rules entries never leak into the DNR allRules array either',
       !allRules.some(r => r.id >= 700000 && r.id < 800000), allRules.filter(r => r.id >= 700000 && r.id < 800000));
     check('NETWORK_BLOCK_MATCHER was populated instead', T.NETWORK_BLOCK_MATCHER.size > 0, T.NETWORK_BLOCK_MATCHER.size);
+    check('a real end-to-end build also persisted NETWORK_BLOCK_MATCHER to its chrome.storage.local cache',
+      !!(storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY] && storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY].compressed),
+      storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY]);
   }
 
   console.log('\n== 6b. Integration: remoteMalwarePathPatterns ALSO routes to MALWARE_PATH_MATCHER, not DNR, on this stub (2026-08-31 follow-up) ==');
@@ -320,6 +333,9 @@ const T = sandbox.__test;
     check('MALWARE_PATH_MATCHER was populated from remoteMalwarePathPatterns', T.MALWARE_PATH_MATCHER.has('malware-host.example'), [...T.MALWARE_PATH_MATCHER.keys()]);
     check('the bare-domain malware rules (batched, small) STILL go through DNR as before — only the path ones moved',
       allRules.some(r => r.id >= 100000 && r.id < 200000), allRules.filter(r => r.id >= 100000 && r.id < 200000).length);
+    check('a real end-to-end build also persisted MALWARE_PATH_MATCHER to its chrome.storage.local cache',
+      !!(storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY] && storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY].compressed),
+      storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY]);
   }
 
   console.log('\n== 7. _matcherEntryCount(): powers GET_RULE_COUNT so the popup shows the SAME meaning on every browser (2026-08-31 — live-reported: Chrome popup showed 17526, Firefox showed only 155 for equivalent protection, because getDynamicRules() alone cannot see either matcher) ==');
@@ -327,6 +343,48 @@ const T = sandbox.__test;
     const m1 = new Map([['a.example', [1, 2, 3]], ['b.example', [1]]]);
     check('sums entry counts across every domain bucket', T._matcherEntryCount(m1) === 4, T._matcherEntryCount(m1));
     check('an empty Map (Chrome/Edge — matchers always unused there) counts as 0', T._matcherEntryCount(new Map()) === 0);
+  }
+
+  console.log('\n== 8. NETWORK_BLOCK_MATCHER chrome.storage.local cache round-trip (2026-09-08) ==');
+  {
+    await T._saveMatcherCacheToLocal(T.NETWORK_BLOCK_MATCHER_CACHE_KEY, 'key-1', T._serializeMatcherMap(matcher));
+    check('save writes the {key, compressed} wrapper to chrome.storage.local',
+      storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY] && storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY].key === 'key-1',
+      storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY]);
+    const loaded = await T._loadMatcherCacheFromLocal(T.NETWORK_BLOCK_MATCHER_CACHE_KEY, 'key-1', T._rehydrateMatcherMap);
+    check('load with the SAME key round-trips the matcher (same domains)',
+      loaded instanceof Map && [...loaded.keys()].sort().join(',') === [...matcher.keys()].sort().join(','), loaded && [...loaded.keys()]);
+    check('a rehydrated entry\'s regex SOURCE matches the original (RegExp itself can\'t survive JSON, only .source)',
+      loaded.get('ads-target.example')[0].regex.source === matcher.get('ads-target.example')[0].regex.source);
+    const missOnDifferentKey = await T._loadMatcherCacheFromLocal(T.NETWORK_BLOCK_MATCHER_CACHE_KEY, 'key-2', T._rehydrateMatcherMap);
+    check('load with a DIFFERENT key is treated as a miss (content hash changed -> self-invalidates)', missOnDifferentKey === null, missOnDifferentKey);
+  }
+
+  console.log('\n== 8b. MALWARE_PATH_MATCHER chrome.storage.local cache round-trip — simpler Map<domain, RegExp[]> shape ==');
+  {
+    const malwareMatcher = T.buildMalwarePathMatcher(['||bad.example/x.exe^', '||bad.example/y.exe^']);
+    await T._saveMatcherCacheToLocal(T.MALWARE_PATH_MATCHER_CACHE_KEY, 'mkey-1', T._serializeRegexMatcherMap(malwareMatcher));
+    const loaded = await T._loadMatcherCacheFromLocal(T.MALWARE_PATH_MATCHER_CACHE_KEY, 'mkey-1', T._rehydrateRegexMatcherMap);
+    check('MALWARE_PATH_MATCHER round-trips through its own (simpler, no-options) serialize/rehydrate pair',
+      loaded instanceof Map && loaded.get('bad.example').length === 2 &&
+      loaded.get('bad.example')[0].source === malwareMatcher.get('bad.example')[0].source, loaded && loaded.get('bad.example'));
+  }
+
+  console.log('\n== 8c. _saveMatcherCacheToLocal(): quota guard never risks pushing storage.local over budget ==');
+  {
+    delete storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY];
+    bytesInUseOverride = T.LOCAL_STORAGE_SAFE_LIMIT_BYTES + 1; // already over budget before this write's own bytes are even added
+    await T._saveMatcherCacheToLocal(T.NETWORK_BLOCK_MATCHER_CACHE_KEY, 'key-1', T._serializeMatcherMap(matcher));
+    check('write is skipped entirely when storage.local is already at/near quota — no throw, no partial write',
+      storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY] === undefined, storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY]);
+    bytesInUseOverride = null; // getBytesInUse() itself failing/unavailable
+    await T._saveMatcherCacheToLocal(T.NETWORK_BLOCK_MATCHER_CACHE_KEY, 'key-1', T._serializeMatcherMap(matcher));
+    check('a null (unknown) bytesInUse reading is treated as "assume worst case", not as "assume empty" — write still skipped',
+      storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY] === undefined, storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY]);
+    bytesInUseOverride = 0; // restore for any later test relying on normal cache writes
+    await T._saveMatcherCacheToLocal(T.NETWORK_BLOCK_MATCHER_CACHE_KEY, 'key-1', T._serializeMatcherMap(matcher));
+    check('back under budget, the write goes through normally',
+      !!storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY], storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY]);
   }
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);

@@ -123,6 +123,16 @@ self.ADBLOCK_CONFIG = {
   RULES_CACHE_TEXT_KEY: 'siteRulesCacheText',
   RULES_CACHE_TIME_KEY: 'siteRulesCacheTime',
   RULES_CACHE_TTL_MS: 6 * 60 * 60 * 1000,
+  // Firefox-only (webRequestBlocking) cross-SW-restart caches for the two
+  // matcher structures that are actually expensive to rebuild (per-entry
+  // RegExp compilation) — see background.js's ensureRuleDefinitionsLoaded()/
+  // buildActiveRulesFromStorage() and _saveMatcherCacheToLocal()'s own
+  // comment. Stored in chrome.storage.local (own keys, separate from
+  // RULES_CACHE_TEXT_KEY above, which several independent readers —
+  // content/site-rules-loader.js, tools/inspect-rule-cache-size.js — expect
+  // to always decompress to plain ABP/site-rules text, not a matcher object).
+  NETWORK_BLOCK_MATCHER_CACHE_KEY: 'networkBlockMatcherCacheText',
+  MALWARE_PATH_MATCHER_CACHE_KEY: 'malwarePathMatcherCacheText',
   // Per-host LRU-capped map (see site-block.js's _DIRECT_CSS_LRU_LIMIT)
   // holding the last CSS site-block.js successfully computed for
   // direct_hide_selectors, keyed by hostname — read via chrome.storage.session

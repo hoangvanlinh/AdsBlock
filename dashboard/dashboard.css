@@ -474,7 +474,7 @@ body::before {
   cursor: pointer;
 }
 .chart-dot:hover {
-  r: 5;
+  r: 5px;
   opacity: 1;
 }
 

@@ -189,7 +189,6 @@ self.__test = {
   _applyHtmlFilterSelectors, _attachHtmlFilter, _htmlFilterRequestHandler,
   _hasHtmlStreamFilter,
   ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage,
-  _saveBuiltRulesToCache, _loadBuiltRulesFromCache,
   get HTML_FILTER_MATCHER() { return HTML_FILTER_MATCHER; },
   set HTML_FILTER_MATCHER(v) { HTML_FILTER_MATCHER = v; },
   get settingsCache() { return _settingsCache; },
@@ -476,18 +475,6 @@ function fakeHeadersDetails(overrides) {
     check('capability check itself reports false in this fresh context (not a stale cached true)',
       !(noCapSandbox.EXT && noCapSandbox.EXT.webRequest && typeof noCapSandbox.EXT.webRequest.filterResponseData === 'function'));
     check('no capability at load time -> registration is skipped entirely, not just deferred', noCapListeners.length === 0);
-  }
-
-  console.log('\n== 8. Cache round-trip: HTML_FILTER_MATCHER survives _saveBuiltRulesToCache/_loadBuiltRulesFromCache ==');
-  {
-    T.HTML_FILTER_MATCHER = new Map([['tinhte.vn', ['.pro-container']]]);
-    await T._saveBuiltRulesToCache('cache-key-1');
-    T.HTML_FILTER_MATCHER = new Map(); // clobber before reload to prove the load actually restores it
-    const loaded = await T._loadBuiltRulesFromCache('cache-key-1');
-    check('cache load reports success', loaded === true);
-    check('HTML_FILTER_MATCHER round-trips through plain JSON with its selector arrays intact',
-      JSON.stringify(T.HTML_FILTER_MATCHER.get('tinhte.vn')) === JSON.stringify(['.pro-container']),
-      T.HTML_FILTER_MATCHER.get('tinhte.vn'));
   }
 
   console.log('\n== 9. Integration: buildActiveRulesFromStorage() (re)builds HTML_FILTER_MATCHER via ensureRuleDefinitionsLoaded ==');
