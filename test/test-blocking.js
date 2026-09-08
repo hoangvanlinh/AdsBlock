@@ -306,7 +306,9 @@ self.__test = {
   _entryUrls, _primaryUrl, _isDefaultSourceEnabled,
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
   _isValidUrlFilter, buildQueryStripRules, buildPatternRules,
+  REDIRECT_RESOURCE_BY_TYPE, SPECIFIC_SCRIPT_REDIRECTS,
   buildNetworkBlockRules, buildDomainNetworkBlockRules, _abpParseNetworkOptions, _abpEncodeNetworkBlockEntry, _abpSplitNetworkPattern, NETWORK_BLOCK_RULE_ID_START,
+  _domainToAscii,
   _trimToDynamicRuleLimits, _dynamicRuleLimits,
   get NETWORK_BLOCK_RULES() { return NETWORK_BLOCK_RULES; },
   RULE_SOURCE_ERRORS_KEY,
@@ -433,6 +435,61 @@ function check(name, cond, detail = '') {
   check('malware rules built from config', T.MALWARE_RULES.length > 0);
   check('config tracker list used (not fallback)',
     (g.tracker_network_patterns || []).length > 10);
+
+  console.log('\n== 1a. buildPatternRules: curated vs bulk domain split (2026-09-08) ==');
+  // Real-world motivation: with every default Rule Source enabled, the ad/
+  // tracker domain lists (EasyList/EasyPrivacy/etc, tens of thousands of
+  // entries) used to get duplicated into a full copy PER resourceType-
+  // placeholder group (script/image/xhr/sub_frame/other) — live-measured at
+  // ~31.6MB / 1.36s for one updateDynamicRules() call. Only
+  // specificScriptRedirects' own curated domains (a handful, each with a
+  // real dedicated stub) still pay that per-type fan-out cost; everything
+  // else collapses to ONE block rule spanning every resourceType at once.
+  {
+    const bulkSnippet = T.buildPatternRules(
+      ['bulk-one.example', 'bulk-two.example'], 1,
+      ['script', 'image', 'xmlhttprequest', 'sub_frame', 'other'], 1,
+      T.REDIRECT_RESOURCE_BY_TYPE, T.SPECIFIC_SCRIPT_REDIRECTS
+    );
+    check('bulk-only domains (no specificScriptRedirects entry): exactly 2 rules total (1 for script, 1 for every other type combined), not 5',
+      bulkSnippet.length === 2, bulkSnippet);
+    check('...the non-script bulk rule spans ALL remaining resourceTypes in one condition',
+      bulkSnippet.some(r => r.action.type === 'block' &&
+        JSON.stringify((r.condition.resourceTypes || []).sort()) === JSON.stringify(['image', 'other', 'sub_frame', 'xmlhttprequest']) &&
+        (r.condition.requestDomains || []).includes('bulk-one.example') &&
+        (r.condition.requestDomains || []).includes('bulk-two.example')),
+      bulkSnippet);
+    check('...the script bulk rule still redirects to the generic noop.js placeholder (unchanged behavior)',
+      bulkSnippet.some(r => r.condition.resourceTypes && r.condition.resourceTypes[0] === 'script' &&
+        r.action.type === 'redirect' && r.action.redirect.url.includes('noop.js')),
+      bulkSnippet);
+  }
+  {
+    const curatedSnippet = T.buildPatternRules(
+      ['doubleclick.net', 'bulk-one.example'], 1,
+      ['script', 'image', 'xmlhttprequest', 'sub_frame', 'other'], 1,
+      T.REDIRECT_RESOURCE_BY_TYPE, T.SPECIFIC_SCRIPT_REDIRECTS
+    );
+    check('a curated domain (doubleclick.net, has its own script stub) still gets its OWN dedicated per-domain script rule',
+      curatedSnippet.some(r => r.condition.requestDomains && r.condition.requestDomains.length === 1 &&
+        r.condition.requestDomains[0] === 'doubleclick.net' && r.condition.resourceTypes[0] === 'script' &&
+        r.action.redirect && r.action.redirect.url.includes('doubleclick_instream_ad_status.js')),
+      curatedSnippet);
+    check('...and still gets the full per-type placeholder fan-out for the OTHER resourceTypes (image/xhr/sub_frame/other as separate rules, not collapsed)',
+      curatedSnippet.filter(r => r.condition.requestDomains && r.condition.requestDomains.includes('doubleclick.net') && r.condition.resourceTypes[0] !== 'script').length >= 3,
+      curatedSnippet);
+    check('...while bulk-one.example (mixed into the SAME call) still only gets the collapsed single non-script rule',
+      curatedSnippet.filter(r => r.condition.requestDomains && r.condition.requestDomains.includes('bulk-one.example') && r.condition.resourceTypes[0] !== 'script').length === 1,
+      curatedSnippet);
+  }
+  {
+    // End-to-end: the REAL default config (real EasyList-scale domain
+    // counts) produces dramatically fewer rules than one-per-domain-per-type
+    // would imply, and every bulk domain is still genuinely blocked.
+    const before = T.DEFAULT_RULES.length;
+    check('DEFAULT_RULES stays a reasonable rule count even with real curated+bulk domains mixed (no accidental blowup)',
+      before > 0 && before < 200, before);
+  }
 
   console.log('\n== 2. applyNetworkRules passes Chrome-like validation ==');
   let applyErr = null;
@@ -2080,6 +2137,50 @@ function check(name, cond, detail = '') {
     const rules = T.buildDomainNetworkBlockRules(T.parseRuleText(converted), T.NETWORK_BLOCK_RULE_ID_START);
     check('shared budget: exactly 5 real DNR rules built (across 5 distinct domains)',
       rules.length === 5, rules.length);
+  }
+
+  console.log('\n== 25gg-bis. buildNetworkBlockRules: non-ASCII $domain=/$denyallow= values (2026-09-08) ==');
+  // Live-reported 2026-09-08: a raw Unicode domain in a network_block_rules
+  // entry's domains/denyallow field (e.g. a region-specific filter list's
+  // $domain= written in the site's own script) made Chrome reject the WHOLE
+  // updateDynamicRules() batch — "Rule with id 710210 cannot have non-ascii
+  // characters as part of 'initiatorDomains' key" — only surfaced once
+  // enough Rule Sources were enabled to actually include one such entry.
+  // _domainToAscii (new) now converts via the platform's own URL parser
+  // (IDNA-to-punycode) or drops just that one domain — never the whole rule.
+  {
+    check('_domainToAscii: plain ASCII domain passes through unchanged',
+      T._domainToAscii('example.com') === 'example.com');
+    check('_domainToAscii: a real IDN (Cyrillic) domain converts to its punycode form',
+      T._domainToAscii('пример.рф') === 'xn--e1afmkfd.xn--p1ai', T._domainToAscii('пример.рф'));
+    check('_domainToAscii: garbage that the URL parser can\'t turn into a host returns null',
+      T._domainToAscii('') === null);
+  }
+  {
+    // path types domains denyallow methods thirdParty — see
+    // _abpEncodeNetworkBlockEntry's own comment for the field layout.
+    const entries = [
+      '/ads.js * good.example,пример.рф * * *', // one ASCII + one non-ASCII domain
+      '/beacon.js * * плохой.example * *',      // non-ASCII denyallow only
+    ];
+    let built;
+    let threw = null;
+    try { built = T.buildNetworkBlockRules(entries, 1); } catch (e) { threw = e; }
+    check('buildNetworkBlockRules never throws on a non-ASCII domain (would have rejected the WHOLE updateDynamicRules() batch)',
+      threw === null, threw && threw.message);
+    check('the ASCII domain in a mixed $domain= list survives',
+      built[0].condition.initiatorDomains.includes('good.example'), built[0]);
+    check('the non-ASCII domain in that SAME list is converted to punycode, not dropped silently as a whole rule',
+      built[0].condition.initiatorDomains.includes('xn--e1afmkfd.xn--p1ai'), built[0]);
+    check('a non-ASCII $denyallow= value also converts to punycode',
+      built[1].condition.excludedRequestDomains.includes('xn--i1adjac2b.example'), built[1]);
+    check('every produced rule.condition only ever contains ASCII domain strings (the actual DNR requirement)',
+      built.every(r => [
+        ...(r.condition.initiatorDomains || []),
+        ...(r.condition.excludedInitiatorDomains || []),
+        ...(r.condition.excludedRequestDomains || []),
+      ].every(d => /^[\x00-\x7F]*$/.test(d))),
+      built);
   }
 
   console.log('\n== 25hh. network_block_rules under [host_patterns] merges with that domain\'s OWN cosmetic/scriptlet rules, and never buckets with an unrelated domain ==');

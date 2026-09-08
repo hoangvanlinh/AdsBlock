@@ -346,6 +346,30 @@ function buildNetworkRedirectRules(entries, startId) {
 // (see ABP_SIMPLE_NETWORK_OPTS_RE's own comment for why that matters here).
 // Same "one bad urlFilter must not reject the WHOLE updateDynamicRules()
 // call" validation every other builder here already does.
+//
+// Chrome DNR requires every domain in initiatorDomains/
+// excludedInitiatorDomains/excludedRequestDomains to be plain ASCII
+// (punycode for IDN) — a raw Unicode domain (e.g. a $domain= value from a
+// region-specific filter list written in the site's own script) rejects the
+// WHOLE updateDynamicRules() batch with "cannot have non-ascii characters as
+// part of ... key" (live-reported 2026-09-08, once a large enough set of
+// Rule Sources was enabled to actually include one). urlFilter/pattern
+// already gets this same class of protection via _isValidUrlFilter; this is
+// the missing equivalent for the domain-list fields, which took a raw
+// comma-split value with no validation at all before this. Uses the
+// platform's own URL parser to convert (it already performs IDNA-to-punycode
+// normalization as part of normal hostname parsing) rather than a
+// hand-rolled punycode implementation; returns null for a domain the parser
+// can't turn into a valid ASCII host, so the caller drops just that ONE
+// domain — not the whole rule, not the whole batch.
+function _domainToAscii(domain) {
+  try {
+    const host = new URL('http://' + domain).hostname;
+    return host && /^[\x00-\x7F]*$/.test(host) ? host : null;
+  } catch {
+    return null;
+  }
+}
 function buildNetworkBlockRules(entries, startId) {
   const rules = [];
   let id = startId;
@@ -367,12 +391,18 @@ function buildNetworkBlockRules(entries, startId) {
     if (domainsField !== '*') {
       const include = [], exclude = [];
       for (const d of domainsField.split(',')) {
-        if (d.charAt(0) === '~') exclude.push(d.slice(1)); else include.push(d);
+        const negated = d.charAt(0) === '~';
+        const ascii = _domainToAscii(negated ? d.slice(1) : d);
+        if (!ascii) continue; // can't represent as ASCII — drop just this one domain, don't guess
+        (negated ? exclude : include).push(ascii);
       }
       if (include.length) condition.initiatorDomains = include;
       if (exclude.length) condition.excludedInitiatorDomains = exclude;
     }
-    if (denyallowField !== '*') condition.excludedRequestDomains = denyallowField.split(',');
+    if (denyallowField !== '*') {
+      const denyallow = denyallowField.split(',').map(_domainToAscii).filter(Boolean);
+      if (denyallow.length) condition.excludedRequestDomains = denyallow;
+    }
     if (methodsField !== '*') {
       const include = [], exclude = [];
       for (const m of methodsField.split(',')) {
@@ -459,11 +489,26 @@ function buildNetworkBlockMatcher(parsed) {
         }
         if (domainsField !== '*') {
           const include = new Map(), exclude = new Map();
-          for (const d of domainsField.split(',')) { if (d.charAt(0) === '~') exclude.set(d.slice(1), true); else include.set(d, true); }
+          // No DNR "reject the whole batch" risk on this JS-matching path
+          // (Firefox webRequestBlocking, not native declarativeNetRequest),
+          // but a raw Unicode domain here would still just silently never
+          // match anything — real request hostnames are always reported in
+          // ASCII/punycode form — so normalize the same way buildNetworkBlockRules
+          // does, for the same underlying reason (a $domain= value can be
+          // written in the site's own script).
+          for (const d of domainsField.split(',')) {
+            const negated = d.charAt(0) === '~';
+            const ascii = _domainToAscii(negated ? d.slice(1) : d);
+            if (!ascii) continue;
+            (negated ? exclude : include).set(ascii, true);
+          }
           if (include.size) entry.initiatorDomains = include;
           if (exclude.size) entry.excludedInitiatorDomains = exclude;
         }
-        if (denyallowField !== '*') entry.excludedRequestDomains = new Map(denyallowField.split(',').map(d => [d, true]));
+        if (denyallowField !== '*') {
+          const denyallow = denyallowField.split(',').map(_domainToAscii).filter(Boolean);
+          if (denyallow.length) entry.excludedRequestDomains = new Map(denyallow.map(d => [d, true]));
+        }
         if (methodsField !== '*') {
           const include = [], exclude = [];
           for (const m of methodsField.split(',')) { if (m.charAt(0) === '~') exclude.push(m.slice(1)); else include.push(m); }
@@ -919,7 +964,6 @@ async function _compressForStorage(text) {
   // old-browser/CompressionStream-unavailable fallback below), so reading it
   // back needs no changes, and toggling DEBUG_LOCAL on/off never breaks
   // already-stored (possibly compressed) values either way.
-  if (DEBUG_LOCAL) return { format: 'raw', data: text };
   try {
     if (typeof CompressionStream === 'undefined') throw new Error('CompressionStream unavailable');
     const cs = new CompressionStream('deflate-raw');
@@ -2829,17 +2873,34 @@ function buildPatternRules(patterns, startId, resourceTypes, priority, redirectB
   const rules = [];
   let id = startId;
 
+  // Bulk-vs-curated split (2026-09-08): specificScriptRedirects' own key set
+  // doubles as the ONLY domains that pay the "one rule per resourceType-
+  // placeholder group" fan-out cost below — a real, already-vetted-as-
+  // "matters enough for a dedicated stub" curated list (currently ~10
+  // entries), not a guess. Every other domain — the actual bulk of
+  // ad_network_patterns/tracker_network_patterns, tens of thousands of
+  // entries from EasyList/EasyPrivacy/etc — gets ONE plain block rule
+  // spanning every resourceType this call covers, instead of one full copy
+  // of that same huge array per placeholder-file group. Still fully blocks
+  // the request either way; what's given up is ONLY the "make the bait
+  // request look like it succeeded" property (see REDIRECT_RESOURCE_BY_TYPE's
+  // own comment on why that exists at all) for domains this repo has no
+  // specific evidence are ever bait-checked directly. Live-measured
+  // motivation: real EasyList+EasyPrivacy+all-sources-enabled content
+  // duplicated its domain arrays across ~9 rules this way, measured at
+  // ~31.6MB / 1.36s for a single updateDynamicRules() call.
+  const curatedDomains = specificScriptRedirects ? domains.filter(d => specificScriptRedirects[d]) : [];
+  const bulkDomains = specificScriptRedirects ? domains.filter(d => !specificScriptRedirects[d]) : domains;
+
   // 'script' gets split out first when per-domain overrides are in play:
-  // domains with a specific stub each get their own single-domain rule;
-  // everything else (domains without an override, plus all urlFilters)
-  // still gets batched under the generic per-type placeholder exactly like
-  // every other resourceType below.
+  // curated domains with a specific stub each get their own single-domain
+  // rule; bulk domains (no override) get the generic per-type placeholder,
+  // batched into ONE rule same as before (script was never part of the
+  // expensive fan-out below — only one file, noop.js, applies to it).
   let remainingTypes = resourceTypes;
   if (specificScriptRedirects && resourceTypes.includes('script')) {
     remainingTypes = resourceTypes.filter(t => t !== 'script');
-    const overridden = domains.filter(d => specificScriptRedirects[d]);
-    const generic = domains.filter(d => !specificScriptRedirects[d]);
-    for (const d of overridden) {
+    for (const d of curatedDomains) {
       rules.push({
         id: id++, priority,
         action: _redirectAction(specificScriptRedirects[d]),
@@ -2848,16 +2909,26 @@ function buildPatternRules(patterns, startId, resourceTypes, priority, redirectB
     }
     const scriptFile = redirectByType && redirectByType.script;
     const scriptAction = scriptFile ? _redirectAction(scriptFile) : { type: 'block' };
-    if (generic.length) {
-      rules.push({ id: id++, priority, action: scriptAction, condition: { requestDomains: generic, resourceTypes: ['script'] } });
+    if (bulkDomains.length) {
+      rules.push({ id: id++, priority, action: scriptAction, condition: { requestDomains: bulkDomains, resourceTypes: ['script'] } });
     }
     for (const f of urlFilters) {
       rules.push({ id: id++, priority, action: scriptAction, condition: { urlFilter: f, resourceTypes: ['script'] } });
     }
   }
 
-  // Remaining resourceTypes: group by the action they'll get, so types
-  // sharing a placeholder (or sharing "just block") collapse into one rule.
+  // Bulk domains, remaining resourceTypes: ONE block rule spanning every
+  // remaining type at once — see this function's own top comment for why
+  // this is safe to collapse (unlike the curated group-by-placeholder loop
+  // below, bulk domains never got a type-specific placeholder anyway).
+  if (bulkDomains.length && remainingTypes.length) {
+    rules.push({ id: id++, priority, action: { type: 'block' }, condition: { requestDomains: bulkDomains, resourceTypes: remainingTypes } });
+  }
+
+  // Curated domains, remaining resourceTypes: group by the action they'll
+  // get, so types sharing a placeholder (or sharing "just block") collapse
+  // into one rule — same grouping this whole function always did, just
+  // scoped to the small curated list now instead of every domain.
   const groups = new Map(); // actionKey -> { action, types }
   for (const t of remainingTypes) {
     const file = redirectByType && redirectByType[t];
@@ -2868,8 +2939,8 @@ function buildPatternRules(patterns, startId, resourceTypes, priority, redirectB
     groups.get(actionKey).types.push(t);
   }
   for (const { action, types } of groups.values()) {
-    if (domains.length) {
-      rules.push({ id: id++, priority, action, condition: { requestDomains: domains, resourceTypes: types } });
+    if (curatedDomains.length) {
+      rules.push({ id: id++, priority, action, condition: { requestDomains: curatedDomains, resourceTypes: types } });
     }
     for (const f of urlFilters) {
       rules.push({ id: id++, priority, action, condition: { urlFilter: f, resourceTypes: types } });
@@ -3105,6 +3176,33 @@ async function getParsedRules() {
       // reduction vs reparsing from scratch. The extra stringify+compress
       // cost on write (~378ms measured) doesn't matter: it happens once per
       // rules change, not on the cold-start hot path this cache exists for.
+      // Dev-only per-section size breakdown — answers "which section of the
+      // merged rules text actually bloats this cache" instead of guessing
+      // (2026-09-08, motivated by a live-reported quota overflow at ~17MB
+      // with every Rule Source enabled). Sections are the top-level
+      // site-rules.txt [section] keys — 'global' plus one per curated/
+      // ABP-dedicated domain — summed separately from 'global's own
+      // sub-keys (ad_network_patterns/tracker_network_patterns are the
+      // usual suspects there) so both "one huge section" and "thousands of
+      // small dedicated sections" show up distinctly.
+      if (DEBUG_LOCAL) {
+        const byteSize = (v) => new TextEncoder().encode(JSON.stringify(v)).length;
+        const sectionSizes = {};
+        let dedicatedCount = 0, dedicatedBytes = 0;
+        for (const [section, body] of Object.entries(_parsedRules)) {
+          const size = byteSize(body);
+          if (section === 'global' || section === 'host_patterns') sectionSizes[section] = size;
+          else { dedicatedCount++; dedicatedBytes += size; }
+        }
+        sectionSizes['—all other (dedicated per-domain) sections combined'] = dedicatedBytes;
+        sectionSizes['—dedicated section count'] = dedicatedCount;
+        console.log('[AdBlock][DEBUG_LOCAL] parsed-rules cache top-level section sizes (bytes, pre-compression)', sectionSizes);
+        if (_parsedRules.global) {
+          const globalKeySizes = {};
+          for (const [k, v] of Object.entries(_parsedRules.global)) globalKeySizes[k] = byteSize(v);
+          console.log('[AdBlock][DEBUG_LOCAL] parsed-rules cache [global] section, per-key sizes (bytes)', globalKeySizes);
+        }
+      }
       const compressed = await _compressForStorage(JSON.stringify(_parsedRules));
       await SessionStorage.set({ [PARSED_RULES_SESSION_KEY]: { hash: textHash, compressed } });
       return _parsedRules;
@@ -3349,6 +3447,16 @@ async function _saveBuiltRulesToCache(cacheKey) {
       TRACKER_RULE_IDS: [...TRACKER_RULE_IDS], MALWARE_RULE_IDS: [...MALWARE_RULE_IDS],
       AD_KEYWORDS: [...AD_KEYWORDS], TRACKER_KEYWORDS: [...TRACKER_KEYWORDS], MALWARE_KEYWORDS: [...MALWARE_KEYWORDS],
     };
+    // Dev-only per-field size breakdown — answers "which field actually
+    // bloats this cache" instead of guessing, same spirit as
+    // buildActiveRulesFromStorage()'s own DEBUG_LOCAL rule-build summary
+    // (2026-09-08, motivated by the same live-reported quota overflow).
+    if (DEBUG_LOCAL) {
+      const byteSize = (v) => new TextEncoder().encode(JSON.stringify(v)).length;
+      const breakdown = {};
+      for (const [k, v] of Object.entries(data)) breakdown[k] = byteSize(v);
+      console.log('[AdBlock][DEBUG_LOCAL] built-rules cache field sizes (bytes, pre-compression)', breakdown);
+    }
     const compressed = await _compressForStorage(JSON.stringify(data));
     await SessionStorage.set({ [BUILT_RULES_SESSION_KEY]: { key: cacheKey, compressed } });
   } catch (e) { console.warn('[AdBlock] storage.session write (built-rules cache) failed — next restart will just rebuild again:', e); }
@@ -3807,6 +3915,32 @@ async function buildActiveRulesFromStorage() {
   ];
   const allRules = _trimToDynamicRuleLimits(combinedRules);
 
+  // Dev-only rule-build summary — never runs for a real user (DEBUG_LOCAL is
+  // false in shipped config.js, see that constant's own comment). Answers
+  // "how many rules, from which tier, how big" without having to paste
+  // tools/inspect-rule-cache-size.js into the SW console by hand every time.
+  if (DEBUG_LOCAL) {
+    const byteSize = (v) => new TextEncoder().encode(JSON.stringify(v)).length;
+    console.log('[AdBlock][DEBUG_LOCAL] rule build summary', {
+      default: filteredDefaultRules.length,
+      adMainFrame: adMainFrameActive.length,
+      malware: malwareActive.length,
+      remoteMalware: remoteActive.length,
+      custom: customBlockRules.length,
+      focus: focusRules.length,
+      pauseAllow: pauseAllowRules.length,
+      queryStrip: queryStripActive.length,
+      networkRedirect: networkRedirectActive.length,
+      networkBlock: networkBlockActive.length,
+      '—combinedTotal': combinedRules.length,
+      '—afterTrim': allRules.length,
+      '—trimmedAway': combinedRules.length - allRules.length,
+      '—approxBytes': byteSize(allRules),
+      remoteMalwareDomainsRaw: remoteDomains.length,
+      remoteMalwarePathPatternsRaw: remotePathPatterns.length,
+    });
+  }
+
   return { enabled: true, allRules };
 }
 
@@ -3896,7 +4030,23 @@ async function _applyNetworkRulesImpl() {
   const { removeRuleIds, addRules, nextHashById } = _computeRuleDiff(allRules, existing);
   if (removeRuleIds.length || addRules.length) {
     try {
+      // Dev-only timing — how long the actual DNR IPC call takes for
+      // THIS diff (not the full allRules set — Phase 3a above already only
+      // sends what changed, so this is the real per-call cost, not a
+      // worst-case full-rebuild number every single time). See
+      // buildActiveRulesFromStorage()'s own DEBUG_LOCAL summary for the
+      // full-set byte size context this pairs with.
+      const t0 = DEBUG_LOCAL ? performance.now() : 0;
       await EXT.declarativeNetRequest.updateDynamicRules({ removeRuleIds, addRules });
+      if (DEBUG_LOCAL) {
+        const byteSize = (v) => new TextEncoder().encode(JSON.stringify(v)).length;
+        console.log('[AdBlock][DEBUG_LOCAL] updateDynamicRules() timing', {
+          ms: Math.round(performance.now() - t0),
+          removeCount: removeRuleIds.length,
+          addCount: addRules.length,
+          addBytes: byteSize(addRules),
+        });
+      }
     } catch (e) {
       // Chrome validates the WHOLE batch before committing any of it — one
       // malformed rule anywhere (e.g. a third-party ABP list contributing an
