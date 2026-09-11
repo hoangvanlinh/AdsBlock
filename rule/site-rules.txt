@@ -29,10 +29,6 @@ pinterest.com = pinterest
 quora.com = quora
 amazon.* = amazon
 google.* = google
-twinfinite.net = twinfinite
-
-[global]
-ad_network_patterns = inventorycache.com | succeedscene.com
 
 [youtube]
 json_prune_xhr = playerResponse.adPlacements playerResponse.playerAds playerResponse.adSlots adPlacements playerAds adSlots  contents.twoColumnBrowseResultsRenderer.tabs.[].tabRenderer.content.richGridRenderer.contents.[-].richItemRenderer.content.adSlotRenderer entries.[-].command.reelWatchEndpoint.adClientParams.isAd, , /playlist\?list=\|player\?\|watch\?[tv]=\|get_watch\?/ | [?..userAgent*="adunit"]..client[?.clientName=="WEB"]+={"clientScreen":"ADUNIT"}, , /player?/ | [?..userAgent*="instream"]..playbackContext[?.contentPlaybackContext]+={"adPlaybackContext":{"adType":"AD_TYPE_INSTREAM"}}, , /player?/ | [?..userAgent*="eafg"]+={"params":"eAFgAQ"}, , /player?/
@@ -126,7 +122,5 @@ direct_hide_selectors = #tads | #tadsb | #bottomads | #rhsads | div[data-text-ad
 paths = /search
 query_keys = q
 
-[twinfinite]
-direct_hide_selectors = .DCDOr
 
 
