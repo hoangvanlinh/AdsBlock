@@ -147,7 +147,7 @@ const chromeStub = {
     onStartup: { addListener() {} },
     onMessage: { addListener() {} },
   },
-  alarms: { create() {}, clear() {}, onAlarm: { addListener() {} } },
+  alarms: { get() { return Promise.resolve(undefined); }, create() {}, clear() {}, onAlarm: { addListener() {} } },
   tabs: {
     async query() { return []; },
     sendMessage: async () => {},

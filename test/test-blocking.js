@@ -166,7 +166,7 @@ const chromeStub = {
     onStartup: noopEvent,
     onMessage: { addListener(fn) { messageListeners.push(fn); } },
   },
-  alarms: { create() {}, clear() {}, onAlarm: noopEvent },
+  alarms: { get() { return Promise.resolve(undefined); }, create() {}, clear() {}, onAlarm: noopEvent },
   tabs: {
     async query() { return []; },
     async get(tabId) {
@@ -303,6 +303,7 @@ self.__test = {
   _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
   _abpEmptySkipStats, _fetchAndConvertUrls, RULE_SOURCE_STATS_KEY,
   _uiLanguageMatches, _autoEnableLangDefaultSources, _candidateUILanguages, timezoneLangCandidates,
+  _isLangMatchedEntry,
   _entryUrls, _primaryUrl, _isDefaultSourceEnabled,
   buildNetworkRedirectRules, _resolveRedirectResourceName, NETWORK_REDIRECT_RULE_ID_START,
   _isValidUrlFilter, buildQueryStripRules, buildPatternRules,
@@ -1978,6 +1979,80 @@ function check(name, cond, detail = '') {
     builtRedirectRules[0].id === T.NETWORK_REDIRECT_RULE_ID_START && builtRedirectRules[1].id === T.NETWORK_REDIRECT_RULE_ID_START + 1,
     JSON.stringify(builtRedirectRules.map(r => r.id)));
 
+  console.log('\n== 25ff. Bare-domain $type,redirect= now converts with an explicit resourceType (2026-09-11) ==');
+  // Real-world case that motivated this: `||static.eclick.vn^$image,redirect=1x1.gif`
+  // — an ad CDN subdomain some sites bait-load to detect adblockers by
+  // checking onerror/onload. Used to be dropped entirely (complexNetwork):
+  // excluded from network_redirect_rules for being bare-domain, then also
+  // rejected by _abpParseNetworkOptions (no redirect-target field there) —
+  // net effect was NEITHER blocked NOR redirected.
+  {
+    const stats = {};
+    const converted = await T._maybeConvertAbpText('||static.eclick.vn^$image,redirect=1x1.gif', stats);
+    check('bare-domain $image,redirect=1x1.gif: no longer complexNetwork — actually converts',
+      stats.converted === 1 && !stats.complexNetwork, stats);
+    check('bare-domain $image,redirect=1x1.gif: lands in network_redirect_rules with an explicit type field',
+      converted.includes('network_redirect_rules = static.eclick.vn 1x1.gif image'), converted);
+
+    const parsed = T.parseRuleText(converted);
+    const built = T.buildNetworkRedirectRules(parsed.global.network_redirect_rules, T.NETWORK_REDIRECT_RULE_ID_START);
+    check('builds a real DNR rule restricted to image requests (not the old script-only default)',
+      built.length === 1 && JSON.stringify(built[0].condition.resourceTypes) === '["image"]' &&
+      built[0].condition.requestDomains[0] === 'static.eclick.vn',
+      JSON.stringify(built));
+    check('redirect action points at the real shipped 1x1.gif placeholder',
+      built[0].action.type === 'redirect' && built[0].action.redirect.url.includes('1x1.gif'),
+      JSON.stringify(built[0].action));
+
+    // A legacy 2-field entry (no type — either hand-written, or converted
+    // before this field existed) must still default to script exactly like
+    // before, not be treated as malformed.
+    const legacyBuilt = T.buildNetworkRedirectRules(['legacy.example noop.js'], T.NETWORK_REDIRECT_RULE_ID_START);
+    check('backward-compat: a 2-field entry (no explicit type) still defaults to script',
+      legacyBuilt.length === 1 && JSON.stringify(legacyBuilt[0].condition.resourceTypes) === '["script"]',
+      JSON.stringify(legacyBuilt));
+
+    // Bare-domain + redirect= with NO type restriction at all must still
+    // convert now (just without a type field, same script-default as a
+    // legacy 2-field entry) — this is the part of the old exclusion that
+    // genuinely regressed to zero effect, not just the type-specific case.
+    const noTypeStats = {};
+    const noTypeConverted = await T._maybeConvertAbpText('||bare-redirect-only.example^$redirect=noopjs', noTypeStats);
+    check('bare-domain redirect= with NO type option: also converts now (previously dropped)',
+      noTypeStats.converted === 1 && !noTypeStats.complexNetwork &&
+      noTypeConverted.includes('network_redirect_rules = bare-redirect-only.example noop.js'),
+      { noTypeStats, noTypeConverted });
+
+    // Ambiguous (more than one type) still converts, just without a type
+    // field — same conservative "don't guess which one" as everywhere else.
+    const multiTypeStats = {};
+    const multiTypeConverted = await T._maybeConvertAbpText('||multi-type.example^$image,script,redirect=noopjs', multiTypeStats);
+    check('bare-domain redirect= with MULTIPLE types: still converts (script-default fallback), not dropped',
+      multiTypeStats.converted === 1 && !multiTypeStats.complexNetwork &&
+      multiTypeConverted.includes('network_redirect_rules = multi-type.example noop.js') &&
+      !multiTypeConverted.includes('multi-type.example noop.js image') && !multiTypeConverted.includes('multi-type.example noop.js script'),
+      { multiTypeStats, multiTypeConverted });
+
+    // A TLD-wildcard bare pattern (ABP_BARE_NETWORK_DOMAIN_RE allows '*',
+    // but it's not a literal domain requestDomains can use) must still be
+    // dropped rather than guessed at.
+    const wildcardStats = {};
+    const wildcardConverted = await T._maybeConvertAbpText('||wildcard-tld.*^$image,redirect=1x1.gif', wildcardStats);
+    check('bare-domain TLD-wildcard pattern ("example.*^") + redirect=: still dropped, not guessed at',
+      wildcardStats.complexNetwork === 1 && !wildcardStats.converted && !wildcardConverted.includes('network_redirect_rules'),
+      { wildcardStats, wildcardConverted });
+
+    // Path-scoped (non-bare-domain) $redirect= behavior must be completely
+    // unaffected by this change — still unconditional, no type gating added
+    // there (matches the pre-existing bbcSnippet test above).
+    const pathScopedStats = {};
+    const pathScopedConverted = await T._maybeConvertAbpText('||path-scoped.example/x.js$domain=foo.com,redirect=noopjs', pathScopedStats);
+    check('path-scoped $redirect= (with $domain=, an option unrelated to type): still converts unconditionally as before',
+      pathScopedStats.converted === 1 &&
+      pathScopedConverted.includes('network_redirect_rules = path-scoped.example/x.js noop.js'),
+      { pathScopedStats, pathScopedConverted });
+  }
+
   console.log('\n== 25gg. Path-scoped network rules ($all, third-party, $image, $domain=, $denyallow=, $method=, $removeparam=, $important) via per-domain network_block_rules ==');
   // network_block_rules now lives under the pattern's OWN [host_patterns]
   // section (see _abpSplitNetworkPattern/_abpFinalizeGroups) rather than one
@@ -2447,6 +2522,77 @@ function check(name, cond, detail = '') {
 
   await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} }); // leave state clean for any later section
   stubUILanguage = 'en-US';
+
+  console.log('\n== 25mm. fetchRemoteRuleText(): lang-matched default sources get PRIORITY — processed/merged before language-agnostic ones (2026-09-11) ==');
+  {
+    check('_isLangMatchedEntry: no lang field at all -> false',
+      T._isLangMatchedEntry({ name: 'x', url: 'https://x.example/a.txt' }) === false);
+    stubUILanguage = 'vi-VN';
+    check('_isLangMatchedEntry: entry lang "vi" matches vi-VN browser', T._isLangMatchedEntry({ lang: 'vi' }) === true);
+    check('_isLangMatchedEntry: entry lang array containing "vi" also matches', T._isLangMatchedEntry({ lang: ['fr', 'vi'] }) === true);
+    stubUILanguage = 'en-US';
+    check('_isLangMatchedEntry: entry lang "vi" does NOT match en-US browser', T._isLangMatchedEntry({ lang: 'vi' }) === false);
+
+    // Two synthetic default sources, only one lang-matched — each defines
+    // its OWN multi-domain [host_patterns] group whose FIRST listed domain
+    // is the identical string ("lang-priority-collision.example"), so both
+    // independently try to mint the exact same generated section key
+    // (_abpSanitizeKey derives it purely from that leading domain — see its
+    // own comment). Whichever group gets rendered first through the shared
+    // usedKeys Set keeps the clean "abp_lang_priority_collision" name; the
+    // other collides and gets forced to "..._2" — a deterministic, directly
+    // observable stand-in for the real thing this priority ordering
+    // protects (NETWORK_RULE_BUDGET exhaustion favoring the user's own
+    // language list over a big language-agnostic one like EasyList, which
+    // would take 12,000 synthetic rules to reproduce directly in a test).
+    const langEntry = {
+      name: 'Priority Test — lang-matched', lang: 'vi', enable: false, group: 'language',
+      url: 'https://lang-priority.test/list.txt',
+    };
+    const otherEntry = {
+      name: 'Priority Test — language-agnostic', enable: false, group: 'easylist',
+      url: 'https://other-priority.test/list.txt',
+    };
+    stubUrlTextMap['https://lang-priority.test/list.txt'] =
+      'lang-priority-collision.example,lang-partner.example##.from-lang-source';
+    stubUrlTextMap['https://other-priority.test/list.txt'] =
+      'lang-priority-collision.example,other-partner.example##.from-other-source';
+    sandbox.self.ADBLOCK_CONFIG.RULES_REMOTE_URL.push(langEntry, otherEntry);
+    try {
+      stubUILanguage = 'vi-VN';
+      await chromeStub.storage.local.set({
+        ruleSources: [], customRulesText: '', defaultRuleSourceEnabled: true,
+        defaultRuleSourceOverrides: {
+          [T._primaryUrl(langEntry)]: true,
+          [T._primaryUrl(otherEntry)]: true,
+        },
+      });
+      const priorityMerged = await T.fetchRemoteRuleText();
+      check('fetchRemoteRuleText: both sources still contribute their own selector',
+        priorityMerged.includes('.from-lang-source') && priorityMerged.includes('.from-other-source'),
+        priorityMerged);
+      check('fetchRemoteRuleText: the lang-matched source\'s text comes BEFORE the language-agnostic one\'s in the merged output',
+        priorityMerged.indexOf('.from-lang-source') < priorityMerged.indexOf('.from-other-source'),
+        priorityMerged);
+      const priorityParsed = T.parseRuleText(priorityMerged);
+      // Resolve via each group's own UNIQUE partner domain (the shared
+      // "lang-priority-collision.example" domain itself is ambiguous — it's
+      // listed in BOTH groups) to find which generated key each landed on.
+      const langGroupKey = T.resolveSiteKey(priorityParsed.host_patterns, 'lang-partner.example');
+      const otherGroupKey = T.resolveSiteKey(priorityParsed.host_patterns, 'other-partner.example');
+      check('fetchRemoteRuleText: the lang-matched source claims the CLEAN generated key (no collision suffix)',
+        langGroupKey === 'abp_lang_priority_collision', langGroupKey);
+      check('fetchRemoteRuleText: the language-agnostic source is the one forced onto the numeric-suffixed key, not the reverse',
+        otherGroupKey === 'abp_lang_priority_collision_2', otherGroupKey);
+    } finally {
+      sandbox.self.ADBLOCK_CONFIG.RULES_REMOTE_URL.pop();
+      sandbox.self.ADBLOCK_CONFIG.RULES_REMOTE_URL.pop();
+      delete stubUrlTextMap['https://lang-priority.test/list.txt'];
+      delete stubUrlTextMap['https://other-priority.test/list.txt'];
+      await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceOverrides: {}, defaultRuleSourceEnabled: true });
+      stubUILanguage = 'en-US';
+    }
+  }
 
   console.log('\n== 25n. timezoneLangCandidates()/_candidateUILanguages(): IANA timezone as a region fallback signal (2026-09-07) ==');
 

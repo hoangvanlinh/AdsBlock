@@ -52,7 +52,7 @@ self.ADBLOCK_CONFIG = {
     // meaning "Block trackers" only ever toggled 10 hardcoded fallback
     // domains. Only this one entry is tagged so far — other sources stay
     // in the ad_network_patterns bucket unless similarly marked.
-    { name: 'EasyPrivacy', url: 'https://easylist.to/easylist/easyprivacy.txt', enable: true, group: "easylist", category: "tracker" },
+    { name: 'EasyPrivacy', url: ['https://easylist.to/easylist/easyprivacy.txt','https://raw.githubusercontent.com/uBlockOrigin/uAssets/92c8ad87cba5f2641c18f8f0c5a06503b259988c/filters/privacy.txt'], enable: true, group: "easylist", category: "tracker" },
     { name: 'EasyList Cookie List', url: 'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt', enable: false, group: "easylist" },
     { name: 'Fanboy\'s Annoyance List', url: 'https://secure.fanboy.co.nz/fanboy-annoyance.txt', enable: false, group: "easylist" },
     { name: 'Fanboy\'s Social Blocking List', url: 'https://easylist.to/easylist/fanboy-social.txt', enable: true, group: "easylist" },

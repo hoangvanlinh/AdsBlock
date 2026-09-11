@@ -307,14 +307,20 @@ function buildQueryStripRules(entries, startId) {
   return rules;
 }
 
-// network_redirect_rules entries: "urlPattern resourceName" — same
-// domain-vs-path condition split as buildQueryStripRules above, but the
+// network_redirect_rules entries: "urlPattern resourceName [resourceType]" —
+// same domain-vs-path condition split as buildQueryStripRules above, but the
 // action is a static-resource redirect (_resolveRedirectResourceName/
 // _redirectAction) instead of a query-param strip. resourceName not
 // resolving to a real shipped file (unknown alias, or a name that maps to
 // a file this extension doesn't actually have) drops the whole entry —
 // same "don't guess" rule as everywhere else a filter-syntax modifier
-// can't be confidently honored.
+// can't be confidently honored. The optional 3rd field (2026-09-11) is an
+// explicit DNR resourceType, present whenever _abpParseFile could derive
+// exactly one from the source rule's own options (e.g. $image,redirect=...)
+// — omitted, this still defaults to 'script' same as every entry did before
+// this field existed (real-world redirect= rules overwhelmingly ARE script,
+// hence the default; entries persisted before this field shipped are just
+// 2 fields and behave identically to before).
 function buildNetworkRedirectRules(entries, startId) {
   const rules = [];
   let id = startId;
@@ -324,7 +330,8 @@ function buildNetworkRedirectRules(entries, startId) {
     const pattern = parts[0];
     const file = _resolveRedirectResourceName(parts[1]);
     if (!file) continue;
-    const condition = { resourceTypes: ['script'] }; // real-world redirect= rules are ~always script
+    const resourceType = parts[2] && ABP_RESOURCE_TYPE_VALUES.has(parts[2]) ? parts[2] : 'script';
+    const condition = { resourceTypes: [resourceType] };
     if (pattern.indexOf('/') === -1) {
       if (!DOMAIN_PATTERN_RE.test(pattern)) continue; // malformed — don't guess, drop it
       condition.requestDomains = [pattern.toLowerCase()];
@@ -333,7 +340,18 @@ function buildNetworkRedirectRules(entries, startId) {
       if (!_isValidUrlFilter(urlFilter)) continue; // would reject the WHOLE updateDynamicRules() call
       condition.urlFilter = urlFilter;
     }
-    rules.push({ id: id++, priority: 1, action: _redirectAction(file), condition });
+    // priority 2, not 1 (2026-09-11): Chrome's own documented same-priority
+    // tie-break order is allow > block > redirect — at priority 1 (the same
+    // level buildPatternRules' plain ad/tracker block rules use), a domain
+    // that ALSO happens to be in some OTHER enabled source's bulk block list
+    // (a real, independently-reported case: static.eclick.vn's bait image
+    // matched both this redirect rule AND a separate list's plain block
+    // rule) always lost to the block — the redirect target never actually
+    // got served, live-verified via DevTools showing "blocked:other" instead
+    // of a successful (redirected) load. Priority 2 matches the precedent
+    // buildMalwareRulesFromConfig's own redirect-to-warning-page rules
+    // already set for "this must win over an ordinary priority-1 block."
+    rules.push({ id: id++, priority: 2, action: _redirectAction(file), condition });
   }
   return rules;
 }
@@ -1249,6 +1267,10 @@ const ABP_RESOURCE_TYPE_MAP = {
   document: 'main_frame', font: 'font', media: 'media', websocket: 'websocket',
   ping: 'ping', other: 'other',
 };
+// Just the DNR-side values (buildNetworkRedirectRules' own validation of an
+// optional hand-written 3rd field — see its comment) — a Set since it's a
+// membership check, not the ABP-token-name-keyed lookup above.
+const ABP_RESOURCE_TYPE_VALUES = new Set(Object.values(ABP_RESOURCE_TYPE_MAP));
 // chrome.declarativeNetRequest.RequestMethod's own enum — an ABP `$method=`
 // value outside this set can't be mapped, so the whole option is unsupported.
 const ABP_REQUEST_METHODS = new Set(['connect', 'delete', 'get', 'head', 'options', 'patch', 'post', 'put']);
@@ -1712,13 +1734,23 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
         // Not a bare-domain-with-simple-opts block — three other shapes this
         // converter preserves, none of them ad_network_patterns (see
         // ABP_SIMPLE_NETWORK_OPTS_RE's own comment for why that distinction
-        // matters): (a) a path-scoped rule carrying a $redirect=/
-        // $redirect-rule= that resolves to a resource this extension
-        // actually ships (network_redirect_rules, background.js's
-        // buildNetworkRedirectRules) — a bare-domain redirect isn't worth its
-        // own rule since ad_network_patterns already blocks that domain
-        // outright, so this only fires for a genuinely path-scoped pattern;
-        // (b) a bare $removeparam=name (optionally with third-party) — maps
+        // matters): (a) a rule carrying a $redirect=/$redirect-rule= that
+        // resolves to a resource this extension actually ships
+        // (network_redirect_rules, background.js's buildNetworkRedirectRules)
+        // — bare-domain patterns are included here too (2026-09-11; used to
+        // be excluded on the theory that ad_network_patterns already blocks
+        // that domain outright, but that reasoning didn't hold: a bare
+        // domain with an unresolvable option like $redirect= never actually
+        // REACHES ad_network_patterns — ABP_SIMPLE_NETWORK_OPTS_RE only
+        // allows third-party/all, nothing else — so it fell through to
+        // _abpParseNetworkOptions below, which has no representation for a
+        // redirect target either, and got dropped as complexNetwork with
+        // ZERO effect: not blocked, not redirected. A real-world case that
+        // motivated the fix: `||static.eclick.vn^$image,redirect=1x1.gif` —
+        // an ad CDN subdomain some sites bait-load to detect adblockers by
+        // checking onerror/onload, where an outright block IS visibly
+        // different from a "succeeded" 1x1 placeholder); (b) a bare
+        // $removeparam=name (optionally with third-party) — maps
         // to this repo's EXISTING strip_query_params mechanism
         // (buildQueryStripRules) instead of a block, since removeparam=
         // means "strip this param and let the (modified) request through,"
@@ -1741,9 +1773,32 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
         const file = redirectTok && _resolveRedirectResourceName(redirectTok.slice(redirectTok.indexOf('=') + 1));
         const removeparamToks = optTokens.filter(t => t.startsWith('removeparam='));
         const nonThirdPartyToks = optTokens.filter(t => t !== 'third-party' && t !== '~third-party');
-        if (file && !ABP_BARE_NETWORK_DOMAIN_RE.test(pattern)) {
-          networkRedirects.add(pattern + ' ' + file);
-          s.converted++;
+        if (file) {
+          const isBareDomain = ABP_BARE_NETWORK_DOMAIN_RE.test(pattern);
+          // A bare-domain pattern's stored token must NOT carry the trailing
+          // '^' separator — buildNetworkRedirectRules treats a slash-free
+          // pattern as a literal hostname for requestDomains, not a urlFilter
+          // (real domains never contain '^'). The '*' TLD-wildcard shape
+          // ABP_BARE_NETWORK_DOMAIN_RE also allows (e.g. "example.*^") isn't
+          // a literal domain either — DOMAIN_PATTERN_RE rejects it, same
+          // "don't guess" drop as everywhere else here.
+          const redirectPattern = isBareDomain ? pattern.slice(0, -1).toLowerCase() : pattern;
+          if (isBareDomain && !DOMAIN_PATTERN_RE.test(redirectPattern)) {
+            s.complexNetwork++;
+          } else {
+            // A single, unambiguous resourceType alongside $redirect= (e.g.
+            // $image,redirect=1x1.gif) is carried through as an explicit 3rd
+            // field so buildNetworkRedirectRules can honor it instead of
+            // always assuming 'script' — see that function's own comment.
+            // Anything less clear-cut (no type option, more than one, a
+            // negated one, $domain=, ...) still converts, just without a
+            // type restriction — the pre-existing script-only behavior,
+            // never a regression from not recognizing this case at all.
+            const typeToks = optTokens.filter(t => t !== redirectTok && t !== 'third-party' && t !== '~third-party');
+            const singleType = typeToks.length === 1 && typeToks[0].charAt(0) !== '~' ? ABP_RESOURCE_TYPE_MAP[typeToks[0]] : null;
+            networkRedirects.add(redirectPattern + ' ' + file + (singleType ? ' ' + singleType : ''));
+            s.converted++;
+          }
         } else if (
           removeparamToks.length === 1 && nonThirdPartyToks.length === 1 &&
           /^removeparam=[^~/][^,]*$/.test(removeparamToks[0]) && _isValidUrlFilter(urlFilter)
@@ -2291,6 +2346,15 @@ function _uiLanguageMatches(lang) {
   });
 }
 
+// True if this entry has a `lang` and at least one of it matches the
+// browser's own UI language — used by fetchRemoteRuleText() to give a
+// user's own-language list priority (fetched/processed before, and placed
+// ahead of in the merged output) over language-agnostic sources like
+// EasyList/EasyPrivacy.
+function _isLangMatchedEntry(entry) {
+  return _entryLangs(entry).some(l => _uiLanguageMatches(l));
+}
+
 // A RULES_REMOTE_URL entry's `lang` is either a single BCP-47 subtag or an
 // array of them (some region lists cover several languages, e.g. Spain's
 // list also covers Catalan/Basque/Galician) — normalize to an array either
@@ -2432,6 +2496,19 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap,
 async function fetchRemoteRuleText() {
   const stored = await LocalStorage.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
   const sources = stored.ruleSources;
+  // priorityUrls holds enabled default sources whose `lang` matches the
+  // browser's own UI language (e.g. the Vietnam list for a vi-VN browser) —
+  // kept in a SEPARATE array (not just sorted-to-front within `urls`) so
+  // they can be fetched/converted as their own earlier phase below. Plain
+  // array order alone wouldn't be enough: _fetchAndConvertUrls() runs its
+  // whole url list through Promise.all, so which url's _maybeConvertAbpText
+  // call actually claims a shared dedup key or spends the shared
+  // NETWORK_RULE_BUDGET first depends on NETWORK COMPLETION TIMING, not
+  // array position — a slow-loading language list could still lose a
+  // budget/key race to a faster-loading global list even if it were listed
+  // first. Awaiting priorityUrls to completion before starting the rest
+  // (see below) makes that priority deterministic instead of a coin flip.
+  const priorityUrls = [];
   const urls = [];
   const fileParts = [];
   const defaultUrls = new Set(RULES_REMOTE_URL.flatMap(e => _entryUrls(e)));
@@ -2476,8 +2553,12 @@ async function fetchRemoteRuleText() {
     if (DEBUG_LOCAL && i === 0) {
       urls.push(EXT.runtime.getURL(RULES_LOCAL_PATH));
     } else {
+      // This repo's own curated list (the DEBUG_LOCAL swap above) always
+      // stays in the non-priority group even though it has no `lang` — it's
+      // language-agnostic by design, not a candidate for lang-priority.
+      const bucket = _isLangMatchedEntry(entry) ? priorityUrls : urls;
       for (const u of _entryUrls(entry)) {
-        urls.push(u);
+        bucket.push(u);
         if (entry.category === 'tracker') trackerUrls.add(u);
       }
     }
@@ -2521,6 +2602,13 @@ async function fetchRemoteRuleText() {
   // instead), so there's no DNR rule-count ceiling to protect here — every
   // eligible entry converts, uncapped. Chrome/Edge keep the real cap.
   const networkRuleBudget = { remaining: _hasWebRequestBlocking() ? Infinity : NETWORK_RULE_BUDGET };
+  // priorityUrls awaited to completion FIRST (its own internal Promise.all
+  // for concurrency across just that group, but as a whole phase strictly
+  // before the rest starts) — see priorityUrls' own comment above for why
+  // this, not just array order, is what actually makes lang-matched sources
+  // win any shared dedup-key or NETWORK_RULE_BUDGET race against the
+  // language-agnostic sources fetched in the second phase below.
+  const priorityTexts = await _fetchAndConvertUrls(priorityUrls, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget, trackerUrls);
   const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget, trackerUrls);
   const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget)));
   // Sequential (not Promise.all'd with the fetch above): both this and
@@ -2529,8 +2617,8 @@ async function fetchRemoteRuleText() {
   // concurrently would race and drop whichever one's write lands first.
   await _updateRemoteMalwareDomains(malwareUrls);
 
-  const merged = [...texts, ...convertedFileParts].filter(Boolean).join('\n');
-  if (!merged && urls.length) {
+  const merged = [...priorityTexts, ...texts, ...convertedFileParts].filter(Boolean).join('\n');
+  if (!merged && (priorityUrls.length || urls.length)) {
     // At least one remote fetch was attempted and all of them came back
     // empty — that's an actual failure (network down, bad URL, ...), so
     // let getRulesText()'s catch branch fall back to cached/local rules.
@@ -3446,7 +3534,12 @@ async function ensureRuleDefinitionsLoaded() {
           NETWORK_BLOCK_MATCHER = cachedNetworkBlockMatcher;
         } else {
           NETWORK_BLOCK_MATCHER = buildNetworkBlockMatcher(parsed);
-          await _saveMatcherCacheToLocal(NETWORK_BLOCK_MATCHER_CACHE_KEY, _parsedRulesTextHash, _serializeMatcherMap(NETWORK_BLOCK_MATCHER));
+          // Fire-and-forget: measured ~8-11ms (compress + getBytesInUse +
+          // storage.local.set) at real ~7,480-entry scale — the write is
+          // best-effort already (try/catch inside), so there's no reason to
+          // make every rebuild's caller (ensureRuleDefinitionsLoaded(),
+          // GET_RULE_COUNT, applyNetworkRules()...) wait on it finishing.
+          _saveMatcherCacheToLocal(NETWORK_BLOCK_MATCHER_CACHE_KEY, _parsedRulesTextHash, _serializeMatcherMap(NETWORK_BLOCK_MATCHER));
         }
       } else {
         NETWORK_BLOCK_RULES = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
@@ -3807,7 +3900,9 @@ async function buildActiveRulesFromStorage() {
           MALWARE_PATH_MATCHER = cachedMalwarePathMatcher;
         } else {
           MALWARE_PATH_MATCHER = buildMalwarePathMatcher(remotePathPatterns);
-          await _saveMatcherCacheToLocal(MALWARE_PATH_MATCHER_CACHE_KEY, remoteKey, _serializeRegexMatcherMap(MALWARE_PATH_MATCHER));
+          // Fire-and-forget — see the matching comment on the
+          // NETWORK_BLOCK_MATCHER save above.
+          _saveMatcherCacheToLocal(MALWARE_PATH_MATCHER_CACHE_KEY, remoteKey, _serializeRegexMatcherMap(MALWARE_PATH_MATCHER));
         }
       } else {
         MALWARE_PATH_MATCHER = new Map();
@@ -4436,8 +4531,24 @@ async function _updateRemoteMalwareDomains(urls) {
   await LocalStorage.remove('remoteMalwareRules');
 }
 
-EXT.alarms?.create(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
-EXT.alarms?.create('extension-update-check', { periodInMinutes: 60 * 24 });
+// alarms.create() with an existing name CANCELS and REPLACES it, resetting
+// its next-fire countdown — calling it unconditionally here (top-level
+// script scope) re-runs every time the MV3 service worker wakes for ANY
+// reason (a message, a request, ...), not just onInstalled/onStartup. Under
+// active browsing the SW routinely wakes more often than every 30 minutes,
+// which was perpetually resetting RULES_REVALIDATE_ALARM before it ever got
+// to fire — silently defeating the "30-minute alarm" urgent-fix propagation
+// revalidateRemoteRules()'s own comment describes. get()-before-create only
+// (re)creates an alarm that isn't already scheduled, so an existing alarm's
+// countdown survives SW restarts as intended.
+function _ensureAlarm(name, alarmInfo) {
+  if (!EXT.alarms) return;
+  Promise.resolve(EXT.alarms.get(name)).then(existing => {
+    if (!existing) EXT.alarms.create(name, alarmInfo);
+  }).catch(() => {});
+}
+_ensureAlarm(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
+_ensureAlarm('extension-update-check', { periodInMinutes: 60 * 24 });
 EXT.alarms?.onAlarm.addListener(async (alarm) => {
   if (alarm.name === RULES_REVALIDATE_ALARM) {
     await revalidateRemoteRules();

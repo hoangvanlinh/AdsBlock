@@ -106,7 +106,7 @@ const chromeStub = {
     onStartup: { addListener() {} },
     onMessage: { addListener() {} },
   },
-  alarms: { create() {}, clear() {}, onAlarm: { addListener() {} } },
+  alarms: { get() { return Promise.resolve(undefined); }, create() {}, clear() {}, onAlarm: { addListener() {} } },
   tabs: {
     async query() { return []; },
     sendMessage: async () => {},
@@ -121,6 +121,19 @@ const chromeStub = {
 
 async function fetchStub(url) {
   return { ok: false, status: 404, headers: { get: () => '' }, text: async () => '' };
+}
+
+// _saveMatcherCacheToLocal() is called fire-and-forget (not awaited) by its
+// two real callers (ensureRuleDefinitionsLoaded(), buildActiveRulesFromStorage())
+// — a deliberate 2026-09-11 change so a cache-miss rebuild's caller doesn't
+// wait on the (best-effort, already try/catch-wrapped) persist finishing.
+// Tests asserting on that write's side effect must let its promise chain
+// (getBytesInUse() -> compress -> LocalStorage.set(), each a real await)
+// settle first — a couple of macrotask ticks is enough since the stub's own
+// async fns all resolve on their own microtask/next tick.
+async function flushMicrotasks() {
+  await new Promise(r => setTimeout(r, 0));
+  await new Promise(r => setTimeout(r, 0));
 }
 
 const sandbox = {
@@ -315,6 +328,7 @@ const T = sandbox.__test;
     check('network_block_rules entries never leak into the DNR allRules array either',
       !allRules.some(r => r.id >= 700000 && r.id < 800000), allRules.filter(r => r.id >= 700000 && r.id < 800000));
     check('NETWORK_BLOCK_MATCHER was populated instead', T.NETWORK_BLOCK_MATCHER.size > 0, T.NETWORK_BLOCK_MATCHER.size);
+    await flushMicrotasks(); // the cache write is fire-and-forget — let it settle before checking storageData
     check('a real end-to-end build also persisted NETWORK_BLOCK_MATCHER to its chrome.storage.local cache',
       !!(storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY] && storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY].compressed),
       storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY]);
@@ -333,6 +347,7 @@ const T = sandbox.__test;
     check('MALWARE_PATH_MATCHER was populated from remoteMalwarePathPatterns', T.MALWARE_PATH_MATCHER.has('malware-host.example'), [...T.MALWARE_PATH_MATCHER.keys()]);
     check('the bare-domain malware rules (batched, small) STILL go through DNR as before — only the path ones moved',
       allRules.some(r => r.id >= 100000 && r.id < 200000), allRules.filter(r => r.id >= 100000 && r.id < 200000).length);
+    await flushMicrotasks(); // fire-and-forget cache write — same as section 6's note
     check('a real end-to-end build also persisted MALWARE_PATH_MATCHER to its chrome.storage.local cache',
       !!(storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY] && storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY].compressed),
       storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY]);
