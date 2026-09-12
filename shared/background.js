@@ -3241,6 +3241,34 @@ function buildAdMainFrameRulesFromConfig(config, startId) {
   ];
 }
 
+// Stale-while-revalidate (2026-09-13): a real fetchRemoteRuleText() call
+// (network round trips across every enabled Rule Source) can take multiple
+// seconds — this used to sit directly in getRulesText()'s blocking path
+// whenever the cache aged past RULES_CACHE_TTL_MS, which is also GET_SITE_
+// CONFIG's own critical path (every navigation/frame's cosmetic-hide CSS
+// waits on it) — live-reported as ad boxes staying visible for several
+// seconds after the extension's been idle a while (MV3 service worker
+// eviction + the periodic ETag-revalidation alarm not having run recently
+// enough both push the cache past its TTL). One in-flight guard so a burst
+// of frames hitting the same stale cache triggers exactly one background
+// refetch, not one per frame.
+let _rulesTextRefreshInFlight = null;
+function _refreshRulesTextInBackground() {
+  if (_rulesTextRefreshInFlight) return;
+  _rulesTextRefreshInFlight = fetchRemoteRuleText()
+    .then(() => {
+      // fetchRemoteRuleText() already wrote the fresh text to
+      // RULES_CACHE_TEXT_KEY itself — only the IN-MEMORY parsed-rules memo
+      // (this SW lifetime only, see getParsedRules()' own comment) needs
+      // invalidating so the NEXT getParsedRules()/GET_SITE_CONFIG call
+      // re-parses the fresh text instead of continuing to serve the stale
+      // in-memory one this call itself is about to return below.
+      _parsedRules = null;
+    })
+    .catch(() => { /* best-effort — next stale getRulesText() call just retries */ })
+    .finally(() => { _rulesTextRefreshInFlight = null; });
+}
+
 // Single source for the merged rules text (fresh cache → remote → cached/local
 // fallback). Used by rule-definition loading, GET_RULES_TEXT, and GET_SITE_CONFIG.
 async function getRulesText() {
@@ -3250,7 +3278,21 @@ async function getRulesText() {
   // DEBUG_LOCAL is set (see its own comment), so a plain cache-skip here is
   // all that's needed for local site-rules.txt edits to take effect on
   // every reload instead of waiting out the 6h TTL.
-  if (!DEBUG_LOCAL && isFreshRuleCache(cached)) return cached.text;
+  if (!DEBUG_LOCAL && cached && cached.text) {
+    // Serve whatever's cached IMMEDIATELY, stale or not — a stale cache is
+    // still far more correct than a multi-second visible-ad flash, and the
+    // background refresh below (fire-and-forget, not awaited) means the
+    // NEXT call — not this one — is what actually benefits from newly
+    // fetched content. isFreshRuleCache() below only decides whether that
+    // background refresh is even needed this call, never whether to return
+    // synchronously.
+    if (!isFreshRuleCache(cached)) _refreshRulesTextInBackground();
+    return cached.text;
+  }
+  // No cache at all yet — e.g. the very first load before anything was ever
+  // cached, or DEBUG_LOCAL's own deliberate cache bypass — nothing to serve
+  // immediately, so (unlike the branch above) a real fetch is unavoidable
+  // right here.
   try {
     return await fetchRemoteRuleText();
   } catch {

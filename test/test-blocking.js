@@ -224,6 +224,14 @@ const stubUrlTextMap = {};
 // for the current browser" decision. Simulated here by swapping
 // sandbox.navigator.userAgent directly (see section 24a below), not via a
 // separate flag.
+// A one-shot gate (test-controlled Promise) delaying the REMOTE default
+// site-rules.txt fetch specifically — same "remote vs local bundled" url
+// distinction stubRulesRemoteUnreachable already relies on (see its own
+// comment above) — lets a test prove getRulesText()'s stale-while-revalidate
+// path (background.js, 2026-09-13) returns the stale cache WITHOUT waiting
+// on this fetch to resolve, by never resolving the gate until after that
+// assertion already ran.
+let stubDefaultFetchGate = null;
 async function fetchStub(url) {
   const u = String(url);
   if (Object.prototype.hasOwnProperty.call(stubUrlTextMap, u)) {
@@ -233,6 +241,7 @@ async function fetchStub(url) {
     if (stubRulesRemoteUnreachable && u.startsWith('https://raw.githubusercontent.com')) {
       throw new Error('network error (simulated)');
     }
+    if (stubDefaultFetchGate && u.startsWith('https://raw.githubusercontent.com')) await stubDefaultFetchGate;
     return { ok: true, status: 200, headers: { get: () => '' }, text: async () => rulesText };
   }
   if (u.includes('manifest.firefox.json')) {
@@ -300,6 +309,7 @@ self.__test = {
   get REMOTE_MAX_DOMAINS() { return REMOTE_MAX_DOMAINS; },
   getParsedRules, resolveSiteKey,
   getCachedRuleText, setCachedRuleText, _compressForStorage, _decompressFromStorage,
+  getRulesText,
   _looksLikeAbpFormat, _maybeConvertAbpText, fetchRemoteRuleText,
   _abpEmptySkipStats, _fetchAndConvertUrls, RULE_SOURCE_STATS_KEY,
   _uiLanguageMatches, _autoEnableLangDefaultSources, _candidateUILanguages, timezoneLangCandidates,
@@ -318,6 +328,8 @@ self.__test = {
   _buildGlobalRulesBlock, _applyGlobalRules,
   _buildSiteRuleTextBlock, _applySiteRuleText,
   _isNewerVersion, checkForExtensionUpdate, maybeCheckForExtensionUpdate,
+  get _parsedRules() { return _parsedRules; },
+  _resetParsedRulesCache() { _parsedRules = null; _parsedRulesPromise = null; },
   get DEFAULT_RULES() { return DEFAULT_RULES; },
   get MALWARE_RULES() { return MALWARE_RULES; },
   get AD_MAINFRAME_RULES() { return AD_MAINFRAME_RULES; },
@@ -1495,6 +1507,83 @@ function check(name, cond, detail = '') {
   check('fetchRemoteRuleText: ABP-format Rule Source URL converted and merged in (network domain present)',
     e2eMerged.includes('e2eabpnetwork.com') && e2eMerged.includes('ad_network_patterns'), e2eMerged);
   await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceEnabled: true }); // reset for any later section
+
+  console.log('\n== 25ee. getRulesText()/getParsedRules(): stale-while-revalidate — a stale cache is served IMMEDIATELY, refresh happens in the background (2026-09-13) ==');
+  // Live-reported: after the extension sat idle a while (MV3 service worker
+  // eviction + the periodic ETag-revalidation alarm not always keeping the
+  // cache fresh), the NEXT GET_SITE_CONFIG call — every navigation/frame's
+  // cosmetic-hide CSS depends on it — used to BLOCK on a real, multi-second
+  // fetchRemoteRuleText() network round trip once the cache passed
+  // RULES_CACHE_TTL_MS, visibly delaying ad-hiding. getRulesText() must now
+  // return whatever's cached even when stale, and only kick off the refetch
+  // in the background (this test's stubDefaultFetchGate never resolves until
+  // explicitly released, proving nothing here actually waits on it).
+  {
+    function withTimeout2(promise, ms, label) {
+      let timer;
+      const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('TIMEOUT: ' + label)), ms); });
+      return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+    }
+    const staleText = '[global]\ndirect_hide_selectors = .stale-marker-25ee';
+    const staleWrapped = await T._compressForStorage(staleText);
+    const sixHoursAgo = Date.now() - (7 * 60 * 60 * 1000); // past RULES_CACHE_TTL_MS (6h)
+    await chromeStub.storage.local.set({
+      siteRulesCacheText: staleWrapped,
+      siteRulesCacheTime: sixHoursAgo,
+      ruleSources: [], defaultRuleSourceEnabled: true, defaultRuleSourceOverrides: {},
+    });
+    T._resetParsedRulesCache(); // else getParsedRules() would just keep serving an earlier section's in-memory memo, never touching the cache seeded above
+
+    let releaseFetch;
+    stubDefaultFetchGate = new Promise(r => { releaseFetch = r; });
+    try {
+      const parsedBefore = await withTimeout2(T.getParsedRules(), 1000,
+        'getParsedRules() hung — must not wait on the gated background fetch');
+      check('getParsedRules(): resolves promptly from the stale cache, never touching the still-gated fetch',
+        (parsedBefore.global.direct_hide_selectors || []).includes('.stale-marker-25ee'),
+        parsedBefore.global);
+
+      // Now let the gated fetch actually complete and give the background
+      // .then() chain (fetchRemoteRuleText() -> setCachedRuleText() ->
+      // _parsedRules = null) a moment to run.
+      releaseFetch();
+      await stubDefaultFetchGate;
+      await new Promise(r => setTimeout(r, 0));
+      await new Promise(r => setTimeout(r, 0));
+
+      check('background refresh: siteRulesCacheText in storage was actually updated (no longer the stale marker)',
+        !JSON.stringify(storageData['siteRulesCacheText']).includes('stale-marker-25ee'),
+        JSON.stringify(storageData['siteRulesCacheText']).slice(0, 80));
+      check('background refresh: siteRulesCacheTime bumped to roughly now, not left at the stale 6h-old timestamp',
+        storageData['siteRulesCacheTime'] > sixHoursAgo + 6 * 60 * 60 * 1000,
+        storageData['siteRulesCacheTime']);
+
+      const parsedAfter = await T.getParsedRules();
+      check('getParsedRules(): the in-memory memo was invalidated too — re-parses fresh content instead of still serving the stale one for the rest of this SW lifetime',
+        !((parsedAfter.global || {}).direct_hide_selectors || []).includes('.stale-marker-25ee'),
+        parsedAfter.global);
+    } finally {
+      stubDefaultFetchGate = null;
+    }
+
+    // Regression guard for the ORIGINAL (still correct) behavior: with NO
+    // cache at all, there is nothing to serve immediately, so a real fetch
+    // is unavoidable — getRulesText() must still actually wait for it.
+    await chromeStub.storage.local.set({ siteRulesCacheText: null, siteRulesCacheTime: 0 });
+    let noCacheResolved = false;
+    stubDefaultFetchGate = new Promise(r => { releaseFetch = r; });
+    try {
+      const p = T.getRulesText().then(t => { noCacheResolved = true; return t; });
+      await new Promise(r => setTimeout(r, 0));
+      check('getRulesText(): with NO cache at all, still correctly BLOCKS on the real fetch (nothing to serve early)',
+        noCacheResolved === false, { noCacheResolved });
+      releaseFetch();
+      const text = await withTimeout2(p, 1000, 'getRulesText() hung after the gate was released');
+      check('getRulesText(): resolves once the (now-released) fetch actually completes', typeof text === 'string');
+    } finally {
+      stubDefaultFetchGate = null;
+    }
+  }
 
   console.log('\n== 25y. RULES_REMOTE_URL entry.url as an ARRAY — every url fetched+merged, not a mirror/fallback list (2026-08-25) ==');
   check('_entryUrls: single string url normalizes to a 1-element array',
