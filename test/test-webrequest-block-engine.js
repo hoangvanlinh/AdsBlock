@@ -17,6 +17,7 @@ const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'shared/browser-compat.
 const utilsSrc = fs.readFileSync(path.join(ROOT, 'shared/utils.js'), 'utf8');
 const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'shared/scriptlet-alias-map.js'), 'utf8');
 const localStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/local-storage.js'), 'utf8');
+const diagLoggerSrc = fs.readFileSync(path.join(ROOT, 'shared/diag-logger.js'), 'utf8');
 const sessionStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/session-storage.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'shared/background.js'), 'utf8');
 
@@ -136,6 +137,23 @@ async function flushMicrotasks() {
   await new Promise(r => setTimeout(r, 0));
 }
 
+// Polls instead of a fixed tick count for checks on the fire-and-forget
+// cache write specifically — background.js now also fires an unconditional
+// top-level applyNetworkRules() call at module load (see its own comment),
+// which is a SECOND concurrent fire-and-forget write chain competing for
+// the same event loop right as a section's own build+write happens. Two
+// fixed setTimeout(0) ticks occasionally isn't enough for both chains
+// (getBytesInUse -> compress via a real CompressionStream -> LocalStorage.
+// set) to settle under load — poll up to 2s instead of guessing a tick count.
+async function waitUntil(predicate, timeoutMs = 2000) {
+  const start = Date.now();
+  while (!predicate()) {
+    if (Date.now() - start > timeoutMs) return false;
+    await new Promise(r => setTimeout(r, 10));
+  }
+  return true;
+}
+
 const sandbox = {
   console, chrome: chromeStub, fetch: fetchStub,
   setTimeout, clearTimeout, setInterval, clearInterval,
@@ -146,6 +164,7 @@ const sandbox = {
     if (name && name.includes('scriptlet-alias-map')) vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 'scriptlet-alias-map.js' });
     else if (name && name.includes('browser-compat')) vm.runInContext(browserCompatSrc, ctx, { filename: 'browser-compat.js' });
     else if (name && name.includes('local-storage')) vm.runInContext(localStorageSrc, ctx, { filename: 'local-storage.js' });
+    else if (name && name.includes('diag-logger')) vm.runInContext(diagLoggerSrc, ctx, { filename: 'diag-logger.js' });
     else if (name && name.includes('session-storage')) vm.runInContext(sessionStorageSrc, ctx, { filename: 'session-storage.js' });
     else if (name && name.includes('utils')) vm.runInContext(utilsSrc, ctx, { filename: 'utils.js' });
     else vm.runInContext(configSrc, ctx, { filename: 'config.js' });
@@ -170,15 +189,42 @@ self.__test = {
   set NETWORK_BLOCK_MATCHER(v) { NETWORK_BLOCK_MATCHER = v; },
   get MALWARE_PATH_MATCHER() { return MALWARE_PATH_MATCHER; },
   set MALWARE_PATH_MATCHER(v) { MALWARE_PATH_MATCHER = v; },
+  get HTML_FILTER_MATCHER() { return HTML_FILTER_MATCHER; },
+  set HTML_FILTER_MATCHER(v) { HTML_FILTER_MATCHER = v; },
+  get DEFAULT_RULES() { return DEFAULT_RULES; },
   get NETWORK_BLOCK_RULES() { return NETWORK_BLOCK_RULES; },
   get REMOTE_MAX_PATH_PATTERNS() { return REMOTE_MAX_PATH_PATTERNS; },
   _compressDomainsForStorage,
   get tabBlockedCounts() { return _tabBlockedCounts; },
+  // Test-only: undoes ensureRuleDefinitionsLoaded()'s "already built" guard
+  // (DEFAULT_RULES/MALWARE_RULES/AD_MAINFRAME_RULES all non-empty) so a
+  // section that seeds its OWN fixture storageData and calls
+  // buildActiveRulesFromStorage() gets a REAL rebuild from that fixture,
+  // instead of silently reusing whatever the module-top-level unconditional
+  // applyNetworkRules() call (background.js, see its own comment) already
+  // built from this stub's fetchStub()-always-404 fixture at module load.
+  _resetBuiltRuleState() {
+    DEFAULT_RULES = []; MALWARE_RULES = []; AD_MAINFRAME_RULES = [];
+    _ruleConfigPromise = null; _parsedRules = null; _parsedRulesTextHash = null;
+    _curatedDedupPromise = null;
+  },
+  get _remoteMalwareRulesMemo() { return _remoteMalwareRulesMemo; },
+  _resetRemoteMalwareRulesMemo() { _remoteMalwareRulesMemo = { key: undefined, rules: null }; },
 };`;
 vm.runInContext(bgSrc + '\n' + exportSnippet, ctx, { filename: 'background.js' });
 const T = sandbox.__test;
 
 (async () => {
+  // background.js now fires an unconditional top-level applyNetworkRules()
+  // call at module load (see its own comment — Firefox idle-kills/respawns
+  // this event page and Chrome's SW restarts routinely, neither firing
+  // onInstalled/onStartup, so nothing else would rebuild after that). That
+  // call's build+fire-and-forget matcher-cache write is still in flight
+  // when this IIFE starts. Join it here (applyNetworkRules() chains off
+  // the SAME in-flight promise, see _applyNetworkRulesChain) so later
+  // sections don't race its cache write with their own.
+  await T.applyNetworkRules();
+
   console.log('== 1. _hasWebRequestBlocking() feature detection ==');
   check('true when chrome.webRequest.onBeforeRequest.addListener exists (this stub simulates Firefox post-manifest-change)',
     T._hasWebRequestBlocking() === true);
@@ -322,13 +368,14 @@ const T = sandbox.__test;
     // same storage key getParsedRules()/getCachedRuleText() reads.
     storageData.siteRulesCacheText = nativeText;
     storageData.siteRulesCacheTime = Date.now();
+    T._resetBuiltRuleState();
     const { allRules } = await T.buildActiveRulesFromStorage();
     check('NETWORK_BLOCK_RULES (DNR array) is empty on this webRequestBlocking-capable stub',
       T.NETWORK_BLOCK_RULES.length === 0, T.NETWORK_BLOCK_RULES.length);
     check('network_block_rules entries never leak into the DNR allRules array either',
       !allRules.some(r => r.id >= 700000 && r.id < 800000), allRules.filter(r => r.id >= 700000 && r.id < 800000));
     check('NETWORK_BLOCK_MATCHER was populated instead', T.NETWORK_BLOCK_MATCHER.size > 0, T.NETWORK_BLOCK_MATCHER.size);
-    await flushMicrotasks(); // the cache write is fire-and-forget — let it settle before checking storageData
+    await waitUntil(() => !!(storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY] && storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY].compressed));
     check('a real end-to-end build also persisted NETWORK_BLOCK_MATCHER to its chrome.storage.local cache',
       !!(storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY] && storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY].compressed),
       storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY]);
@@ -347,10 +394,121 @@ const T = sandbox.__test;
     check('MALWARE_PATH_MATCHER was populated from remoteMalwarePathPatterns', T.MALWARE_PATH_MATCHER.has('malware-host.example'), [...T.MALWARE_PATH_MATCHER.keys()]);
     check('the bare-domain malware rules (batched, small) STILL go through DNR as before — only the path ones moved',
       allRules.some(r => r.id >= 100000 && r.id < 200000), allRules.filter(r => r.id >= 100000 && r.id < 200000).length);
-    await flushMicrotasks(); // fire-and-forget cache write — same as section 6's note
+    await waitUntil(() => !!(storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY] && storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY].compressed));
     check('a real end-to-end build also persisted MALWARE_PATH_MATCHER to its chrome.storage.local cache',
       !!(storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY] && storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY].compressed),
       storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY]);
+  }
+
+  console.log('\n== 6c. Regression (2026-09-14): a throw PARTWAY through ensureRuleDefinitionsLoaded() must not leave HTML_FILTER_MATCHER stuck empty forever ==');
+  {
+    // Live-reported: HTML_FILTER_MATCHER stayed empty (size 0) for the rest
+    // of a background lifetime even though GET_SITE_CONFIG (a separate code
+    // path reading the same parsed rules) kept returning correct selectors
+    // the whole time. Root cause: DEFAULT_RULES/MALWARE_RULES/
+    // AD_MAINFRAME_RULES (the guard this function checks) used to be
+    // committed BEFORE buildNetworkBlockMatcher()/buildHtmlFilterMatcher()
+    // ran — if either threw (one malformed entry among thousands merged
+    // from real Rule Sources is enough), the guard was already satisfied,
+    // so the function would never retry again this lifetime, leaving
+    // HTML_FILTER_MATCHER at its initial empty Map permanently. Simulated
+    // here by making buildNetworkBlockMatcher() itself throw once.
+    T._resetBuiltRuleState();
+    T.HTML_FILTER_MATCHER = new Map(); // start from a known-empty state
+    T.NETWORK_BLOCK_MATCHER = new Map();
+    // Fixture WITH a direct_hide_selectors entry (nativeText above has
+    // none — section 6 only needs network_block_rules) so this section can
+    // actually prove HTML_FILTER_MATCHER recovers, not just stays
+    // legitimately empty because the fixture never had anything for it.
+    // Raw (uncompressed) string is fine here — same as section 6's own
+    // seeding — _decompressFromStorage() passes a bare string through as-is.
+    const hostPatternsPatched = nativeText.replace('[host_patterns]', '[host_patterns]\nhtmlfilter-target.example = site3');
+    storageData.siteRulesCacheText = hostPatternsPatched + '\n[site3]\ndirect_hide_selectors = .ad-banner\n';
+    storageData.siteRulesCacheTime = Date.now();
+    // Must also drop the on-disk matcher cache section 6 already wrote for
+    // the OLD rule text — otherwise _loadMatcherCacheFromLocal() could
+    // still serve a stale cache HIT and buildNetworkBlockMatcher() (the
+    // thing being overridden below) never even gets called.
+    delete storageData[T.NETWORK_BLOCK_MATCHER_CACHE_KEY];
+    const realBuildNetworkBlockMatcher = sandbox.buildNetworkBlockMatcher;
+    sandbox.buildNetworkBlockMatcher = () => { throw new Error('simulated malformed network_block_rules entry'); };
+    let threwAsExpected = false;
+    try { await T.ensureRuleDefinitionsLoaded(); } catch { threwAsExpected = true; }
+    check('the simulated throw actually propagated (sanity check on the test setup itself)', threwAsExpected);
+    check('nothing was committed on the failed attempt — the guard (DEFAULT_RULES) is still empty, not silently "already built"',
+      T.DEFAULT_RULES.length === 0, T.DEFAULT_RULES.length);
+    check('HTML_FILTER_MATCHER is still empty too (never reached, but NOT permanently stuck as a side effect either)',
+      T.HTML_FILTER_MATCHER.size === 0, T.HTML_FILTER_MATCHER.size);
+
+    sandbox.buildNetworkBlockMatcher = realBuildNetworkBlockMatcher; // "fix" the transient failure
+    await T.ensureRuleDefinitionsLoaded();
+    check('the NEXT call retries the whole build from scratch and succeeds — DEFAULT_RULES populated',
+      T.DEFAULT_RULES.length > 0, T.DEFAULT_RULES.length);
+    check('...and HTML_FILTER_MATCHER is populated too this time — the real bug this section guards against',
+      T.HTML_FILTER_MATCHER.size > 0, T.HTML_FILTER_MATCHER.size);
+  }
+
+  console.log('\n== 6d. Regression (2026-09-14): the SAME bug class in buildActiveRulesFromStorage()\'s MALWARE_PATH_MATCHER/_remoteMalwareRulesMemo, plus defense-in-depth (one malformed entry skipped, not fatal) ==');
+  {
+    // Part 1 (Fix B): a single malformed remoteMalwarePathPatterns entry —
+    // a real URLhaus-style external feed is exactly the kind of data
+    // likely to have one occasionally — must be SKIPPED, not abort the
+    // whole matcher build.
+    await T._resetRemoteMalwareRulesMemo();
+    T.MALWARE_PATH_MATCHER = new Map();
+    const paths = [
+      '||good-malware-host.example/exact/payload.exe^',
+      '||throw-me.example/bad^',
+      '||another-good-host.example/x^',
+    ];
+    await chromeStub.storage.local.set({
+      remoteMalwarePathPatterns: await T._compressDomainsForStorage(paths),
+      remoteMalwareDomains: await T._compressDomainsForStorage([]),
+    });
+    const realUrlFilterToRegExp = sandbox._urlFilterToRegExp;
+    sandbox._urlFilterToRegExp = (urlFilter) => {
+      if (urlFilter.includes('throw-me')) throw new Error('simulated malformed pattern');
+      return realUrlFilterToRegExp(urlFilter);
+    };
+    await T.buildActiveRulesFromStorage();
+    sandbox._urlFilterToRegExp = realUrlFilterToRegExp; // restore immediately, whatever happens above
+    check('the two GOOD entries still made it into MALWARE_PATH_MATCHER despite the third one throwing',
+      T.MALWARE_PATH_MATCHER.has('good-malware-host.example') && T.MALWARE_PATH_MATCHER.has('another-good-host.example'),
+      [...T.MALWARE_PATH_MATCHER.keys()]);
+    check('the malformed entry itself contributed NO domain key at all (skipped before matcher.set, not a broken/partial one)',
+      !T.MALWARE_PATH_MATCHER.has('throw-me.example'), [...T.MALWARE_PATH_MATCHER.keys()]);
+
+    // Part 2 (Fix A): if buildMalwarePathMatcher() fails in some OTHER way
+    // Fix B doesn't catch (simulated here by making the whole function
+    // throw), _remoteMalwareRulesMemo must NOT get committed — otherwise
+    // the memo-hit branch on the next call with the same remoteKey would
+    // skip rebuilding forever, leaving MALWARE_PATH_MATCHER stuck (this is
+    // the exact bug already fixed for HTML_FILTER_MATCHER in
+    // ensureRuleDefinitionsLoaded(), section 6c above).
+    await T._resetRemoteMalwareRulesMemo();
+    T.MALWARE_PATH_MATCHER = new Map();
+    const paths2 = ['||yet-another-good-host.example/y^'];
+    await chromeStub.storage.local.set({
+      remoteMalwarePathPatterns: await T._compressDomainsForStorage(paths2),
+      remoteMalwareDomains: await T._compressDomainsForStorage([]),
+    });
+    delete storageData[T.MALWARE_PATH_MATCHER_CACHE_KEY]; // force the real build path, not a cache hit
+    const realBuildMalwarePathMatcher = sandbox.buildMalwarePathMatcher;
+    sandbox.buildMalwarePathMatcher = () => { throw new Error('simulated total build failure'); };
+    let threwAsExpected2 = false;
+    try { await T.buildActiveRulesFromStorage(); } catch { threwAsExpected2 = true; }
+    check('the simulated throw actually propagated (sanity check on the test setup itself)', threwAsExpected2);
+    check('_remoteMalwareRulesMemo was NOT committed on the failed attempt',
+      T._remoteMalwareRulesMemo.rules === null, T._remoteMalwareRulesMemo);
+    check('MALWARE_PATH_MATCHER is still empty too (never reached, but not permanently stuck as a side effect)',
+      T.MALWARE_PATH_MATCHER.size === 0, T.MALWARE_PATH_MATCHER.size);
+
+    sandbox.buildMalwarePathMatcher = realBuildMalwarePathMatcher; // "fix" the transient failure
+    await T.buildActiveRulesFromStorage();
+    check('the NEXT call retries and succeeds — MALWARE_PATH_MATCHER populated this time',
+      T.MALWARE_PATH_MATCHER.has('yet-another-good-host.example'), [...T.MALWARE_PATH_MATCHER.keys()]);
+    check('...and _remoteMalwareRulesMemo is now correctly committed too',
+      T._remoteMalwareRulesMemo.rules !== null, T._remoteMalwareRulesMemo);
   }
 
   console.log('\n== 7. _matcherEntryCount(): powers GET_RULE_COUNT so the popup shows the SAME meaning on every browser (2026-08-31 — live-reported: Chrome popup showed 17526, Firefox showed only 155 for equivalent protection, because getDynamicRules() alone cannot see either matcher) ==');

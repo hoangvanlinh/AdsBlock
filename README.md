@@ -115,6 +115,7 @@ Available on Chrome, Firefox, and Edge:
 **Run the Firefox build in dev mode:**
 
 ```bash
+about:debugging#/runtime/this-firefox
 npx --yes web-ext run --source-dir=build/dist-firefox --firefox=/Applications/Firefox.app/Contents/MacOS/firefox --pref=browser.dom.window.dump.enabled=true --verbose --start-url=https://vnexpress.net
 ```
 

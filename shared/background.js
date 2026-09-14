@@ -44,6 +44,16 @@ if (typeof importScripts === 'function' && !self.SCRIPTLET_ALIAS_MAP) {
 if (typeof importScripts === 'function' && !self.LocalStorage) {
   importScripts('local-storage.js');
 }
+// diag-logger.js (repo root shared/, same dual-loading story) — must load
+// after local-storage.js (its own persistence uses self.LocalStorage).
+// TEMP (2026-09-14): pulled out into its own file — see that file's own
+// comment — specifically so it's easy to find/control (DiagLogger.dump()/
+// .clear()/.setEnabled(false) from the background console) independent of
+// whatever else is being edited in this file.
+if (typeof importScripts === 'function' && !self.DiagLogger) {
+  importScripts('diag-logger.js');
+}
+const _diagLog = (level, msg, data) => self.DiagLogger[level](msg, data);
 // session-storage.js (repo root shared/, same dual-loading story) — must
 // load AFTER browser-compat.js (needs self.EXT_SESSION_STORAGE) and
 // local-storage.js (its own local fallback uses self.LocalStorage), and
@@ -549,7 +559,24 @@ function buildNetworkBlockMatcher(parsed) {
         const [path, typesField, domainsField, denyallowField, methodsField, thirdPartyField] = parts;
         const urlFilter = '||' + domain + path;
         if (!_isValidUrlFilter(urlFilter)) continue;
-        const entry = { regex: _urlFilterToRegExp(urlFilter) };
+        // _urlFilterToRegExp() can still throw on a genuinely malformed
+        // pattern despite _isValidUrlFilter()'s check above — real
+        // large-scale merged content (EasyList/EasyPrivacy/Fanboy-Social/
+        // ...) is exactly the kind of external data likely to have an
+        // occasional bad entry. An uncaught throw here used to abort the
+        // ENTIRE matcher build for every other domain too, and (before the
+        // atomic-commit fix in ensureRuleDefinitionsLoaded()) could leave
+        // HTML_FILTER_MATCHER stuck empty for the rest of the background's
+        // lifetime — live-reported 2026-09-14. Skip just this one entry
+        // instead.
+        let regex;
+        try {
+          regex = _urlFilterToRegExp(urlFilter);
+        } catch (e) {
+          _diagLog('warn', 'buildNetworkBlockMatcher: skipped malformed entry', { urlFilter, error: e && (e.message || e) });
+          continue;
+        }
+        const entry = { regex };
         if (typesField !== '*') {
           const tokens = typesField.split(',');
           if (tokens[0].charAt(0) === '~') entry.excludedResourceTypes = new Set(tokens.map(t => t.slice(1)));
@@ -721,8 +748,19 @@ function buildMalwarePathMatcher(pathPatterns) {
     const { domain } = _abpSplitNetworkPattern(bare);
     const key = domain.toLowerCase();
     if (!key) continue;
+    // See buildNetworkBlockMatcher()'s matching comment — pathPatterns here
+    // comes from a real external threat-intel feed (URLhaus-style), exactly
+    // the kind of data likely to have an occasional malformed entry. Skip
+    // just this one instead of letting the whole matcher build fail.
+    let regex;
+    try {
+      regex = _urlFilterToRegExp(urlFilter);
+    } catch (e) {
+      _diagLog('warn', 'buildMalwarePathMatcher: skipped malformed entry', { urlFilter, error: e && (e.message || e) });
+      continue;
+    }
     if (!matcher.has(key)) matcher.set(key, []);
-    matcher.get(key).push(_urlFilterToRegExp(urlFilter));
+    matcher.get(key).push(regex);
   }
   return matcher;
 }
@@ -897,7 +935,11 @@ function _concatHtmlFilterChunks(chunks) {
 function _attachHtmlFilter(requestId, selectors) {
   let filter;
   try { filter = EXT.webRequest.filterResponseData(requestId); }
-  catch { return; }
+  catch (e) {
+    _diagLog('error', 'HTML filter: filterResponseData() THREW (never attached)', { requestId, error: e && (e.message || e) });
+    return;
+  }
+  _diagLog('log', 'HTML filter: attached', { requestId, selectorCount: selectors.length });
   let chunks = [];
   let totalBytes = 0;
   let aborted = false;
@@ -906,6 +948,7 @@ function _attachHtmlFilter(requestId, selectors) {
     totalBytes += event.data.byteLength;
     if (totalBytes > HTML_FILTER_MAX_BYTES) {
       aborted = true;
+      _diagLog('warn', 'HTML filter: ABORTED mid-stream (exceeded HTML_FILTER_MAX_BYTES) — passthrough for the rest', { requestId, totalBytes, HTML_FILTER_MAX_BYTES });
       for (const chunk of chunks) filter.write(chunk);
       chunks = [];
       filter.write(event.data);
@@ -917,17 +960,22 @@ function _attachHtmlFilter(requestId, selectors) {
     if (aborted) { filter.close(); return; } // already streamed through in ondata
     try {
       const bytes = _concatHtmlFilterChunks(chunks);
-      const html = new TextDecoder('utf-8').decode(bytes);
+      const html = new TextDecoder().decode(bytes);
       const replacement = _applyHtmlFilterSelectors(html, selectors);
       filter.write(new TextEncoder().encode(replacement !== null ? replacement : html));
-    } catch {
+      _diagLog('log', 'HTML filter: onstop — filtered and wrote', { requestId, htmlLength: html.length, modified: replacement !== null, replacementLength: replacement === null ? null : replacement.length });
+    } catch (e) {
       // Any failure here — write back the untouched original bytes rather
       // than dropping them (see the contract note above).
+      _diagLog('error', 'HTML filter: onstop THREW — writing back UNTOUCHED original bytes', { requestId, error: e && (e.message || e) });
       for (const chunk of chunks) filter.write(chunk);
     }
     filter.close();
   };
-  filter.onerror = () => { try { filter.close(); } catch { /* already closed/disconnected */ } };
+  filter.onerror = () => {
+    _diagLog('error', 'HTML filter: onerror fired (stream aborted by the browser, e.g. request cancelled/redirected)', { requestId, filterStatus: filter.status });
+    try { filter.close(); } catch { /* already closed/disconnected */ }
+  };
 }
 
 // This rewrites real page markup — a much more visible effect than
@@ -941,14 +989,27 @@ function _attachHtmlFilter(requestId, selectors) {
 // earlier chance to miss the very first navigation (see below).
 function _htmlFilterRequestHandler(details) {
   if (details.type !== 'main_frame' && details.type !== 'sub_frame') return {};
-  if (!_settingsCache.enabled || !_settingsCache.blockAds) return {};
+  if (!_settingsCache.enabled || !_settingsCache.blockAds) {
+    _diagLog('log', 'HTML filter: SKIPPED (extension disabled or blockAds off)', { url: details.url, enabled: _settingsCache.enabled, blockAds: _settingsCache.blockAds });
+    return {};
+  }
   let host;
   try { host = new URL(details.url).hostname.toLowerCase(); } catch { return {}; }
-  if (_settingsCache.pausedDomains.has(host) || _settingsCache.allowedDomains.has(host)) return {};
+  if (_settingsCache.pausedDomains.has(host) || _settingsCache.allowedDomains.has(host)) {
+    _diagLog('log', 'HTML filter: SKIPPED (host paused/allowed)', { host, url: details.url });
+    return {};
+  }
   const selectors = _htmlFilterSelectorsForHost(host);
-  if (!selectors) return {};
+  if (!selectors) {
+    _diagLog('log', 'HTML filter: SKIPPED (no selectors for this host — HTML_FILTER_MATCHER empty or no match)', { host, url: details.url, HTML_FILTER_MATCHER_size: HTML_FILTER_MATCHER.size });
+    return {};
+  }
   const cl = (details.responseHeaders || []).find(h => h.name.toLowerCase() === 'content-length');
-  if (cl && Number(cl.value) > HTML_FILTER_MAX_BYTES) return {};
+  if (cl && Number(cl.value) > HTML_FILTER_MAX_BYTES) {
+    _diagLog('warn', 'HTML filter: SKIPPED (Content-Length exceeds HTML_FILTER_MAX_BYTES)', { host, url: details.url, contentLength: cl.value, HTML_FILTER_MAX_BYTES });
+    return {};
+  }
+  _diagLog('log', 'HTML filter: request matched, attaching', { host, url: details.url, type: details.type, selectorCount: selectors.length });
   _attachHtmlFilter(details.requestId, selectors);
   return {};
 }
@@ -2465,16 +2526,19 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap,
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) {
         sourceErrors[url] = `HTTP ${res.status}`;
+        _diagLog('warn', 'source fetch FAILED (HTTP)', { url, status: res.status });
         return '';
       }
       const raw = await res.text();
-      if (!raw) return '';
+      if (!raw) { _diagLog('warn', 'source fetch OK but EMPTY body', { url }); return ''; }
       const stats = {};
       const converted = await _maybeConvertAbpText(raw, stats, usedKeys, dedicatedKeyMap, networkRuleBudget, !!(trackerUrls && trackerUrls.has(url)));
       if (Object.keys(stats).length) sourceStats[url] = stats;
+      _diagLog('log', 'source fetch OK', { url, rawLength: raw.length, convertedLength: converted.length });
       return converted;
     } catch (e) {
       sourceErrors[url] = e && e.message ? e.message : 'fetch failed';
+      _diagLog('warn', 'source fetch THREW', { url, error: e && (e.message || e) });
       return '';
     }
   }));
@@ -2623,6 +2687,7 @@ async function fetchRemoteRuleText() {
     // At least one remote fetch was attempted and all of them came back
     // empty — that's an actual failure (network down, bad URL, ...), so
     // let getRulesText()'s catch branch fall back to cached/local rules.
+    _diagLog('error', 'fetchRemoteRuleText: ALL sources returned empty -> throwing "no rules available"', { priorityUrls, urls });
     throw new Error('no rules available');
   }
   // Empty here with no urls attempted means every source was deliberately
@@ -3256,6 +3321,7 @@ function buildAdMainFrameRulesFromConfig(config, startId) {
 let _rulesTextRefreshInFlight = null;
 function _refreshRulesTextInBackground() {
   if (_rulesTextRefreshInFlight) return;
+  _diagLog('log', '_refreshRulesTextInBackground TRIGGERED (cache was stale)', {});
   _rulesTextRefreshInFlight = fetchRemoteRuleText()
     .then(() => {
       // fetchRemoteRuleText() already wrote the fresh text to
@@ -3265,8 +3331,11 @@ function _refreshRulesTextInBackground() {
       // re-parses the fresh text instead of continuing to serve the stale
       // in-memory one this call itself is about to return below.
       _parsedRules = null;
+      _diagLog('log', '_refreshRulesTextInBackground finished OK', {});
     })
-    .catch(() => { /* best-effort — next stale getRulesText() call just retries */ })
+    .catch((e) => {
+      _diagLog('warn', '_refreshRulesTextInBackground FAILED', { error: e && (e.message || e) });
+    })
     .finally(() => { _rulesTextRefreshInFlight = null; });
 }
 
@@ -3557,36 +3626,56 @@ async function ensureRuleDefinitionsLoaded() {
         trackerPatterns: global.tracker_patterns?.length ? global.tracker_patterns : FALLBACK_RULE_CONFIG.trackerPatterns,
         malwarePatterns: global.malware_patterns?.length ? global.malware_patterns : FALLBACK_RULE_CONFIG.malwarePatterns,
       });
+      // Everything below builds into LOCAL variables first — module-level
+      // variables (including DEFAULT_RULES/MALWARE_RULES/AD_MAINFRAME_RULES,
+      // the very guard this function checks at its own top) are committed
+      // ONLY in one atomic block at the very end, after every step below
+      // has succeeded without throwing. This used to commit DEFAULT_RULES/
+      // MALWARE_RULES/AD_MAINFRAME_RULES FIRST, with NETWORK_BLOCK_MATCHER/
+      // HTML_FILTER_MATCHER assigned several steps later — if anything in
+      // between threw (e.g. buildNetworkBlockMatcher() hitting one
+      // malformed entry among thousands merged from EasyList/EasyPrivacy/
+      // Fanboy-Social/...), the guard was already satisfied by the time the
+      // exception propagated, so this function would never retry for the
+      // REST OF THIS SCRIPT'S LIFETIME — leaving HTML_FILTER_MATCHER (built
+      // after the throw point) stuck at its initial empty Map permanently.
+      // Live-reported (2026-09-14): HTML filter silently doing nothing on
+      // vnexpress.net "after some time" (HTML_FILTER_MATCHER_size: 0 in the
+      // diag log) despite GET_SITE_CONFIG — a completely separate code path
+      // reading the exact same `parsed` — still returning the correct
+      // selectors the whole time, since getParsedRules() has its own
+      // independent success/failure, unaffected by this function's guard.
       const { adRules, trackerRules } = buildDefaultRulesFromConfig(config);
-      DEFAULT_RULES = [...adRules, ...trackerRules];
-      MALWARE_RULES = buildMalwareRulesFromConfig(config, DEFAULT_RULES.length +1);
-      AD_MAINFRAME_RULES = buildAdMainFrameRulesFromConfig(config, DEFAULT_RULES.length + MALWARE_RULES.length + 1);
-      QUERY_STRIP_RULES = buildQueryStripRules(global.strip_query_params || [], QUERY_STRIP_RULE_ID_START);
-      NETWORK_REDIRECT_RULES = buildNetworkRedirectRules(global.network_redirect_rules || [], NETWORK_REDIRECT_RULE_ID_START);
+      const defaultRules = [...adRules, ...trackerRules];
+      const malwareRules = buildMalwareRulesFromConfig(config, defaultRules.length + 1);
+      const adMainFrameRules = buildAdMainFrameRulesFromConfig(config, defaultRules.length + malwareRules.length + 1);
+      const queryStripRules = buildQueryStripRules(global.strip_query_params || [], QUERY_STRIP_RULE_ID_START);
+      const networkRedirectRules = buildNetworkRedirectRules(global.network_redirect_rules || [], NETWORK_REDIRECT_RULE_ID_START);
       // network_block_rules: DNR rule objects for Chrome/Edge (and Firefox
       // when webRequestBlocking isn't available), OR a webRequest matcher
       // Map for Firefox when it is — never both, see _hasWebRequestBlocking()
       // and buildActiveRulesFromStorage()'s own gating of networkBlockActive.
+      let networkBlockRules, networkBlockMatcher;
       if (_hasWebRequestBlocking()) {
-        NETWORK_BLOCK_RULES = [];
+        networkBlockRules = [];
         // Cross-SW-restart cache (chrome.storage.local, quota-guarded) for
         // this specifically — the only per-entry-RegExp-compiling build in
         // this function — see _saveMatcherCacheToLocal's own comment.
         const cachedNetworkBlockMatcher = await _loadMatcherCacheFromLocal(NETWORK_BLOCK_MATCHER_CACHE_KEY, _parsedRulesTextHash, _rehydrateMatcherMap);
         if (cachedNetworkBlockMatcher) {
-          NETWORK_BLOCK_MATCHER = cachedNetworkBlockMatcher;
+          networkBlockMatcher = cachedNetworkBlockMatcher;
         } else {
-          NETWORK_BLOCK_MATCHER = buildNetworkBlockMatcher(parsed);
+          networkBlockMatcher = buildNetworkBlockMatcher(parsed);
           // Fire-and-forget: measured ~8-11ms (compress + getBytesInUse +
           // storage.local.set) at real ~7,480-entry scale — the write is
           // best-effort already (try/catch inside), so there's no reason to
           // make every rebuild's caller (ensureRuleDefinitionsLoaded(),
           // GET_RULE_COUNT, applyNetworkRules()...) wait on it finishing.
-          _saveMatcherCacheToLocal(NETWORK_BLOCK_MATCHER_CACHE_KEY, _parsedRulesTextHash, _serializeMatcherMap(NETWORK_BLOCK_MATCHER));
+          _saveMatcherCacheToLocal(NETWORK_BLOCK_MATCHER_CACHE_KEY, _parsedRulesTextHash, _serializeMatcherMap(networkBlockMatcher));
         }
       } else {
-        NETWORK_BLOCK_RULES = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
-        NETWORK_BLOCK_MATCHER = new Map();
+        networkBlockRules = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
+        networkBlockMatcher = new Map();
       }
       // Unconditional (unlike NETWORK_BLOCK_MATCHER above) — building the
       // MAP itself is cheap regardless of browser (just copying selector
@@ -3598,14 +3687,41 @@ async function ensureRuleDefinitionsLoaded() {
       // HTML response) — see buildHtmlFilterMatcher's own comment on
       // reusing direct_hide_selectors wholesale instead of a separate
       // opt-in key.
-      HTML_FILTER_MATCHER = buildHtmlFilterMatcher(parsed);
-      TRACKER_RULE_IDS = new Set(trackerRules.map(rule => rule.id));
-      MALWARE_RULE_IDS = new Set(MALWARE_RULES.map(rule => rule.id));
+      const htmlFilterMatcher = buildHtmlFilterMatcher(parsed);
+      const trackerRuleIds = new Set(trackerRules.map(rule => rule.id));
+      const malwareRuleIds = new Set(malwareRules.map(rule => rule.id));
+
+      // Atomic commit — see this function's own comment above for why
+      // nothing above this point touches a module-level variable.
+      DEFAULT_RULES = defaultRules;
+      MALWARE_RULES = malwareRules;
+      AD_MAINFRAME_RULES = adMainFrameRules;
+      QUERY_STRIP_RULES = queryStripRules;
+      NETWORK_REDIRECT_RULES = networkRedirectRules;
+      NETWORK_BLOCK_RULES = networkBlockRules;
+      NETWORK_BLOCK_MATCHER = networkBlockMatcher;
+      HTML_FILTER_MATCHER = htmlFilterMatcher;
+      TRACKER_RULE_IDS = trackerRuleIds;
+      MALWARE_RULE_IDS = malwareRuleIds;
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
       TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...config.trackerPatterns);
       MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...config.malwarePatterns);
       _ruleGeneration++; // invalidates _ruleFingerprint() — static rule defs just changed
-    })().finally(() => {
+      _diagLog('log', 'ensureRuleDefinitionsLoaded REAL BUILD finished', {
+        DEFAULT_RULES: DEFAULT_RULES.length, MALWARE_RULES: MALWARE_RULES.length, AD_MAINFRAME_RULES: AD_MAINFRAME_RULES.length,
+        NETWORK_BLOCK_MATCHER: NETWORK_BLOCK_MATCHER.size, HTML_FILTER_MATCHER: HTML_FILTER_MATCHER.size,
+        MALWARE_PATH_MATCHER: MALWARE_PATH_MATCHER.size, NETWORK_BLOCK_RULES: NETWORK_BLOCK_RULES.length,
+        parsedRulesTextHash: _parsedRulesTextHash,
+        hasWebRequestBlocking: _hasWebRequestBlocking(), hasHtmlStreamFilter: _hasHtmlStreamFilter(),
+        userAgent: navigator.userAgent,
+      });
+    })().catch((e) => {
+      // Nothing committed above (see the atomic-commit comment) — the
+      // guard stays unsatisfied, so the NEXT call retries the whole build
+      // from scratch instead of running forever with partial/stale state.
+      _diagLog('error', 'ensureRuleDefinitionsLoaded REAL BUILD THREW — nothing committed, will retry on next call', { error: e && (e.message || e), stack: e && e.stack });
+      throw e;
+    }).finally(() => {
       _ruleConfigPromise = null;
     });
   }
@@ -3932,7 +4048,18 @@ async function buildActiveRulesFromStorage() {
       // still builds the small, batched bare-domain DNR rules but skips the
       // path ones entirely on this browser.
       remoteActive = buildRemoteMalwareRules(remoteDomains, _hasWebRequestBlocking() ? [] : remotePathPatterns);
-      _remoteMalwareRulesMemo = { key: remoteKey, rules: remoteActive };
+      // Build into a LOCAL variable first, same reasoning as
+      // ensureRuleDefinitionsLoaded()'s own atomic commit: _remoteMalwareRulesMemo
+      // used to be committed BEFORE MALWARE_PATH_MATCHER was actually built
+      // below — if that build ever threw (a malformed entry in a real
+      // URLhaus-style feed; Fix B above makes this unlikely but not
+      // impossible for other reasons), the memo would already report
+      // "already built for this remoteKey", so this function would never
+      // retry again until remoteKey changes — leaving MALWARE_PATH_MATCHER
+      // stuck at whatever it was (empty, on a first build) for the rest of
+      // this lifetime, the exact same bug class live-reported for
+      // HTML_FILTER_MATCHER (2026-09-14).
+      let malwarePathMatcher;
       if (_hasWebRequestBlocking()) {
         // Same cross-SW-restart local-storage cache pattern as
         // NETWORK_BLOCK_MATCHER in ensureRuleDefinitionsLoaded() — this is
@@ -3940,16 +4067,19 @@ async function buildActiveRulesFromStorage() {
         // remoteKey already used for the in-memory _remoteMalwareRulesMemo.
         const cachedMalwarePathMatcher = await _loadMatcherCacheFromLocal(MALWARE_PATH_MATCHER_CACHE_KEY, remoteKey, _rehydrateRegexMatcherMap);
         if (cachedMalwarePathMatcher) {
-          MALWARE_PATH_MATCHER = cachedMalwarePathMatcher;
+          malwarePathMatcher = cachedMalwarePathMatcher;
         } else {
-          MALWARE_PATH_MATCHER = buildMalwarePathMatcher(remotePathPatterns);
+          malwarePathMatcher = buildMalwarePathMatcher(remotePathPatterns);
           // Fire-and-forget — see the matching comment on the
           // NETWORK_BLOCK_MATCHER save above.
-          _saveMatcherCacheToLocal(MALWARE_PATH_MATCHER_CACHE_KEY, remoteKey, _serializeRegexMatcherMap(MALWARE_PATH_MATCHER));
+          _saveMatcherCacheToLocal(MALWARE_PATH_MATCHER_CACHE_KEY, remoteKey, _serializeRegexMatcherMap(malwarePathMatcher));
         }
       } else {
-        MALWARE_PATH_MATCHER = new Map();
+        malwarePathMatcher = new Map();
       }
+      // Atomic commit — only after the build above succeeded without throwing.
+      MALWARE_PATH_MATCHER = malwarePathMatcher;
+      _remoteMalwareRulesMemo = { key: remoteKey, rules: remoteActive };
     }
   } else {
     MALWARE_PATH_MATCHER = new Map();
@@ -4066,6 +4196,49 @@ function applyNetworkRules() {
     .then(() => _applyNetworkRulesImpl());
   return _applyNetworkRulesChain;
 }
+
+// Called ONCE, unconditionally, right here at module top-level — not just
+// from onInstalled/onStartup. Both DEFAULT_RULES/MALWARE_RULES/
+// AD_MAINFRAME_RULES (in-memory, built by ensureRuleDefinitionsLoaded())
+// and NETWORK_BLOCK_MATCHER/MALWARE_PATH_MATCHER/HTML_FILTER_MATCHER
+// (in-memory, built inside buildActiveRulesFromStorage()) live only in this
+// module's variables — never persisted — so they're empty every time this
+// script is (re)loaded. That happens far more often than onInstalled/
+// onStartup fire: Firefox idle-kills and respawns this event page after a
+// period of inactivity (visible as "Background event page was not
+// terminated on idle because a DevTools toolbox is attached to the
+// extension" when a toolbox IS attached and this doesn't happen), and
+// Chrome's MV3 service worker does the same. Neither onInstalled nor
+// onStartup fires on that kind of respawn (only a real install/update or an
+// actual browser launch does), so without this call the popup's rule count
+// silently drops to whatever getDynamicRules() alone reports (live-reported
+// as "469 quy tắc" — DNR-persisted rules only) and, on Firefox, the
+// webRequestBlocking listener (_updateNetworkBlockListener) plus
+// HTML_FILTER_MATCHER's content stay empty/unregistered until something
+// else happens to trigger a rebuild (e.g. toggling Protected off/on, which
+// sends a message that ends up calling applyNetworkRules() some other way).
+_diagLog('log', 'MODULE LOAD (background script (re)started)', {
+  hasWebRequestBlocking: _hasWebRequestBlocking(), hasHtmlStreamFilter: _hasHtmlStreamFilter(),
+  userAgent: navigator.userAgent,
+});
+// _autoEnableLangDefaultSources() used to run ONLY from onInstalled — but
+// "Reload" in about:debugging (or a web-ext auto-reload on file change),
+// the normal dev-loop way to pick up code changes, does NOT fire
+// onInstalled at all; it's a plain re-execution of this script, same as
+// any other respawn. If the ONE real onInstalled event for this profile
+// happened before a lang-matched source existed in config.js (e.g. ABPVN,
+// added 2026-08-22), or storage.local was ever reset since, this function
+// never got another chance to run — live-reported (2026-09-14) as ABPVN
+// staying disabled ("priorityUrlsCount: 0" in the diag log) despite a
+// vi-VN/Asia-Ho_Chi_Minh-timezone browser matching its `lang`. Calling it
+// here too is safe to repeat: it only fills in an override key that's
+// completely ABSENT (see its own `hasOwnProperty` check) — it can never
+// re-enable a source the user deliberately turned back off, and once it
+// has run successfully once, every later call here is a fast no-op.
+(async () => {
+  await _autoEnableLangDefaultSources();
+  applyNetworkRules();
+})();
 
 async function _applyNetworkRulesImpl() {
   const { enabled, allRules } = await buildActiveRulesFromStorage();
@@ -4813,6 +4986,18 @@ async function applyPrivacySettings() {
 // each other. Keyed per tab+frame since all_frames content scripts each
 // have their own frameId.
 const _frameCss = new Map(); // `${tabId}:${frameId}:${slot}` -> last-applied css text
+// content.js/site-block.js legitimately re-send the exact same slot's CSS
+// verbatim more than once per page (boot()'s own send, then sync()'s
+// defensive re-send in case CSS_CLEAR_ALL wiped it, then another sync() on
+// DOMContentLoaded — see sync()'s own comment) — byte-identical raw text
+// every time on a normal page with a stable config. _frameCss above only
+// short-circuits AFTER paying for _dedupeCssRules() (a split+sort+join over
+// the whole CSS text) on every one of those resends. This tracks the RAW
+// (pre-dedupe) text per key so an identical resend returns immediately,
+// before any of that work — cleared alongside _frameCss in clearFrameCss()
+// so a real fresh navigation with coincidentally-identical content (same
+// host revisited) still isn't skipped incorrectly.
+const _frameCssRaw = new Map();
 
 function _frameCssKey(tabId, frameId, slot) {
   return `${tabId}:${frameId}:${slot}`;
@@ -4864,10 +5049,40 @@ function _dedupeCssRules(css) {
   return Array.from(seen).sort().join('\n\n');
 }
 
-async function setFrameCss(tabId, frameId, slot, css) {
-  if (tabId === undefined || frameId === undefined) return;
-  css = _dedupeCssRules(css);
+// setFrameCss's own body used to run as soon as it was called, with no
+// mutual exclusion between overlapping calls for the SAME tab+frame+slot.
+// content.js/site-block.js legitimately send two CSS_SET messages for the
+// SAME 'direct' slot close together on every normal page load: site-
+// block.js's _fastPathDirectStyle() fires last-known-good CSS immediately
+// (before GET_SITE_CONFIG even resolves), then the real selectors follow
+// moments later once it does. Each incoming 'CSS_SET' message spawns its
+// OWN independent async IIFE in the onMessage handler, so if the real
+// call's setFrameCss() started running before the fast-path call's had
+// finished, BOTH would read the same (stale) `_frameCss.get(key)` and
+// could end up calling EXT.scripting.insertCSS TWICE, concurrently, for
+// the same frame — with neither having removed the other's sheet first.
+// Live-observed on Firefox as `NS_ERROR_ILLEGAL_VALUE` from
+// nsIDOMWindowUtils.addSheet on EVERY vnexpress.net load (2026-09-14), not
+// just after a background respawn — individually-valid selectors and the
+// post-_dedupeCssRules text both ruled out a malformed-CSS explanation
+// first. Fixed by serializing calls per key: a second call for the same
+// key now waits for the first's insert/remove sequence to fully settle
+// before reading `_frameCss`/touching the browser, so the two can never
+// overlap.
+const _frameCssQueues = new Map(); // key -> tail promise of the chain for that key
+function setFrameCss(tabId, frameId, slot, css) {
+  if (tabId === undefined || frameId === undefined) return Promise.resolve();
   const key = _frameCssKey(tabId, frameId, slot);
+  const prevTail = _frameCssQueues.get(key) || Promise.resolve();
+  const tail = prevTail.catch(() => {}).then(() => _setFrameCssImpl(tabId, frameId, key, css));
+  _frameCssQueues.set(key, tail);
+  return tail;
+}
+
+async function _setFrameCssImpl(tabId, frameId, key, rawCss) {
+  if (_frameCssRaw.get(key) === rawCss) return; // byte-identical resend — skip dedupe/comparison entirely
+  _frameCssRaw.set(key, rawCss);
+  const css = _dedupeCssRules(rawCss);
   const prev = _frameCss.get(key);
   if (prev === css) return; // no change — already applied (or already absent)
   if (prev) {
@@ -4878,7 +5093,10 @@ async function setFrameCss(tabId, frameId, slot, css) {
     try {
       await _insertFrameCss(tabId, frameId, css);
       _frameCss.set(key, css);
-    } catch (e) { _frameCss.delete(key); }
+    } catch (e) {
+      _diagLog('error', '_insertFrameCss FAILED', { key, tabId, frameId, cssLength: css.length, css, error: e && (e.message || e) });
+      _frameCss.delete(key);
+    }
   } else {
     _frameCss.delete(key);
   }
@@ -4894,6 +5112,9 @@ function clearFrameCss(tabId, frameId) {
   for (const key of _frameCss.keys()) {
     if (key.startsWith(prefix)) _frameCss.delete(key);
   }
+  for (const key of _frameCssRaw.keys()) {
+    if (key.startsWith(prefix)) _frameCssRaw.delete(key);
+  }
 }
 
 async function clearAllFrameCss(tabId, frameId) {
@@ -4902,6 +5123,12 @@ async function clearAllFrameCss(tabId, frameId) {
     if (!key.startsWith(prefix)) continue;
     try { await _removeFrameCss(tabId, frameId, css); } catch (e) {}
     _frameCss.delete(key);
+    // Must also forget the RAW text (see _frameCssRaw's own comment): the
+    // browser-side CSS was just genuinely removed above, so the NEXT send
+    // — even a byte-identical one, e.g. sync()'s own defensive re-send
+    // after this exact CSS_CLEAR_ALL — must not be short-circuited as "no
+    // change", or it would never actually get re-applied.
+    _frameCssRaw.delete(key);
   }
 }
 
@@ -4909,6 +5136,9 @@ EXT.tabs.onRemoved.addListener((tabId) => {
   const prefix = `${tabId}:`;
   for (const key of _frameCss.keys()) {
     if (key.startsWith(prefix)) _frameCss.delete(key);
+  }
+  for (const key of _frameCssRaw.keys()) {
+    if (key.startsWith(prefix)) _frameCssRaw.delete(key);
   }
   _tabBlockedCounts.delete(tabId);
 });
@@ -5503,6 +5733,7 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'CSS_SET': {
         const tabId = sender.tab && sender.tab.id;
         const frameId = sender.frameId;
+        _diagLog('log', 'CSS_SET received', { tabId, frameId, slot: msg.slot, fresh: !!msg.fresh, cssLength: (msg.css || '').length, css: msg.css || '', url: sender.tab && sender.tab.url });
         if (tabId !== undefined && frameId !== undefined) {
           if (msg.fresh) clearFrameCss(tabId, frameId);
           await setFrameCss(tabId, frameId, msg.slot, msg.css || '');

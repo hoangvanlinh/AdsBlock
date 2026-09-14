@@ -22,6 +22,7 @@ const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'shared/browser-compat.
 const utilsSrc = fs.readFileSync(path.join(ROOT, 'shared/utils.js'), 'utf8');
 const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'shared/scriptlet-alias-map.js'), 'utf8');
 const localStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/local-storage.js'), 'utf8');
+const diagLoggerSrc = fs.readFileSync(path.join(ROOT, 'shared/diag-logger.js'), 'utf8');
 const sessionStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/session-storage.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'shared/background.js'), 'utf8');
 
@@ -284,6 +285,8 @@ const sandbox = {
       vm.runInContext(browserCompatSrc, ctx, { filename: 'browser-compat.js' });
     } else if (name && name.includes('local-storage')) {
       vm.runInContext(localStorageSrc, ctx, { filename: 'local-storage.js' });
+    } else if (name && name.includes('diag-logger')) {
+      vm.runInContext(diagLoggerSrc, ctx, { filename: 'diag-logger.js' });
     } else if (name && name.includes('session-storage')) {
       vm.runInContext(sessionStorageSrc, ctx, { filename: 'session-storage.js' });
     } else if (name && name.includes('utils')) {
