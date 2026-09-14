@@ -2410,6 +2410,87 @@ function check(name, cond, detail = '') {
       built);
   }
 
+  console.log('\n== 25gg-ter. Regression (2026-09-14): wildcard-TLD ("amazon.*") [host_patterns] keys for network_block_rules -> DNR regexFilter (Chrome/Edge path), and raw-regex keys stay deliberately unconverted (RE2 platform limit) ==');
+  {
+    // Same bug/fix as buildNetworkBlockMatcher()'s Firefox-side "3b"
+    // regression (test-webrequest-block-engine.js): buildDomainNetworkBlockRules()
+    // used to string-concatenate domainKey+path regardless of [host_patterns]
+    // form, so "amazon.*" fed the literal '*' straight into a urlFilter,
+    // over-matching any host merely STARTING WITH "amazon" (e.g.
+    // "amazonevil.example"). Now it builds a dedicated regexFilter rule per
+    // wildcard-TLD token instead, mirroring _compileHostPattern()'s own
+    // wildcard-TLD matching semantics.
+    const wildcardText = [
+      '[global]',
+      '[host_patterns]',
+      'amazon.* = wildsite',
+      '',
+      '[wildsite]',
+      'network_block_rules = /ads.js script * * * *',
+      '',
+    ].join('\n');
+    const parsed = T.parseRuleText(wildcardText);
+    const rules = T.buildDomainNetworkBlockRules(parsed, T.NETWORK_BLOCK_RULE_ID_START);
+    check('exactly one rule built for the single wildcard-TLD network_block_rules entry', rules.length === 1, rules);
+    check('the rule uses condition.regexFilter, NOT a garbage urlFilter (literal "*" is not a valid DNR urlFilter wildcard-TLD escape)',
+      rules[0] && typeof rules[0].condition.regexFilter === 'string' && rules[0].condition.urlFilter === undefined,
+      rules[0] && rules[0].condition);
+    const re = new RegExp(rules[0].condition.regexFilter);
+    check('regexFilter matches a REAL TLD variant (amazon.co.uk/ads.js)', re.test('https://amazon.co.uk/ads.js'), re.source);
+    check('regexFilter matches a subdomain of a real TLD variant (www.amazon.de/ads.js)', re.test('https://www.amazon.de/ads.js'), re.source);
+    check('regexFilter does NOT over-match an unrelated host starting with "amazon" — the exact bug this fixes',
+      !re.test('https://amazonevil.example/ads.js'), re.source);
+    check('regexFilter does NOT match the right host with the WRONG path', !re.test('https://amazon.co.uk/other.js'), re.source);
+    check('resourceTypes still decoded correctly (same field-decoding helper as the plain urlFilter path)',
+      JSON.stringify(rules[0].condition.resourceTypes) === JSON.stringify(['script']), rules[0].condition);
+
+    // A literal-domain entry in the SAME fixture must be completely
+    // unaffected — same shape/IDs as before this fix.
+    const mixedText = [
+      '[global]',
+      '[host_patterns]',
+      'amazon.* = wildsite',
+      'plain-ads.example = plainsite',
+      '',
+      '[wildsite]',
+      'network_block_rules = /ads.js script * * * *',
+      '',
+      '[plainsite]',
+      'network_block_rules = /beacon.gif image * * * *',
+      '',
+    ].join('\n');
+    const mixedParsed = T.parseRuleText(mixedText);
+    const mixedRules = T.buildDomainNetworkBlockRules(mixedParsed, T.NETWORK_BLOCK_RULE_ID_START);
+    check('mixed fixture: 2 total rules (1 literal-domain urlFilter + 1 wildcard-TLD regexFilter)', mixedRules.length === 2, mixedRules);
+    const literalRule = mixedRules.find(r => r.condition.urlFilter !== undefined);
+    const regexRule = mixedRules.find(r => r.condition.regexFilter !== undefined);
+    check('the literal-domain entry still gets a plain urlFilter rule, exactly as before this fix',
+      !!literalRule && literalRule.condition.urlFilter === '||plain-ads.example/beacon.gif', literalRule && literalRule.condition);
+    check('the wildcard-TLD entry in the same batch still gets its regexFilter rule', !!regexRule, mixedRules);
+    check('no rule ID collision between the two forms', literalRule.id !== regexRule.id, [literalRule.id, regexRule.id]);
+
+    // Raw-regex form: deliberately NOT converted on the DNR/Chrome path
+    // (see buildDomainNetworkBlockRules()'s own comment for the RE2
+    // lookaround limitation) — must simply be dropped, not throw, not
+    // produce a broken rule.
+    const regexFormText = [
+      '[global]',
+      '[host_patterns]',
+      '/(^|\\.)fmovies[a-z0-9-]*\\./ = regexsite',
+      '',
+      '[regexsite]',
+      'network_block_rules = /popunder.js script * * * *',
+      '',
+    ].join('\n');
+    const regexFormParsed = T.parseRuleText(regexFormText);
+    let threwOnRegexForm = null, regexFormRules;
+    try { regexFormRules = T.buildDomainNetworkBlockRules(regexFormParsed, T.NETWORK_BLOCK_RULE_ID_START); }
+    catch (e) { threwOnRegexForm = e; }
+    check('a raw-regex [host_patterns] key never throws building DNR rules', threwOnRegexForm === null, threwOnRegexForm && threwOnRegexForm.message);
+    check('a raw-regex [host_patterns] key produces NO DNR rule on Chrome/Edge (intentionally unsupported there — Firefox\'s buildNetworkBlockComplex() covers it instead)',
+      regexFormRules.length === 0, regexFormRules);
+  }
+
   console.log('\n== 25hh. network_block_rules under [host_patterns] merges with that domain\'s OWN cosmetic/scriptlet rules, and never buckets with an unrelated domain ==');
   {
     // Same domain gets BOTH a cosmetic selector (##) AND a path-scoped

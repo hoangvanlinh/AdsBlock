@@ -87,9 +87,10 @@ const chromeStub = {
   },
   // The one thing this file adds over test-blocking.js's stub: a real
   // (fake) webRequest.onBeforeRequest that captures registered listeners so
-  // tests can invoke them directly with synthetic `details` objects, and
-  // supports removeListener so _updateNetworkBlockListener()'s toggle logic
-  // is exercised too.
+  // tests can invoke them directly with synthetic `details` objects.
+  // removeListener is still supported even though _networkBlockRequestHandler
+  // itself is registered unconditionally now (2026-09-14 — see its own
+  // registration comment) and never removed again in real usage.
   webRequest: {
     onBeforeRequest: {
       addListener(fn) { if (!onBeforeRequestListeners.includes(fn)) onBeforeRequestListeners.push(fn); },
@@ -176,8 +177,11 @@ const ctx = vm.createContext(sandbox);
 
 const exportSnippet = `
 self.__test = {
-  parseRuleText, buildNetworkBlockMatcher, _urlFilterToRegExp, _hasWebRequestBlocking,
-  _networkBlockRequestHandler, _updateNetworkBlockListener,
+  parseRuleText, buildNetworkBlockMatcher, buildNetworkBlockComplex, _urlFilterToRegExp, _hasWebRequestBlocking,
+  _networkBlockRequestHandler, _compileHostPattern,
+  get NETWORK_BLOCK_COMPLEX() { return NETWORK_BLOCK_COMPLEX; },
+  set NETWORK_BLOCK_COMPLEX(v) { NETWORK_BLOCK_COMPLEX = v; },
+  get _settingsCache() { return _settingsCache; },
   ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules,
   buildMalwarePathMatcher, _matcherEntryCount,
   _loadMatcherCacheFromLocal, _saveMatcherCacheToLocal,
@@ -276,6 +280,61 @@ const T = sandbox.__test;
   check('the domain|domain bucket key was split into 2 separate matcher keys',
     matcher.has('shared-a.example') && matcher.has('shared-b.example'), [...matcher.keys()]);
 
+  console.log('\n== 3b. Regression (2026-09-14): wildcard-TLD ("amazon.*") and raw-regex ("/.../ ") [host_patterns] keys for network_block_rules — buildNetworkBlockComplex()/NETWORK_BLOCK_COMPLEX ==');
+  {
+    // Live logic bug found while auditing NETWORK_BLOCK_RULES/NETWORK_BLOCK_MATCHER/
+    // HTML_FILTER_MATCHER: buildNetworkBlockMatcher() used to treat EVERY
+    // [host_patterns] key as a literal domain regardless of form. A
+    // wildcard-TLD key ("amazon.*") fed the literal '*' straight into
+    // _urlFilterToRegExp(), which treats '*' as its OWN unrelated "any
+    // characters" ABP wildcard — so "amazon.*" ended up matching
+    // "amazonEVIL.example" too (an over-match bug), not just real TLD
+    // variants. buildHtmlFilterMatcher() already correctly skips this form
+    // (documented, deliberate scope restriction); buildNetworkBlockMatcher()
+    // now does too, with buildNetworkBlockComplex() handling it PROPERLY
+    // instead (reusing _compileHostPattern() — the same matcher
+    // resolveSiteKey() itself uses for site-key resolution).
+    const complexText = [
+      '[global]',
+      '[host_patterns]',
+      'amazon.* = wildsite',
+      '/(^|\\.)fmovies[a-z0-9-]*\\./ = regexsite',
+      '',
+      '[wildsite]',
+      'network_block_rules = /ads.js script * * * *',
+      '',
+      '[regexsite]',
+      'network_block_rules = /popunder.js script * * * *',
+      '',
+    ].join('\n');
+    const complexParsed = T.parseRuleText(complexText);
+    const plainMatcher = T.buildNetworkBlockMatcher(complexParsed);
+    check('the wildcard-TLD/regex keys never leak into the plain (literal-domain) matcher',
+      plainMatcher.size === 0, [...plainMatcher.keys()]);
+
+    const complex = T.buildNetworkBlockComplex(complexParsed);
+    check('buildNetworkBlockComplex() found exactly the 2 complex entries (wildcard-TLD + regex)', complex.length === 2, complex.length);
+
+    // Use a dedicated tabId (999) so this section's blocks never pollute
+    // section 4's tab-1 badge-counter assertions below (fakeDetails()
+    // defaults to tabId:1).
+    T.NETWORK_BLOCK_COMPLEX = complex;
+    const wildcardHit = T._networkBlockRequestHandler(fakeDetails({ tabId: 999, url: 'https://amazon.co.uk/ads.js', type: 'script' }));
+    check('wildcard-TLD "amazon.*" correctly matches a REAL TLD variant (amazon.co.uk)', wildcardHit.cancel === true, wildcardHit);
+    const wildcardOverMatch = T._networkBlockRequestHandler(fakeDetails({ tabId: 999, url: 'https://amazonevil.example/ads.js', type: 'script' }));
+    check('wildcard-TLD "amazon.*" does NOT over-match an unrelated host starting with "amazon" — the exact bug this fixes',
+      !wildcardOverMatch.cancel, wildcardOverMatch);
+    const regexHit = T._networkBlockRequestHandler(fakeDetails({ tabId: 999, url: 'https://sub.fmovies-hd.to/popunder.js', type: 'script' }));
+    check('raw-regex key matches a real fmovies-variant subdomain', regexHit.cancel === true, regexHit);
+    const regexMiss = T._networkBlockRequestHandler(fakeDetails({ tabId: 999, url: 'https://unrelated.example/popunder.js', type: 'script' }));
+    check('raw-regex key does NOT match an unrelated host', !regexMiss.cancel, regexMiss);
+
+    check('_matcherEntryCount-style total (GET_RULE_COUNT) sees both complex entries',
+      T.NETWORK_BLOCK_COMPLEX.reduce((n, b) => n + b.entries.length, 0) === 2,
+      T.NETWORK_BLOCK_COMPLEX);
+    T.NETWORK_BLOCK_COMPLEX = []; // reset for later sections
+  }
+
   console.log('\n== 4. _networkBlockRequestHandler(): end-to-end matching + stats + cancel decision ==');
   function fakeDetails(overrides) {
     return { tabId: 1, method: 'GET', type: 'image', initiator: undefined, documentUrl: undefined, ...overrides };
@@ -347,15 +406,87 @@ const T = sandbox.__test;
     check('malware-path block has NO resourceType restriction — matches regardless of type (main_frame here)', otherType.cancel === true, otherType);
   }
 
-  console.log('\n== 5. _updateNetworkBlockListener(): registers/unregisters against the real webRequest stub ==');
+  console.log('\n== 5. Regression (2026-09-14, "469 quy tắc" root cause): _networkBlockRequestHandler is registered UNCONDITIONALLY at module load (no more _updateNetworkBlockListener add/removeListener toggle depending on the async build chain), and self-gates enabled/blockAds/blockMalware/pausedDomains/allowedDomains per request instead ==');
   {
-    T._updateNetworkBlockListener(false);
-    T._updateNetworkBlockListener(true);
-    check('listener registered exactly once (idempotent re-enable)', onBeforeRequestListeners.length === 1, onBeforeRequestListeners.length);
-    T._updateNetworkBlockListener(true); // calling again with the same state must not double-register
-    check('calling enable=true again does not double-register', onBeforeRequestListeners.length === 1, onBeforeRequestListeners.length);
-    T._updateNetworkBlockListener(false);
-    check('disable removes the listener', onBeforeRequestListeners.length === 0, onBeforeRequestListeners.length);
+    // The listener was registered exactly once when background.js itself
+    // loaded (top-level, unconditional — mirrors _htmlFilterRequestHandler's
+    // own established pattern) — never toggled off/on again, unlike the old
+    // _updateNetworkBlockListener()-based mechanism this replaces.
+    check('listener registered exactly once, unconditionally, at module load — present regardless of any build ever having run',
+      onBeforeRequestListeners.length === 1 && onBeforeRequestListeners[0] === T._networkBlockRequestHandler,
+      onBeforeRequestListeners.length);
+
+    // Seed a small self-contained fixture so this section doesn't depend on
+    // whatever earlier sections left in the matchers.
+    T.NETWORK_BLOCK_MATCHER = new Map([['ads.example', [{ regex: T._urlFilterToRegExp('||ads.example/ad.js') }]]]);
+    T.MALWARE_PATH_MATCHER = new Map([['malware.example', [T._urlFilterToRegExp('||malware.example/bad.exe')]]]);
+
+    const savedSettings = { ...T._settingsCache, pausedDomains: new Set(T._settingsCache.pausedDomains), allowedDomains: new Set(T._settingsCache.allowedDomains) };
+    try {
+      // enabled:false must short-circuit BEFORE any matcher is even consulted.
+      T._settingsCache.enabled = false;
+      const whileDisabled = T._networkBlockRequestHandler(fakeDetails({ tabId: 998, url: 'https://ads.example/ad.js', type: 'script' }));
+      check('enabled:false: a request that would otherwise match is NOT cancelled', !whileDisabled.cancel, whileDisabled);
+      T._settingsCache.enabled = true;
+
+      // blockAds:false must skip the ad-network matcher tier specifically,
+      // while blockMalware (still true) keeps blocking the OTHER tier —
+      // proves the two tiers are gated independently, not as one all-or-
+      // nothing switch (the real pre-existing bug _updateNetworkBlockListener's
+      // single blockAds||blockMalware condition had, live-reported while
+      // auditing this).
+      T._settingsCache.blockAds = false;
+      T._settingsCache.blockMalware = true;
+      const adsWhileBlockAdsOff = T._networkBlockRequestHandler(fakeDetails({ tabId: 998, url: 'https://ads.example/ad.js', type: 'script' }));
+      check('blockAds:false: the ad-network tier stops blocking, even though NETWORK_BLOCK_MATCHER still has the entry', !adsWhileBlockAdsOff.cancel, adsWhileBlockAdsOff);
+      const malwareWhileBlockAdsOff = T._networkBlockRequestHandler(fakeDetails({ tabId: 998, url: 'https://malware.example/bad.exe', type: 'script' }));
+      check('blockAds:false: the malware-path tier is UNAFFECTED (still blocks) — the two tiers gate independently', malwareWhileBlockAdsOff.cancel === true, malwareWhileBlockAdsOff);
+
+      // Symmetric check: blockMalware:false, blockAds:true.
+      T._settingsCache.blockAds = true;
+      T._settingsCache.blockMalware = false;
+      const malwareWhileBlockMalwareOff = T._networkBlockRequestHandler(fakeDetails({ tabId: 998, url: 'https://malware.example/bad.exe', type: 'script' }));
+      check('blockMalware:false: the malware-path tier stops blocking', !malwareWhileBlockMalwareOff.cancel, malwareWhileBlockMalwareOff);
+      const adsWhileBlockMalwareOff = T._networkBlockRequestHandler(fakeDetails({ tabId: 998, url: 'https://ads.example/ad.js', type: 'script' }));
+      check('blockMalware:false: the ad-network tier is UNAFFECTED (still blocks)', adsWhileBlockMalwareOff.cancel === true, adsWhileBlockMalwareOff);
+      T._settingsCache.blockAds = true;
+      T._settingsCache.blockMalware = true;
+
+      // pausedDomains/allowedDomains: a sub-resource request (script loaded
+      // BY a paused page) must be exempted via its INITIATING document's
+      // host (documentUrl/initiator), not the ad host itself — pausedDomains
+      // stores the site the user paused, never the third-party ad host.
+      T._settingsCache.pausedDomains = new Set(['paused-site.example']);
+      const subResourceOnPausedSite = T._networkBlockRequestHandler(
+        fakeDetails({ tabId: 998, url: 'https://ads.example/ad.js', type: 'script', documentUrl: 'https://paused-site.example/page.html' })
+      );
+      check('pausedDomains: a sub-resource request loaded BY a paused page is exempted via its initiator, not its own host',
+        !subResourceOnPausedSite.cancel, subResourceOnPausedSite);
+      const subResourceOnOtherSite = T._networkBlockRequestHandler(
+        fakeDetails({ tabId: 998, url: 'https://ads.example/ad.js', type: 'script', documentUrl: 'https://unrelated-site.example/page.html' })
+      );
+      check('pausedDomains: the SAME ad host is still blocked when loaded from an UNPAUSED page', subResourceOnOtherSite.cancel === true, subResourceOnOtherSite);
+
+      // A subdomain of a paused domain is exempted too (mirrors DNR's own
+      // requestDomains subdomain-inclusive matching for the real
+      // pauseAllowRules tier this handler has no visibility into).
+      const subResourceOnPausedSubdomain = T._networkBlockRequestHandler(
+        fakeDetails({ tabId: 998, url: 'https://ads.example/ad.js', type: 'script', documentUrl: 'https://shop.paused-site.example/page.html' })
+      );
+      check('pausedDomains: a SUBDOMAIN of a paused site is also exempted (subdomain-inclusive, mirrors DNR requestDomains)',
+        !subResourceOnPausedSubdomain.cancel, subResourceOnPausedSubdomain);
+
+      // A main_frame navigation TO the paused domain itself (no separate
+      // initiator to check — the request's own host IS the site).
+      T._settingsCache.pausedDomains = new Set(['malware.example']);
+      const mainFrameToPausedHost = T._networkBlockRequestHandler(fakeDetails({ tabId: 998, url: 'https://malware.example/bad.exe', type: 'main_frame' }));
+      check('pausedDomains: a main_frame request TO the paused host itself is exempted (checked by its own host, no initiator involved)',
+        !mainFrameToPausedHost.cancel, mainFrameToPausedHost);
+    } finally {
+      Object.assign(T._settingsCache, savedSettings);
+      T._settingsCache.pausedDomains = savedSettings.pausedDomains;
+      T._settingsCache.allowedDomains = savedSettings.allowedDomains;
+    }
   }
 
   console.log('\n== 6. Integration: ensureRuleDefinitionsLoaded()/buildActiveRulesFromStorage() route network_block_rules to the matcher on this "Firefox" stub, NOT into DNR allRules ==');

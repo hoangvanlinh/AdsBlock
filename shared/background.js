@@ -400,6 +400,46 @@ function _domainToAscii(domain) {
     return null;
   }
 }
+// Decodes the "types domains denyallow methods thirdParty" 5 trailing
+// fields (see _abpEncodeNetworkBlockEntry's own comment for the layout)
+// into DNR condition fields — factored out of buildNetworkBlockRules() so
+// the wildcard-TLD regexFilter rules buildDomainNetworkBlockRules() builds
+// directly (see its own comment, below) decode the exact same 6-field entry
+// format identically, instead of a second hand-rolled copy that could drift.
+function _buildNetworkBlockDnrConditionFields(condition, typesField, domainsField, denyallowField, methodsField, thirdPartyField) {
+  if (typesField !== '*') {
+    const tokens = typesField.split(',');
+    // _abpParseNetworkOptions never mixes included/excluded types in one
+    // rule, so either every token here is '~'-prefixed or none are.
+    if (tokens[0].charAt(0) === '~') condition.excludedResourceTypes = tokens.map(t => t.slice(1));
+    else condition.resourceTypes = tokens;
+  }
+  if (domainsField !== '*') {
+    const include = [], exclude = [];
+    for (const d of domainsField.split(',')) {
+      const negated = d.charAt(0) === '~';
+      const ascii = _domainToAscii(negated ? d.slice(1) : d);
+      if (!ascii) continue; // can't represent as ASCII — drop just this one domain, don't guess
+      (negated ? exclude : include).push(ascii);
+    }
+    if (include.length) condition.initiatorDomains = include;
+    if (exclude.length) condition.excludedInitiatorDomains = exclude;
+  }
+  if (denyallowField !== '*') {
+    const denyallow = denyallowField.split(',').map(_domainToAscii).filter(Boolean);
+    if (denyallow.length) condition.excludedRequestDomains = denyallow;
+  }
+  if (methodsField !== '*') {
+    const include = [], exclude = [];
+    for (const m of methodsField.split(',')) {
+      if (m.charAt(0) === '~') exclude.push(m.slice(1)); else include.push(m);
+    }
+    if (include.length) condition.requestMethods = include;
+    if (exclude.length) condition.excludedRequestMethods = exclude;
+  }
+  if (thirdPartyField === '1') condition.domainType = 'thirdParty';
+  else if (thirdPartyField === '0') condition.domainType = 'firstParty';
+}
 function buildNetworkBlockRules(entries, startId) {
   const rules = [];
   let id = startId;
@@ -410,40 +450,7 @@ function buildNetworkBlockRules(entries, startId) {
     const urlFilter = '||' + pattern;
     if (!_isValidUrlFilter(urlFilter)) continue; // would reject the WHOLE updateDynamicRules() call
     const condition = { urlFilter };
-
-    if (typesField !== '*') {
-      const tokens = typesField.split(',');
-      // _abpParseNetworkOptions never mixes included/excluded types in one
-      // rule, so either every token here is '~'-prefixed or none are.
-      if (tokens[0].charAt(0) === '~') condition.excludedResourceTypes = tokens.map(t => t.slice(1));
-      else condition.resourceTypes = tokens;
-    }
-    if (domainsField !== '*') {
-      const include = [], exclude = [];
-      for (const d of domainsField.split(',')) {
-        const negated = d.charAt(0) === '~';
-        const ascii = _domainToAscii(negated ? d.slice(1) : d);
-        if (!ascii) continue; // can't represent as ASCII — drop just this one domain, don't guess
-        (negated ? exclude : include).push(ascii);
-      }
-      if (include.length) condition.initiatorDomains = include;
-      if (exclude.length) condition.excludedInitiatorDomains = exclude;
-    }
-    if (denyallowField !== '*') {
-      const denyallow = denyallowField.split(',').map(_domainToAscii).filter(Boolean);
-      if (denyallow.length) condition.excludedRequestDomains = denyallow;
-    }
-    if (methodsField !== '*') {
-      const include = [], exclude = [];
-      for (const m of methodsField.split(',')) {
-        if (m.charAt(0) === '~') exclude.push(m.slice(1)); else include.push(m);
-      }
-      if (include.length) condition.requestMethods = include;
-      if (exclude.length) condition.excludedRequestMethods = exclude;
-    }
-    if (thirdPartyField === '1') condition.domainType = 'thirdParty';
-    else if (thirdPartyField === '0') condition.domainType = 'firstParty';
-
+    _buildNetworkBlockDnrConditionFields(condition, typesField, domainsField, denyallowField, methodsField, thirdPartyField);
     rules.push({ id: id++, priority: 1, action: { type: 'block' }, condition });
   }
   return rules;
@@ -460,24 +467,76 @@ function buildNetworkBlockRules(entries, startId) {
 // this converter's own forced single-domain rule for network_block_rules,
 // but nothing stops a hand-written site-rules.txt from doing it) applies
 // the same path/options to every domain in the group.
+//
+// [host_patterns] keys can take 4 forms (see resolveSiteKey()'s own
+// comment): plain domain, wildcard-TLD ("amazon.*"), a '|'-joined bucket of
+// either, or a raw regex ("/.../"). A wildcard-TLD token gets its own
+// regexFilter-based DNR rule below, built directly (not routed through
+// buildNetworkBlockRules() — urlFilter and regexFilter are mutually
+// exclusive DNR condition shapes): the host-matching regex source mirrors
+// _compileHostPattern()'s own wildcard-TLD branch (escape the base, require
+// it at a domain-label boundary, allow anything up to the next '/' for the
+// rest of the TLD), concatenated with the SAME path regex source
+// _urlFilterToRegExp() already produces for the plain (literal-domain) path.
+//
+// A raw-regex token is intentionally SKIPPED here — not silently, this is a
+// real DNR/RE2 platform limitation, not a "don't bother": regexFilter is
+// tested against the WHOLE url string, and RE2 has no lookaround, so a
+// host-scoped pattern whose own '^'/'$' anchors were written assuming an
+// ISOLATED hostname string (see _compileHostPattern()'s own comment) cannot
+// be safely re-anchored once spliced into a larger URL regex — e.g. a
+// leading '^' meant "start of host" would instead require matching
+// position 0 of the whole URL (before "https://"), which can never succeed,
+// and there is no general, non-guessing way to rewrite an arbitrary
+// user-authored regex body's anchors to mean something else. Firefox's
+// webRequestBlocking engine has no such limitation — buildNetworkBlockComplex()
+// tests the host and path as two INDEPENDENT JS regexes (host first, via
+// _compileHostPattern(), then path only on a host that already matched),
+// never splicing one pattern's source into the other — so raw-regex
+// host_patterns keys are fully supported there. See buildNetworkBlockComplex()'s
+// own comment for that side.
 function buildDomainNetworkBlockRules(parsed, startId) {
   const hostPatterns = parsed.host_patterns || {};
   const entries = [];
+  const regexRules = [];
+  let id = startId;
   for (const domainKey in hostPatterns) {
     if (!Object.prototype.hasOwnProperty.call(hostPatterns, domainKey)) continue;
+    if (domainKey.charAt(0) === '/' && domainKey.length > 1 && domainKey.lastIndexOf('/') > 0) continue; // raw-regex — not safely expressible as one DNR regexFilter, see comment above
     const sectionKey = hostPatterns[domainKey] && hostPatterns[domainKey][0];
     const section = sectionKey && parsed[sectionKey];
     const pathEntries = section && section.network_block_rules;
     if (!pathEntries || !pathEntries.length) continue;
-    for (const domain of domainKey.split('|')) {
+    for (const token of domainKey.split('|').map(s => s.trim()).filter(Boolean)) {
+      if (token.slice(-2) === '.*') {
+        const base = token.slice(0, -2).replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+        for (const pathEntry of pathEntries) {
+          const parts = String(pathEntry || '').trim().split(/\s+/);
+          if (parts.length !== 6) continue; // malformed — don't guess, drop it
+          const [path, typesField, domainsField, denyallowField, methodsField, thirdPartyField] = parts;
+          if (!_isValidUrlFilter(path)) continue; // would reject the WHOLE updateDynamicRules() call
+          let pathRegexSource;
+          try {
+            pathRegexSource = _urlFilterToRegExp(path).source;
+          } catch (e) {
+            _diagLog('warn', 'buildDomainNetworkBlockRules: skipped malformed wildcard-TLD entry', { token, path, error: e && (e.message || e) });
+            continue;
+          }
+          const regexFilter = '^[a-zA-Z][a-zA-Z0-9+.-]*:\\/\\/([^\\/]*\\.)?' + base + '\\.[^\\/]*' + pathRegexSource;
+          const condition = { regexFilter };
+          _buildNetworkBlockDnrConditionFields(condition, typesField, domainsField, denyallowField, methodsField, thirdPartyField);
+          regexRules.push({ id: id++, priority: 1, action: { type: 'block' }, condition });
+        }
+        continue;
+      }
       for (const pathEntry of pathEntries) {
         const parts = String(pathEntry || '').trim().split(/\s+/);
         if (parts.length !== 6) continue; // malformed — don't guess, drop it (buildNetworkBlockRules re-validates anyway)
-        entries.push([domain + parts[0], ...parts.slice(1)].join(' '));
+        entries.push([token + parts[0], ...parts.slice(1)].join(' '));
       }
     }
   }
-  return buildNetworkBlockRules(entries, startId);
+  return buildNetworkBlockRules(entries, id).concat(regexRules);
 }
 
 // NETWORK_BLOCK_MATCHER entries carry a compiled RegExp (`regex`) plus
@@ -543,21 +602,84 @@ function _rehydrateMatcherMap(obj) {
 // the remaining path" as two separate steps. The Map is purely a fast
 // pre-filter (only test entries bucketed under a domain the request
 // actually targets), not part of the match semantics itself.
+// Builds the option fields (resourceTypes/initiatorDomains/excludedRequestDomains/
+// requestMethods/domainType) shared by every NETWORK_BLOCK_MATCHER entry —
+// factored out of buildNetworkBlockMatcher() so both the literal-domain
+// (combined domain+path regex) and complex (path-only regex, host matched
+// separately — see buildNetworkBlockMatcher()'s own comment on
+// NETWORK_BLOCK_COMPLEX) branches build entries identically, only differing
+// in how `regex` itself gets constructed.
+function _buildNetworkBlockEntryOptions(entry, typesField, domainsField, denyallowField, methodsField, thirdPartyField) {
+  if (typesField !== '*') {
+    const tokens = typesField.split(',');
+    if (tokens[0].charAt(0) === '~') entry.excludedResourceTypes = new Set(tokens.map(t => t.slice(1)));
+    else entry.resourceTypes = new Set(tokens);
+  }
+  if (domainsField !== '*') {
+    const include = new Map(), exclude = new Map();
+    // No DNR "reject the whole batch" risk on this JS-matching path
+    // (Firefox webRequestBlocking, not native declarativeNetRequest),
+    // but a raw Unicode domain here would still just silently never
+    // match anything — real request hostnames are always reported in
+    // ASCII/punycode form — so normalize the same way buildNetworkBlockRules
+    // does, for the same underlying reason (a $domain= value can be
+    // written in the site's own script).
+    for (const d of domainsField.split(',')) {
+      const negated = d.charAt(0) === '~';
+      const ascii = _domainToAscii(negated ? d.slice(1) : d);
+      if (!ascii) continue;
+      (negated ? exclude : include).set(ascii, true);
+    }
+    if (include.size) entry.initiatorDomains = include;
+    if (exclude.size) entry.excludedInitiatorDomains = exclude;
+  }
+  if (denyallowField !== '*') {
+    const denyallow = denyallowField.split(',').map(_domainToAscii).filter(Boolean);
+    if (denyallow.length) entry.excludedRequestDomains = new Map(denyallow.map(d => [d, true]));
+  }
+  if (methodsField !== '*') {
+    const include = [], exclude = [];
+    for (const m of methodsField.split(',')) { if (m.charAt(0) === '~') exclude.push(m.slice(1)); else include.push(m); }
+    if (include.length) entry.requestMethods = new Set(include.map(m => m.toLowerCase()));
+    if (exclude.length) entry.excludedRequestMethods = new Set(exclude.map(m => m.toLowerCase()));
+  }
+  if (thirdPartyField === '1') entry.domainType = 'thirdParty';
+  else if (thirdPartyField === '0') entry.domainType = 'firstParty';
+}
+
+// `[host_patterns]` supports 4 left-hand-side forms (see resolveSiteKey()'s
+// own comment): a plain domain, a wildcard-TLD ("amazon.*"), a `|`-joined
+// bucket of either, and a raw regex ("/.../"). This — and buildDomainNetworkBlockRules()'s
+// DNR equivalent — used to treat every domainKey as a literal domain (or
+// bucket of literal domains) regardless of form: a wildcard-TLD key fed `*`
+// straight into _urlFilterToRegExp(), which treats it as its OWN unrelated
+// "any characters" wildcard (so "amazon.*" ended up matching
+// "amazonEVIL.com" too, not just real TLD variants — an over-match bug); a
+// raw-regex key got its whole regex-source string (parens, anchors,
+// sometimes literal '|') concatenated as if it were a domain, compiling
+// into a regex that can never match any real URL (a silent no-op). Only
+// LITERAL-domain keys are handled here now — wildcard-TLD/raw-regex keys
+// are handled by the separate buildNetworkBlockComplex() below instead
+// (kept apart so this function's cache — see its caller in
+// ensureRuleDefinitionsLoaded() — still only covers the expensive part;
+// the complex list is cheap enough to always rebuild fresh).
 function buildNetworkBlockMatcher(parsed) {
   const hostPatterns = parsed.host_patterns || {};
   const matcher = new Map();
   for (const domainKey in hostPatterns) {
     if (!Object.prototype.hasOwnProperty.call(hostPatterns, domainKey)) continue;
+    if (domainKey.charAt(0) === '/' && domainKey.length > 1 && domainKey.lastIndexOf('/') > 0) continue; // raw-regex — buildNetworkBlockComplex()'s job
     const sectionKey = hostPatterns[domainKey] && hostPatterns[domainKey][0];
     const section = sectionKey && parsed[sectionKey];
     const pathEntries = section && section.network_block_rules;
     if (!pathEntries || !pathEntries.length) continue;
-    for (const domain of domainKey.split('|')) {
+    for (const token of domainKey.split('|').map(s => s.trim()).filter(Boolean)) {
+      if (token.slice(-2) === '.*') continue; // wildcard-TLD — buildNetworkBlockComplex()'s job
       for (const pathEntry of pathEntries) {
         const parts = String(pathEntry || '').trim().split(/\s+/);
         if (parts.length !== 6) continue; // malformed — don't guess, drop it
         const [path, typesField, domainsField, denyallowField, methodsField, thirdPartyField] = parts;
-        const urlFilter = '||' + domain + path;
+        const urlFilter = '||' + token + path;
         if (!_isValidUrlFilter(urlFilter)) continue;
         // _urlFilterToRegExp() can still throw on a genuinely malformed
         // pattern despite _isValidUrlFilter()'s check above — real
@@ -577,47 +699,74 @@ function buildNetworkBlockMatcher(parsed) {
           continue;
         }
         const entry = { regex };
-        if (typesField !== '*') {
-          const tokens = typesField.split(',');
-          if (tokens[0].charAt(0) === '~') entry.excludedResourceTypes = new Set(tokens.map(t => t.slice(1)));
-          else entry.resourceTypes = new Set(tokens);
-        }
-        if (domainsField !== '*') {
-          const include = new Map(), exclude = new Map();
-          // No DNR "reject the whole batch" risk on this JS-matching path
-          // (Firefox webRequestBlocking, not native declarativeNetRequest),
-          // but a raw Unicode domain here would still just silently never
-          // match anything — real request hostnames are always reported in
-          // ASCII/punycode form — so normalize the same way buildNetworkBlockRules
-          // does, for the same underlying reason (a $domain= value can be
-          // written in the site's own script).
-          for (const d of domainsField.split(',')) {
-            const negated = d.charAt(0) === '~';
-            const ascii = _domainToAscii(negated ? d.slice(1) : d);
-            if (!ascii) continue;
-            (negated ? exclude : include).set(ascii, true);
-          }
-          if (include.size) entry.initiatorDomains = include;
-          if (exclude.size) entry.excludedInitiatorDomains = exclude;
-        }
-        if (denyallowField !== '*') {
-          const denyallow = denyallowField.split(',').map(_domainToAscii).filter(Boolean);
-          if (denyallow.length) entry.excludedRequestDomains = new Map(denyallow.map(d => [d, true]));
-        }
-        if (methodsField !== '*') {
-          const include = [], exclude = [];
-          for (const m of methodsField.split(',')) { if (m.charAt(0) === '~') exclude.push(m.slice(1)); else include.push(m); }
-          if (include.length) entry.requestMethods = new Set(include.map(m => m.toLowerCase()));
-          if (exclude.length) entry.excludedRequestMethods = new Set(exclude.map(m => m.toLowerCase()));
-        }
-        if (thirdPartyField === '1') entry.domainType = 'thirdParty';
-        else if (thirdPartyField === '0') entry.domainType = 'firstParty';
-        if (!matcher.has(domain)) matcher.set(domain, []);
-        matcher.get(domain).push(entry);
+        _buildNetworkBlockEntryOptions(entry, typesField, domainsField, denyallowField, methodsField, thirdPartyField);
+        if (!matcher.has(token)) matcher.set(token, []);
+        matcher.get(token).push(entry);
       }
     }
   }
   return matcher;
+}
+
+// The wildcard-TLD/raw-regex sibling of buildNetworkBlockMatcher() above —
+// see its comment for why these forms need separate handling. Reuses
+// _compileHostPattern() (this file's single existing, tested
+// implementation of these exact matching semantics, otherwise only used by
+// resolveSiteKey()) rather than re-deriving wildcard/regex matching a third
+// time. Returned entries can't be keyed by a single literal domain — no
+// fixed domain-suffix to walk to — so NETWORK_BLOCK_COMPLEX is a flat list,
+// tested by host directly in _networkBlockRequestHandler(). Each entry's
+// regex is built from the PATH ONLY (no domain prefix): the host match
+// already gatekeeps which requests even reach it, so the path regex just
+// needs to identify the right path on a request whose host is already
+// confirmed to match. Expected to stay tiny (only ever populated by a
+// hand-written rule/site-rules.txt or customRulesText entry — the ABP→
+// native converter never emits wildcard/regex host_patterns keys), so —
+// unlike buildNetworkBlockMatcher() — this is never cached, just rebuilt
+// fresh on every real ensureRuleDefinitionsLoaded() build regardless of
+// whether that build's plain matcher was itself a cache hit or miss.
+function buildNetworkBlockComplex(parsed) {
+  const hostPatterns = parsed.host_patterns || {};
+  const complex = [];
+  for (const domainKey in hostPatterns) {
+    if (!Object.prototype.hasOwnProperty.call(hostPatterns, domainKey)) continue;
+    const sectionKey = hostPatterns[domainKey] && hostPatterns[domainKey][0];
+    const section = sectionKey && parsed[sectionKey];
+    const pathEntries = section && section.network_block_rules;
+    if (!pathEntries || !pathEntries.length) continue;
+    // Raw regex form (/body/flags) is the WHOLE key and must never be split
+    // on '|' — its body can (and often does, e.g. "(^|\.)") contain a
+    // literal '|' as regex alternation, not a domain separator — same
+    // reasoning _buildHostPatternIndex() already documents for
+    // resolveSiteKey()'s own indexing.
+    const isRegexForm = domainKey.charAt(0) === '/' && domainKey.length > 1 && domainKey.lastIndexOf('/') > 0;
+    const tokens = isRegexForm ? [domainKey] : domainKey.split('|').map(s => s.trim()).filter(Boolean);
+    for (const token of tokens) {
+      if (!isRegexForm && token.slice(-2) !== '.*') continue; // literal domain — buildNetworkBlockMatcher()'s job
+      const entries = [];
+      for (const pathEntry of pathEntries) {
+        const parts = String(pathEntry || '').trim().split(/\s+/);
+        if (parts.length !== 6) continue; // malformed — don't guess, drop it
+        const [path, typesField, domainsField, denyallowField, methodsField, thirdPartyField] = parts;
+        if (!_isValidUrlFilter(path)) continue;
+        let regex;
+        try {
+          regex = _urlFilterToRegExp(path);
+        } catch (e) {
+          _diagLog('warn', 'buildNetworkBlockComplex: skipped malformed entry', { token, path, error: e && (e.message || e) });
+          continue;
+        }
+        const entry = { regex };
+        _buildNetworkBlockEntryOptions(entry, typesField, domainsField, denyallowField, methodsField, thirdPartyField);
+        entries.push(entry);
+      }
+      if (entries.length) {
+        const test = _compileHostPattern(token);
+        if (test) complex.push({ test, entries });
+      }
+    }
+  }
+  return complex;
 }
 
 // Firefox-only: HTML_FILTER_MATCHER's build step. Reuses direct_hide_
@@ -706,6 +855,14 @@ function _requestInitiatorHost(details) {
 // NETWORK_RULE_BUDGET's own comment and fetchRemoteRuleText()'s/
 // buildActiveRulesFromStorage()'s conditional handling of each.
 let NETWORK_BLOCK_MATCHER = new Map();
+// Array<{ test: (host)=>boolean, entries: [...] }> — the wildcard-TLD/raw-
+// regex sibling of NETWORK_BLOCK_MATCHER (see buildNetworkBlockMatcher()'s
+// own comment): entries that can't be keyed by a single literal domain, so
+// there's no domain-suffix to walk in a Map. Tested by a short linear scan
+// in _networkBlockRequestHandler() — expected to stay tiny (only ever
+// populated by a hand-written rule/site-rules.txt or customRulesText entry,
+// never by the ABP→native converter).
+let NETWORK_BLOCK_COMPLEX = [];
 // Map<domain, Array<RegExp>> — much simpler shape than NETWORK_BLOCK_MATCHER
 // since remoteMalwarePathPatterns entries carry no options at all (no
 // resourceTypes/domain=/method=/thirdParty — see buildRemoteMalwareRules'
@@ -799,28 +956,78 @@ function _matchesNetworkBlockEntry(entry, details, requestHost) {
   return true;
 }
 
+// Live-reported 2026-09-14 ("469 quy tắc" instead of ~16,889): this used to
+// be registered/unregistered conditionally (_updateNetworkBlockListener,
+// called from inside buildActiveRulesFromStorage()'s async chain), so real
+// protection from this tier depended entirely on that chain having actually
+// run at least once since the last script (re)start — the SAME single
+// top-level `applyNetworkRules()` call already fragile enough to have been
+// silently lost 5-6+ times this session (IDE/editor churn commenting it
+// out). When that call was missing, this listener was simply never
+// registered at all: not just a wrong popup count, but zero real blocking
+// from network_block_rules/remoteMalwarePathPatterns' path-scoped tier,
+// silently, with no error anywhere. Chrome never has this failure mode at
+// all — its equivalent (declarativeNetRequest dynamic rules) is persisted
+// by the BROWSER itself across every service-worker restart, so there is
+// nothing that ever needs to "re-register" after a respawn there.
+// _htmlFilterRequestHandler already established the right pattern for this
+// exact problem (see its own registration comment) — mirrored here:
+// registered ONCE, unconditionally, synchronously at module top-level
+// (below), never toggled on/off again, with enabled/blockAds/blockMalware/
+// pausedDomains/allowedDomains all re-checked on every call instead. Even
+// if a future edit loses the module-load `applyNetworkRules()` call again,
+// this listener is still attached and will start blocking the moment
+// NETWORK_BLOCK_MATCHER/MALWARE_PATH_MATCHER/NETWORK_BLOCK_COMPLEX get
+// populated by whatever DOES eventually trigger a build (message handlers
+// already call applyNetworkRules() independently in many places) — no
+// longer an all-or-nothing dependency on one fragile line.
 function _networkBlockRequestHandler(details) {
+  if (!_settingsCache.enabled) return {};
   let host;
   try { host = new URL(details.url).hostname.toLowerCase(); } catch { return {}; }
+  // Mirrors the DNR pause/allow tier (pauseAllowRules' allowAllRequests
+  // rules) this handler has no visibility into otherwise — that DNR rule
+  // still runs unconditionally on every browser (including Firefox) for
+  // every OTHER tier, but declarativeNetRequest and this JS listener
+  // evaluate completely independently, so a request this handler cancels
+  // never even reaches DNR's own allow check. For a document request
+  // itself (main_frame/sub_frame — matching pauseAllowRules' own
+  // resourceTypes), the relevant site IS the request's own host; for every
+  // other resource type (the actual ad/tracker/malware-path requests this
+  // handler exists to catch), it's the INITIATING document's host instead
+  // — pausedDomains/allowedDomains store the SITE the user paused, not the
+  // third-party resource host being requested. Domain-suffix walk (not an
+  // exact match) to mirror requestDomains' own subdomain-inclusive
+  // matching (Chrome docs: a requestDomains entry matches that domain AND
+  // its subdomains).
+  const isDocumentRequest = details.type === 'main_frame' || details.type === 'sub_frame';
+  const siteHost = isDocumentRequest ? host : _requestInitiatorHost(details);
+  if (siteHost && (_walkDomainMatches(_settingsCache.pausedDomains, siteHost) || _walkDomainMatches(_settingsCache.allowedDomains, siteHost))) {
+    return {};
+  }
   let h = host;
   while (h) {
-    const entries = NETWORK_BLOCK_MATCHER.get(h);
-    if (entries) {
-      for (const entry of entries) {
-        if (_matchesNetworkBlockEntry(entry, details, host)) {
-          _incrementTabBlocked(details.tabId, 1);
-          updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
-          return { cancel: true };
+    if (_settingsCache.blockAds) {
+      const entries = NETWORK_BLOCK_MATCHER.get(h);
+      if (entries) {
+        for (const entry of entries) {
+          if (_matchesNetworkBlockEntry(entry, details, host)) {
+            _incrementTabBlocked(details.tabId, 1);
+            updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
+            return { cancel: true };
+          }
         }
       }
     }
-    const malwareRegexes = MALWARE_PATH_MATCHER.get(h);
-    if (malwareRegexes) {
-      for (const re of malwareRegexes) {
-        if (re.test(details.url)) {
-          _incrementTabBlocked(details.tabId, 1);
-          updateDailyStats({ blocked: 1, ads: 0, trackers: 0, malware: 1 });
-          return { cancel: true };
+    if (_settingsCache.blockMalware) {
+      const malwareRegexes = MALWARE_PATH_MATCHER.get(h);
+      if (malwareRegexes) {
+        for (const re of malwareRegexes) {
+          if (re.test(details.url)) {
+            _incrementTabBlocked(details.tabId, 1);
+            updateDailyStats({ blocked: 1, ads: 0, trackers: 0, malware: 1 });
+            return { cancel: true };
+          }
         }
       }
     }
@@ -828,19 +1035,32 @@ function _networkBlockRequestHandler(details) {
     if (dot === -1) break;
     h = h.slice(dot + 1);
   }
+  // Wildcard-TLD / raw-regex [host_patterns] forms (e.g. "amazon.*",
+  // "/(^|\.)fmovies[a-z0-9-]*\./") — see buildNetworkBlockComplex()'s own
+  // comment. No domain-suffix Map lookup is possible for these (there's no
+  // single literal domain), so a short linear scan against the ORIGINAL
+  // full host — expected to stay tiny (hand-written entries only).
+  if (_settingsCache.blockAds) {
+    for (const bucket of NETWORK_BLOCK_COMPLEX) {
+      if (!bucket.test(host)) continue;
+      for (const entry of bucket.entries) {
+        if (_matchesNetworkBlockEntry(entry, details, host)) {
+          _incrementTabBlocked(details.tabId, 1);
+          updateDailyStats({ blocked: 1, ads: 1, trackers: 0, malware: 0 });
+          return { cancel: true };
+        }
+      }
+    }
+  }
   return {};
 }
 
-let _networkBlockListenerRegistered = false;
-function _updateNetworkBlockListener(enable) {
-  if (!_hasWebRequestBlocking()) return;
-  if (enable && !_networkBlockListenerRegistered) {
-    EXT.webRequest.onBeforeRequest.addListener(_networkBlockRequestHandler, { urls: ['<all_urls>'] }, ['blocking']);
-    _networkBlockListenerRegistered = true;
-  } else if (!enable && _networkBlockListenerRegistered) {
-    EXT.webRequest.onBeforeRequest.removeListener(_networkBlockRequestHandler);
-    _networkBlockListenerRegistered = false;
-  }
+// See this function's own comment above for why this is unconditional and
+// permanent — no _updateNetworkBlockListener add/removeListener toggle
+// anymore (removed 2026-09-14), matching _htmlFilterRequestHandler's
+// already-established registration pattern below.
+if (_hasWebRequestBlocking()) {
+  EXT.webRequest.onBeforeRequest.addListener(_networkBlockRequestHandler, { urls: ['<all_urls>'] }, ['blocking']);
 }
 
 // ── HTML stream filter (Firefox only) ───────────────────────────────
@@ -3655,7 +3875,7 @@ async function ensureRuleDefinitionsLoaded() {
       // when webRequestBlocking isn't available), OR a webRequest matcher
       // Map for Firefox when it is — never both, see _hasWebRequestBlocking()
       // and buildActiveRulesFromStorage()'s own gating of networkBlockActive.
-      let networkBlockRules, networkBlockMatcher;
+      let networkBlockRules, networkBlockMatcher, networkBlockComplex;
       if (_hasWebRequestBlocking()) {
         networkBlockRules = [];
         // Cross-SW-restart cache (chrome.storage.local, quota-guarded) for
@@ -3673,9 +3893,15 @@ async function ensureRuleDefinitionsLoaded() {
           // GET_RULE_COUNT, applyNetworkRules()...) wait on it finishing.
           _saveMatcherCacheToLocal(NETWORK_BLOCK_MATCHER_CACHE_KEY, _parsedRulesTextHash, _serializeMatcherMap(networkBlockMatcher));
         }
+        // NETWORK_BLOCK_MATCHER's wildcard-TLD/raw-regex sibling — see
+        // buildNetworkBlockComplex()'s own comment for why it's always
+        // rebuilt fresh here regardless of the plain matcher's cache hit/
+        // miss above (expected to stay tiny — hand-written entries only).
+        networkBlockComplex = buildNetworkBlockComplex(parsed);
       } else {
         networkBlockRules = buildDomainNetworkBlockRules(parsed, NETWORK_BLOCK_RULE_ID_START);
         networkBlockMatcher = new Map();
+        networkBlockComplex = []; // Chrome/Edge — network_block_rules goes through NETWORK_BLOCK_RULES (DNR) instead, see buildDomainNetworkBlockRules()
       }
       // Unconditional (unlike NETWORK_BLOCK_MATCHER above) — building the
       // MAP itself is cheap regardless of browser (just copying selector
@@ -3700,6 +3926,7 @@ async function ensureRuleDefinitionsLoaded() {
       NETWORK_REDIRECT_RULES = networkRedirectRules;
       NETWORK_BLOCK_RULES = networkBlockRules;
       NETWORK_BLOCK_MATCHER = networkBlockMatcher;
+      NETWORK_BLOCK_COMPLEX = networkBlockComplex;
       HTML_FILTER_MATCHER = htmlFilterMatcher;
       TRACKER_RULE_IDS = trackerRuleIds;
       MALWARE_RULE_IDS = malwareRuleIds;
@@ -3711,6 +3938,7 @@ async function ensureRuleDefinitionsLoaded() {
         DEFAULT_RULES: DEFAULT_RULES.length, MALWARE_RULES: MALWARE_RULES.length, AD_MAINFRAME_RULES: AD_MAINFRAME_RULES.length,
         NETWORK_BLOCK_MATCHER: NETWORK_BLOCK_MATCHER.size, HTML_FILTER_MATCHER: HTML_FILTER_MATCHER.size,
         MALWARE_PATH_MATCHER: MALWARE_PATH_MATCHER.size, NETWORK_BLOCK_RULES: NETWORK_BLOCK_RULES.length,
+        NETWORK_BLOCK_COMPLEX: NETWORK_BLOCK_COMPLEX.length,
         parsedRulesTextHash: _parsedRulesTextHash,
         hasWebRequestBlocking: _hasWebRequestBlocking(), hasHtmlStreamFilter: _hasHtmlStreamFilter(),
         userAgent: navigator.userAgent,
@@ -4002,18 +4230,15 @@ async function buildActiveRulesFromStorage() {
   );
 
   if (!enabled) {
-    _updateNetworkBlockListener(false);
-    // No _updateHtmlFilterListener call here — that listener is registered
-    // once, unconditionally, at module load (see _htmlFilterRequestHandler's
-    // own comment for why) and enforces enabled/blockAds/pausedDomains/
-    // allowedDomains itself on every request instead.
+    // No _updateNetworkBlockListener/_updateHtmlFilterListener calls here
+    // (both removed 2026-09-14/2026-08-xx respectively) — both webRequestBlocking
+    // listeners are registered once, unconditionally, at module load (see
+    // _networkBlockRequestHandler's and _htmlFilterRequestHandler's own
+    // registration comments for why) and enforce enabled/blockAds/
+    // blockMalware/pausedDomains/allowedDomains themselves on every request
+    // instead.
     return { enabled: false, allRules: [] };
   }
-  // Same gates networkBlockActive/remoteActive's path-pattern half (DNR
-  // path) use for these two tiers below — kept in sync here since the
-  // webRequestBlocking listener is a replacement for both, not an addition
-  // (see _hasWebRequestBlocking()'s own comment).
-  _updateNetworkBlockListener(blockAds || blockMalware);
 
   const AD_RULE_IDS = new Set(DEFAULT_RULES.filter(r => !TRACKER_RULE_IDS.has(r.id)).map(r => r.id));
   const filteredDefaultRules = DEFAULT_RULES.filter(r => {
@@ -4212,11 +4437,15 @@ function applyNetworkRules() {
 // onStartup fires on that kind of respawn (only a real install/update or an
 // actual browser launch does), so without this call the popup's rule count
 // silently drops to whatever getDynamicRules() alone reports (live-reported
-// as "469 quy tắc" — DNR-persisted rules only) and, on Firefox, the
-// webRequestBlocking listener (_updateNetworkBlockListener) plus
-// HTML_FILTER_MATCHER's content stay empty/unregistered until something
-// else happens to trigger a rebuild (e.g. toggling Protected off/on, which
-// sends a message that ends up calling applyNetworkRules() some other way).
+// as "469 quy tắc" — DNR-persisted rules only) until something else happens
+// to trigger a rebuild (e.g. toggling Protected off/on, which sends a
+// message that ends up calling applyNetworkRules() some other way).
+// _networkBlockRequestHandler's own listener registration (see its comment,
+// above) no longer depends on this call at all as of 2026-09-14 — it's
+// registered unconditionally at module load regardless, so real blocking
+// from that tier survives even when this call is ever lost again; only the
+// MATCHER CONTENT (and the popup's displayed count) still needs a build to
+// actually run, same as every other in-memory rule tier.
 _diagLog('log', 'MODULE LOAD (background script (re)started)', {
   hasWebRequestBlocking: _hasWebRequestBlocking(), hasHtmlStreamFilter: _hasHtmlStreamFilter(),
   userAgent: navigator.userAgent,
@@ -6152,7 +6381,16 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // equivalent protection). Add both matchers' entry counts so the
         // displayed total means the same thing on every browser — on
         // Chrome/Edge both Maps are always empty, so this is a no-op there.
-        const matcherCount = _matcherEntryCount(NETWORK_BLOCK_MATCHER) + _matcherEntryCount(MALWARE_PATH_MATCHER);
+        // Gated by blockAds/blockMalware (2026-09-14) to match
+        // _networkBlockRequestHandler's own per-tier gating — NETWORK_BLOCK_
+        // MATCHER/NETWORK_BLOCK_COMPLEX are built unconditionally regardless
+        // of blockAds, so without this the count would still include them
+        // even while that tier is actually toggled off.
+        const complexCount = _settingsCache.blockAds ? NETWORK_BLOCK_COMPLEX.reduce((n, bucket) => n + bucket.entries.length, 0) : 0;
+        const matcherCount =
+          (_settingsCache.blockAds ? _matcherEntryCount(NETWORK_BLOCK_MATCHER) : 0) +
+          (_settingsCache.blockMalware ? _matcherEntryCount(MALWARE_PATH_MATCHER) : 0) +
+          complexCount;
         sendResponse({ count: rules.length + matcherCount, rules: rules.map(r => r.id) });
         break;
       }
