@@ -72,7 +72,7 @@ const {
 // chrome.storage.session.get/set/getBytesInUse all worked but
 // .setAccessLevel was undefined on BOTH chrome.storage.session and
 // browser.storage.session — so preferring browser.* alone isn't expected to
-// fix that specific case, but it's the same call uBOL itself makes and
+// fix that specific case, but it's the more standard call to make and
 // removes any doubt about whether the compat shim specifically was the gap.
 var _sessionStorage = self.EXT_SESSION_STORAGE;
 
@@ -600,9 +600,9 @@ function buildNetworkBlockMatcher(parsed) {
 // Buffering+reparsing a whole HTML response body is a real memory/latency
 // cost — worth it for a site whose ad markup is confirmed server-rendered
 // directly into the initial HTML response, so no amount of CSS-injection
-// speed can ever prevent the flash (see uBlock Origin's own ##^
-// HTML-filter syntax, `src/js/traffic.js`'s htmlFilteringEngine, for the
-// same idea) — but paying it for every ABP-converted "bucket" section
+// speed can ever prevent the flash (the same reasoning behind a dedicated
+// HTML-filter syntax elsewhere in the ad-blocking space) — but paying it
+// for every ABP-converted "bucket" section
 // (one `domainA|domainB|...|domainN = sitekey` line covering hundreds of
 // loosely related sites, the shape EasyList/EasyPrivacy/region lists
 // produce by the thousand once several large Rule Sources are enabled) is
@@ -815,19 +815,19 @@ function _updateNetworkBlockListener(enable) {
 // gated below) that lets an extension rewrite a response's bytes before
 // the browser ever parses them.
 //
-// Real uBlock Origin has a matching mechanism (src/js/html-filtering.js,
-// driven by a deliberately separate ##^ syntax) that DOES fully remove the
-// matched DOM node (node.remove(), confirmed by reading their source) — but
-// their own filter lists don't actually use it for tinhte.vn (no ##^ rule
-// exists there; only regular ## CSS-hide selectors + a nostif anti-
-// detection scriptlet, live-verified: real uBO visibly leaves the ad's
-// <ins>/wrapper element in place, just display:none'd). Rather than
-// reimplementing removal (which needs a real DOM — DOMParser().parseFromString
+// A separate, deliberately distinct syntax for THIS kind of rule (as
+// opposed to a regular ## CSS-hide selector) could fully remove the matched
+// DOM node (node.remove()) instead of just hiding it — but for a real site
+// like tinhte.vn, live-verified, the actually-effective approach leaves the
+// ad's <ins>/wrapper element in place, just display:none'd (plus a
+// nostif-style anti-detection scriptlet), rather than removing it. Rather
+// than reimplementing removal (which needs a real DOM — DOMParser().parseFromString
 // + querySelectorAll + reserialize — and this MV3 background context's
 // DOMParser/Gecko :has()/serializer semantics were never independently
-// verified against the real thing), this applies the SAME strategy uBO's
-// own maintainers settled on for this site: inject a <style> block into the
-// raw response text instead. A CSS rule is harmless even where it matches
+// verified against the real thing), this applies the same strategy that
+// visible behavior implies is the right call for this site: inject a
+// <style> block into the raw response text instead. A CSS rule is harmless
+// even where it matches
 // nothing on the page, so there's no need to parse the document at all to
 // know WHETHER something matched — just splice one <style> block in right
 // after the opening <head> tag, string-only, no DOM involved. It still
@@ -853,8 +853,8 @@ function _htmlFilterSelectorsForHost(host) {
   return null;
 }
 
-// Buffer-then-filter, not incremental streaming (simpler, matches uBlock's
-// own Session/ondata/onstop pattern) — a whole HTML document is small
+// Buffer-then-filter, not incremental streaming (simpler, and matches the
+// StreamFilter API's own ondata/onstop pattern) — a whole HTML document is small
 // enough in practice that the extra latency of waiting for the full body
 // before first paint is an accepted trade-off for correctness (an
 // incremental string search risks splitting the <head> tag itself across a
@@ -1185,12 +1185,12 @@ function isFreshRuleCache(entry) {
   return !!(entry && entry.text && entry.time && (Date.now() - entry.time) < RULES_CACHE_TTL_MS);
 }
 
-// ── ABP/uBO format auto-detect + convert (Rule Source "Add URL") ──────
+// ── ABP-style format auto-detect + convert (Rule Source "Add URL") ──────
 // Ported from scripts/convert-uassets.js's own tested parseFile/finalizeGroups/
 // render (this repo's own code, previously offline-only — ran via
 // `node scripts/convert-uassets.js`, never inside the actual extension).
 // parseRuleText() below only understands this repo's own [section]/key=value
-// grammar, so a Rule Source URL/file in raw ABP/uBO syntax (! comments,
+// grammar, so a Rule Source URL/file in raw ABP-style syntax (! comments,
 // ##selector cosmetic rules, ##+js(name,args) scriptlet calls, ||domain^ network
 // rules) previously contributed nothing at all, silently. This makes that
 // conversion happen automatically wherever fetchRemoteRuleText() merges in a
@@ -1254,7 +1254,7 @@ const ABP_SIMPLE_NETWORK_OPTS_RE = /^(?:~?third-party|all)?$/;
 // Sources are enabled — degrading gracefully instead of risking
 // updateDynamicRules() rejecting the WHOLE batch atomically.
 const NETWORK_RULE_BUDGET = 12000;
-// DNR resourceType for each ABP/uBO single-content-type option token this
+// DNR resourceType for each ABP-style single-content-type option token this
 // converter understands (`$script`, `$image`, ...; `~name` negates it, e.g.
 // `$~script` means "every type except script"). Tokens with no real DNR
 // equivalent (popup, csp=, badfilter, first-party used standalone, ...) —
@@ -1275,7 +1275,7 @@ const ABP_RESOURCE_TYPE_VALUES = new Set(Object.values(ABP_RESOURCE_TYPE_MAP));
 // value outside this set can't be mapped, so the whole option is unsupported.
 const ABP_REQUEST_METHODS = new Set(['connect', 'delete', 'get', 'head', 'options', 'patch', 'post', 'put']);
 
-// Parses one ABP/uBO network-rule option string (everything after the '$',
+// Parses one ABP-style network-rule option string (everything after the '$',
 // e.g. "script,domain=a.com|~b.com,denyallow=cdn.example.com") into the
 // pieces buildNetworkBlockRules() needs to build a real DNR condition:
 // resourceTypes/excludedResourceTypes ($script, $~script, ...),
@@ -1410,7 +1410,7 @@ function _abpSplitNetworkPattern(pattern) {
 const ABP_LOW_VALUE_HASH_RE = /-\d{8,}\b/;
 
 // This repo's own grammar always opens with a [section] header (after
-// optional #/; comment lines) — ABP/uBO text uses ! comments and has no
+// optional #/; comment lines) — ABP-style text uses ! comments and has no
 // bracket sections. First non-blank, non-#/;-comment line starting with '['
 // => native (skip conversion). Empty/comment-only text => nothing to convert
 // either way (falls through unchanged, same as today).
@@ -1564,7 +1564,7 @@ function _abpFormatScriptletValue(mapping, args) {
 }
 
 // trusted_replace_script_text's own value grammar can't just join args like
-// the generic formatter above: real uBO rpnt/trusted-rpnt rules trail
+// the generic formatter above: real-world rpnt/trusted-rpnt rules trail
 // "sedCount, N" / "includes, X" / "excludes, X" pairs AFTER the replacement
 // (args[2]) — but the replacement is arbitrary JS that can itself contain
 // any number of commas, so there's no reliable way to find where it ends
@@ -1834,8 +1834,9 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
     // (a) cancelling a `##selector` hide rule from another list — no
     // equivalent here (direct_hide_selectors has no cancellation model),
     // still dropped; (b) injecting a scriptlet via exception syntax
-    // specifically so OTHER exception rules can't cancel it (uBO's own
-    // convention). Since this repo's dispatch has no cancellation concept
+    // specifically so OTHER exception rules can't cancel it (a real
+    // convention some filter lists rely on). Since this repo's dispatch has
+    // no cancellation concept
     // at all, that distinction is moot here — a '#@#+js(...)' scriptlet
     // call behaves identically to a '##+js(...)' one, so it's handled the
     // same way instead of being dropped like a plain cosmetic exception.
@@ -1844,7 +1845,7 @@ function _abpParseFile(text, curatedPatterns, acc, stats, networkRuleBudget, isT
     // model here, so it behaves identically to the apply form" reasoning as
     // '#@#+js(...)' above). Only the standardized //scriptlet(name, args...)
     // call wrapper is recognized — that's what AdGuard's own public filter
-    // lists use for cross-engine portability with uBO/ABP; bare
+    // lists use for cross-engine portability; bare
     // '#%#<arbitrary JS>' has no equivalent here (same as an arbitrary '#@#'
     // cosmetic exception) and falls through to unrecognized below. Checked
     // as its own marker pair (not folded into the '##'/'#@#' pair) because
@@ -2577,7 +2578,7 @@ async function fetchRemoteRuleText() {
   // Append user's custom rules text (merged with built-in rules via parseRuleText merge logic)
   if (stored.customRulesText) fileParts.push(stored.customRulesText);
 
-  // Each fetched/uploaded piece may be in raw ABP/uBO syntax rather than this
+  // Each fetched/uploaded piece may be in raw ABP-style syntax rather than this
   // repo's own grammar — _maybeConvertAbpText detects and converts, or
   // returns the text unchanged if it's already native (including the local
   // fallback/customRulesText pieces in fileParts, which always are). One
@@ -4304,8 +4305,8 @@ async function buildFocusRules(focusMode) {
 }
 
 // ── Icon badge ────────────────────────────────────────────────────
-// enabled=true shows the ACTIVE TAB's own blocked count (uBO-style —
-// resets per navigation, see _tabBlockedCounts below), enabled=false shows
+// enabled=true shows the ACTIVE TAB's own blocked count (resets per
+// navigation, see _tabBlockedCounts below), enabled=false shows
 // "OFF". "OFF" is a global (no-tabId) badge value; per-tab counts are set
 // via chrome.action.setBadgeText({..., tabId}), which Chrome overlays on
 // top of the global value for that tab only.
@@ -4402,7 +4403,7 @@ async function _writeDailyStatDelta(delta) {
   await LocalStorage.set({ dailyStats, totalBlockedAllTime: totalBlockedAllTime + (delta.blocked || 0) });
 }
 
-// ── Icon badge count — PER TAB, uBO-style ───────────────────────────
+// ── Icon badge count — PER TAB ───────────────────────────────────────
 // Counts reset per navigation (see the tabs.onUpdated listener below) and
 // are pure in-memory state — a service-worker restart just means every open
 // tab's badge goes blank until its next block event, same as reloading the
@@ -4803,10 +4804,9 @@ async function applyPrivacySettings() {
 // off is just removeCSS.
 //
 // origin:'USER' places it in the "user" cascade origin, which always wins
-// over the page's own CSS regardless of specificity/!important — matches
-// uBlock Origin's own approach. removeCSS must pass the same origin used
-// at insert time, or the browser won't recognize it as the same injection
-// to remove.
+// over the page's own CSS regardless of specificity/!important. removeCSS
+// must pass the same origin used at insert time, or the browser won't
+// recognize it as the same injection to remove.
 //
 // "slot" lets 3 independent CSS sources (base defaults, per-site
 // direct_hide_selectors, user custom rules) update/clear without touching
@@ -4917,11 +4917,9 @@ EXT.tabs.onRemoved.addListener((tabId) => {
 // A visible "flash" before a popup tab closes comes from latency between
 // tab-creation and the tabs.remove() call — every extra `await` is a real
 // IPC round-trip to the storage backend, not memory access, and gives the
-// tab another paint frame to become visible/focused first. uBO's own
-// onPopupUpdated (src/js/tab.js) makes zero fresh chrome.storage.* calls in
-// its hot path — it only reads already-in-memory state (tabContextManager,
-// parsed filter lists) — confirmed by reading their source. This cache
-// mirrors that: kept in sync via onChanged instead of read fresh per call.
+// tab another paint frame to become visible/focused first. The hot path
+// here makes zero fresh chrome.storage.* calls — it only reads already-
+// in-memory state, kept in sync via onChanged instead of read fresh per call.
 // pausedDomains/allowedDomains are Sets (not the raw storage arrays) so the
 // per-new-tab / per-blocked-request membership checks below are O(1) instead
 // of an O(n) Array scan. blockAds/blockTrackers/blockMalware are cached here
@@ -4969,8 +4967,8 @@ EXT.storage.onChanged.addListener((changes, area) => {
 });
 
 // ── Popunder/click-hijack tab auto-close ─────────────────────────────
-// src/js/tab.js onPopupUpdated/popunderMatch): closing a spawned tab based
-// on which SITE opened it, not what domain it landed on, is the only way to
+// Closing a spawned tab based on which SITE opened it, not what domain it
+// landed on, is the only way to
 // catch popups that land on a legitimate destination (e.g. an affiliate-
 // tracked redirect to a real travel/shopping site) — no destination
 // blocklist can flag those without false-positiving on direct visits to the
@@ -4980,7 +4978,7 @@ EXT.storage.onChanged.addListener((changes, area) => {
 // MAIN-world `no_window_open_if`/`disableNewtabLinks` scriptlets which only
 // see whichever single vector they specifically proxy.
 // Opt-in per site (`close_popunder_tabs = 1` in that site's site-rules.txt
-// section) — same curation model uBO itself uses; there is no way to know a
+// section) — a curated, opt-in-per-domain model; there is no way to know a
 // site abuses new-tab opens without someone having observed it first, and
 // closing indiscriminately would also kill legitimate outbound new-tab links.
 // Also opt-in via a GLOBAL list (`[global] close_popunder_domains`) — the
@@ -4997,7 +4995,7 @@ function _domainListMatches(list, host) {
   if (!list || !list.length) return false;
   // Reuses _hostPatternMatches (already defined above for [host_patterns])
   // so entries here support the same "domain.*" wildcard-TLD shorthand —
-  // uBO's real data has domains with 20-45 TLD variants each (serienstream.*,
+  // real-world data has domains with 20-45 TLD variants each (serienstream.*,
   // txxx.*, acortalo.*) that would otherwise need enumerating every one.
   for (const d of list) if (_hostPatternMatches(d, host)) return true;
   return false;
@@ -5424,6 +5422,71 @@ async function _applySiteRuleText(siteRuleText) {
   if (after) newText += (newText ? '\n\n' : '') + after;
   await LocalStorage.set({ customRulesText: newText, siteRuleText });
   await reloadRules();
+}
+
+// ── Generic ("low-generic") cosmetic selector hash-bucketing ─────────────
+// [global] direct_hide_selectors is the union of every enabled Rule
+// Source's DOMAIN-AGNOSTIC hide rules — real EasyList+EasyPrivacy content
+// measures ~13,600 entries there, ~96% of them a bare single class/id
+// selector (2026-09-13). Sending that whole list to chrome.scripting.
+// insertCSS on every single page (the previous behavior) means the
+// browser's own style engine evaluates every one of those ~13,600 selectors
+// against the DOM on every page, for a page that realistically only ever
+// has a handful of matches — the vast majority contribute nothing.
+//
+// A selector this simple carries no more information than the exact
+// class/id token it matches, so it can be
+// looked up by HASHING that token instead of being style-engine-matched
+// against the whole DOM. content/site-block.js surveys the page's own id/
+// class attributes, hashes each token with the identical djb2 formula
+// below, and asks GET_GENERIC_SELECTORS for just the matching subset —
+// typically single/low-double-digit selectors, not 13,600+. Anything more
+// complex than a bare class/id ("high generic" — attribute selectors,
+// :has(), combinators, ...) can't be reduced to one lookup key this way and
+// keeps the old behavior: sent directly in `global.direct_hide_selectors`,
+// unconditionally, same as before this feature existed. host_patterns-
+// specific direct_hide_selectors (a real per-domain section) are NOT
+// touched by any of this — they're already small and precisely targeted,
+// exactly the case this technique doesn't need to help with.
+//
+// djb2 — MUST mirror content/site-block.js's own copy of this exact
+// formula, or every survey silently misses every match (the two sides only
+// ever agree by computing the identical hash for the identical token).
+function _hashGenericToken(type, s) {
+  const len = s.length;
+  const step = (len + 7) >>> 3;
+  let hash = (type << 5) + type ^ len;
+  for (let i = 0; i < len; i += step) hash = (hash << 5) + hash ^ s.charCodeAt(i);
+  return hash & 0xFFFFFF;
+}
+// A bare, single class ('.foo') or id ('#bar') selector — nothing else.
+const _SIMPLEST_SELECTOR_RE = /^([.#])([A-Za-z0-9_-]+)$/;
+
+function _classifyGenericSelectors(selectors) {
+  const lowGenericMap = new Map(); // hash -> Set<selector> (a hash can collide across different real class/id spellings)
+  const highGeneric = [];
+  for (const sel of selectors) {
+    const m = _SIMPLEST_SELECTOR_RE.exec(sel);
+    if (!m) { highGeneric.push(sel); continue; }
+    const hash = _hashGenericToken(m[1] === '#' ? 0x23 : 0x2E, m[2]);
+    if (!lowGenericMap.has(hash)) lowGenericMap.set(hash, new Set());
+    lowGenericMap.get(hash).add(sel);
+  }
+  return { lowGenericMap, highGeneric };
+}
+
+// Memoized the same way _siteConfigGlobalMemo below is (invalidated purely
+// by `parsed` reference change, i.e. a real rules reload) — this
+// classification is a pure function of the parsed rules, never per-request
+// or per-frame, and real content measures thousands of entries, not worth
+// recomputing on every GET_SITE_CONFIG/GET_GENERIC_SELECTORS call.
+let _genericSelectorsMemo = { parsed: null, lowGenericMap: null, highGeneric: null };
+function _getClassifiedGenericSelectors(parsed) {
+  if (_genericSelectorsMemo.parsed !== parsed) {
+    const { lowGenericMap, highGeneric } = _classifyGenericSelectors((parsed.global && parsed.global.direct_hide_selectors) || []);
+    _genericSelectorsMemo = { parsed, lowGenericMap, highGeneric };
+  }
+  return _genericSelectorsMemo;
 }
 
 // In-memory memo for GET_SITE_CONFIG's computed `global` object — see that
@@ -5942,6 +6005,11 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             global = _siteConfigGlobalMemo.global;
           } else {
             global = Object.assign({}, parsed.global || {});
+            // Only the "high generic" subset goes out here — the ~96% that
+            // are a bare class/id selector are held back in the hash-bucket
+            // map instead, resolved on demand via GET_GENERIC_SELECTORS
+            // (see _classifyGenericSelectors' own comment for why).
+            global.direct_hide_selectors = _getClassifiedGenericSelectors(parsed).highGeneric;
             if (gpcSignal) global.gpc_signal = ['1'];
             if (referrerAnonymization) global.hide_document_referrer = ['1'];
             _siteConfigGlobalMemo = { parsed, gpcSignal, referrerAnonymization, global };
@@ -5953,6 +6021,28 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           });
         } catch {
           sendResponse(null);
+        }
+        break;
+      }
+
+      case 'GET_GENERIC_SELECTORS': {
+        // content/site-block.js's DOM surveyor — see _classifyGenericSelectors'
+        // own comment for the full picture. `msg.hashes` are id/class tokens
+        // actually observed in the requesting frame's own DOM; only ever
+        // returns the (typically tiny) matching subset of [global]'s
+        // low-generic bucket, never the full list.
+        try {
+          const parsed = await getParsedRules();
+          const { lowGenericMap } = _getClassifiedGenericSelectors(parsed);
+          const hashes = Array.isArray(msg.hashes) ? msg.hashes : [];
+          const out = new Set();
+          for (const h of hashes) {
+            const bucket = lowGenericMap.get(h);
+            if (bucket) for (const sel of bucket) out.add(sel);
+          }
+          sendResponse({ selectors: Array.from(out) });
+        } catch {
+          sendResponse({ selectors: [] });
         }
         break;
       }
@@ -6063,7 +6153,7 @@ EXT.tabs.onActivated.addListener(async ({ tabId }) => {
 EXT.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   // changeInfo.url is only present when the tab actually navigated to a new
   // URL (not on every status tick) — that's the per-tab block count's reset
-  // point, same "new page, new count" behavior as uBO's badge.
+  // point: "new page, new count".
   if (changeInfo.url) {
     _tabBlockedCounts.delete(tabId);
     _setTabBadge(tabId);

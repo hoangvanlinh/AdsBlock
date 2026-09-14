@@ -375,10 +375,123 @@ var _DIRECT_FILTER_CACHE_THRESHOLD=100;
 // markup changes.
 var _DIRECT_FILTER_CACHE_STALE_MS=24*60*60*1000;
 
+// ── Generic ("low-generic") cosmetic selector survey (2026-09-14) ────────
+// background.js no longer sends a bare class/id selector (measured ~96% of
+// a real EasyList+EasyPrivacy [global]
+// direct_hide_selectors set) in `global.direct_hide_selectors` at all — see
+// that file's _classifyGenericSelectors' own comment. Instead, this content
+// script hashes the id/class tokens actually present in ITS OWN page's DOM
+// and asks background (GET_GENERIC_SELECTORS) for just the matching
+// subset, typically single/low-double-digit selectors instead of 10,000+.
+//
+// djb2 — MUST mirror background.js's _hashGenericToken() exactly, or every
+// survey silently misses every match (the two sides only ever agree by
+// computing the identical hash for the identical token).
+function _hashGenericToken(type,s){
+  var len=s.length;
+  var step=(len+7)>>>3;
+  var hash=(type<<5)+type^len;
+  for(var i=0;i<len;i+=step)hash=(hash<<5)+hash^s.charCodeAt(i);
+  return hash&0xFFFFFF;
+}
+// Whether THIS host's own [host_patterns] section defines its own
+// direct_hide_selectors — background.js's _mergeConfigs REPLACES (not
+// merges) direct_hide_selectors when a site section defines it, so
+// [global]'s generic selectors (high OR low) never even apply to such a
+// host. Surveying for the low-generic subset would be pure waste there —
+// set once in boot(), before global/site get flattened into one _config.
+var _genericSurveyEligible=true;
+// Page-lifetime state: which id/class hashes have already been asked about
+// (never re-asked, whether they matched or not), and which low-generic
+// selectors have actually matched so far this page load (appended to,
+// never replaced, as new matches arrive).
+var _queriedGenericHashes=new Set();
+var _matchedGenericSelectors=[];
+
+function _collectNewGenericHashes(root,out){
+  if(!root||root.nodeType!==1)return;
+  var id=root.id;
+  if(id){
+    var idHash=_hashGenericToken(0x23,id);
+    if(!_queriedGenericHashes.has(idHash)){_queriedGenericHashes.add(idHash);out.push(idHash);}
+  }
+  var cls=root.getAttribute&&root.getAttribute('class');
+  if(cls)_collectClassHashes(cls,out);
+  if(!root.querySelectorAll)return;
+  var all=root.querySelectorAll('[id],[class]');
+  for(var j=0;j<all.length;j++){
+    var el=all[j];
+    if(el.id){
+      var elIdHash=_hashGenericToken(0x23,el.id);
+      if(!_queriedGenericHashes.has(elIdHash)){_queriedGenericHashes.add(elIdHash);out.push(elIdHash);}
+    }
+    var elCls=el.getAttribute('class');
+    if(elCls)_collectClassHashes(elCls,out);
+  }
+}
+function _collectClassHashes(cls,out){
+  var parts=cls.split(/\s+/);
+  for(var i=0;i<parts.length;i++){
+    var tok=parts[i];
+    if(!tok)continue;
+    var hash=_hashGenericToken(0x2E,tok);
+    if(!_queriedGenericHashes.has(hash)){_queriedGenericHashes.add(hash);out.push(hash);}
+  }
+}
+
+// Surveys `root`'s own id/class attributes (plus its subtree) for tokens
+// never asked about before, and — only if any are actually new — asks
+// background for whichever low-generic selectors match. A miss (no new
+// tokens, or background found nothing) costs nothing beyond the DOM walk:
+// no message round trip, no re-injection.
+function _surveyGenericSelectors(root){
+  if(!_genericSurveyEligible||!_enabled||!_config||!extValid())return;
+  var newHashes=[];
+  try{_collectNewGenericHashes(root,newHashes);}catch(e){}
+  if(!newHashes.length)return;
+  try{
+    EXT.runtime.sendMessage({type:'GET_GENERIC_SELECTORS',hashes:newHashes}).then(function(res){
+      var selectors=(res&&res.selectors)||[];
+      if(!selectors.length)return;
+      var added=false;
+      for(var i=0;i<selectors.length;i++){
+        if(_matchedGenericSelectors.indexOf(selectors[i])===-1){_matchedGenericSelectors.push(selectors[i]);added=true;}
+      }
+      if(added)_reinjectDirectStyleWithGenerics();
+    }).catch(function(){});
+  }catch(e){}
+}
+
+// Shared by _injectDirectStyle (first, authoritative send) and
+// _reinjectDirectStyleWithGenerics (appends newly-surveyed generic matches
+// later, same page load) — one place builds the actual CSS text so both
+// stay in sync.
+function _buildDirectRules(){
+  var all=_cachedDirect.concat(_matchedGenericSelectors);
+  var rules=[];
+  for(var i=0;i<all.length;i++)rules.push(_scopedDirectRule(all[i]));
+  for(var k=0;k<_cachedDirectStyle.length;k++)rules.push(_cachedDirectStyle[k]);
+  return {rules:rules,all:all};
+}
+
+// Re-sends the 'direct' slot after the survey (above) finds NEW generic
+// matches partway through the page's life (SPA navigation, lazy-loaded
+// content, ...) — same CSS-building logic _injectDirectStyle uses for its
+// own first send, just without redoing that function's config-driven
+// early-return/fast-path-cache-seeding steps (already done once at boot).
+function _reinjectDirectStyleWithGenerics(){
+  var built=_buildDirectRules();
+  _sendCssSlot('direct',built.rules.join('\n\n'));
+  // Merge into the fast-path replay cache too, so next visit's INSTANT
+  // guess (before GET_SITE_CONFIG even resolves) already includes today's
+  // discoveries — same size cap _injectDirectStyle's own caching uses.
+  if(built.all.length<=_DIRECT_FILTER_CACHE_THRESHOLD)_updateDirectCssCacheEntry(location.hostname,built.all);
+}
+
 function _injectDirectStyle(){
   _directAuthInjected=true; // real config wins over the fast-path guess from here on
   var host=location.hostname;
-  if(!_cachedDirect.length&&!_cachedDirectStyle.length){
+  if(!_cachedDirect.length&&!_cachedDirectStyle.length&&!_matchedGenericSelectors.length){
     _sendCssSlot('direct','');
     _updateDirectCssCacheEntry(host,null);
     return;
@@ -388,27 +501,21 @@ function _injectDirectStyle(){
   // display:none!important alone is enough once it wins the cascade
   // (origin:'user'/cssOrigin:'user', see background.js's setFrameCss).
   //
-  // The CSS actually sent below always covers the FULL _cachedDirect list.
-  // Only the fast-path cache (below) gets narrowed.
-  var rules=[];
-  for(var i=0;i<_cachedDirect.length;i++)rules.push(_scopedDirectRule(_cachedDirect[i]));
-  // _cachedDirectStyle entries are ALREADY complete 'selector{declarations}'
-  // CSS rules (see DIRECT_STYLE_KEYS' own comment) — appended verbatim into
-  // the same stylesheet, not run through _scopedDirectRule. Not part of the
-  // fast-path LRU cache below (_updateDirectCssCacheEntry/_scopedDirectRule
-  // only ever reconstruct bare hide selectors) — these arrive slightly later,
-  // once this real GET_SITE_CONFIG-driven call runs, same as every other
-  // capability this repo has added since the fast-path cache shape was fixed.
-  for(var k=0;k<_cachedDirectStyle.length;k++)rules.push(_cachedDirectStyle[k]);
+  // The CSS actually sent below always covers the FULL _cachedDirect list
+  // (plus any generic matches the survey has found so far — see
+  // _buildDirectRules). Only the fast-path cache (below) gets narrowed.
+  var built=_buildDirectRules();
+  var rules=built.rules;
   _sendCssSlot('direct',rules.join('\n\n'));
 
   // Cache this host's matched selectors for next visit's fast-path guess.
-  // Small lists (real site-specific rules) are cached as-is. Large lists
-  // (a host with no dedicated section, inheriting [global] wholesale — can
-  // be thousands of selectors) are filtered down to just the ones that
-  // actually match something on this page first.
-  if(_cachedDirect.length<=_DIRECT_FILTER_CACHE_THRESHOLD){
-    _updateDirectCssCacheEntry(host,_cachedDirect);
+  // Small lists (real site-specific rules — now also the common case for
+  // the generic bucket too, since the survey above only ever contributes
+  // actual matches) are cached as-is. Large lists (a host whose OWN
+  // dedicated section alone is still huge) are filtered down to just the
+  // ones that actually match something on this page first.
+  if(built.all.length<=_DIRECT_FILTER_CACHE_THRESHOLD){
+    _updateDirectCssCacheEntry(host,built.all);
     return;
   }
   // Skip re-filtering if a still-fresh cached result already exists
@@ -419,8 +526,8 @@ function _injectDirectStyle(){
       var existing=map[host];
       if(existing&&(Date.now()-(existing.ts||0))<_DIRECT_FILTER_CACHE_STALE_MS)return; // still fresh — keep as-is, skip re-filtering
       var cacheSelectors=[];
-      for(var j=0;j<_cachedDirect.length;j++){
-        try{if(document.querySelector(_cachedDirect[j]))cacheSelectors.push(_cachedDirect[j]);}catch(e){}
+      for(var j=0;j<built.all.length;j++){
+        try{if(document.querySelector(built.all[j]))cacheSelectors.push(built.all[j]);}catch(e){}
       }
       _updateDirectCssCacheEntry(host,cacheSelectors);
     }).catch(function(){});
@@ -699,6 +806,11 @@ function hide(el){
 
 function scan(root){
   if(!_enabled||!_config||!isEligiblePage(_config))return;
+  // Ongoing generic-selector coverage for SPA/lazy-loaded content — schedule()
+  // already batches+defers mutation-triggered calls here via the SAME idle
+  // callback candidate/host scanning below uses, so this piggy-backs on
+  // infrastructure that already exists rather than adding a second observer.
+  _surveyGenericSelectors(root);
   var count=0;
   // direct_hide_selectors are already hidden instantly by the injected
   // stylesheet — only re-collected once per boot, purely to seed the "ads
@@ -1022,17 +1134,31 @@ function boot(){
   window.__qkv1Loader.loadSite(function(res){
     siteKey=(res&&res.siteKey)||'';
     var base=(res&&res.global)||{};
-    _config=_mergeConfigs(base,(res&&res.site)||{});
+    var site=(res&&res.site)||{};
+    // background.js's _mergeConfigs REPLACES (not merges) direct_hide_selectors
+    // when the site section defines its own — [global]'s generic selectors
+    // (already high-generic-only by the time they arrive here) never apply
+    // to such a host at all, so surveying for the withheld low-generic
+    // subset would be pure waste. See _genericSurveyEligible's own comment.
+    _genericSurveyEligible=!(site.direct_hide_selectors&&site.direct_hide_selectors.length);
+    _queriedGenericHashes=new Set();
+    _matchedGenericSelectors=[];
+    _config=_mergeConfigs(base,site);
     _rebuildSelectorCache();
     // Send the direct-hide CSS immediately (before DOMContentLoaded) so
     // late-rendered ads never paint. content.js's CSS_CLEAR_ALL (on
     // pause/disable) clears this slot in background for free.
     _injectDirectStyle();
+    // Survey whatever's already in the DOM at this point (document_start:
+    // typically just <html>/<head>, sometimes more if this frame injected
+    // late) — the observer wired in startObserver()/scan() below covers
+    // everything rendered from here on, including SPA/lazy-loaded content.
+    _surveyGenericSelectors(document.documentElement);
     // New/changed config must always be re-dispatched — reset the flag so the
     // sync below sends it (but only if the site turns out to be enabled).
     _scriptletRulesActive=false;
     sync();
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();watchPageClasses();});
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){sync();watchPageClasses();_surveyGenericSelectors(document.documentElement);});
   });
 }
 

@@ -330,6 +330,7 @@ self.__test = {
   _isNewerVersion, checkForExtensionUpdate, maybeCheckForExtensionUpdate,
   get _parsedRules() { return _parsedRules; },
   _resetParsedRulesCache() { _parsedRules = null; _parsedRulesPromise = null; },
+  _hashGenericToken, _classifyGenericSelectors, _getClassifiedGenericSelectors,
   get DEFAULT_RULES() { return DEFAULT_RULES; },
   get MALWARE_RULES() { return MALWARE_RULES; },
   get AD_MAINFRAME_RULES() { return AD_MAINFRAME_RULES; },
@@ -887,6 +888,65 @@ function check(name, cond, detail = '') {
     (rTuoitre.site.direct_hide_selectors || []).includes('.my-picked-ad'),
     JSON.stringify(rTuoitre.site.direct_hide_selectors));
   await send5({ type: 'REMOVE_ELEMENT_RULE', host: 'tuoitre.vn' });
+
+  console.log('\n== 20cc. Generic ("low-generic") cosmetic selector hash-bucketing (2026-09-14) ==');
+  // See _classifyGenericSelectors' own comment — real EasyList+EasyPrivacy
+  // content measured ~96% of [global] direct_hide_selectors as a bare
+  // class/id selector, so sending the full ~13,600-entry list to insertCSS
+  // on every page was pure waste.
+  {
+    check('_hashGenericToken: same type+token always hashes the same',
+      T._hashGenericToken(0x2E, 'ad-banner') === T._hashGenericToken(0x2E, 'ad-banner'));
+    check('_hashGenericToken: a class and an id with the identical spelling hash DIFFERENTLY (type-prefixed)',
+      T._hashGenericToken(0x2E, 'foo') !== T._hashGenericToken(0x23, 'foo'));
+    check('_hashGenericToken: different tokens (typically) hash differently',
+      T._hashGenericToken(0x2E, 'ad-banner') !== T._hashGenericToken(0x2E, 'sidebar-widget'));
+
+    const mixedSelectors = [
+      '.ad-banner', '#sponsored-block', '.top_ad-unit',
+      'div.ad-banner', // NOT simplest — has a tag prefix
+      '.ad-banner:not(.hidden)', // NOT simplest — has a pseudo-class
+      '[data-ad="1"]', // NOT simplest — attribute selector
+      '.ad-banner > .inner', // NOT simplest — combinator
+    ];
+    const { lowGenericMap, highGeneric } = T._classifyGenericSelectors(mixedSelectors);
+    check('_classifyGenericSelectors: exactly the 3 bare class/id selectors land in the low-generic map',
+      lowGenericMap.size === 3, lowGenericMap.size);
+    check('_classifyGenericSelectors: everything else (tag/pseudo/attribute/combinator) is high-generic, unchanged',
+      highGeneric.length === 4 &&
+      highGeneric.includes('div.ad-banner') && highGeneric.includes('.ad-banner:not(.hidden)') &&
+      highGeneric.includes('[data-ad="1"]') && highGeneric.includes('.ad-banner > .inner'),
+      highGeneric);
+    const adBannerHash = T._hashGenericToken(0x2E, 'ad-banner');
+    check('_classifyGenericSelectors: the low-generic map is keyed by the SAME hash the survey side computes',
+      lowGenericMap.has(adBannerHash) && lowGenericMap.get(adBannerHash).has('.ad-banner'),
+      [...lowGenericMap.keys()]);
+
+    // End-to-end through the real message handlers: GET_SITE_CONFIG must
+    // send ONLY high-generic selectors; GET_GENERIC_SELECTORS must resolve
+    // a survey hash back to its low-generic selector, and return nothing
+    // for a hash that matches no real selector.
+    await chromeStub.storage.local.set({
+      customRulesText: '[global]\ndirect_hide_selectors = .e2e-generic-low | div.e2e-generic-high',
+    });
+    await T.reloadRules(); // re-fetches+re-merges customRulesText and resets the in-memory parsed-rules memo
+    const siteCfg = await send5({ type: 'GET_SITE_CONFIG', host: 'unrelated-host.example' });
+    check('GET_SITE_CONFIG: high-generic selector IS sent directly',
+      (siteCfg.global.direct_hide_selectors || []).includes('div.e2e-generic-high'), siteCfg.global.direct_hide_selectors);
+    check('GET_SITE_CONFIG: the bare-class low-generic selector is WITHHELD (survey-only, not sent to every page)',
+      !(siteCfg.global.direct_hide_selectors || []).includes('.e2e-generic-low'), siteCfg.global.direct_hide_selectors);
+
+    const lowHash = T._hashGenericToken(0x2E, 'e2e-generic-low');
+    const genericResolved = await send5({ type: 'GET_GENERIC_SELECTORS', hashes: [lowHash] });
+    check('GET_GENERIC_SELECTORS: resolves the survey hash back to the withheld selector',
+      (genericResolved.selectors || []).includes('.e2e-generic-low'), genericResolved);
+    const genericMiss = await send5({ type: 'GET_GENERIC_SELECTORS', hashes: [T._hashGenericToken(0x2E, 'no-such-class-anywhere')] });
+    check('GET_GENERIC_SELECTORS: an unmatched hash resolves to no selectors, not an error',
+      Array.isArray(genericMiss.selectors) && genericMiss.selectors.length === 0, genericMiss);
+
+    await chromeStub.storage.local.set({ customRulesText: '' });
+    await T.reloadRules();
+  }
 
   // 20d. "Decline ad popup" -> no_window_open_if (2026-08-23) — sent by
   // blocked/blocked.js when the user ticks "Don't warn me again" and
