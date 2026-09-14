@@ -54,58 +54,68 @@ async function getCurrentDomain() {
 }
 
 // ── Load data from storage ─────────────────────
+// Split into fetch (async, no DOM writes) + apply (sync, DOM writes only) —
+// see the "Init" section's own comment further down for why: batching every
+// fetch together and applying them all in ONE pass is what actually fixes
+// the popup-open flash on Firefox. loadState() below still does fetch+apply
+// combined, for its OTHER (non-init) call site (removeAllowlist), where
+// batching doesn't matter — initial layout has already long settled by then.
+function _fetchLoadState() {
+  return new Promise(resolve => {
+    EXT.storage.local.get(
+      ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'stats', 'referrerAnonymization'],
+      resolve
+    );
+  });
+}
+function _applyLoadState(domain, { enabled = true, pausedDomains = [], allowedDomains = [], focusMode = false, stats = {}, referrerAnonymization = true }) {
+  const paused     = pausedDomains.includes(domain);
+  const allowlisted = allowedDomains.includes(domain);
+  const active     = enabled && !paused && !allowlisted;
+
+  // toggle state — distinguish paused vs allowlisted vs fully off
+  mainToggle.checked = active;
+  updateToggleUI(enabled, paused, allowlisted);
+
+  // pause button — hide when allowlisted (managed from dashboard)
+  pauseSiteBtn.classList.toggle('active', paused);
+  pauseSiteLabel.textContent = paused ? EXT.i18n.getMessage('popup_action_resume_emoji') : EXT.i18n.getMessage('popup_action_pause_emoji');
+  pauseSiteBtn.style.display = allowlisted ? 'none' : '';
+
+  // allowlist banner
+  const banner = document.getElementById('allowlistBanner');
+  if (banner) {
+    banner.classList.toggle('hidden', !allowlisted);
+  }
+
+  // focus mode
+  focusModeBtn.classList.toggle('active', focusMode);
+  focusModeBtn.classList.toggle('accent', !focusMode);
+
+  // stats
+  const siteStats = stats[domain] || {};
+  blockedCount.textContent = (siteStats.blocked ?? 0).toLocaleString();
+
+  // Malware is cross-domain — show global total
+  let totalMalware = 0;
+  for (const s of Object.values(stats)) totalMalware += s.malwareBlocked ?? 0;
+  malwareCount.textContent = totalMalware.toLocaleString();
+  const spd = siteStats.speedGain ?? 0;
+  speedGain.textContent  = spd > 0 ? `+${spd}%` : '—';
+  timeSaved.textContent  = formatTime(siteStats.timeSaved ?? 0);
+
+  // privacy score — computed from real data
+  const score = calculatePrivacyScore(siteStats, { enabled, paused, referrerAnonymization });
+  privacyScore.textContent = score;
+  privacyBar.style.width   = `${score}%`;
+  privacyScore.style.color = score >= 70
+    ? 'var(--green)'
+    : score >= 40 ? 'var(--blue)' : 'var(--red)';
+}
 async function loadState() {
   const domain = await getCurrentDomain();
   domainLabel.textContent = domain || EXT.i18n.getMessage('popup_domain_unknown');
-
-  EXT.storage.local.get(
-    ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'stats', 'referrerAnonymization'],
-    ({ enabled = true, pausedDomains = [], allowedDomains = [], focusMode = false, stats = {}, referrerAnonymization = true }) => {
-
-      const paused     = pausedDomains.includes(domain);
-      const allowlisted = allowedDomains.includes(domain);
-      const active     = enabled && !paused && !allowlisted;
-
-      // toggle state — distinguish paused vs allowlisted vs fully off
-      mainToggle.checked = active;
-      updateToggleUI(enabled, paused, allowlisted);
-
-      // pause button — hide when allowlisted (managed from dashboard)
-      pauseSiteBtn.classList.toggle('active', paused);
-      pauseSiteLabel.textContent = paused ? EXT.i18n.getMessage('popup_action_resume_emoji') : EXT.i18n.getMessage('popup_action_pause_emoji');
-      pauseSiteBtn.style.display = allowlisted ? 'none' : '';
-
-      // allowlist banner
-      const banner = document.getElementById('allowlistBanner');
-      if (banner) {
-        banner.classList.toggle('hidden', !allowlisted);
-      }
-
-      // focus mode
-      focusModeBtn.classList.toggle('active', focusMode);
-      focusModeBtn.classList.toggle('accent', !focusMode);
-
-      // stats
-      const siteStats = stats[domain] || {};
-      blockedCount.textContent = (siteStats.blocked ?? 0).toLocaleString();
-
-      // Malware is cross-domain — show global total
-      let totalMalware = 0;
-      for (const s of Object.values(stats)) totalMalware += s.malwareBlocked ?? 0;
-      malwareCount.textContent = totalMalware.toLocaleString();
-      const spd = siteStats.speedGain ?? 0;
-      speedGain.textContent  = spd > 0 ? `+${spd}%` : '—';
-      timeSaved.textContent  = formatTime(siteStats.timeSaved ?? 0);
-
-      // privacy score — computed from real data
-      const score = calculatePrivacyScore(siteStats, { enabled, paused, referrerAnonymization });
-      privacyScore.textContent = score;
-      privacyBar.style.width   = `${score}%`;
-      privacyScore.style.color = score >= 70
-        ? 'var(--green)'
-        : score >= 40 ? 'var(--blue)' : 'var(--red)';
-    }
-  );
+  _applyLoadState(domain, await _fetchLoadState());
 }
 
 function formatTime(seconds) {
@@ -294,18 +304,21 @@ function _detectReviewStoreUrl() {
   if (ua.includes('Edg/'))     return urls.edge;
   return urls.chrome + '/reviews';
 }
-function maybeShowReviewPrompt() {
+function _fetchReviewPromptState() {
+  return new Promise(resolve => {
+    EXT.storage.local.get(['reviewPromptState', 'totalBlockedAllTime', 'installDate'], resolve);
+  });
+}
+function _applyReviewPrompt({ reviewPromptState = 'unseen', totalBlockedAllTime = 0, installDate } = {}) {
   const banner = document.getElementById('reviewBanner');
   if (!banner) return;
-  EXT.storage.local.get(
-    ['reviewPromptState', 'totalBlockedAllTime', 'installDate'],
-    ({ reviewPromptState = 'unseen', totalBlockedAllTime = 0, installDate }) => {
-      if (reviewPromptState !== 'unseen') return;
-      const daysInstalled = installDate ? (Date.now() - installDate) / 86400000 : 0;
-      const eligible = totalBlockedAllTime >= REVIEW_BLOCKED_MILESTONE || daysInstalled >= REVIEW_MIN_DAYS_INSTALLED;
-      if (eligible) banner.classList.remove('hidden');
-    }
-  );
+  if (reviewPromptState !== 'unseen') return;
+  const daysInstalled = installDate ? (Date.now() - installDate) / 86400000 : 0;
+  const eligible = totalBlockedAllTime >= REVIEW_BLOCKED_MILESTONE || daysInstalled >= REVIEW_MIN_DAYS_INSTALLED;
+  if (eligible) banner.classList.remove('hidden');
+}
+function maybeShowReviewPrompt() {
+  _fetchReviewPromptState().then(_applyReviewPrompt);
 }
 document.getElementById('reviewRateBtn')?.addEventListener('click', () => {
   EXT.storage.local.set({ reviewPromptState: 'reviewed' });
@@ -333,49 +346,69 @@ document.getElementById('pickElement')?.addEventListener('click', async () => {
 
 // ── Init ───────────────────────────────────────
 // Paint the optimistic default ("Protection ON" — same assumption the
-// static HTML placeholder encodes) SYNCHRONOUSLY, before loadState()'s
-// async EXT.tabs.query()/storage.get() round-trip resolves — otherwise the
-// raw hardcoded-English HTML placeholder stays visible for that entire
-// round-trip and only THEN gets replaced, which reads as a visible
-// English-then-localized flash whenever the real language is non-English
-// (live-reported 2026-08-28). EXT.i18n.getMessage() here already resolves
-// through shared/i18n.js's synchronous localStorage cache (populated
-// before this script even runs, per that file's script-tag load order) on
-// any repeat popup open, so this paints already-correct on every open but
-// the very first one. loadState() still corrects the state (not just the
-// language) moments later if the real status differs from this guess.
+// static HTML placeholder encodes) SYNCHRONOUSLY, before the batched init
+// below's async round-trips resolve — otherwise the raw hardcoded-English
+// HTML placeholder stays visible for that entire round-trip and only THEN
+// gets replaced, which reads as a visible English-then-localized flash
+// whenever the real language is non-English (live-reported 2026-08-28).
+// EXT.i18n.getMessage() here already resolves through shared/i18n.js's
+// synchronous localStorage cache (populated before this script even runs,
+// per that file's script-tag load order) on any repeat popup open, so this
+// paints already-correct on every open but the very first one. The batched
+// init below still corrects the state (not just the language) moments
+// later if the real status differs from this guess.
 statusLabel.innerHTML = _statusHtml('popup_status_protection', 'popup_status_on');
-loadState();
-maybeShowReviewPrompt();
 
 // Show how many network blocking rules are actually loaded — re-called after
 // the Protection toggle so the chip doesn't keep showing a stale count from
 // before the background finished adding/removing declarativeNetRequest rules.
-function refreshRuleCount() {
-  void EXT.runtime.lastError; // ack TOGGLE's own response, if any
-  EXT.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {
-    const chip = document.getElementById('ruleChip');
-    if (!chip) return;
-    if (EXT.runtime.lastError || !res) {
-      chip.textContent = EXT.i18n.getMessage('popup_ruleChip_unknown');
-      chip.classList.add('zero');
-      return;
-    }
-    const n = res.count ?? 0;
-    chip.textContent = EXT.i18n.getMessage('popup_ruleChip_loaded', [String(n)]);
-    chip.classList.toggle('zero', n === 0);
+// Split fetch/apply — see the "Init" batching block's own comment below for
+// why. refreshRuleCount() (fetch+apply combined) stays the entry point for
+// its OTHER call site (the TOGGLE handler), where batching doesn't matter —
+// layout has long settled by then.
+function _fetchRuleCount() {
+  return new Promise(resolve => {
+    EXT.runtime.sendMessage({ type: 'GET_RULE_COUNT' }, (res) => {
+      const hadError = !!EXT.runtime.lastError;
+      void EXT.runtime.lastError;
+      resolve({ res, hadError });
+    });
   });
 }
-refreshRuleCount();
+function _applyRuleCount({ res, hadError } = {}) {
+  const chip = document.getElementById('ruleChip');
+  if (!chip) return;
+  if (hadError || !res) {
+    chip.textContent = EXT.i18n.getMessage('popup_ruleChip_unknown');
+    chip.classList.add('zero');
+    return;
+  }
+  const n = res.count ?? 0;
+  chip.textContent = EXT.i18n.getMessage('popup_ruleChip_loaded', [String(n)]);
+  chip.classList.toggle('zero', n === 0);
+}
+function refreshRuleCount() {
+  void EXT.runtime.lastError; // ack TOGGLE's own response, if any
+  _fetchRuleCount().then(_applyRuleCount);
+}
 
 // ── Version / update check ──────────────────────────────────────
 // GET_UPDATE_STATUS reads cached state only (background.js checks against
 // this repo's own manifest.json on its own daily schedule) — the popup
 // never triggers a network fetch itself just from being opened.
-EXT.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, (res) => {
+function _fetchUpdateStatus() {
+  return new Promise(resolve => {
+    EXT.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, (res) => {
+      const hadError = !!EXT.runtime.lastError;
+      void EXT.runtime.lastError;
+      resolve(hadError ? null : res);
+    });
+  });
+}
+function _applyUpdateStatus(res) {
   const chip = document.getElementById('versionChip');
   if (!chip) return;
-  if (EXT.runtime.lastError || !res || !res.available || !res.latestVersion) return; // stays hidden
+  if (!res || !res.available || !res.latestVersion) return; // stays hidden
   chip.textContent = EXT.i18n.getMessage('popup_version_updateAvailable', [String(res.currentVersion), String(res.latestVersion)]);
   chip.title = EXT.i18n.getMessage('popup_version_updateTitle');
   chip.classList.remove('hidden');
@@ -383,4 +416,35 @@ EXT.runtime.sendMessage({ type: 'GET_UPDATE_STATUS' }, (res) => {
     EXT.tabs.create({ url: _detectStoreUrl() });
     window.close();
   });
-});
+}
+
+// Live-reported 2026-09-14 (Firefox, every popup open): the popup would
+// briefly render TALLER than its settled size, then snap back down — a
+// visible flash. Root cause: loadState()/maybeShowReviewPrompt()/
+// refreshRuleCount()/the update-status check each did their OWN independent
+// storage.local.get()/runtime.sendMessage() round-trip and wrote to the DOM
+// the MOMENT their own response landed — 4 separate, staggered DOM writes
+// within the first few dozen/hundred ms after open. Firefox's WebExtension
+// popup panel auto-resizes to match body content height on every change it
+// observes, so several staggered writes meant several resize passes; if any
+// intermediate state was momentarily taller than the FINAL settled state
+// (e.g. the review banner appearing before a later write removed/shrank
+// something else), Firefox visibly resized the panel down again right after
+// resizing it up — read as one flash. Fix: run every fetch in parallel
+// first (no DOM writes yet), then apply all the resulting DOM writes
+// together in ONE synchronous pass — Firefox only ever sees a single
+// post-initial-paint layout change instead of several staggered ones.
+(async () => {
+  const [domain, loadStateRes, reviewRes, ruleCountRes, updateStatusRes] = await Promise.all([
+    getCurrentDomain(),
+    _fetchLoadState(),
+    _fetchReviewPromptState(),
+    _fetchRuleCount(),
+    _fetchUpdateStatus(),
+  ]);
+  domainLabel.textContent = domain || EXT.i18n.getMessage('popup_domain_unknown');
+  _applyLoadState(domain, loadStateRes);
+  _applyReviewPrompt(reviewRes);
+  _applyRuleCount(ruleCountRes);
+  _applyUpdateStatus(updateStatusRes);
+})();
