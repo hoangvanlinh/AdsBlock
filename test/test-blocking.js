@@ -3314,6 +3314,135 @@ function check(name, cond, detail = '') {
     scriptingCalls.length === 0, JSON.stringify(scriptingCalls));
   T.frameCss.clear();
 
+  // ── Regression (2026-09-14, "page load not smooth, flashes"): setFrameCss
+  // must INSERT the new css before REMOVING the old one, never the other way
+  // around — a remove-then-insert gap means no hiding css is active for a
+  // moment, flashing whatever it was hiding. This is the exact sequence a
+  // real page hits: _fastPathDirectStyle()'s immediate guess superseded by
+  // the real selectors moments later. ──
+  {
+    scriptingCalls.length = 0;
+    T.frameCss.clear();
+    await T.setFrameCss(9002, 0, 'direct', '.guess{display:none!important}');
+    check('first setFrameCss call for a fresh key: only an insert, nothing to remove yet',
+      scriptingCalls.length === 1 && scriptingCalls[0].op === 'insert' && scriptingCalls[0].css === '.guess{display:none!important}',
+      JSON.stringify(scriptingCalls));
+
+    scriptingCalls.length = 0;
+    await T.setFrameCss(9002, 0, 'direct', '.real{display:none!important}');
+    check('second call with DIFFERENT css: exactly one insert + one remove',
+      scriptingCalls.length === 2, JSON.stringify(scriptingCalls));
+    check('the NEW css is inserted BEFORE the OLD one is removed — never a zero-css gap (the actual flash bug)',
+      scriptingCalls[0].op === 'insert' && scriptingCalls[0].css === '.real{display:none!important}' &&
+      scriptingCalls[1].op === 'remove' && scriptingCalls[1].css === '.guess{display:none!important}',
+      JSON.stringify(scriptingCalls));
+    check('bookkeeping now points at the new css', T.frameCss.get('9002:0:direct') === '.real{display:none!important}');
+
+    // Simulate insertCSS rejecting — prev must stay protected/active, never
+    // removed out from under a failed replacement.
+    const realInsertCSS = chromeStub.scripting.insertCSS;
+    chromeStub.scripting.insertCSS = async () => { throw new Error('simulated insertCSS failure'); };
+    scriptingCalls.length = 0;
+    await T.setFrameCss(9002, 0, 'direct', '.newer{display:none!important}');
+    chromeStub.scripting.insertCSS = realInsertCSS;
+    check('a failed insertCSS never calls removeCSS on the still-good prev css',
+      !scriptingCalls.some(c => c.op === 'remove'), JSON.stringify(scriptingCalls));
+    check('bookkeeping still points at the last GOOD css, not the one that failed to insert',
+      T.frameCss.get('9002:0:direct') === '.real{display:none!important}');
+
+    // Explicit clear (falsy css) — unaffected by the reorder: nothing new to
+    // insert first, so remove(prev) + delete bookkeeping, as before.
+    scriptingCalls.length = 0;
+    await T.setFrameCss(9002, 0, 'direct', '');
+    check('an explicit clear (falsy css) still removes the previous css',
+      scriptingCalls.length === 1 && scriptingCalls[0].op === 'remove' && scriptingCalls[0].css === '.real{display:none!important}',
+      JSON.stringify(scriptingCalls));
+    check('bookkeeping entry is gone after an explicit clear', !T.frameCss.has('9002:0:direct'));
+
+    T.frameCss.clear();
+  }
+
+  // ── Regression (2026-09-14): CSS_FASTPATH_APPLY — collapses site-block.js's
+  // old 2-round-trip fast path (content script reads its own storage cache,
+  // THEN sends the result to background) into 1 (content script just names
+  // the host; background reads the SAME storage key itself and applies it
+  // directly). Covers: the happy path, a host with no cached entry, the
+  // _directAuthApplied race guard (a real 'direct' CSS_SET must never be
+  // clobbered by a late-arriving stale fast-path guess), and reading from
+  // BOTH possible storage areas content/fastpath-storage.js's _fpStorage
+  // could have written to (chrome.storage.session, or its own UNPREFIXED
+  // chrome.storage.local fallback when a content script's session grant is
+  // denied — deliberately NOT the background-only SessionStorage module's
+  // own, differently-prefixed local fallback, see this handler's own
+  // comment in background.js). ──
+  {
+    const sendMsg = (msg, sender) => new Promise(res => messageListeners[0](msg, sender, res));
+    const FASTPATH_KEY = 'directCssFastPath';
+
+    // Happy path: a cached entry exists in chrome.storage.session.
+    scriptingCalls.length = 0;
+    T.frameCss.clear();
+    sessionStorageData[FASTPATH_KEY] = { 'fastpath.example': { sel: ['.cached-ad'], ts: Date.now() } };
+    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'fastpath.example' }, { tab: { id: 9010 }, frameId: 0 });
+    check('CSS_FASTPATH_APPLY applies the cached selector from chrome.storage.session',
+      scriptingCalls.length === 1 && scriptingCalls[0].op === 'insert' && scriptingCalls[0].css === '.cached-ad{display:none!important}',
+      JSON.stringify(scriptingCalls));
+    delete sessionStorageData[FASTPATH_KEY];
+    T.frameCss.clear();
+
+    // No cached entry for this host at all — no-op, no insertCSS call.
+    scriptingCalls.length = 0;
+    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'never-visited.example' }, { tab: { id: 9010 }, frameId: 0 });
+    check('CSS_FASTPATH_APPLY with no cached entry for the host does nothing',
+      scriptingCalls.length === 0, JSON.stringify(scriptingCalls));
+
+    // Race guard: the REAL 'direct' CSS_SET arrives FIRST — a fast-path
+    // apply for the SAME tab/frame afterward must be ignored, never
+    // clobbering the already-applied authoritative selectors.
+    scriptingCalls.length = 0;
+    T.frameCss.clear();
+    await sendMsg({ type: 'CSS_SET', slot: 'direct', css: '.real-selector{display:none!important}' }, { tab: { id: 9011 }, frameId: 0 });
+    scriptingCalls.length = 0;
+    sessionStorageData[FASTPATH_KEY] = { 'race.example': { sel: ['.stale-guess'], ts: Date.now() } };
+    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'race.example' }, { tab: { id: 9011 }, frameId: 0 });
+    check('_directAuthApplied guard: a fast-path apply arriving AFTER the real CSS_SET is ignored, never overwrites it',
+      scriptingCalls.length === 0, JSON.stringify(scriptingCalls));
+    check('bookkeeping still reflects the real (authoritative) css, not the stale guess',
+      T.frameCss.get('9011:0:direct') === '.real-selector{display:none!important}');
+    delete sessionStorageData[FASTPATH_KEY];
+    T.frameCss.clear();
+
+    // A fresh navigation (CSS_SET 'base' slot, fresh:true) must reset the
+    // _directAuthApplied guard — otherwise a NEW page load in the same
+    // tab/frame would be permanently locked out of ever using the fast path
+    // again, just because a PREVIOUS document there once got real selectors.
+    scriptingCalls.length = 0;
+    await sendMsg({ type: 'CSS_SET', slot: 'base', css: '', fresh: true }, { tab: { id: 9011 }, frameId: 0 });
+    scriptingCalls.length = 0;
+    sessionStorageData[FASTPATH_KEY] = { 'race.example': { sel: ['.after-fresh-nav'], ts: Date.now() } };
+    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'race.example' }, { tab: { id: 9011 }, frameId: 0 });
+    check('a fresh navigation (CSS_SET base, fresh:true) resets the guard — the fast path works again on the NEW document',
+      scriptingCalls.length === 1 && scriptingCalls[0].css === '.after-fresh-nav{display:none!important}',
+      JSON.stringify(scriptingCalls));
+    delete sessionStorageData[FASTPATH_KEY];
+    T.frameCss.clear();
+
+    // Reads content/fastpath-storage.js's own UNPREFIXED local fallback too
+    // (the scenario where a content script's storage.session grant was
+    // denied, so _fpStorage fell back to chrome.storage.local directly under
+    // the SAME bare key — not SessionStorage.js's own, differently-prefixed
+    // fallback convention, which this handler deliberately does NOT use).
+    scriptingCalls.length = 0;
+    T.frameCss.clear();
+    storageData[FASTPATH_KEY] = { 'local-fallback.example': { sel: ['.from-local-fallback'], ts: Date.now() } };
+    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'local-fallback.example' }, { tab: { id: 9012 }, frameId: 0 });
+    check('CSS_FASTPATH_APPLY also finds an entry in the RAW (unprefixed) chrome.storage.local fallback, not just session',
+      scriptingCalls.length === 1 && scriptingCalls[0].css === '.from-local-fallback{display:none!important}',
+      JSON.stringify(scriptingCalls));
+    delete storageData[FASTPATH_KEY];
+    T.frameCss.clear();
+  }
+
   // ── _settingsCache survives storage.local.clear() with correct defaults ──
   // Live-reported (2026-09-01): clearing storage.local/session made ad
   // blocking work "sometimes, sometimes not". Root cause: storage.local.

@@ -4,16 +4,15 @@
 // match content.js/content/scriptlets.js's own copy of the placeholder.
 var _QKV1_TOKEN='__QKV1_BUILD_TOKEN__';
 
-// _directAuthInjected/_DIRECT_CSS_SESSION_KEY/_fastPathDirectStyle() must come
-// FIRST, before any other declaration in this file: the goal is to fire the
-// last-known-good 'direct' CSS (see _injectDirectStyle() further down) as
-// early as possible, before loadSite()'s GET_SITE_CONFIG round-trip to
-// background even resolves. `_sendCssSlot`/`_fastPathDirectStyle` are
-// `function` declarations (fully hoisted, body and all) so calling
-// _fastPathDirectStyle() here — before their textual definition further down
-// — is safe; only the `var`s right below it are NOT hoisted-with-value, so
-// they genuinely must be assigned before this call.
-var _directAuthInjected=false;
+// _DIRECT_CSS_SESSION_KEY/_fastPathDirectStyle() must come FIRST, before any
+// other declaration in this file: the goal is to fire the last-known-good
+// 'direct' CSS (see _injectDirectStyle() further down) as early as possible,
+// before loadSite()'s GET_SITE_CONFIG round-trip to background even
+// resolves. `_sendCssSlot`/`_fastPathDirectStyle` are `function` declarations
+// (fully hoisted, body and all) so calling _fastPathDirectStyle() here —
+// before their textual definition further down — is safe; only the `var`s
+// right below it are NOT hoisted-with-value, so they genuinely must be
+// assigned before this call.
 // content/fastpath-storage.js (listed right before this file in
 // manifest.json/manifest.firefox.json) already resolved, ONCE, whether
 // chrome.storage.session is actually reachable from this content script and
@@ -489,7 +488,10 @@ function _reinjectDirectStyleWithGenerics(){
 }
 
 function _injectDirectStyle(){
-  _directAuthInjected=true; // real config wins over the fast-path guess from here on
+  // Real config now wins over the fast-path guess — background.js's
+  // _directAuthApplied (set the moment this function's CSS_SET arrives)
+  // is what actually enforces that ordering now (2026-09-14), not a
+  // content-script-side flag; see CSS_FASTPATH_APPLY's own comment there.
   var host=location.hostname;
   if(!_cachedDirect.length&&!_cachedDirectStyle.length&&!_matchedGenericSelectors.length){
     _sendCssSlot('direct','');
@@ -534,34 +536,31 @@ function _injectDirectStyle(){
   }catch(e){}
 }
 
-// _fastPathDirectStyle — fires the LAST successfully-computed 'direct' CSS
-// for THIS host (from its own last visit — see the LRU map comment near
-// _fpStorage above) as early as possible at content-script start,
-// before loadSite()'s GET_SITE_CONFIG round-trip to background even
-// resolves. That round-trip is fast on a warm service worker but can cost a
-// chrome.storage.session read (cold-started SW) or a full remote rule fetch
-// (no valid parsed-rules cache yet) with no timeout — during which ads would
-// otherwise flash unhidden. This read is itself a chrome.storage.session
-// call (same async class as that round-trip), so it's a best-effort head
-// start, not a guaranteed win — chosen over the page's own localStorage
-// specifically because chrome.storage is never reachable from page JS (no
-// fingerprint exposure, not even inside a same-page third-party iframe like
-// an embedded Facebook widget). _injectDirectStyle() always re-sends the
-// real CSS once loadSite() resolves and _directAuthInjected stops this
-// stale guess from winning a race against it.
+// _fastPathDirectStyle — asks background to apply the LAST successfully-
+// computed 'direct' CSS for THIS host (from its own last visit — see the
+// LRU map comment near _fpStorage above) as early as possible at
+// content-script start, before loadSite()'s GET_SITE_CONFIG round-trip to
+// background even resolves. That round-trip is fast on a warm service
+// worker but can cost a chrome.storage.session read (cold-started SW) or a
+// full remote rule fetch (no valid parsed-rules cache yet) with no timeout
+// — during which ads would otherwise flash unhidden.
+//
+// Used to read _fpStorage itself here FIRST (a chrome.storage.session/local
+// round trip) and only THEN send the result to background in a SECOND
+// message — two sequential round trips before any protective CSS could
+// possibly land. Collapsed into ONE (2026-09-14): just name the host,
+// background reads the exact same underlying storage key itself (it always
+// has unconditional access — no setAccessLevel grant dance needed, unlike a
+// content script — see CSS_FASTPATH_APPLY's own comment in background.js)
+// and applies it in the same round trip. The race this used to guard
+// against client-side (a stale guess arriving AFTER _injectDirectStyle()'s
+// real send) is now guarded server-side instead (background.js's
+// _directAuthApplied), since background is what actually decides ordering
+// now, not this content script.
 function _fastPathDirectStyle(){
   if(!extValid())return;
   try{
-    _fpStorage.get([_DIRECT_CSS_SESSION_KEY]).then(function(res){
-      if(_directAuthInjected)return;
-      var map=res&&res[_DIRECT_CSS_SESSION_KEY];
-      var entry=map&&map[location.hostname];
-      var sel=entry&&entry.sel;
-      if(!sel||!sel.length)return;
-      var rules=[];
-      for(var i=0;i<sel.length;i++)rules.push(_scopedDirectRule(sel[i]));
-      _sendCssSlot('direct',rules.join('\n\n'));
-    }).catch(function(){});
+    EXT.runtime.sendMessage({type:'CSS_FASTPATH_APPLY',host:location.hostname}).catch(function(){});
   }catch(e){}
 }
 

@@ -5215,6 +5215,13 @@ async function applyPrivacySettings() {
 // each other. Keyed per tab+frame since all_frames content scripts each
 // have their own frameId.
 const _frameCss = new Map(); // `${tabId}:${frameId}:${slot}` -> last-applied css text
+// Set of `${tabId}:${frameId}` for which the AUTHORITATIVE 'direct' slot CSS
+// (site-block.js's _injectDirectStyle(), real GET_SITE_CONFIG-derived
+// selectors) has already arrived — see CSS_FASTPATH_APPLY's own comment for
+// why this guards against a stale fast-path guess clobbering it. Cleared
+// alongside _frameCss/_frameCssRaw on a fresh navigation/tab removal, same
+// reasoning as those.
+const _directAuthApplied = new Set();
 // content.js/site-block.js legitimately re-send the exact same slot's CSS
 // verbatim more than once per page (boot()'s own send, then sync()'s
 // defensive re-send in case CSS_CLEAR_ALL wiped it, then another sync() on
@@ -5234,13 +5241,11 @@ function _frameCssKey(tabId, frameId, slot) {
 
 // Firefox implements the same `scripting.insertCSS` namespace Chrome does
 // (browser.tabs.insertCSS does not exist) — one shared implementation for
-// both browsers.
-// ██████ TEMP DEBUG (2026-09-03): CSS injection disabled on purpose to
-// ██████ isolate-test whether the HTML stream filter alone can hide
-// ██████ vnexpress.net's banner, with no CSS fallback masking the result.
-// ██████ MUST be restored (uncomment the real body, delete this block)
-// ██████ before shipping — leaving this off broke cosmetic hiding on
-// ██████ EVERY site the last time it was left commented out by mistake.
+// both browsers. (This was briefly stubbed out for an isolate-test on
+// 2026-09-03, whether the HTML stream filter alone could hide vnexpress.net's
+// banner with no CSS fallback masking the result — restored the same day.
+// Leaving this disabled by mistake breaks cosmetic hiding on EVERY site, so
+// don't disable it again without a very good reason.)
 async function _insertFrameCss(tabId, frameId, css) {
   await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
 }
@@ -5308,26 +5313,47 @@ function setFrameCss(tabId, frameId, slot, css) {
   return tail;
 }
 
+// Live-reported 2026-09-14 ("page load not smooth, flashes") — insert the
+// NEW css before removing the OLD one, not the other way around. This used
+// to remove `prev` first, then insert `css` — two separate async round
+// trips to chrome.scripting.removeCSS()/insertCSS(), with a real gap in
+// between where NO hiding css was active at all: on every normal page load
+// content.js/site-block.js legitimately supersedes the 'direct' slot's css
+// two or three times in quick succession (_fastPathDirectStyle()'s
+// immediate guess -> the real selectors -> _reinjectDirectStyleWithGenerics()'s
+// expanded set once the async generic-selector survey resolves), and EACH
+// supersession hit this gap — whatever was being hidden (ads, clutter)
+// flashed visible for a moment, then got hidden again. Reordered so there
+// is ALWAYS at least one ruleset active: every rule here is a `display:none`
+// hide, so briefly having BOTH old and new active is harmless (idempotent
+// cascade); the only behavior change for a genuine "stop hiding this"
+// update is that it now stays hidden one round trip longer instead of
+// flashing visible then hidden again — strictly better for an ad blocker.
+// Also a strictly safer failure mode: if insertCSS throws, `prev` (if any)
+// is left untouched/still active instead of having already been removed
+// with nothing to replace it. _frameCssQueues' per-key serialization
+// (setFrameCss, above) still wraps the whole call, so this reordering is
+// entirely internal — no other call can interleave mid-sequence.
 async function _setFrameCssImpl(tabId, frameId, key, rawCss) {
   if (_frameCssRaw.get(key) === rawCss) return; // byte-identical resend — skip dedupe/comparison entirely
   _frameCssRaw.set(key, rawCss);
   const css = _dedupeCssRules(rawCss);
   const prev = _frameCss.get(key);
   if (prev === css) return; // no change — already applied (or already absent)
-  if (prev) {
-    try { await _removeFrameCss(tabId, frameId, prev); }
-    catch (e) { /* frame navigated away mid-flight — fine, nothing to clean up */ }
-  }
   if (css) {
     try {
       await _insertFrameCss(tabId, frameId, css);
       _frameCss.set(key, css);
     } catch (e) {
       _diagLog('error', '_insertFrameCss FAILED', { key, tabId, frameId, cssLength: css.length, css, error: e && (e.message || e) });
-      _frameCss.delete(key);
+      return; // insert failed — leave `prev` (if any) active rather than removing it and ending up with NOTHING hiding
     }
   } else {
     _frameCss.delete(key);
+  }
+  if (prev) {
+    try { await _removeFrameCss(tabId, frameId, prev); }
+    catch (e) { /* frame navigated away mid-flight — fine, nothing to clean up */ }
   }
 }
 
@@ -5344,6 +5370,7 @@ function clearFrameCss(tabId, frameId) {
   for (const key of _frameCssRaw.keys()) {
     if (key.startsWith(prefix)) _frameCssRaw.delete(key);
   }
+  _directAuthApplied.delete(`${tabId}:${frameId}`);
 }
 
 async function clearAllFrameCss(tabId, frameId) {
@@ -5368,6 +5395,9 @@ EXT.tabs.onRemoved.addListener((tabId) => {
   }
   for (const key of _frameCssRaw.keys()) {
     if (key.startsWith(prefix)) _frameCssRaw.delete(key);
+  }
+  for (const key of _directAuthApplied) {
+    if (key.startsWith(prefix)) _directAuthApplied.delete(key);
   }
   _tabBlockedCounts.delete(tabId);
 });
@@ -5954,6 +5984,39 @@ function _getClassifiedGenericSelectors(parsed) {
 // in this file (_customBlockRulesMemo, _focusRulesMemo, etc.).
 let _siteConfigGlobalMemo = { parsed: null, gpcSignal: null, referrerAnonymization: null, global: null };
 
+// Same key content/site-block.js's _fpStorage cache uses
+// (self.ADBLOCK_CONFIG.DIRECT_CSS_FASTPATH_KEY) — read directly here
+// (2026-09-14) so CSS_FASTPATH_APPLY can look it up itself, see that
+// case's own comment for why.
+const DIRECT_CSS_FASTPATH_KEY = (self.ADBLOCK_CONFIG && self.ADBLOCK_CONFIG.DIRECT_CSS_FASTPATH_KEY) || 'directCssFastPath';
+// Deliberately NOT SessionStorage.get() (this file's usual background-context
+// helper, further up) — its own local-fallback path stores under a PREFIXED
+// key (`_LOCAL_FALLBACK_PREFIX + key`, see session-storage.js) to avoid
+// colliding with a genuine local key of the same name. content/
+// fastpath-storage.js's _fpStorage (the ONLY thing that ever WRITES this
+// specific key) has its own, separate, UNPREFIXED local-fallback convention
+// (content scripts can't reach SessionStorage.js — background-context only
+// — so it can't share that logic). Reading via SessionStorage.get() here
+// would silently miss every fast-path entry a content script wrote to its
+// own local fallback (a real, previously-confirmed case — see
+// browser-compat.js's EXT_SESSION_STORAGE / background.js's own
+// setAccessLevel comment for when a content script's session grant is
+// denied) — this mirrors _fpStorage's own session-then-raw-local order
+// instead, so it reads whichever place content actually wrote to.
+async function _readDirectCssFastpathMap() {
+  try {
+    if (_sessionStorage) {
+      const res = await _sessionStorage.get(DIRECT_CSS_FASTPATH_KEY);
+      const map = res && res[DIRECT_CSS_FASTPATH_KEY];
+      if (map) return map;
+    }
+  } catch (e) { /* fall through to local */ }
+  try {
+    const res = await LocalStorage.get(DIRECT_CSS_FASTPATH_KEY);
+    return (res && res[DIRECT_CSS_FASTPATH_KEY]) || null;
+  } catch (e) { return null; }
+}
+
 // ── Message handler ───────────────────────────────────────────────
 EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
@@ -5965,7 +6028,55 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         _diagLog('log', 'CSS_SET received', { tabId, frameId, slot: msg.slot, fresh: !!msg.fresh, cssLength: (msg.css || '').length, css: msg.css || '', url: sender.tab && sender.tab.url });
         if (tabId !== undefined && frameId !== undefined) {
           if (msg.fresh) clearFrameCss(tabId, frameId);
+          // Every 'direct'-slot CSS_SET is the AUTHORITATIVE one now (the
+          // fast-path guess uses a separate CSS_FASTPATH_APPLY message
+          // below, never CSS_SET directly) — mark it so a fast-path guess
+          // that's still in flight (rare, but see that case's own comment)
+          // knows to skip itself rather than clobber this with stale data.
+          if (msg.slot === 'direct') _directAuthApplied.add(`${tabId}:${frameId}`);
           await setFrameCss(tabId, frameId, msg.slot, msg.css || '');
+        }
+        sendResponse({ ok: true });
+        break;
+      }
+
+      // site-block.js's _fastPathDirectStyle() fast path (2026-09-14,
+      // replaces its own content-script-side storage.session/local.get()
+      // call): used to be TWO sequential round trips before any protective
+      // CSS could land — content script reads its own cache
+      // (chrome.storage.session/local, itself an async IPC call), THEN
+      // sends CSS_SET with the result (a SECOND async IPC call, which is
+      // what actually applies it via setFrameCss/insertCSS). Collapsed into
+      // ONE: content script just names the host, background (which already
+      // has unconditional, un-gated access to the exact same storage key —
+      // no setAccessLevel grant dance needed, unlike a content script) reads
+      // the cache AND applies it in the same round trip.
+      //
+      // _directAuthApplied guards the one real race this introduces: if the
+      // REAL selectors (_injectDirectStyle(), via GET_SITE_CONFIG) somehow
+      // finish and arrive before this fast-path lookup does — normally
+      // impossible in practice (GET_SITE_CONFIG's own round trip is
+      // strictly heavier than the single storage read this does), but not
+      // provably impossible — applying the stale cached guess AFTER the
+      // real one would silently strand the page on outdated selectors for
+      // the rest of its life (nothing else re-triggers a 'direct' send
+      // afterward except a fresh generic-selector match). Checked once,
+      // right after the storage read resolves, immediately before the only
+      // place this would actually write anything.
+      case 'CSS_FASTPATH_APPLY': {
+        const tabId = sender.tab && sender.tab.id;
+        const frameId = sender.frameId;
+        const host = msg.host;
+        if (tabId !== undefined && frameId !== undefined && host) {
+          const map = await _readDirectCssFastpathMap();
+          if (!_directAuthApplied.has(`${tabId}:${frameId}`)) {
+            const entry = map && map[host];
+            const sel = entry && entry.sel;
+            if (sel && sel.length) {
+              const css = sel.map(s => `${s}{display:none!important}`).join('\n\n');
+              await setFrameCss(tabId, frameId, 'direct', css);
+            }
+          }
         }
         sendResponse({ ok: true });
         break;
