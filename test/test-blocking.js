@@ -3416,134 +3416,14 @@ function check(name, cond, detail = '') {
     T.frameCss.clear();
   }
 
-  // ── Regression (2026-09-14): CSS_FASTPATH_APPLY — collapses site-block.js's
-  // old 2-round-trip fast path (content script reads its own storage cache,
-  // THEN sends the result to background) into 1 (content script just names
-  // the host; background reads the SAME storage key itself and applies it
-  // directly). Covers: the happy path, a host with no cached entry, the
-  // _directAuthApplied race guard (a real 'direct' CSS_SET must never be
-  // clobbered by a late-arriving stale fast-path guess), and reading from
-  // BOTH possible storage areas content/fastpath-storage.js's _fpStorage
-  // could have written to (chrome.storage.session, or its own UNPREFIXED
-  // chrome.storage.local fallback when a content script's session grant is
-  // denied — deliberately NOT the background-only SessionStorage module's
-  // own, differently-prefixed local fallback, see this handler's own
-  // comment in background.js). ──
-  {
-    const sendMsg = (msg, sender) => new Promise(res => messageListeners[0](msg, sender, res));
-    const FASTPATH_KEY = 'directCssFastPath';
-
-    // Happy path: a cached entry exists in chrome.storage.session.
-    scriptingCalls.length = 0;
-    T.frameCss.clear();
-    sessionStorageData[FASTPATH_KEY] = { 'fastpath.example': { sel: ['.cached-ad'], ts: Date.now() } };
-    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'fastpath.example' }, { tab: { id: 9010 }, frameId: 0 });
-    check('CSS_FASTPATH_APPLY applies the cached selector from chrome.storage.session',
-      scriptingCalls.length === 1 && scriptingCalls[0].op === 'insert' && scriptingCalls[0].css === '.cached-ad{display:none!important}',
-      JSON.stringify(scriptingCalls));
-    delete sessionStorageData[FASTPATH_KEY];
-    T.frameCss.clear();
-
-    // No cached entry for this host at all — no-op, no insertCSS call.
-    scriptingCalls.length = 0;
-    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'never-visited.example' }, { tab: { id: 9010 }, frameId: 0 });
-    check('CSS_FASTPATH_APPLY with no cached entry for the host does nothing',
-      scriptingCalls.length === 0, JSON.stringify(scriptingCalls));
-
-    // Race guard: the REAL 'direct' CSS_SET arrives FIRST — a fast-path
-    // apply for the SAME tab/frame afterward must be ignored, never
-    // clobbering the already-applied authoritative selectors.
-    scriptingCalls.length = 0;
-    T.frameCss.clear();
-    await sendMsg({ type: 'CSS_SET', slot: 'direct', css: '.real-selector{display:none!important}' }, { tab: { id: 9011 }, frameId: 0 });
-    scriptingCalls.length = 0;
-    sessionStorageData[FASTPATH_KEY] = { 'race.example': { sel: ['.stale-guess'], ts: Date.now() } };
-    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'race.example' }, { tab: { id: 9011 }, frameId: 0 });
-    check('_directAuthApplied guard: a fast-path apply arriving AFTER the real CSS_SET is ignored, never overwrites it',
-      scriptingCalls.length === 0, JSON.stringify(scriptingCalls));
-    check('bookkeeping still reflects the real (authoritative) css, not the stale guess',
-      T.frameCss.get('9011:0:direct') === '.real-selector{display:none!important}');
-    delete sessionStorageData[FASTPATH_KEY];
-    T.frameCss.clear();
-
-    // A fresh navigation (CSS_SET 'base' slot, fresh:true) must reset the
-    // _directAuthApplied guard — otherwise a NEW page load in the same
-    // tab/frame would be permanently locked out of ever using the fast path
-    // again, just because a PREVIOUS document there once got real selectors.
-    scriptingCalls.length = 0;
-    await sendMsg({ type: 'CSS_SET', slot: 'base', css: '', fresh: true }, { tab: { id: 9011 }, frameId: 0 });
-    scriptingCalls.length = 0;
-    sessionStorageData[FASTPATH_KEY] = { 'race.example': { sel: ['.after-fresh-nav'], ts: Date.now() } };
-    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'race.example' }, { tab: { id: 9011 }, frameId: 0 });
-    check('a fresh navigation (CSS_SET base, fresh:true) resets the guard — the fast path works again on the NEW document',
-      scriptingCalls.length === 1 && scriptingCalls[0].css === '.after-fresh-nav{display:none!important}',
-      JSON.stringify(scriptingCalls));
-    delete sessionStorageData[FASTPATH_KEY];
-    T.frameCss.clear();
-
-    // Reads content/fastpath-storage.js's own UNPREFIXED local fallback too
-    // (the scenario where a content script's storage.session grant was
-    // denied, so _fpStorage fell back to chrome.storage.local directly under
-    // the SAME bare key — not SessionStorage.js's own, differently-prefixed
-    // fallback convention, which this handler deliberately does NOT use).
-    scriptingCalls.length = 0;
-    T.frameCss.clear();
-    storageData[FASTPATH_KEY] = { 'local-fallback.example': { sel: ['.from-local-fallback'], ts: Date.now() } };
-    await sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'local-fallback.example' }, { tab: { id: 9012 }, frameId: 0 });
-    check('CSS_FASTPATH_APPLY also finds an entry in the RAW (unprefixed) chrome.storage.local fallback, not just session',
-      scriptingCalls.length === 1 && scriptingCalls[0].css === '.from-local-fallback{display:none!important}',
-      JSON.stringify(scriptingCalls));
-    delete storageData[FASTPATH_KEY];
-    T.frameCss.clear();
-
-    // ── Regression (2026-09-15): _readDirectCssFastpathMap() reads session
-    // and local CONCURRENTLY, not session-then-local — live-reported
-    // ("nháy nháy" persisting despite this fast path existing): on Firefox,
-    // content scripts can never reach storage.session at all, so the session
-    // half of this read always resolves empty there while the REAL data sits
-    // in local — awaiting the (always-empty-on-Firefox) session read before
-    // even starting the local one silently doubled this function's latency
-    // on exactly that browser. Proven here by holding the session read open
-    // (never resolving it yet) and confirming the local read is ALREADY
-    // in flight regardless — sequential code could never do that.
-    //
-    // Not gated to a specific browser (tried, reverted) — runs unconditionally
-    // on every browser; the small extra concurrently-issued (and, on Chrome,
-    // thrown-away) storage.local.get() isn't worth a browser-specific branch. ──
-    {
-      sessionStorageData[FASTPATH_KEY] = { 'parallel.example': { sel: ['.session-wins'], ts: Date.now() } };
-      storageData[FASTPATH_KEY] = { 'parallel.example': { sel: ['.local-only'], ts: Date.now() } };
-
-      let releaseSession;
-      const sessionGate = new Promise(resolve => { releaseSession = resolve; });
-      const realSessionGet = chromeStub.storage.session.get;
-      const realLocalGet = chromeStub.storage.local.get;
-      let localGetCalled = false;
-      chromeStub.storage.session.get = async (keys) => { await sessionGate; return realSessionGet.call(chromeStub.storage.session, keys); };
-      chromeStub.storage.local.get = async (keys) => { localGetCalled = true; return realLocalGet.call(chromeStub.storage.local, keys); };
-
-      scriptingCalls.length = 0;
-      T.frameCss.clear();
-      const applyPromise = sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'parallel.example' }, { tab: { id: 9013 }, frameId: 0 });
-      // Let pending microtasks drain WITHOUT ever resolving the session gate —
-      // if the local read only started after session settled (the old,
-      // sequential behavior), it could not possibly have run yet.
-      await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
-      check('local.get() was already issued while session.get() is STILL pending — proves concurrent dispatch, not session-then-local',
-        localGetCalled === true, { localGetCalled });
-
-      releaseSession();
-      await applyPromise;
-      check('once both settle, the SESSION result still wins (preference order unchanged by the parallelization)',
-        scriptingCalls.some(c => c.css === '.session-wins{display:none!important}'), scriptingCalls);
-
-      chromeStub.storage.session.get = realSessionGet;
-      chromeStub.storage.local.get = realLocalGet;
-      delete sessionStorageData[FASTPATH_KEY];
-      delete storageData[FASTPATH_KEY];
-      T.frameCss.clear();
-    }
-  }
+  // CSS_FASTPATH_APPLY (background-side fastpath: content names the host,
+  // background reads its own cache and applies via insertCSS) was removed
+  // 2026-09-15 — reverted back to site-block.js's client-side fast path
+  // (content reads its own _fpStorage cache and applies directly via a DOM
+  // <style> node, no background/insertCSS round trip for the early guess at
+  // all). See content/site-block.js's _fastPathDirectStyle() own comment for
+  // why; that mechanism lives entirely in the content-script world and isn't
+  // covered by this file's background.js-only test harness.
 
   // ── Regression (2026-09-15): applyReferrerAnonymization/applyGpcHeader/
   // applyDntHeader were merged into a shared _applySingleHeaderRule() body

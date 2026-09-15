@@ -138,6 +138,15 @@ window.__qkv1UnhideAll=function(){
     el.style.removeProperty('overflow');
   });
   _hiddenEls.clear();
+  // content.js's CSS_CLEAR_ALL (sent alongside this call — see
+  // disableCosmeticCss()) only clears chrome.scripting.insertCSS'd slots;
+  // _fastPathDirectStyle()'s guess is a plain DOM <style> node that bypasses
+  // that bookkeeping entirely and needs its own explicit teardown here, or a
+  // paused/disabled site would keep hiding ads via the leftover guess.
+  // _clearFastpathDomStyle is a hoisted function declaration (defined later
+  // in this same file/closure) — safe to call from here regardless of
+  // textual order, same pattern _fastPathDirectStyle() itself relies on.
+  _clearFastpathDomStyle();
 };
 
 function normalizeText(value){
@@ -504,11 +513,32 @@ function _reinjectDirectStyleWithGenerics(){
   if(built.all.length<=_DIRECT_FILTER_CACHE_THRESHOLD)_updateDirectCssCacheEntry(location.hostname,built.all);
 }
 
+// _fastpathStyleEl — the single page-visible <style> node _fastPathDirectStyle()
+// (below) may create for the EARLY guess, before the real, authoritative
+// selectors are known. Tracked here (not fire-and-forget) so it can be torn
+// down the moment something better exists: _injectDirectStyle() removes it
+// the instant the real 'direct' CSS is ready (the guess has done its job by
+// then, keeping it around only adds fingerprint surface for the rest of the
+// page's life for zero benefit — see _clearFastpathDomStyle's own comment),
+// and window.__qkv1UnhideAll (content.js's disableCosmeticCss(), pause/
+// disable toggle) also clears it — chrome.scripting.insertCSS's 'direct'
+// slot is cleared via CSS_CLEAR_ALL/removeCSS on that path, but a plain DOM
+// node bypasses that bookkeeping entirely and needs this separate hook or a
+// paused/disabled site would keep hiding ads via the leftover guess forever.
+var _fastpathStyleEl=null;
+function _clearFastpathDomStyle(){
+  if(_fastpathStyleEl){
+    try{_fastpathStyleEl.remove();}catch(e){}
+    _fastpathStyleEl=null;
+  }
+}
+
 function _injectDirectStyle(){
-  // Real config now wins over the fast-path guess — background.js's
-  // _directAuthApplied (set the moment this function's CSS_SET arrives)
-  // is what actually enforces that ordering now (2026-09-14), not a
-  // content-script-side flag; see CSS_FASTPATH_APPLY's own comment there.
+  // Real config now wins over the fast-path guess: whatever guess-only
+  // <style> node _fastPathDirectStyle() may have appended is superseded the
+  // instant the REAL selectors are known, regardless of which branch below
+  // runs — including "nothing to hide", which must also clear a stale guess.
+  _clearFastpathDomStyle();
   var host=location.hostname;
   if(!_cachedDirect.length&&!_cachedDirectStyle.length&&!_matchedGenericSelectors.length){
     _sendCssSlot('direct','');
@@ -553,31 +583,48 @@ function _injectDirectStyle(){
   }catch(e){}
 }
 
-// _fastPathDirectStyle — asks background to apply the LAST successfully-
-// computed 'direct' CSS for THIS host (from its own last visit — see the
-// LRU map comment near _fpStorage above) as early as possible at
-// content-script start, before loadSite()'s GET_SITE_CONFIG round-trip to
-// background even resolves. That round-trip is fast on a warm service
-// worker but can cost a chrome.storage.session read (cold-started SW) or a
-// full remote rule fetch (no valid parsed-rules cache yet) with no timeout
-// — during which ads would otherwise flash unhidden.
+// _fastPathDirectStyle — applies the LAST successfully-computed 'direct'
+// CSS for THIS host (from its own last visit — see the LRU map comment near
+// _fpStorage above) as early as possible at content-script start, before
+// loadSite()'s GET_SITE_CONFIG round-trip to background even resolves. That
+// round-trip is fast on a warm service worker but can cost a
+// chrome.storage.session read (cold-started SW) or a full remote rule fetch
+// (no valid parsed-rules cache yet) with no timeout — during which ads
+// would otherwise flash unhidden.
 //
-// Used to read _fpStorage itself here FIRST (a chrome.storage.session/local
-// round trip) and only THEN send the result to background in a SECOND
-// message — two sequential round trips before any protective CSS could
-// possibly land. Collapsed into ONE (2026-09-14): just name the host,
-// background reads the exact same underlying storage key itself (it always
-// has unconditional access — no setAccessLevel grant dance needed, unlike a
-// content script — see CSS_FASTPATH_APPLY's own comment in background.js)
-// and applies it in the same round trip. The race this used to guard
-// against client-side (a stale guess arriving AFTER _injectDirectStyle()'s
-// real send) is now guarded server-side instead (background.js's
-// _directAuthApplied), since background is what actually decides ordering
-// now, not this content script.
+// 2026-09-14 briefly collapsed this into a single CSS_FASTPATH_APPLY message
+// (content names the host, background reads its own cache and applies via
+// insertCSS) to cut down on IPC round trips. Reverted 2026-09-15: live A/B
+// testing a plain DOM <style> node (this function's current body) against
+// that message+insertCSS path showed the DOM node measurably faster and
+// smoother — appending a <style> element is fully same-process/synchronous
+// once the storage read resolves, with no cross-process IPC to the browser
+// process and back at all, unlike insertCSS. Trade-off accepted knowingly:
+// this DOES reintroduce a page-visible, document.styleSheets-enumerable
+// <style> node for the brief guess window (exactly what background.js's
+// insertCSS path was originally built to avoid — see its own "Per-frame
+// cosmetic CSS injection" comment) — kept as short-lived as possible by
+// _clearFastpathDomStyle(), called the instant the real selectors land
+// (_injectDirectStyle()) or cosmetic hiding is disabled (__qkv1UnhideAll,
+// below). The REAL, longer-lived 'direct' CSS (_injectDirectStyle(), once
+// GET_SITE_CONFIG resolves) still goes through background/insertCSS as
+// before — only this early, inherently-transient guess uses the DOM node.
 function _fastPathDirectStyle(){
   if(!extValid())return;
   try{
-    EXT.runtime.sendMessage({type:'CSS_FASTPATH_APPLY',host:location.hostname}).catch(function(){});
+    _fpStorage.get([_DIRECT_CSS_SESSION_KEY]).then(function(res){
+      var map=(res&&res[_DIRECT_CSS_SESSION_KEY])||{};
+      var entry=map[location.hostname];
+      if(!entry||!entry.sel||!entry.sel.length)return;
+      var css=entry.sel.map(function(s){return _scopedDirectRule(s);}).join('\n\n');
+      if(!css)return;
+      try{
+        var style=document.createElement('style');
+        style.textContent=css;
+        (document.documentElement||document.head||document.body).appendChild(style);
+        _fastpathStyleEl=style;
+      }catch(e){}
+    }).catch(function(){});
   }catch(e){}
 }
 
