@@ -5984,6 +5984,12 @@ function _getClassifiedGenericSelectors(parsed) {
 // in this file (_customBlockRulesMemo, _focusRulesMemo, etc.).
 let _siteConfigGlobalMemo = { parsed: null, gpcSignal: null, referrerAnonymization: null, global: null };
 
+// GENERIC_SELECTORS_SURVEY's per-batch CSS slot counter (2026-09-15) — see
+// that case's own comment. Module-level (not inside the case block) so it
+// actually persists a running count across calls instead of resetting to 0
+// on every message.
+let _genericSlotCounter = 0;
+
 // Same key content/site-block.js's _fpStorage cache uses
 // (self.ADBLOCK_CONFIG.DIRECT_CSS_FASTPATH_KEY) — read directly here
 // (2026-09-14) so CSS_FASTPATH_APPLY can look it up itself, see that
@@ -6001,20 +6007,38 @@ const DIRECT_CSS_FASTPATH_KEY = (self.ADBLOCK_CONFIG && self.ADBLOCK_CONFIG.DIRE
 // own local fallback (a real, previously-confirmed case — see
 // browser-compat.js's EXT_SESSION_STORAGE / background.js's own
 // setAccessLevel comment for when a content script's session grant is
-// denied) — this mirrors _fpStorage's own session-then-raw-local order
-// instead, so it reads whichever place content actually wrote to.
+// denied) — this checks whichever place content actually wrote to.
+//
+// Reads BOTH areas CONCURRENTLY (2026-09-15), not session-then-local —
+// live-reported ("nháy nháy" persisting despite this fast path existing):
+// on Firefox, content scripts can NEVER reach storage.session at all (see
+// session-storage.js's own setAccessLevel comment), so directCssFastPath is
+// ALWAYS written to .local there. Background's OWN session read doesn't
+// reject (background is a trusted context, the API itself works fine) — it
+// just resolves with nothing, since content never had anywhere to put data
+// in session in the first place. Awaiting that empty session read before
+// even STARTING the local read (which is where the real data actually is,
+// every single time, on this browser) silently doubled this function's
+// latency on exactly the browser this fast path most needs to be fast on —
+// the "collapsed into ONE round trip" comment on CSS_FASTPATH_APPLY below
+// was quietly false there. Promise.allSettled never rejects, so both
+// resolve/settle independently; total wall-clock cost becomes
+// max(session, local) instead of session + local. Preference order (session
+// wins if both somehow have data) is unchanged — only the timing.
+//
+// Not gated to Firefox specifically (tried, reverted) — on Chrome this pays
+// one extra, harmless, concurrently-issued storage.local.get() per call
+// (thrown away once session answers) instead of skipping it outright; not
+// worth a browser-specific branch for that small a cost.
 async function _readDirectCssFastpathMap() {
-  try {
-    if (_sessionStorage) {
-      const res = await _sessionStorage.get(DIRECT_CSS_FASTPATH_KEY);
-      const map = res && res[DIRECT_CSS_FASTPATH_KEY];
-      if (map) return map;
-    }
-  } catch (e) { /* fall through to local */ }
-  try {
-    const res = await LocalStorage.get(DIRECT_CSS_FASTPATH_KEY);
-    return (res && res[DIRECT_CSS_FASTPATH_KEY]) || null;
-  } catch (e) { return null; }
+  const [sessionRes, localRes] = await Promise.allSettled([
+    _sessionStorage ? _sessionStorage.get(DIRECT_CSS_FASTPATH_KEY) : Promise.resolve(null),
+    LocalStorage.get(DIRECT_CSS_FASTPATH_KEY),
+  ]);
+  const sessionMap = sessionRes.status === 'fulfilled' && sessionRes.value && sessionRes.value[DIRECT_CSS_FASTPATH_KEY];
+  if (sessionMap) return sessionMap;
+  const localMap = localRes.status === 'fulfilled' && localRes.value && localRes.value[DIRECT_CSS_FASTPATH_KEY];
+  return localMap || null;
 }
 
 // ── Message handler ───────────────────────────────────────────────
@@ -6621,6 +6645,68 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             if (bucket) for (const sel of bucket) out.add(sel);
           }
           sendResponse({ selectors: Array.from(out) });
+        } catch {
+          sendResponse({ selectors: [] });
+        }
+        break;
+      }
+
+      // content/site-block.js's per-mutation generic-selector survey
+      // (2026-09-15, replaces its own separate GET_GENERIC_SELECTORS +
+      // CSS_SET reinject pair for this ONE call site — GET_GENERIC_SELECTORS
+      // itself is untouched, still used by boot()'s post-reset reconciliation
+      // survey). Same hash→selector lookup as GET_GENERIC_SELECTORS above,
+      // but also APPLIES the result as CSS in this SAME round trip, instead
+      // of making the content script send a second message to do that.
+      // Matters specifically here (unlike most other CSS sends) because this
+      // fires on EVERY newly-seen id/class token for the page's entire
+      // lifetime on a continuously content-injecting page (infinite scroll,
+      // ad-refresh — live-reported repeatedly on vnexpress.net) — halving
+      // the round trips halves how long each new ad-slot element stays
+      // visible before being hidden.
+      //
+      // Uses a FRESH, never-reused, never-removed-until-navigation slot key
+      // per batch (`direct-generic-N`) rather than merging into the 'direct'
+      // slot itself: background has no visibility into content script's own
+      // _cachedDirect/_matchedGenericSelectors state, so it can't safely
+      // build the FULL merged CSS text itself (two concurrent batches for
+      // the same frame could each read a stale baseline and the second
+      // write would silently drop the first's additions). Every generic
+      // match is always a simple, standalone `display:none` rule (see
+      // _scopedDirectRule in site-block.js) — purely additive, never
+      // scoped/transformed — so giving each batch its own slot sidesteps
+      // the merge problem entirely: `_frameCssQueues`' per-key serialization
+      // never contends across different batches' keys, and `clearFrameCss`/
+      // `clearAllFrameCss` already sweep every key under the tab/frame
+      // prefix regardless of slot name, so these are torn down for free on
+      // navigation — no new cleanup code needed. Never touches the 'direct'
+      // slot itself, so `_directAuthApplied` is entirely unaffected.
+      //
+      // Accepted trade-off: no cap on how many direct-generic-N slots (and
+      // matching insertCSS calls) accumulate over a single very long
+      // infinite-scroll session — each is tiny/harmless on its own; a
+      // periodic consolidation pass (insert one squashed slot, remove the
+      // per-batch ones only after that succeeds — same insert-before-remove
+      // ordering _setFrameCssImpl already uses) would be the follow-up if
+      // this ever proves to matter in practice.
+      case 'GENERIC_SELECTORS_SURVEY': {
+        const tabId = sender.tab && sender.tab.id;
+        const frameId = sender.frameId;
+        try {
+          const parsed = await getParsedRules();
+          const { lowGenericMap } = _getClassifiedGenericSelectors(parsed);
+          const hashes = Array.isArray(msg.hashes) ? msg.hashes : [];
+          const out = new Set();
+          for (const h of hashes) {
+            const bucket = lowGenericMap.get(h);
+            if (bucket) for (const sel of bucket) out.add(sel);
+          }
+          const selectors = Array.from(out);
+          if (selectors.length && tabId !== undefined && frameId !== undefined) {
+            const css = selectors.map(s => `${s}{display:none!important}`).join('\n\n');
+            setFrameCss(tabId, frameId, `direct-generic-${++_genericSlotCounter}`, css).catch(() => {});
+          }
+          sendResponse({ selectors });
         } catch {
           sendResponse({ selectors: [] });
         }

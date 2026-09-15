@@ -36,9 +36,26 @@ var _area=_usingSession?_sessionArea:_localArea;
 // get()/set() call REJECTS the promise rather than throwing, so retry
 // against .local per-call here instead of assuming the area chosen at load
 // time still works.
+//
+// _sessionKnownBroken (2026-09-15) — live-reported ("nháy nháy" persisting
+// despite this fast path existing): on Firefox, session access is denied to
+// EVERY content script, EVERY time (a platform gap, not an occasional
+// failure — see background.js's own setAccessLevel comment) — so without
+// this flag, EVERY get()/set() call this page load repeats the exact same
+// doomed session attempt before falling back to .local, paying 2 sequential
+// round trips forever instead of 1. A single page load calls this several
+// times (site-block.js's scriptlet fast-dispatch read, then its cache-update
+// read+write; same for the direct-CSS cache-update) — one of those sits
+// directly on the "early protection" dispatch path, one hop from paint.
+// Latching after the FIRST real failure means only that one call pays the
+// double cost; everything after goes straight to .local. Same pattern
+// already used (and working) in shared/session-storage.js's own
+// _sessionKnownUnavailable, that file's background-context sibling to this
+// one — this just gives the content-script side the same treatment.
+var _sessionKnownBroken=false;
 function _withLocalFallback(promise){
-  if(!_usingSession||!_localArea)return promise;
-  return promise.catch(function(){return null;});
+  if(!_usingSession||!_localArea||_sessionKnownBroken)return promise;
+  return promise.catch(function(){_sessionKnownBroken=true;return null;});
 }
 
 window.__qkv1FastpathStorage={
@@ -52,6 +69,10 @@ window.__qkv1FastpathStorage={
   // competes with background.js's own parsedRulesSessionCache for headroom.
   lruLimit:_usingSession?50:10,
   get:function(keys){
+    // Session already proven broken this page load — skip straight to
+    // .local, don't repeat the doomed attempt (see _sessionKnownBroken's
+    // own comment above).
+    if(_sessionKnownBroken)return _localArea?_localArea.get(keys).catch(function(){return {};}):Promise.resolve({});
     if(!_area)return Promise.resolve({});
     var p;
     try{p=_area.get(keys);}catch(e){p=Promise.reject(e);}
@@ -62,6 +83,7 @@ window.__qkv1FastpathStorage={
     }).catch(function(){return {};});
   },
   set:function(payload){
+    if(_sessionKnownBroken)return _localArea?_localArea.set(payload).catch(function(){}):Promise.resolve();
     if(!_area)return Promise.resolve();
     var p;
     try{p=_area.set(payload);}catch(e){p=Promise.reject(e);}

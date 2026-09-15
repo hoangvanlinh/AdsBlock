@@ -95,7 +95,12 @@ function makeSandbox(pathname, opts) {
     runtime: {
       sendMessage: (msg) => {
         sentMessages.push(msg);
-        if (msg.type === 'GET_GENERIC_SELECTORS') {
+        // GENERIC_SELECTORS_SURVEY (2026-09-15) is what _surveyGenericSelectors
+        // actually sends now — GET_GENERIC_SELECTORS itself is untouched
+        // (still used by boot()'s post-reset reconciliation survey), so this
+        // stub answers both identically: real background.js resolves both
+        // from the exact same hash->selector lookup.
+        if (msg.type === 'GET_GENERIC_SELECTORS' || msg.type === 'GENERIC_SELECTORS_SURVEY') {
           const out = new Set();
           for (const h of (msg.hashes || [])) {
             const sel = genericSelectorsByHash[h];
@@ -111,7 +116,16 @@ function makeSandbox(pathname, opts) {
       getManifest: () => ({ version: '1.0.0' }),
     },
   };
-  class MutationObserverStub { observe() {} disconnect() {} }
+  // Captures the callback passed to `new MutationObserver(cb)` so a test can
+  // synthesize a mutation record and invoke it directly — real
+  // MutationObserver batches change notifications onto a microtask, but the
+  // CALLBACK itself (once invoked) runs synchronously, same as here.
+  class MutationObserverStub {
+    constructor(cb) { this.cb = cb; MutationObserverStub.instances.push(this); }
+    observe() {}
+    disconnect() {}
+  }
+  MutationObserverStub.instances = [];
   class CustomEventStub {
     constructor(type, o) { this.type = type; this.detail = o && o.detail; }
   }
@@ -146,6 +160,7 @@ function makeSandbox(pathname, opts) {
   vm.runInContext(patched, ctx, { filename: 'site-block.js' });
   const T = sandbox.window.__test;
   T._sentMessages = sentMessages;
+  T._observerInstances = MutationObserverStub.instances;
   return T;
 }
 
@@ -208,8 +223,8 @@ function makeSandbox(pathname, opts) {
     await new Promise(r => setTimeout(r, 0));
     await new Promise(r => setTimeout(r, 0));
 
-    check('GET_GENERIC_SELECTORS was actually sent with the survey\'s hashes',
-      T._sentMessages.some(m => m.type === 'GET_GENERIC_SELECTORS' && m.hashes.includes(realAdBannerHash) && m.hashes.includes(realSidebarIdHash)),
+    check('GENERIC_SELECTORS_SURVEY was actually sent with the survey\'s hashes (2026-09-15 — was GET_GENERIC_SELECTORS)',
+      T._sentMessages.some(m => m.type === 'GENERIC_SELECTORS_SURVEY' && m.hashes.includes(realAdBannerHash) && m.hashes.includes(realSidebarIdHash)),
       T._sentMessages);
     check('both matched selectors ended up in _matchedGenericSelectors',
       T.getMatchedGeneric().includes('.ad-banner') && T.getMatchedGeneric().includes('#sidebar-ad'),
@@ -217,12 +232,18 @@ function makeSandbox(pathname, opts) {
     check('the unmatched class contributed nothing extra (background found no bucket for it)',
       T.getMatchedGeneric().length === 2, T.getMatchedGeneric());
 
+    // 2026-09-15: a matched survey no longer triggers a SEPARATE CSS_SET
+    // re-injection from the content script — background.js now applies the
+    // matched selectors itself, in the SAME round trip as
+    // GENERIC_SELECTORS_SURVEY (a new `direct-generic-N` slot — see that
+    // handler's own comment in background.js), collapsing what used to be
+    // 2 sequential round trips into 1. This is genuinely tested in
+    // test/test-blocking.js instead (background actually owns the apply
+    // now), not here (this harness only runs the content-script half).
     const cssMsg = T._sentMessages.filter(m => m.type === 'CSS_SET' && m.slot === 'direct').pop();
-    check('a NEW match triggers re-injection: the CSS actually sent includes the survey-discovered selectors',
-      !!cssMsg && cssMsg.css.includes('.ad-banner{display:none!important}') && cssMsg.css.includes('#sidebar-ad{display:none!important}'),
+    check('no separate CSS_SET reinject is sent from content script for a generic match anymore — background applies it directly',
+      !cssMsg || !(cssMsg.css.includes('.ad-banner{display:none!important}') || cssMsg.css.includes('#sidebar-ad{display:none!important}')),
       cssMsg && cssMsg.css);
-    check('...alongside the pre-existing site-specific selector (appended, not replaced)',
-      !!cssMsg && cssMsg.css.includes('.site-specific-selector{display:none!important}'), cssMsg && cssMsg.css);
   }
 
   console.log('\n== 4. _genericSurveyEligible — a host with its OWN direct_hide_selectors override skips the survey entirely ==');
@@ -239,8 +260,8 @@ function makeSandbox(pathname, opts) {
     T.boot();
     check('a host with its own direct_hide_selectors override: survey eligibility is turned OFF',
       T.getSurveyEligible() === false);
-    const genericMsgs = T._sentMessages.filter(m => m.type === 'GET_GENERIC_SELECTORS');
-    check('...and no GET_GENERIC_SELECTORS message was ever sent for it',
+    const genericMsgs = T._sentMessages.filter(m => m.type === 'GET_GENERIC_SELECTORS' || m.type === 'GENERIC_SELECTORS_SURVEY');
+    check('...and no generic-selector survey message was ever sent for it',
       genericMsgs.length === 0, genericMsgs);
   }
   {
@@ -252,6 +273,48 @@ function makeSandbox(pathname, opts) {
     T.boot();
     check('a host with NO site-specific override: survey eligibility stays ON',
       T.getSurveyEligible() === true);
+  }
+
+  console.log('\n== 5. Regression (2026-09-15): the generic survey runs SYNCHRONOUSLY from the MutationObserver callback, not deferred behind schedule()/requestIdleCallback — cuts the exposure window for newly-appearing content on a continuously-mutating page (live-reported repeatedly on vnexpress.net) ==');
+  {
+    const probe = makeSandbox('/x');
+    const newSlotHash = probe._hashGenericToken(0x2E, 'new-ad-slot');
+    const T = makeSandbox('/x', {
+      genericSelectorsByHash: { [newSlotHash]: '.new-ad-slot' },
+    });
+    T.boot();
+    // watchPageClasses() (also called from sync(), same as startObserver())
+    // early-returns with no strip_page_classes/strip_inline_styles
+    // configured (the default here) — so the ONE MutationObserver created is
+    // unambiguously startObserver()'s own.
+    check('startObserver() registered exactly one MutationObserver', T._observerInstances.length === 1, T._observerInstances.length);
+    T._sentMessages.length = 0; // isolate: only care about what the mutation itself triggers
+    const addedNode = new FakeElement({ class: 'new-ad-slot' });
+    T._observerInstances[0].cb([{ type: 'childList', addedNodes: [addedNode] }]);
+    // Checked SYNCHRONOUSLY, right here, before any setTimeout/
+    // requestIdleCallback tick — window.requestIdleCallback is undefined in
+    // this sandbox, so schedule()'s own deferred scan() falls back to
+    // setTimeout(fn,50), which has NOT fired yet at this point in the test.
+    check('GENERIC_SELECTORS_SURVEY for the new node\'s class was sent SYNCHRONOUSLY from the observer callback, before any deferred scan() tick',
+      T._sentMessages.some(m => m.type === 'GENERIC_SELECTORS_SURVEY' && m.hashes.includes(newSlotHash)),
+      T._sentMessages);
+  }
+
+  console.log('\n== 6. Regression (2026-09-15): RULES_CHANGED/PRIVACY_TOGGLE never shrinks the generic-matched CSS before a replacement is ready ==');
+  {
+    const T = makeSandbox('/x');
+    T.boot(); // a real, first page load — this is boot() call #1
+    check('_matchedGenericSelectors starts empty on a fresh page load', T.getMatchedGeneric().length === 0, T.getMatchedGeneric());
+    // Seed it as if an earlier survey THIS SAME page load already found a
+    // match (mirrors real usage: the generic survey appends to this array
+    // as new content streams in over the page's life).
+    T.getMatchedGeneric().push('.old-generic-match');
+    T.boot(); // boot() call #2 — mirrors RULES_CHANGED/PRIVACY_TOGGLE re-running it on the ALREADY-loaded page
+    check('_matchedGenericSelectors is NOT wiped by boot() re-running — carries over instead of resetting to []',
+      T.getMatchedGeneric().includes('.old-generic-match'), T.getMatchedGeneric());
+    const built = T._buildDirectRules();
+    check('_buildDirectRules() still includes the carried-over match — the very first post-reset CSS send is never smaller than before',
+      built.all.includes('.old-generic-match'), built.all);
   }
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);

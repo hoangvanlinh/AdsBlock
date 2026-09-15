@@ -947,6 +947,57 @@ function check(name, cond, detail = '') {
     check('GET_GENERIC_SELECTORS: an unmatched hash resolves to no selectors, not an error',
       Array.isArray(genericMiss.selectors) && genericMiss.selectors.length === 0, genericMiss);
 
+    // ── Regression (2026-09-15): GENERIC_SELECTORS_SURVEY — collapses
+    // content/site-block.js's old GET_GENERIC_SELECTORS + separate CSS_SET
+    // reinject pair into ONE round trip: this handler resolves the hashes
+    // AND applies the matched selectors as CSS itself, via a fresh
+    // `direct-generic-N` slot per call. GET_GENERIC_SELECTORS itself (just
+    // tested above) stays completely unaffected — used by other callers. ──
+    const sendMsg = (msg, sender) => new Promise(res => listener2(msg, sender, res));
+    // setFrameCss() inside the handler is deliberately fire-and-forget (not
+    // awaited before sendResponse — same reasoning as this file's other
+    // best-effort async writes) so the content script gets its selectors
+    // back immediately without waiting on the actual insertCSS round trip.
+    // Give that chain a tick to settle before asserting on scriptingCalls.
+    const flush = () => new Promise(r => setTimeout(r, 0)).then(() => new Promise(r => setTimeout(r, 0)));
+    scriptingCalls.length = 0;
+    T.frameCss.clear();
+    const surveyResolved = await sendMsg({ type: 'GENERIC_SELECTORS_SURVEY', hashes: [lowHash] }, { tab: { id: 9020 }, frameId: 0 });
+    await flush();
+    check('GENERIC_SELECTORS_SURVEY: sendResponse.selectors matches GET_GENERIC_SELECTORS\' own resolution',
+      (surveyResolved.selectors || []).includes('.e2e-generic-low'), surveyResolved);
+    check('GENERIC_SELECTORS_SURVEY: applies the matched selector as CSS in the SAME round trip — exactly one insert',
+      scriptingCalls.length === 1 && scriptingCalls[0].op === 'insert' && scriptingCalls[0].css === '.e2e-generic-low{display:none!important}',
+      JSON.stringify(scriptingCalls));
+
+    scriptingCalls.length = 0;
+    const surveyMiss = await sendMsg({ type: 'GENERIC_SELECTORS_SURVEY', hashes: [T._hashGenericToken(0x2E, 'no-such-class-anywhere')] }, { tab: { id: 9020 }, frameId: 0 });
+    await flush();
+    check('GENERIC_SELECTORS_SURVEY: an unmatched hash resolves to no selectors and applies no CSS',
+      Array.isArray(surveyMiss.selectors) && surveyMiss.selectors.length === 0 && scriptingCalls.length === 0,
+      { surveyMiss, scriptingCalls });
+
+    // Two sequential batches for the SAME tab/frame with DIFFERENT matched
+    // hashes must both land as independent slots — neither clobbers the
+    // other (the whole point of the never-reused direct-generic-N key,
+    // instead of trying to merge into a single shared slot).
+    scriptingCalls.length = 0;
+    const otherLowHash = T._hashGenericToken(0x2E, 'another-low-generic');
+    await chromeStub.storage.local.set({
+      customRulesText: '[global]\ndirect_hide_selectors = .e2e-generic-low | .another-low-generic | div.e2e-generic-high',
+    });
+    await T.reloadRules();
+    await sendMsg({ type: 'GENERIC_SELECTORS_SURVEY', hashes: [lowHash] }, { tab: { id: 9021 }, frameId: 0 });
+    await sendMsg({ type: 'GENERIC_SELECTORS_SURVEY', hashes: [otherLowHash] }, { tab: { id: 9021 }, frameId: 0 });
+    await flush();
+    const genericSlotKeys = [...T.frameCss.keys()].filter(k => k.startsWith('9021:0:direct-generic-'));
+    check('two sequential GENERIC_SELECTORS_SURVEY batches for the same tab/frame produce TWO independent direct-generic-N slots, neither overwrites the other',
+      genericSlotKeys.length === 2, genericSlotKeys);
+    const genericSlotCss = genericSlotKeys.map(k => T.frameCss.get(k));
+    check('...one slot carries the first batch\'s selector', genericSlotCss.some(c => c === '.e2e-generic-low{display:none!important}'), genericSlotCss);
+    check('...the other slot carries the second batch\'s selector', genericSlotCss.some(c => c === '.another-low-generic{display:none!important}'), genericSlotCss);
+    T.frameCss.clear();
+
     await chromeStub.storage.local.set({ customRulesText: '' });
     await T.reloadRules();
   }
@@ -3441,6 +3492,54 @@ function check(name, cond, detail = '') {
       JSON.stringify(scriptingCalls));
     delete storageData[FASTPATH_KEY];
     T.frameCss.clear();
+
+    // ── Regression (2026-09-15): _readDirectCssFastpathMap() reads session
+    // and local CONCURRENTLY, not session-then-local — live-reported
+    // ("nháy nháy" persisting despite this fast path existing): on Firefox,
+    // content scripts can never reach storage.session at all, so the session
+    // half of this read always resolves empty there while the REAL data sits
+    // in local — awaiting the (always-empty-on-Firefox) session read before
+    // even starting the local one silently doubled this function's latency
+    // on exactly that browser. Proven here by holding the session read open
+    // (never resolving it yet) and confirming the local read is ALREADY
+    // in flight regardless — sequential code could never do that.
+    //
+    // Not gated to a specific browser (tried, reverted) — runs unconditionally
+    // on every browser; the small extra concurrently-issued (and, on Chrome,
+    // thrown-away) storage.local.get() isn't worth a browser-specific branch. ──
+    {
+      sessionStorageData[FASTPATH_KEY] = { 'parallel.example': { sel: ['.session-wins'], ts: Date.now() } };
+      storageData[FASTPATH_KEY] = { 'parallel.example': { sel: ['.local-only'], ts: Date.now() } };
+
+      let releaseSession;
+      const sessionGate = new Promise(resolve => { releaseSession = resolve; });
+      const realSessionGet = chromeStub.storage.session.get;
+      const realLocalGet = chromeStub.storage.local.get;
+      let localGetCalled = false;
+      chromeStub.storage.session.get = async (keys) => { await sessionGate; return realSessionGet.call(chromeStub.storage.session, keys); };
+      chromeStub.storage.local.get = async (keys) => { localGetCalled = true; return realLocalGet.call(chromeStub.storage.local, keys); };
+
+      scriptingCalls.length = 0;
+      T.frameCss.clear();
+      const applyPromise = sendMsg({ type: 'CSS_FASTPATH_APPLY', host: 'parallel.example' }, { tab: { id: 9013 }, frameId: 0 });
+      // Let pending microtasks drain WITHOUT ever resolving the session gate —
+      // if the local read only started after session settled (the old,
+      // sequential behavior), it could not possibly have run yet.
+      await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+      check('local.get() was already issued while session.get() is STILL pending — proves concurrent dispatch, not session-then-local',
+        localGetCalled === true, { localGetCalled });
+
+      releaseSession();
+      await applyPromise;
+      check('once both settle, the SESSION result still wins (preference order unchanged by the parallelization)',
+        scriptingCalls.some(c => c.css === '.session-wins{display:none!important}'), scriptingCalls);
+
+      chromeStub.storage.session.get = realSessionGet;
+      chromeStub.storage.local.get = realLocalGet;
+      delete sessionStorageData[FASTPATH_KEY];
+      delete storageData[FASTPATH_KEY];
+      T.frameCss.clear();
+    }
   }
 
   // ── _settingsCache survives storage.local.clear() with correct defaults ──

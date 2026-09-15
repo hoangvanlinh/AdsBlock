@@ -443,20 +443,37 @@ function _collectClassHashes(cls,out){
 // background for whichever low-generic selectors match. A miss (no new
 // tokens, or background found nothing) costs nothing beyond the DOM walk:
 // no message round trip, no re-injection.
+//
+// Sends GENERIC_SELECTORS_SURVEY (2026-09-15), not GET_GENERIC_SELECTORS —
+// background now applies the matched selectors AS CSS itself, in the SAME
+// round trip (a new, never-reused `direct-generic-N` slot per batch — see
+// that message's own comment in background.js), instead of this callback
+// separately calling _reinjectDirectStyleWithGenerics() (a SECOND message).
+// Collapsing 2 sequential round trips into 1 matters a lot here specifically
+// (unlike most other CSS sends, which happen once or twice per page load):
+// on a continuously content-injecting page (infinite scroll, ad-refresh —
+// live-reported repeatedly on vnexpress.net), this fires on EVERY
+// newly-seen id/class token for the page's entire lifetime, so halving the
+// round trips halves how long each new ad-slot element stays visible before
+// being hidden. GET_GENERIC_SELECTORS itself is untouched, still used by
+// boot()'s post-reset reconciliation survey (see that comment).
 function _surveyGenericSelectors(root){
   if(!_genericSurveyEligible||!_enabled||!_config||!extValid())return;
   var newHashes=[];
   try{_collectNewGenericHashes(root,newHashes);}catch(e){}
   if(!newHashes.length)return;
   try{
-    EXT.runtime.sendMessage({type:'GET_GENERIC_SELECTORS',hashes:newHashes}).then(function(res){
+    EXT.runtime.sendMessage({type:'GENERIC_SELECTORS_SURVEY',hashes:newHashes}).then(function(res){
       var selectors=(res&&res.selectors)||[];
       if(!selectors.length)return;
-      var added=false;
       for(var i=0;i<selectors.length;i++){
-        if(_matchedGenericSelectors.indexOf(selectors[i])===-1){_matchedGenericSelectors.push(selectors[i]);added=true;}
+        if(_matchedGenericSelectors.indexOf(selectors[i])===-1)_matchedGenericSelectors.push(selectors[i]);
       }
-      if(added)_reinjectDirectStyleWithGenerics();
+      // Bookkeeping only from here — background already applied the CSS
+      // itself. Still worth merging into the fast-path replay cache so next
+      // visit's instant guess (before GET_SITE_CONFIG even resolves)
+      // already includes today's discoveries.
+      if(_matchedGenericSelectors.length<=_DIRECT_FILTER_CACHE_THRESHOLD)_updateDirectCssCacheEntry(location.hostname,_cachedDirect.concat(_matchedGenericSelectors));
     }).catch(function(){});
   }catch(e){}
 }
@@ -868,6 +885,20 @@ function startObserver(){
   // direct_hide_selectors are handled entirely by the injected stylesheet
   // (_injectDirectStyle) — the observer only queues candidate/host scanning,
   // which runs deferred at idle. No selector matching on the mutation hot path.
+  //
+  // _surveyGenericSelectors(node) below (2026-09-15) is the ONE exception —
+  // called synchronously here, NOT deferred via schedule()/idle callback
+  // like everything else. It's just a hash of the node's own id/class
+  // attributes (no querySelectorAll, no selector matching), cheap enough to
+  // not need the idle defer scan()'s real (expensive) candidate/host
+  // matching needs — and on a continuously content-injecting page (infinite
+  // scroll, ad-refresh), the ~100ms idle defer was real, recurring exposure
+  // time for every newly-appearing ad-slot element (live-reported
+  // repeatedly on vnexpress.net). scan()'s own _surveyGenericSelectors(root)
+  // call further down stays too, as a defensive second pass for scan()'s
+  // OTHER callers (sync()'s initial full-document scan, the batched-mutation
+  // document-widening path) — near-free here since _queriedGenericHashes
+  // dedupes anything this inline call already covered.
   _observer=new MutationObserver(function(muts){
     if(!_enabled||!_config)return;
     for(var i=0;i<muts.length;i++){
@@ -877,6 +908,7 @@ function startObserver(){
           var node=mut.addedNodes[j];
           if(node.nodeType!==1)continue;
           if(node===document.body)watchPageClasses();
+          _surveyGenericSelectors(node);
           schedule(node);
         }
       } else if(mut.type==='attributes'){
@@ -1140,8 +1172,21 @@ function boot(){
     // to such a host at all, so surveying for the withheld low-generic
     // subset would be pure waste. See _genericSurveyEligible's own comment.
     _genericSurveyEligible=!(site.direct_hide_selectors&&site.direct_hide_selectors.length);
-    _queriedGenericHashes=new Set();
-    _matchedGenericSelectors=[];
+    // _queriedGenericHashes DOES reset — the re-survey below must genuinely
+    // re-ask about every token under the (possibly changed) rules, since
+    // what matches can differ from before. _matchedGenericSelectors
+    // DELIBERATELY does NOT reset (2026-09-15) — this function re-runs on
+    // an ALREADY-loaded page only via RULES_CHANGED/PRIVACY_TOGGLE (never on
+    // a real fresh page load, where it's already [] from its own
+    // declaration); wiping it here means _injectDirectStyle() below sends a
+    // NARROWER 'direct' CSS than what's already active, and because
+    // _setFrameCssImpl inserts-before-removing, every element the old
+    // (larger) set uniquely covered flashes visible again the moment the
+    // old set is removed — live-reported repeatedly on vnexpress.net.
+    // Keeping it means the CSS only ever grows across a reset, never
+    // shrinks-then-regrows; the trade-off is a selector that stops matching
+    // under the new rules stays hidden instead of un-hiding, same "over-hide,
+    // never under-hide" philosophy already accepted elsewhere in this file.
     _config=_mergeConfigs(base,site);
     _rebuildSelectorCache();
     // Send the direct-hide CSS immediately (before DOMContentLoaded) so
