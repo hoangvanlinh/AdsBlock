@@ -962,16 +962,9 @@ document.getElementById('resetBtn')?.addEventListener('click', () => {
 });
 
 /* ── About / version + update check ─────────────────────────────── */
-// Shared with popup.js via config.js's ADBLOCK_CONFIG.STORE_URLS (single
-// source — see that file's own comment for why two independently-hand-
-// maintained copies of this map used to drift out of sync with each other).
-function _detectUpdateStoreUrl() {
-  const urls = self.ADBLOCK_CONFIG.STORE_URLS;
-  const ua = navigator.userAgent;
-  if (ua.includes('Firefox/')) return urls.firefox;
-  if (ua.includes('Edg/'))     return urls.edge;
-  return urls.chrome;
-}
+// detectStoreUrl() now lives in shared/utils.js (loaded before this file
+// per dashboard.html's own <script> order) — was its own near-identical
+// copy here (2 more in popup.js).
 function _renderUpdateStatus(res) {
   const versionDesc = document.getElementById('aboutVersionDesc');
   const updateRow = document.getElementById('aboutUpdateRow');
@@ -1006,26 +999,9 @@ document.getElementById('checkUpdateBtn')?.addEventListener('click', (e) => {
   });
 });
 document.getElementById('aboutUpdateLink')?.addEventListener('click', () => {
-  EXT.tabs.create({ url: _detectUpdateStoreUrl() });
+  EXT.tabs.create({ url: detectStoreUrl() });
 });
 loadUpdateStatus();
-
-document.getElementById('seedYesterdayBtn')?.addEventListener('click', () => {
-  const yd = new Date(); yd.setDate(yd.getDate() - 1);
-  const key = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, '0')}-${String(yd.getDate()).padStart(2, '0')}`;
-  EXT.storage.local.get('dailyStats', ({ dailyStats = {} }) => {
-    dailyStats[key] = {
-      blocked:  Math.floor(Math.random() * 300) + 100,
-      ads:      Math.floor(Math.random() * 200) + 50,
-      trackers: Math.floor(Math.random() * 100) + 20,
-      malware:  Math.floor(Math.random() * 10),
-    };
-    EXT.storage.local.set({ dailyStats }, () => {
-      alert(EXT.i18n.getMessage('dashboard_debug_seedYesterdayAlert', [key]) + '\n' + JSON.stringify(dailyStats[key], null, 2));
-      loadOverviewStats();
-    });
-  });
-});
 
 /* ── Helpers ──────────────────────────────────── */
 function escHtml(str) {
@@ -1053,10 +1029,10 @@ loadPrivacySettings();
 loadRulesSourceSettings();
 
 /* ── Donate ────────────────────────────────────── */
-// Replace the URL with your actual PayPal.me or donate link
-const PAYPAL_DONATE_URL = 'https://www.paypal.me/linhhvtt/5';
+// URL now lives in shared/config.js's ADBLOCK_CONFIG.PAYPAL_DONATE_URL
+// (was a duplicated literal here and in popup.js).
 document.getElementById('donateBtnSidebar')?.addEventListener('click', () => {
-  EXT.tabs.create({ url: PAYPAL_DONATE_URL });
+  EXT.tabs.create({ url: self.ADBLOCK_CONFIG.PAYPAL_DONATE_URL });
 });
 updateTimerDisplay();
 

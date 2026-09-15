@@ -124,7 +124,6 @@ let DEFAULT_RULES = [];
 let MALWARE_RULES = [];
 let AD_MAINFRAME_RULES = [];
 let TRACKER_RULE_IDS = new Set();
-let MALWARE_RULE_IDS = new Set();
 let QUERY_STRIP_RULES = [];
 let NETWORK_REDIRECT_RULES = [];
 let NETWORK_BLOCK_RULES = [];
@@ -283,6 +282,25 @@ function _urlFilterToRegExp(urlFilter) {
   return new RegExp(out);
 }
 
+// Shared domain-vs-path condition split for buildQueryStripRules/
+// buildNetworkRedirectRules below (previously hand-duplicated in both — the
+// latter's own comment already noted "same domain-vs-path condition split
+// as buildQueryStripRules above" without ever actually extracting it;
+// consolidated here 2026-09-15). A bare domain (no '/') becomes
+// requestDomains; anything with a '/' becomes a `||pattern` urlFilter.
+// Returns null if the pattern is malformed either way — caller should
+// `continue` past that entry entirely rather than guess at what was meant
+// (same "don't guess, drop it" rule every other builder in this file uses).
+function _buildDomainOrUrlFilterCondition(pattern) {
+  if (pattern.indexOf('/') === -1) {
+    if (!DOMAIN_PATTERN_RE.test(pattern)) return null;
+    return { requestDomains: [pattern.toLowerCase()] };
+  }
+  const urlFilter = '||' + pattern;
+  if (!_isValidUrlFilter(urlFilter)) return null; // would reject the WHOLE updateDynamicRules() call
+  return { urlFilter };
+}
+
 // strip_query_params entries: "host[/pathSubstr] param1,param2[ doc]"
 // — same-origin query-param removal (tracking IDs like YouTube's ?si=/?is=),
 // doesn't need host permissions since the redirect target stays same-origin.
@@ -295,18 +313,12 @@ function buildQueryStripRules(entries, startId) {
     const hostPath = parts[0];
     const params = parts[1].split(',').map(s => s.trim()).filter(Boolean);
     if (!params.length) continue;
-    const slashIdx = hostPath.indexOf('/');
+    const domainOrUrl = _buildDomainOrUrlFilterCondition(hostPath);
+    if (!domainOrUrl) continue; // malformed — don't guess, drop it
     const condition = {
       resourceTypes: parts[2] === 'doc' ? ['main_frame'] : QUERY_STRIP_RESOURCE_TYPES,
+      ...domainOrUrl,
     };
-    if (slashIdx === -1) {
-      if (!DOMAIN_PATTERN_RE.test(hostPath)) continue; // malformed — don't guess, drop it
-      condition.requestDomains = [hostPath.toLowerCase()];
-    } else {
-      const urlFilter = '||' + hostPath;
-      if (!_isValidUrlFilter(urlFilter)) continue; // would reject the WHOLE updateDynamicRules() call
-      condition.urlFilter = urlFilter;
-    }
     rules.push({
       id: id++,
       priority: 1,
@@ -318,19 +330,20 @@ function buildQueryStripRules(entries, startId) {
 }
 
 // network_redirect_rules entries: "urlPattern resourceName [resourceType]" —
-// same domain-vs-path condition split as buildQueryStripRules above, but the
-// action is a static-resource redirect (_resolveRedirectResourceName/
-// _redirectAction) instead of a query-param strip. resourceName not
-// resolving to a real shipped file (unknown alias, or a name that maps to
-// a file this extension doesn't actually have) drops the whole entry —
-// same "don't guess" rule as everywhere else a filter-syntax modifier
-// can't be confidently honored. The optional 3rd field (2026-09-11) is an
-// explicit DNR resourceType, present whenever _abpParseFile could derive
-// exactly one from the source rule's own options (e.g. $image,redirect=...)
-// — omitted, this still defaults to 'script' same as every entry did before
-// this field existed (real-world redirect= rules overwhelmingly ARE script,
-// hence the default; entries persisted before this field shipped are just
-// 2 fields and behave identically to before).
+// same domain-vs-path condition split as buildQueryStripRules above (now
+// shared via _buildDomainOrUrlFilterCondition), but the action is a
+// static-resource redirect (_resolveRedirectResourceName/_redirectAction)
+// instead of a query-param strip. resourceName not resolving to a real
+// shipped file (unknown alias, or a name that maps to a file this extension
+// doesn't actually have) drops the whole entry — same "don't guess" rule as
+// everywhere else a filter-syntax modifier can't be confidently honored.
+// The optional 3rd field (2026-09-11) is an explicit DNR resourceType,
+// present whenever _abpParseFile could derive exactly one from the source
+// rule's own options (e.g. $image,redirect=...) — omitted, this still
+// defaults to 'script' same as every entry did before this field existed
+// (real-world redirect= rules overwhelmingly ARE script, hence the default;
+// entries persisted before this field shipped are just 2 fields and behave
+// identically to before).
 function buildNetworkRedirectRules(entries, startId) {
   const rules = [];
   let id = startId;
@@ -341,15 +354,9 @@ function buildNetworkRedirectRules(entries, startId) {
     const file = _resolveRedirectResourceName(parts[1]);
     if (!file) continue;
     const resourceType = parts[2] && ABP_RESOURCE_TYPE_VALUES.has(parts[2]) ? parts[2] : 'script';
-    const condition = { resourceTypes: [resourceType] };
-    if (pattern.indexOf('/') === -1) {
-      if (!DOMAIN_PATTERN_RE.test(pattern)) continue; // malformed — don't guess, drop it
-      condition.requestDomains = [pattern.toLowerCase()];
-    } else {
-      const urlFilter = '||' + pattern;
-      if (!_isValidUrlFilter(urlFilter)) continue; // would reject the WHOLE updateDynamicRules() call
-      condition.urlFilter = urlFilter;
-    }
+    const domainOrUrl = _buildDomainOrUrlFilterCondition(pattern);
+    if (!domainOrUrl) continue; // malformed — don't guess, drop it
+    const condition = { resourceTypes: [resourceType], ...domainOrUrl };
     // priority 2, not 1 (2026-09-11): Chrome's own documented same-priority
     // tie-break order is allow > block > redirect — at priority 1 (the same
     // level buildPatternRules' plain ad/tracker block rules use), a domain
@@ -3129,7 +3136,7 @@ function _isNewerVersion(remote, local) {
 // navigator.userAgent is available in the service worker context just like
 // anywhere else — same technique popup.js/dashboard.js already use for this
 // exact kind of "pick a URL for the current browser" decision
-// (_detectStoreUrl/_detectUpdateStoreUrl), reused here instead of a
+// (shared/utils.js's detectStoreUrl()), reused here instead of a
 // different detection method for the same purpose. Not manifest content
 // (browser_specific_settings isn't actually Firefox-exclusive by spec, it
 // just happens to be the one distinguishing field between this repo's two
@@ -3915,7 +3922,6 @@ async function ensureRuleDefinitionsLoaded() {
       // opt-in key.
       const htmlFilterMatcher = buildHtmlFilterMatcher(parsed);
       const trackerRuleIds = new Set(trackerRules.map(rule => rule.id));
-      const malwareRuleIds = new Set(malwareRules.map(rule => rule.id));
 
       // Atomic commit — see this function's own comment above for why
       // nothing above this point touches a module-level variable.
@@ -3929,7 +3935,6 @@ async function ensureRuleDefinitionsLoaded() {
       NETWORK_BLOCK_COMPLEX = networkBlockComplex;
       HTML_FILTER_MATCHER = htmlFilterMatcher;
       TRACKER_RULE_IDS = trackerRuleIds;
-      MALWARE_RULE_IDS = malwareRuleIds;
       AD_KEYWORDS.splice(0, AD_KEYWORDS.length, ...config.adPatterns);
       TRACKER_KEYWORDS.splice(0, TRACKER_KEYWORDS.length, ...config.trackerPatterns);
       MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...config.malwarePatterns);
@@ -4743,10 +4748,6 @@ async function updateIcon(enabled) {
 }
 
 // ── Stats tracking ────────────────────────────────────────────────
-function initDomainStats() {
-  return { blocked: 0, adsBlocked: 0, cosmeticHidden: 0, trackersBlocked: 0, malwareBlocked: 0, totalSeen: 0, bandwidth: 0, timeSaved: 0, speedGain: 0, https: false };
-}
-
 // Average bytes saved per blocked request (heuristic)
 const AVG_AD_BYTES      = 50000;  // ~50 KB per ad script/image
 const AVG_TRACKER_BYTES = 15000;  // ~15 KB per tracker request
@@ -5086,38 +5087,45 @@ EXT.contextMenus?.onClicked.addListener((info, tab) => {
   }
 });
 
+// ── Privacy: single-header modifyHeaders toggle (shared body) ───────
+// applyReferrerAnonymization/applyGpcHeader/applyDntHeader below were 3
+// structurally identical functions (getDynamicRules() -> check hasRule by a
+// fixed id -> add/remove one single-header modifyHeaders rule), differing
+// only in rule id/header name/value/resourceTypes/extra condition fields.
+// Consolidated here 2026-09-15.
+async function _applySingleHeaderRule(ruleId, enabled, header, value, resourceTypes, extraCondition) {
+  const existing = await EXT.declarativeNetRequest.getDynamicRules();
+  const hasRule = existing.some(r => r.id === ruleId);
+
+  if (enabled && !hasRule) {
+    await EXT.declarativeNetRequest.updateDynamicRules({
+      addRules: [{
+        id: ruleId,
+        priority: 1,
+        action: {
+          type: 'modifyHeaders',
+          requestHeaders: [{ header, operation: 'set', value }],
+        },
+        condition: { resourceTypes, ...extraCondition },
+      }],
+    });
+  } else if (!enabled && hasRule) {
+    await EXT.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [ruleId],
+    });
+  }
+}
+
 // ── Privacy: Referrer anonymization ───────────────────────────────
 // Uses declarativeNetRequest to strip cross-origin Referer to origin only.
 const REFERRER_RULE_ID = 400000;
 
 async function applyReferrerAnonymization(enabled) {
-  const existing = await EXT.declarativeNetRequest.getDynamicRules();
-  const hasRule = existing.some(r => r.id === REFERRER_RULE_ID);
-
-  if (enabled && !hasRule) {
-    await EXT.declarativeNetRequest.updateDynamicRules({
-      addRules: [{
-        id: REFERRER_RULE_ID,
-        priority: 1,
-        action: {
-          type: 'modifyHeaders',
-          requestHeaders: [{
-            header: 'Referer',
-            operation: 'set',
-            value: '',
-          }],
-        },
-        condition: {
-          domainType: 'thirdParty',
-          resourceTypes: ['sub_frame', 'script', 'xmlhttprequest', 'image', 'stylesheet', 'font', 'media', 'ping', 'other'],
-        },
-      }],
-    });
-  } else if (!enabled && hasRule) {
-    await EXT.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [REFERRER_RULE_ID],
-    });
-  }
+  await _applySingleHeaderRule(
+    REFERRER_RULE_ID, enabled, 'Referer', '',
+    ['sub_frame', 'script', 'xmlhttprequest', 'image', 'stylesheet', 'font', 'media', 'ping', 'other'],
+    { domainType: 'thirdParty' }
+  );
 }
 
 // ── Privacy: Global Privacy Control signal ──────────────────────────
@@ -5131,60 +5139,14 @@ const GPC_DNT_RESOURCE_TYPES = [
 ];
 
 async function applyGpcHeader(enabled) {
-  const existing = await EXT.declarativeNetRequest.getDynamicRules();
-  const hasRule = existing.some(r => r.id === GPC_RULE_ID);
-
-  if (enabled && !hasRule) {
-    await EXT.declarativeNetRequest.updateDynamicRules({
-      addRules: [{
-        id: GPC_RULE_ID,
-        priority: 1,
-        action: {
-          type: 'modifyHeaders',
-          requestHeaders: [{
-            header: 'Sec-GPC',
-            operation: 'set',
-            value: '1',
-          }],
-        },
-        condition: { resourceTypes: GPC_DNT_RESOURCE_TYPES },
-      }],
-    });
-  } else if (!enabled && hasRule) {
-    await EXT.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [GPC_RULE_ID],
-    });
-  }
+  await _applySingleHeaderRule(GPC_RULE_ID, enabled, 'Sec-GPC', '1', GPC_DNT_RESOURCE_TYPES);
 }
 
 // ── Privacy: Do Not Track header ────────────────────────────────────
 const DNT_RULE_ID = 400002;
 
 async function applyDntHeader(enabled) {
-  const existing = await EXT.declarativeNetRequest.getDynamicRules();
-  const hasRule = existing.some(r => r.id === DNT_RULE_ID);
-
-  if (enabled && !hasRule) {
-    await EXT.declarativeNetRequest.updateDynamicRules({
-      addRules: [{
-        id: DNT_RULE_ID,
-        priority: 1,
-        action: {
-          type: 'modifyHeaders',
-          requestHeaders: [{
-            header: 'DNT',
-            operation: 'set',
-            value: '1',
-          }],
-        },
-        condition: { resourceTypes: GPC_DNT_RESOURCE_TYPES },
-      }],
-    });
-  } else if (!enabled && hasRule) {
-    await EXT.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [DNT_RULE_ID],
-    });
-  }
+  await _applySingleHeaderRule(DNT_RULE_ID, enabled, 'DNT', '1', GPC_DNT_RESOURCE_TYPES);
 }
 
 // Apply saved privacy settings on startup
@@ -6829,8 +6791,3 @@ EXT.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
-// ── Helpers ───────────────────────────────────────────────────────
-function extractDomain(url) {
-  try { return new URL(url).hostname; }
-  catch { return null; }
-}

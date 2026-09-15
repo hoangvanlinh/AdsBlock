@@ -63,10 +63,8 @@ function mergeDefaults(defaults, overrides){
   return cfg;
 }
 
-function extValid(){
-  try{return !!(EXT.runtime&&EXT.runtime.getManifest());}
-  catch(e){return false;}
-}
+// extValid() now lives in shared/utils.js (loaded before this file per the
+// manifests' own content_scripts order) — was a byte-identical copy here.
 
 // Mirrors background.js's _compressForStorage/_decompressFromStorage
 // (2026-08-24) — this content-script fallback path (only engaged when

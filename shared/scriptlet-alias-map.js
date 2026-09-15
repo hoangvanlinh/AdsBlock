@@ -1,8 +1,10 @@
-// scripts/scriptlet-alias-map.js — single source of truth for the uBO
-// scriptlet-alias -> this project's SCRIPTLET_KEY mapping, shared by
-// scripts/convert-uassets.js and scripts/convert-regions.js (both `require`
-// this instead of keeping their own copy — the two had drifted out of sync
-// with each other before this file existed).
+// shared/scriptlet-alias-map.js — single source of truth for the uBO
+// scriptlet-alias -> this project's SCRIPTLET_KEY mapping. Consumed at
+// runtime by shared/background.js (self.SCRIPTLET_ALIAS_MAP, loaded via
+// importScripts() on Chrome / manifest.firefox.json's background.scripts
+// array on Firefox — see that file's own comment near the top) when
+// converting ABP/uBO-format rule text into this project's own scriptlet
+// syntax.
 //
 // sep: how this project's key joins multiple args ('comma' -> ", ", 'space' -> " ").
 // maxArgs: args beyond this are dropped (key doesn't accept more).

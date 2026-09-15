@@ -303,6 +303,10 @@ const ctx = vm.createContext(sandbox);
 const exportSnippet = `
 self.__test = {
   ensureRuleDefinitionsLoaded, buildActiveRulesFromStorage, applyNetworkRules, reloadRules,
+  applyReferrerAnonymization, applyGpcHeader, applyDntHeader, applyPrivacySettings,
+  get REFERRER_RULE_ID() { return REFERRER_RULE_ID; },
+  get GPC_RULE_ID() { return GPC_RULE_ID; },
+  get DNT_RULE_ID() { return DNT_RULE_ID; },
   _dedupeMalwarePriority,
   parseRuleText, buildRemoteMalwareRules, updateIcon, _incrementTabBlocked, _setTabBadge,
   _updateRemoteMalwareDomains, DOMAIN_PATTERN_RE,
@@ -338,7 +342,6 @@ self.__test = {
   get MALWARE_RULES() { return MALWARE_RULES; },
   get AD_MAINFRAME_RULES() { return AD_MAINFRAME_RULES; },
   get TRACKER_RULE_IDS() { return TRACKER_RULE_IDS; },
-  get MALWARE_RULE_IDS() { return MALWARE_RULE_IDS; },
   get statsChain() { return _statsWriteChain; },
   get tabBlockedCounts() { return _tabBlockedCounts; },
   _dedupeCssRules, setFrameCss, get frameCss() { return _frameCss; },
@@ -3540,6 +3543,57 @@ function check(name, cond, detail = '') {
       delete storageData[FASTPATH_KEY];
       T.frameCss.clear();
     }
+  }
+
+  // ── Regression (2026-09-15): applyReferrerAnonymization/applyGpcHeader/
+  // applyDntHeader were merged into a shared _applySingleHeaderRule() body
+  // (previously 3 structurally-identical functions) — verify each still
+  // adds/removes exactly its OWN distinct rule, independent of the others. ──
+  {
+    dynamicRules.length = 0;
+    await T.applyReferrerAnonymization(true);
+    const referrerRule = dynamicRules.find(r => r.id === T.REFERRER_RULE_ID);
+    check('applyReferrerAnonymization(true) adds a Referer modifyHeaders rule with the right value/condition',
+      !!referrerRule && referrerRule.action.requestHeaders[0].header === 'Referer' &&
+      referrerRule.action.requestHeaders[0].value === '' && referrerRule.condition.domainType === 'thirdParty',
+      referrerRule);
+
+    await T.applyGpcHeader(true);
+    const gpcRule = dynamicRules.find(r => r.id === T.GPC_RULE_ID);
+    check('applyGpcHeader(true) adds a Sec-GPC modifyHeaders rule, independent of the referrer rule (no domainType)',
+      !!gpcRule && gpcRule.action.requestHeaders[0].header === 'Sec-GPC' &&
+      gpcRule.action.requestHeaders[0].value === '1' && !gpcRule.condition.domainType,
+      gpcRule);
+
+    await T.applyDntHeader(true);
+    const dntRule = dynamicRules.find(r => r.id === T.DNT_RULE_ID);
+    check('applyDntHeader(true) adds a DNT modifyHeaders rule, independent of the other two',
+      !!dntRule && dntRule.action.requestHeaders[0].header === 'DNT' && dntRule.action.requestHeaders[0].value === '1',
+      dntRule);
+
+    check('all 3 rules coexist with distinct ids after the merge', dynamicRules.length === 3, dynamicRules.map(r => r.id));
+
+    await T.applyReferrerAnonymization(true); // idempotent: enabled again, rule already present
+    check('calling applyReferrerAnonymization(true) again does not duplicate the rule',
+      dynamicRules.filter(r => r.id === T.REFERRER_RULE_ID).length === 1, dynamicRules.map(r => r.id));
+
+    await T.applyGpcHeader(false);
+    check('applyGpcHeader(false) removes ONLY the GPC rule, leaves the other two untouched',
+      !dynamicRules.some(r => r.id === T.GPC_RULE_ID) &&
+      dynamicRules.some(r => r.id === T.REFERRER_RULE_ID) && dynamicRules.some(r => r.id === T.DNT_RULE_ID),
+      dynamicRules.map(r => r.id));
+
+    await T.applyReferrerAnonymization(false);
+    await T.applyDntHeader(false);
+    check('disabling all 3 leaves zero rules from this group', dynamicRules.length === 0, dynamicRules);
+
+    await chromeStub.storage.local.set({ referrerAnonymization: true, gpcSignal: false, dntHeader: true });
+    await T.applyPrivacySettings();
+    check('applyPrivacySettings() reads storage and wires all 3 together in one call — referrer+DNT on, GPC off',
+      dynamicRules.some(r => r.id === T.REFERRER_RULE_ID) && !dynamicRules.some(r => r.id === T.GPC_RULE_ID) && dynamicRules.some(r => r.id === T.DNT_RULE_ID),
+      dynamicRules.map(r => r.id));
+
+    dynamicRules.length = 0;
   }
 
   // ── _settingsCache survives storage.local.clear() with correct defaults ──

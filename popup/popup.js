@@ -269,10 +269,10 @@ document.getElementById('openSettings').addEventListener('click', () => {
 });
 
 // ── Donate ─────────────────────────────────────
-// Replace with your actual PayPal.me or donate link
-const PAYPAL_DONATE_URL = 'https://www.paypal.me/linhhvtt/5';
+// URL now lives in shared/config.js's ADBLOCK_CONFIG.PAYPAL_DONATE_URL
+// (was a duplicated literal here and in dashboard.js).
 document.getElementById('donateBtnPopup')?.addEventListener('click', () => {
-  EXT.tabs.create({ url: PAYPAL_DONATE_URL });
+  EXT.tabs.create({ url: self.ADBLOCK_CONFIG.PAYPAL_DONATE_URL });
   window.close();
 });
 
@@ -286,24 +286,9 @@ document.getElementById('donateBtnPopup')?.addEventListener('click', () => {
 // to compare against a lifetime threshold here.
 const REVIEW_BLOCKED_MILESTONE = 500;
 const REVIEW_MIN_DAYS_INSTALLED = 7;
-// Shared with dashboard.js via config.js's ADBLOCK_CONFIG.STORE_URLS (single
-// source, see that file's own comment) — both the review prompt and the
-// update-available chip below point here, so there's only ever one link to
-// keep correct.
-function _detectStoreUrl() {
-  const urls = self.ADBLOCK_CONFIG.STORE_URLS;
-  const ua = navigator.userAgent;
-  if (ua.includes('Firefox/')) return urls.firefox;
-  if (ua.includes('Edg/'))     return urls.edge;
-  return urls.chrome;
-}
-function _detectReviewStoreUrl() {
-  const ua = navigator.userAgent;
-  const urls = self.ADBLOCK_CONFIG.STORE_URLS;
-  if (ua.includes('Firefox/')) return urls.firefox + '/reviews';
-  if (ua.includes('Edg/'))     return urls.edge;
-  return urls.chrome + '/reviews';
-}
+// detectStoreUrl(variant) now lives in shared/utils.js (loaded before this
+// file per popup.html's own <script> order) — was 2 near-identical copies
+// here (this file's own review-prompt variant, plus a 3rd in dashboard.js).
 function _fetchReviewPromptState() {
   return new Promise(resolve => {
     EXT.storage.local.get(['reviewPromptState', 'totalBlockedAllTime', 'installDate'], resolve);
@@ -322,7 +307,7 @@ function maybeShowReviewPrompt() {
 }
 document.getElementById('reviewRateBtn')?.addEventListener('click', () => {
   EXT.storage.local.set({ reviewPromptState: 'reviewed' });
-  EXT.tabs.create({ url: _detectReviewStoreUrl() });
+  EXT.tabs.create({ url: detectStoreUrl('reviews') });
   document.getElementById('reviewBanner')?.classList.add('hidden');
   window.close();
 });
@@ -413,7 +398,7 @@ function _applyUpdateStatus(res) {
   chip.title = EXT.i18n.getMessage('popup_version_updateTitle');
   chip.classList.remove('hidden');
   chip.addEventListener('click', () => {
-    EXT.tabs.create({ url: _detectStoreUrl() });
+    EXT.tabs.create({ url: detectStoreUrl() });
     window.close();
   });
 }

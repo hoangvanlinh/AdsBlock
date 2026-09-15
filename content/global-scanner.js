@@ -27,9 +27,7 @@ var _active = false;
 var _panelEl = null;
 var _pendingScans = {}; // requestId -> {resolve, timer}
 
-function _ownNode(el) {
-  return !!(el && el.closest && el.closest('.qkv1-scanner-ui'));
-}
+var _ownNode = makeOwnNodeCheck('.qkv1-scanner-ui');
 
 // ── MAIN-world round trip ────────────────────────────────────────────
 function _requestScan() {
@@ -93,15 +91,7 @@ function _quickValueLabel(raw) {
 }
 
 // ── UI ──────────────────────────────────────────────────────────────
-function _mkBtn(label, primary) {
-  var b = document.createElement('button');
-  b.className = 'qkv1-scanner-ui';
-  b.textContent = label;
-  b.style.cssText =
-    'font:inherit;font-weight:600;border:0;border-radius:6px;padding:5px 10px;cursor:pointer;' +
-    (primary ? 'background:#2563eb;color:#fff;' : 'background:#334155;color:#e2e8f0;');
-  return b;
-}
+var _mkBtn = makeButtonFactory('qkv1-scanner-ui', '5px 10px');
 
 function _row(entry, host) {
   var row = document.createElement('div');
@@ -326,9 +316,7 @@ function _buildPanel(host, results) {
   _panelEl = panel;
 }
 
-function _removePanel() {
-  if (_panelEl) { try { _panelEl.remove(); } catch (e) {} _panelEl = null; }
-}
+function _removePanel() { _panelEl = removePanelEl(_panelEl); }
 
 function _showLoading() {
   _removePanel();

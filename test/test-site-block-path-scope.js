@@ -18,7 +18,25 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
+const utilsSrc = fs.readFileSync(path.join(ROOT, 'shared/utils.js'), 'utf8');
 const siteBlockSrc = fs.readFileSync(path.join(ROOT, 'content/site-block.js'), 'utf8');
+
+// site-block.js's _sendCssSlot is now just `var _sendCssSlot=_sendCss;`
+// (2026-09-15 — was its own near-duplicate of content.js's _sendCss) — pull
+// the real _sendCss body out of content.js by source markers (same
+// technique test-classify-url.js already uses) rather than stubbing it or
+// loading the whole of content.js (which does unrelated module-top-level
+// work this sandbox isn't set up for).
+const contentJsSrc = fs.readFileSync(path.join(ROOT, 'content/content.js'), 'utf8');
+const sendCssStart = 'function _sendCss(slot, css, fresh) {';
+const sendCssEnd = 'function _clearAllCss';
+const sendCssStartIdx = contentJsSrc.indexOf(sendCssStart);
+const sendCssEndIdx = contentJsSrc.indexOf(sendCssEnd, sendCssStartIdx);
+if (sendCssStartIdx === -1 || sendCssEndIdx === -1) {
+  console.error('HARNESS ERROR: could not locate _sendCss in content.js — did it move/get renamed?');
+  process.exit(2);
+}
+const sendCssSrc = contentJsSrc.slice(sendCssStartIdx, sendCssEndIdx);
 
 let pass = 0, fail = 0;
 function check(label, cond, extra) {
@@ -104,6 +122,8 @@ function makeSandbox(pathname) {
       setConfig: function(c){ _config = c; }, getCachedDirect: function(){ return _cachedDirect; },
       getCachedDirectStyle: function(){ return _cachedDirectStyle; } };\n` +
     siteBlockSrc.slice(closeIdx);
+  vm.runInContext(utilsSrc, ctx, { filename: 'utils.js' }); // extValid() lives here now (2026-09-15) — loaded before site-block.js, same as the real manifests
+  vm.runInContext(sendCssSrc, ctx, { filename: 'content.js (_sendCss only)' }); // site-block.js's _sendCssSlot aliases this now
   vm.runInContext(patched, ctx, { filename: 'site-block.js' });
   const T = sandbox.window.__test;
   T._sentMessages = sentMessages;

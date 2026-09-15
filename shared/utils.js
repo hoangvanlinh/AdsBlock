@@ -10,6 +10,86 @@
 // navigator aren't guaranteed to exist in every context this file loads
 // into) the same way langCandidates() below does.
 
+// extValid() — detects an invalidated extension context (page still open
+// after the extension was reloaded/updated/disabled — every EXT.* call
+// throws once that happens). chrome.runtime.id is static even after
+// invalidation, so it can't detect this; getManifest() actually probes the
+// context and throws once it's gone. Used by every content script that
+// talks to the background/EXT.* APIs (content.js, site-rules-loader.js,
+// site-block.js, and transitively element-picker.js/global-scanner.js/
+// rule-editor.js which load after this file per the manifests' own
+// content_scripts order) — previously 3 byte-identical copies of this same
+// function, consolidated here 2026-09-15.
+function extValid() {
+  try {
+    return !!(typeof EXT !== 'undefined' && EXT.runtime && EXT.runtime.getManifest());
+  } catch (e) { return false; }
+}
+
+// makeOwnNodeCheck(cssClass) — returns an `_ownNode(el)`-shaped predicate
+// ("is this element part of MY OWN injected UI, not the page's"), used by
+// the 3 on-page picker overlays (element-picker.js/global-scanner.js/
+// rule-editor.js — each marks its own UI root with a different class:
+// 'qkv1-picker-ui'/'qkv1-scanner-ui'/'qkv1-editor-ui') to avoid treating
+// clicks on their own panel/buttons as clicks on the underlying page.
+// Previously 3 byte-identical function bodies differing only by the
+// hardcoded class string; consolidated here 2026-09-15.
+function makeOwnNodeCheck(cssClass) {
+  return function (el) { return !!(el && el.closest && el.closest(cssClass)); };
+}
+
+// removePanelEl(panelEl) — the shared body of every `_removePanel()` in the
+// 3 picker overlays above: tear down the (possibly already-detached) panel
+// element and report back the new (always null) value to assign to the
+// caller's own `_panelEl` variable, e.g. `_panelEl = removePanelEl(_panelEl);`
+// — each file keeps its own module-level `_panelEl`, only the teardown body
+// (previously byte-identical in all 3) is shared. Safe to call with null/
+// undefined (no-op).
+function removePanelEl(panelEl) {
+  if (panelEl) { try { panelEl.remove(); } catch (e) { /* already detached */ } }
+  return null;
+}
+
+// makeButtonFactory(cssClass, padding) — returns an `_mkBtn(label, primary)`
+// factory shaped like the 3 picker overlays' own button-styling boilerplate
+// (differing only by class name — some use one to mark the button as their
+// own UI, `_ownNode`'s cssClass — and the exact padding). `cssClass` may be
+// null/omitted to skip setting className (element-picker.js's own confirm-
+// panel buttons rely on an ANCESTOR element already carrying the class
+// instead of marking each button individually).
+function makeButtonFactory(cssClass, padding) {
+  return function (label, primary) {
+    var b = document.createElement('button');
+    if (cssClass) b.className = cssClass;
+    b.textContent = label;
+    b.style.cssText =
+      'font:inherit;font-weight:600;border:0;border-radius:6px;padding:' + padding + ';cursor:pointer;' +
+      (primary ? 'background:#2563eb;color:#fff;' : 'background:#334155;color:#e2e8f0;');
+    return b;
+  };
+}
+
+// detectStoreUrl(variant) — picks this browser's real extension-store URL
+// from ADBLOCK_CONFIG.STORE_URLS (Firefox/Edge/Chrome, by navigator.userAgent
+// sniffing). Used by popup.js (the main store link, plus the review prompt's
+// own '/reviews'-suffixed variant) and dashboard.js (the update-available
+// link). variant: 'reviews' appends '/reviews' to the firefox/chrome URL
+// (matches each store's own review-page URL shape) — Edge's URL already
+// points at the right page either way, so it's never suffixed (an existing,
+// deliberate asymmetry, not something introduced here). STORE_URLS itself
+// was already centralized in config.js specifically to prevent the map
+// itself from drifting out of sync between pages — but the CALLING code
+// that reads it wasn't: previously 3 near-identical copies (popup.js had 2
+// of its own, dashboard.js 1). Consolidated here 2026-09-15.
+function detectStoreUrl(variant) {
+  const urls = self.ADBLOCK_CONFIG.STORE_URLS;
+  const ua = navigator.userAgent;
+  const suffix = variant === 'reviews' ? '/reviews' : '';
+  if (ua.includes('Firefox/')) return urls.firefox + suffix;
+  if (ua.includes('Edg/')) return urls.edge;
+  return urls.chrome + suffix;
+}
+
 // langCandidates() — the ONE place that gathers "what language does
 // this user actually seem to want" candidates. Used by two independent
 // features: background.js's regional-filter-list auto-enable

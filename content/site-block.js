@@ -102,10 +102,8 @@ var _cachedDirectStr='', _cachedCandidateStr='', _cachedHostStr='';
 // with _cachedDirect/etc. by _rebuildSelectorCache().
 var _cachedLabelsCompact=[], _cachedLinkPatternsCompact=[], _cachedLinkPatternsNorm=[];
 
-function extValid(){
-  try{return !!(EXT.runtime&&EXT.runtime.getManifest());}
-  catch(e){return false;}
-}
+// extValid() now lives in shared/utils.js (loaded before this file per the
+// manifests' own content_scripts order) — was a byte-identical copy here.
 
 // Elements hidden by hide()/collapseParentIfEmpty (dedup + collapse-
 // propagation state, see below). Used to be a DOM attribute stamped on each
@@ -312,10 +310,12 @@ function stopPageClassWatch(){
 // future matching nodes for free — no per-mutation JS matching, and an empty
 // slot send instantly disables everything (content.js's CSS_CLEAR_ALL, on
 // pause/disable, clears this slot the same way it clears 'base'/'custom').
-function _sendCssSlot(slot,css){
-  if(!extValid())return;
-  try{EXT.runtime.sendMessage({type:'CSS_SET',slot:slot,css:css||''}).catch(function(){});}catch(e){}
-}
+// Was its own near-identical copy of content.js's _sendCss (same CSS_SET
+// message + extValid() guard, just without the `fresh` flag this file never
+// needs to pass) — content.js loads before this file per the manifests' own
+// content_scripts order, so this is just an alias now (2026-09-15): calling
+// with 2 args leaves `fresh` undefined/falsy, identical to the old body.
+var _sendCssSlot=_sendCss;
 // Bare `body`/`html`-anchored selectors (e.g. `body:has(x) > y`) must skip
 // the auto-prefix below — 'body '+'body:has(...)' is always false.
 var _ALREADY_ROOT_SCOPED_RE=/^(body|html)(?![\w-])/i;
@@ -797,17 +797,6 @@ function collapseParentIfEmpty(el){
   }
 }
 
-// Keeps el itself in the DOM but clears its children and hides it — used
-// for known/direct ad selectors. Then checks the parent for collapse.
-function removeEl(el){
-  if(!el)return false;
-  var parent=el.parentElement;
-  el.replaceChildren();
-  el.style.setProperty('display','none','important');
-  if(parent)collapseParentIfEmpty({parentElement:parent});
-  return true;
-}
-
 function hide(el){
   if(!el||_hiddenEls.has(el))return false;
   // Never hide the page itself — a broad rule (e.g. *:has(>[ad-attr]))
@@ -1207,18 +1196,6 @@ function boot(){
 }
 
 boot();
-
-// Re-scan entire document after YouTube SPA navigation.
-// MutationObserver catches individual nodes but may miss elements rendered
-// during large DOM replacements. A delayed full scan fills the gap.
-/// var _navScanT=0;
-/// function _onSpaNav(){
-///   if(!_enabled||!_config)return;
-///   if(_navScanT)clearTimeout(_navScanT);
-///   _navScanT=setTimeout(function(){_navScanT=0;scan(document);},500);
-/// }
-/// document.addEventListener('yt-navigate-finish',_onSpaNav);
-/// document.addEventListener('yt-page-data-updated',_onSpaNav);
 
 window.addEventListener('__'+_QKV1_TOKEN+'_blk__',function(e){
   if(!extValid()||!_enabled)return;

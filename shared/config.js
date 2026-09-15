@@ -53,7 +53,7 @@ self.ADBLOCK_CONFIG = {
     // domains. Only this one entry is tagged so far — other sources stay
     // in the ad_network_patterns bucket unless similarly marked.
     { name: 'EasyPrivacy', url: ['https://easylist.to/easylist/easyprivacy.txt','https://raw.githubusercontent.com/uBlockOrigin/uAssets/92c8ad87cba5f2641c18f8f0c5a06503b259988c/filters/privacy.txt'], enable: true, group: "easylist", category: "tracker" },
-    { name: 'EasyList Cookie List', url: 'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt', enable: false, group: "easylist" },
+    { name: 'EasyList Cookie List', url: 'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt', enable: true, group: "easylist" },
     { name: 'Fanboy\'s Annoyance List', url: 'https://secure.fanboy.co.nz/fanboy-annoyance.txt', enable: false, group: "easylist" },
     { name: 'Fanboy\'s Social Blocking List', url: 'https://easylist.to/easylist/fanboy-social.txt', enable: true, group: "easylist" },
     { name: 'AdGuard Base Filter', url: 'https://filters.adtidy.org/extension/ublock/filters/2.txt', enable: false, group: "easylist" },
@@ -197,6 +197,9 @@ self.ADBLOCK_CONFIG = {
     edge:    'https://microsoftedge.microsoft.com/addons/detail/pbhhhdiineoaofllgkipegloafcpiaml',
     chrome:  'https://chromewebstore.google.com/detail/adblock-%E2%80%94-ads-trackers/emdofgiggmkkncojffpebiaegdmdkgio',
   },
+  // Single source for the "Donate" link — was a duplicated literal in both
+  // popup.js and dashboard.js (2026-09-15 consolidation).
+  PAYPAL_DONATE_URL: 'https://www.paypal.me/linhhvtt/5',
   // Debug builds (./build.sh <target> <obf> <export> true) flip this to true:
   // every context (background DNR rules + content rule loader) then reads the
   // bundled rule/site-rules.txt instead of cache/remote, so local rule edits

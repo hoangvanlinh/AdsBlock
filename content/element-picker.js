@@ -19,9 +19,7 @@ var _boxEl = null;
 var _panelEl = null;
 var _badgeEl = null;
 
-function _ownNode(el) {
-  return !!(el && el.closest && el.closest('.qkv1-picker-ui'));
-}
+var _ownNode = makeOwnNodeCheck('.qkv1-picker-ui');
 
 // ── selector generation ──────────────────────────────────────────────
 // Not a full uBO-grade generator — good enough to be stable across reloads
@@ -118,9 +116,7 @@ function _moveBoxTo(el) {
   box.style.width = r.width + 'px';
   box.style.height = r.height + 'px';
 }
-function _removePanel() {
-  if (_panelEl) { try { _panelEl.remove(); } catch (e) {} _panelEl = null; }
-}
+function _removePanel() { _panelEl = removePanelEl(_panelEl); }
 function _showConfirmPanel(el) {
   _removePanel();
   var selector = _generateSelector(el);
@@ -145,14 +141,7 @@ function _showConfirmPanel(el) {
 
   var row = document.createElement('div');
   row.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;';
-  function mkBtn(label, primary) {
-    var b = document.createElement('button');
-    b.textContent = label;
-    b.style.cssText =
-      'font:inherit;font-weight:600;border:0;border-radius:6px;padding:6px 10px;cursor:pointer;' +
-      (primary ? 'background:#2563eb;color:#fff;' : 'background:#334155;color:#e2e8f0;');
-    return b;
-  }
+  var mkBtn = makeButtonFactory(null, '6px 10px');
   var hideBtn = mkBtn(EXT.i18n.getMessage('picker_btn_hide'), true);
   var broadenBtn = mkBtn(EXT.i18n.getMessage('picker_btn_broaden'), false);
   var cancelBtn = mkBtn(EXT.i18n.getMessage('common_cancel'), false);

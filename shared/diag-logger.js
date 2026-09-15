@@ -1,6 +1,7 @@
-// shared/diag-logger.js — TEMP diagnostic logger (2026-09-14)
-// Separated out of background.js so it's easy to find/control on its own,
-// independent of whatever else is being edited there.
+// shared/diag-logger.js — standing diagnostic logger (added 2026-09-14, now
+// permanent infra, not a throwaway). Separated out of background.js so it's
+// easy to find/control on its own, independent of whatever else is being
+// edited there.
 //
 // Persists every entry to chrome.storage.local (small capped ring buffer)
 // instead of only console.log/warn/error, so a sequence of events can be
@@ -9,7 +10,9 @@
 // Firefox's background page stops it from ever being idle-killed at all
 // ("Background event page was not terminated on idle because a DevTools
 // toolbox is attached to the extension"), which is exactly the real-world
-// respawn scenario this diagnostic investigation needs to observe.
+// respawn scenario this file exists to make observable. Kept gated behind
+// DEBUG_LOCAL (see write()'s own comment further down) so it's a true no-op
+// in every production build regardless of how many call sites accumulate.
 //
 // Depends on self.LocalStorage (shared/local-storage.js) — must load AFTER
 // it. Dual-loading story matches every other shared/*.js file: Chrome MV3

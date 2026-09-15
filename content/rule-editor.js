@@ -43,23 +43,13 @@ var SCRIPTLET_KEYS_REF = [
   'prevent_bab', 'disable_newtab_links',
 ];
 
-function _ownNode(el) {
-  return !!(el && el.closest && el.closest('.qkv1-editor-ui'));
-}
+var _ownNode = makeOwnNodeCheck('.qkv1-editor-ui');
 
 // ── UI ──────────────────────────────────────────────────────────────
 var _panelEl = null;
 var _active = false;
 
-function _mkBtn(label, primary) {
-  var b = document.createElement('button');
-  b.className = 'qkv1-editor-ui';
-  b.textContent = label;
-  b.style.cssText =
-    'font:inherit;font-weight:600;border:0;border-radius:6px;padding:6px 12px;cursor:pointer;' +
-    (primary ? 'background:#2563eb;color:#fff;' : 'background:#334155;color:#e2e8f0;');
-  return b;
-}
+var _mkBtn = makeButtonFactory('qkv1-editor-ui', '6px 12px');
 
 function _refRow(key) {
   var row = document.createElement('div');
@@ -262,9 +252,7 @@ function _buildPanel(host, initialText, existingText) {
   textarea.focus();
 }
 
-function _removePanel() {
-  if (_panelEl) { try { _panelEl.remove(); } catch (e) {} _panelEl = null; }
-}
+function _removePanel() { _panelEl = removePanelEl(_panelEl); }
 
 function _onKeyDown(ev) {
   if (!_active) return;

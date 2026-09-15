@@ -6,13 +6,8 @@
 //   3. Observe dynamic DOM mutations (SPA / infinite scroll)
 //   4. Listen for messages from background to toggle per-domain
 
-// ── Guard: detect invalidated extension context ───────────────────
-function extValid() {
-  try {
-    // chrome.runtime.id is static; use getManifest() to actually probe the context
-    return !!(EXT.runtime && EXT.runtime.getManifest());
-  } catch { return false; }
-}
+// extValid() now lives in shared/utils.js (loaded before this file per the
+// manifests' own content_scripts order) — was a byte-identical copy here.
 
 // Substituted with a random string at build time (_build-lib.sh) — must
 // match content/scriptlets.js's own copy of the same placeholder exactly.
