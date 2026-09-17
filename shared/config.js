@@ -123,6 +123,23 @@ self.ADBLOCK_CONFIG = {
   RULES_CACHE_TEXT_KEY: 'siteRulesCacheText',
   RULES_CACHE_TIME_KEY: 'siteRulesCacheTime',
   RULES_CACHE_TTL_MS: 6 * 60 * 60 * 1000,
+  // Per-visited-host GET_SITE_CONFIG cache (2026-09-17) — background.js's
+  // own persisted, hash-gated fast path, separate from RULES_CACHE_TEXT_KEY
+  // above (that key caches the raw MERGED text for every enabled Rule
+  // Source; this caches the small RESOLVED {siteKey, site} answer for just
+  // the hosts actually visited, so a revisited host can skip re-parsing the
+  // whole merged text after a service-worker cold start). Two keys because
+  // `global` is identical for every host — storing it once avoids
+  // duplicating it into every per-host entry. The "V1" suffix versions the
+  // RESOLUTION LOGIC (resolveSiteKey/_getClassifiedGenericSelectors'
+  // observable output shape), not the data — a logic change bumps to V2 and
+  // old entries are silently orphaned, no migration code needed. Data
+  // freshness itself is never versioned/TTL'd here — each entry carries the
+  // rule text's own hash and is only ever served when that hash still
+  // matches the CURRENT text, which is a stronger, always-correct guarantee
+  // than any timestamp could be. See background.js's _tryFastSiteConfig().
+  SITE_CONFIG_HOST_CACHE_KEY: 'siteConfigHostCacheV1',
+  SITE_CONFIG_GLOBAL_CACHE_KEY: 'siteConfigGlobalCacheV1',
   // Firefox-only (webRequestBlocking) cross-SW-restart caches for the two
   // matcher structures that are actually expensive to rebuild (per-entry
   // RegExp compilation) — see background.js's ensureRuleDefinitionsLoaded()/
@@ -135,13 +152,18 @@ self.ADBLOCK_CONFIG = {
   MALWARE_PATH_MATCHER_CACHE_KEY: 'malwarePathMatcherCacheText',
   // Per-host LRU-capped map (see site-block.js's _DIRECT_CSS_LRU_LIMIT)
   // holding the last CSS site-block.js successfully computed for
-  // direct_hide_selectors, keyed by hostname — read via chrome.storage.session
-  // (background.js grants content scripts access via setAccessLevel) at
-  // content-script start as a "fire now, correct shortly after" fast path so
-  // ads don't flash while GET_SITE_CONFIG's message round-trip to a
-  // cold-started background is still in flight. Lives in the extension's own
-  // storage, never the page's — no page-JS can ever read or enumerate it,
-  // unlike the page's own localStorage. See site-block.js's
+  // direct_hide_selectors, keyed by hostname — read directly by the content
+  // script itself (chrome.storage.session, falling back to .local — see
+  // content/fastpath-storage.js) at content-script start, THEN applied via
+  // the same CSS_SET/insertCSS message _injectDirectStyle() uses for the
+  // real selectors (2026-09-17, back to this original pre-2026-09-14 shape
+  // after two other approaches were tried and reverted in between — a
+  // background-side CSS_FASTPATH_APPLY message, and a plain DOM <style> node
+  // — see site-block.js's _fastPathDirectStyle() own comment for the full
+  // history) so ads don't flash while GET_SITE_CONFIG's own round-trip to a
+  // possibly cold-started background is still in flight. Lives in the
+  // extension's own storage, never the page's — no page-JS can ever read or
+  // enumerate it, unlike the page's own localStorage. See site-block.js's
   // _fastPathDirectStyle()/_injectDirectStyle().
   DIRECT_CSS_FASTPATH_KEY: 'directCssFastPath',
   // Same fast-path pattern as DIRECT_CSS_FASTPATH_KEY above, but for a

@@ -81,6 +81,12 @@ const chromeStub = {
         for (const key of keys) { changes[key] = { oldValue: storageData[key] }; delete storageData[key]; }
         for (const fn of storageChangeListeners) fn(changes, 'local');
       },
+      // Mutable (function, reassigned per test) so _writeLocalIfWithinQuota's
+      // two branches — a real Chrome getBytesInUse() reading, and Firefox's
+      // genuine permanent "API doesn't exist" (null) — can both be simulated.
+      // Defaults to the null case, the SAFER default for every test that
+      // doesn't care about quota behavior at all (matches real Firefox).
+      async getBytesInUse() { return null; },
     },
     // Separate backing object from `local` — chrome.storage.session is a
     // genuinely distinct store (in-memory, cleared on browser restart), used
@@ -346,6 +352,10 @@ self.__test = {
   get tabBlockedCounts() { return _tabBlockedCounts; },
   _dedupeCssRules, setFrameCss, get frameCss() { return _frameCss; },
   get settingsCache() { return _settingsCache; },
+  _hashText, _writeLocalIfWithinQuota,
+  _tryFastSiteConfig, _saveSiteConfigCacheEntry, _loadSiteConfigCacheEntry, _evictOldestLruEntry,
+  get SITE_CONFIG_HOST_CACHE_LIMIT() { return _SITE_CONFIG_HOST_CACHE_LIMIT; },
+  get siteConfigCacheWriteChain() { return _siteConfigCacheWriteChain; },
 };`;
 vm.runInContext(bgSrc + '\n' + exportSnippet, ctx, { filename: 'background.js' });
 const T = sandbox.__test;
@@ -3404,6 +3414,70 @@ function check(name, cond, detail = '') {
     check('bookkeeping still points at the last GOOD css, not the one that failed to insert',
       T.frameCss.get('9002:0:direct') === '.real{display:none!important}');
 
+    // ── Regression (2026-09-17): _insertFrameCss retries TWO different
+    // TRANSIENT chrome.scripting.insertCSS failures — live-reported: even
+    // with frameId hardcoded to 0, the very first CSS_SET of a brand-new
+    // navigation (site-block.js's _fastPathDirectStyle() guess, firing at
+    // document_start) can hit either "No frame with id X in tab with id Y"
+    // (frame registry not caught up) or "Cannot access a chrome:// URL"
+    // (the tab's OWN current-URL bookkeeping not caught up — confirmed via
+    // a live diag log where the reported tab url was still "chrome://
+    // newtab/" while the CSS being inserted was already built from a real
+    // site's cached selectors, proving the content script itself was
+    // already running on a real page). Both confirmed transient (the same
+    // frame succeeds moments later) — covers both retry paths succeeding,
+    // and that a genuinely DIFFERENT error message is never retried. ──
+    {
+      let insertAttempts = 0;
+      chromeStub.scripting.insertCSS = async (opts) => {
+        insertAttempts++;
+        if (insertAttempts === 1) throw new Error('No frame with id 0 in tab with id 9002');
+        scriptingCalls.push({ op: 'insert', css: opts.css });
+      };
+      scriptingCalls.length = 0;
+      T.frameCss.delete('9003:0:direct');
+      await T.setFrameCss(9003, 0, 'direct', '.retry-guess{display:none!important}');
+      check('a transient "No frame with id" failure is retried, not given up on immediately',
+        insertAttempts === 2, insertAttempts);
+      check('...and the CSS is actually applied once the retry succeeds',
+        scriptingCalls.length === 1 && scriptingCalls[0].css === '.retry-guess{display:none!important}',
+        JSON.stringify(scriptingCalls));
+      check('bookkeeping reflects the CSS that landed on retry',
+        T.frameCss.get('9003:0:direct') === '.retry-guess{display:none!important}');
+
+      let insertAttempts3 = 0;
+      chromeStub.scripting.insertCSS = async (opts) => {
+        insertAttempts3++;
+        if (insertAttempts3 <= 2) throw new Error('Cannot access a chrome:// URL');
+        scriptingCalls.push({ op: 'insert', css: opts.css });
+      };
+      scriptingCalls.length = 0;
+      T.frameCss.delete('9005:0:direct');
+      await T.setFrameCss(9005, 0, 'direct', '.retry-guess-2{display:none!important}');
+      check('a transient "Cannot access a chrome://" failure is also retried',
+        insertAttempts3 === 3, insertAttempts3);
+      check('...and the CSS is applied once THAT retry succeeds',
+        scriptingCalls.length === 1 && scriptingCalls[0].css === '.retry-guess-2{display:none!important}',
+        JSON.stringify(scriptingCalls));
+
+      let insertAttempts2 = 0;
+      chromeStub.scripting.insertCSS = async () => {
+        insertAttempts2++;
+        throw new Error('Cannot access contents of the page');
+      };
+      scriptingCalls.length = 0;
+      T.frameCss.delete('9004:0:direct');
+      await T.setFrameCss(9004, 0, 'direct', '.no-retry{display:none!important}');
+      check('a DIFFERENT (non-transient) error message is never retried',
+        insertAttempts2 === 1, insertAttempts2);
+      check('...and nothing was applied', scriptingCalls.length === 0, JSON.stringify(scriptingCalls));
+
+      chromeStub.scripting.insertCSS = realInsertCSS;
+      T.frameCss.delete('9003:0:direct');
+      T.frameCss.delete('9004:0:direct');
+      T.frameCss.delete('9005:0:direct');
+    }
+
     // Explicit clear (falsy css) — unaffected by the reorder: nothing new to
     // insert first, so remove(prev) + delete bookkeeping, as before.
     scriptingCalls.length = 0;
@@ -3424,6 +3498,133 @@ function check(name, cond, detail = '') {
   // all). See content/site-block.js's _fastPathDirectStyle() own comment for
   // why; that mechanism lives entirely in the content-script world and isn't
   // covered by this file's background.js-only test harness.
+
+  // ── New (2026-09-17): per-visited-host GET_SITE_CONFIG cache ──
+  // background.js now persists each visited host's resolved {siteKey, site}
+  // answer (plus one shared `global` blob) hash-gated against the current
+  // rule text, so a revisited host can skip getParsedRules()'s full parse
+  // entirely on a cold service-worker start. Covers: fast-path hit skips
+  // the parse and returns the identical answer, a hash mismatch always
+  // falls through to the real (correct) resolution rather than ever serving
+  // a stale wrong one, a privacy-flag mismatch also falls through, LRU
+  // eviction at the cap, and reloadRules() clearing both new keys.
+  {
+    const sendMsg = (msg) => new Promise(res => messageListeners[0](msg, {}, res));
+    const HOST_KEY = 'siteConfigHostCacheV1';
+    const GLOBAL_KEY = 'siteConfigGlobalCacheV1';
+    const HOST = 'fastpath-cfg.example';
+
+    // Force the rule-text cache fresh (an earlier, unrelated section leaves
+    // siteRulesCacheTime at 0) so getRulesText() never fires its own
+    // non-awaited _refreshRulesTextInBackground() during this block — that
+    // background refresh sets _parsedRules = null on completion, which would
+    // otherwise race with (and falsify) this block's own _parsedRules checks.
+    await chromeStub.storage.local.set({ siteRulesCacheTime: Date.now() });
+    // Known starting state for gpcSignal/referrerAnonymization — an earlier,
+    // unrelated section in this shared test file can leave either at `true`,
+    // which would make this block's own gpcSignal-mismatch test below a
+    // false pass (comparing true against already-true instead of a real change).
+    await chromeStub.storage.local.set({ gpcSignal: false, referrerAnonymization: false });
+    await chromeStub.storage.local.remove([HOST_KEY, GLOBAL_KEY]);
+    T._resetParsedRulesCache();
+
+    const first = await sendMsg({ type: 'GET_SITE_CONFIG', host: HOST });
+    await T.siteConfigCacheWriteChain; // wait for the handler's fire-and-forget cache write to actually land
+    check('first GET_SITE_CONFIG call for a fresh host went through the real path',
+      T._parsedRules !== null);
+
+    // Simulate a cold SW restart: the in-memory parsed-rules memo is gone,
+    // but the new per-host cache (written by the first call) survives.
+    T._resetParsedRulesCache();
+    const second = await sendMsg({ type: 'GET_SITE_CONFIG', host: HOST });
+    check('fast-path hit returns the SAME answer as the real resolution',
+      JSON.stringify(second) === JSON.stringify(first), { first, second });
+    check('fast-path hit never triggered getParsedRules() — _parsedRules is still null',
+      T._parsedRules === null);
+
+    // Hash mismatch (as if the rule text changed since this entry was
+    // cached) must NEVER serve the stale cached answer.
+    const { [HOST_KEY]: hostMapBefore } = await chromeStub.storage.local.get(HOST_KEY);
+    await chromeStub.storage.local.set({
+      [HOST_KEY]: { ...hostMapBefore, [HOST]: { ...hostMapBefore[HOST], textHash: 'deliberately-wrong-hash' } },
+    });
+    T._resetParsedRulesCache();
+    const third = await sendMsg({ type: 'GET_SITE_CONFIG', host: HOST });
+    check('a hash mismatch falls through to the real path',
+      T._parsedRules !== null);
+    check('...and still returns the CORRECT answer, not the stale cached one',
+      JSON.stringify(third) === JSON.stringify(first), { first, third });
+
+    // gpcSignal affects the computed `global` blob — a stored entry from
+    // before the flag changed must not be served as-is.
+    await T.siteConfigCacheWriteChain;
+    T._resetParsedRulesCache();
+    await chromeStub.storage.local.set({ gpcSignal: true });
+    const withGpc = await sendMsg({ type: 'GET_SITE_CONFIG', host: HOST });
+    check('a settings-cache change (gpcSignal) is reflected in the response',
+      (withGpc.global.gpc_signal || []).includes('1'), withGpc.global);
+    check('...because it fell through to the real path, not a stale-flags fast-path hit',
+      T._parsedRules !== null);
+    await chromeStub.storage.local.set({ gpcSignal: false });
+    await T.siteConfigCacheWriteChain;
+
+    console.log('\n== New: per-visited-host cache LRU eviction ==');
+    await chromeStub.storage.local.remove([HOST_KEY, GLOBAL_KEY]);
+    const primed = {};
+    for (let i = 0; i < T.SITE_CONFIG_HOST_CACHE_LIMIT; i++) {
+      primed['host' + i + '.example'] = { siteKey: null, site: {}, textHash: 'x', ts: i };
+    }
+    await chromeStub.storage.local.set({
+      [HOST_KEY]: primed,
+      [GLOBAL_KEY]: { global: {}, textHash: 'x', gpcSignal: false, referrerAnonymization: false, ts: 1 },
+    });
+    await T._saveSiteConfigCacheEntry('new-host.example', null, {}, {}, 'x', false, false);
+    const { [HOST_KEY]: afterEvict } = await chromeStub.storage.local.get(HOST_KEY);
+    check('map stays at the cap after inserting one more (oldest evicted)',
+      Object.keys(afterEvict).length === T.SITE_CONFIG_HOST_CACHE_LIMIT, Object.keys(afterEvict).length);
+    check('the oldest-timestamp host (host0.example, ts=0) was the one evicted',
+      !('host0.example' in afterEvict), Object.keys(afterEvict));
+    check('the newly-inserted host is present',
+      'new-host.example' in afterEvict);
+
+    console.log('\n== New: reloadRules() clears the per-host/global cache too ==');
+    await T.reloadRules();
+    const cleared = await chromeStub.storage.local.get([HOST_KEY, GLOBAL_KEY]);
+    check('both new cache keys are gone after reloadRules()',
+      !cleared[HOST_KEY] && !cleared[GLOBAL_KEY], cleared);
+
+    console.log('\n== New: _writeLocalIfWithinQuota branches (setCachedRuleText/matcher-cache guard) ==');
+    const realGetBytesInUse = chromeStub.storage.local.getBytesInUse;
+
+    chromeStub.storage.local.getBytesInUse = async () => null;
+    await chromeStub.storage.local.remove('quotaTestKeyA');
+    const wroteOnNull = await T._writeLocalIfWithinQuota({ quotaTestKeyA: 'v' }, 'test-write-mode', 'write');
+    check('null bytesInUse + \'write\' mode (setCachedRuleText\'s case): write proceeds', wroteOnNull === true);
+    check('...and the value actually landed in storage',
+      (await chromeStub.storage.local.get('quotaTestKeyA')).quotaTestKeyA === 'v');
+
+    await chromeStub.storage.local.remove('quotaTestKeyB');
+    const skippedOnNull = await T._writeLocalIfWithinQuota({ quotaTestKeyB: 'v' }, 'test-skip-mode', 'skip');
+    check('null bytesInUse + \'skip\' mode (matcher-cache\'s case): write is skipped', skippedOnNull === false);
+    check('...and nothing landed in storage',
+      (await chromeStub.storage.local.get('quotaTestKeyB')).quotaTestKeyB === undefined);
+
+    chromeStub.storage.local.getBytesInUse = async () => 9 * 1024 * 1024; // already at/over the safe limit
+    await chromeStub.storage.local.remove('quotaTestKeyC');
+    const skippedOverLimit = await T._writeLocalIfWithinQuota({ quotaTestKeyC: 'v' }, 'test-over-limit', 'write');
+    check('known bytesInUse over the safe limit: write is skipped even in \'write\' mode', skippedOverLimit === false);
+    check('...and nothing landed in storage',
+      (await chromeStub.storage.local.get('quotaTestKeyC')).quotaTestKeyC === undefined);
+
+    chromeStub.storage.local.getBytesInUse = async () => 1000;
+    await chromeStub.storage.local.remove('quotaTestKeyD');
+    const wroteUnderLimit = await T._writeLocalIfWithinQuota({ quotaTestKeyD: 'v' }, 'test-under-limit', 'skip');
+    check('known bytesInUse comfortably under the limit: write proceeds', wroteUnderLimit === true);
+
+    chromeStub.storage.local.getBytesInUse = realGetBytesInUse;
+    await chromeStub.storage.local.remove(['quotaTestKeyA', 'quotaTestKeyB', 'quotaTestKeyC', 'quotaTestKeyD', HOST_KEY, GLOBAL_KEY]);
+    T._resetParsedRulesCache();
+  }
 
   // ── Regression (2026-09-15): applyReferrerAnonymization/applyGpcHeader/
   // applyDntHeader were merged into a shared _applySingleHeaderRule() body

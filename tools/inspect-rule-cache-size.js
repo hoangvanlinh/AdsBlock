@@ -36,9 +36,25 @@
     if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
     return (n / (1024 * 1024)).toFixed(2) + ' MB';
   }
-  function summarize(key, value) {
+  async function summarize(key, value) {
     if (value === undefined) return '(not set)';
-    if (key === 'siteRulesCacheText' || key === 'customRulesText') {
+    if (key === 'siteRulesCacheText') {
+      // Since the 2026-08-24 deflate-raw compression change, the stored
+      // value is a {format,data} wrapper object, not a bare string —
+      // String(value) on it stringifies to "[object Object]", so a plain
+      // split('\n') always reported "1 line". Decompress first, same as the
+      // runtime code does (getCachedRuleText -> _decompressFromStorage),
+      // using this SW console's own already-loaded copy of that function
+      // when this script is pasted here per its own header instructions.
+      if (typeof _decompressFromStorage === 'function') {
+        try {
+          const text = await _decompressFromStorage(value);
+          return `${text.split('\n').length} lines (decompressed)`;
+        } catch { /* fall through to the raw-value summary below */ }
+      }
+      return `${String(value).split('\n').length} lines (RAW — _decompressFromStorage not in scope, paste this into the extension's own SW console)`;
+    }
+    if (key === 'customRulesText') {
       const lines = String(value).split('\n').length;
       return `${lines} lines`;
     }
@@ -65,7 +81,7 @@
     } else {
       bytes = bytesOf(value);
     }
-    rows.push({ key, bytes, size: fmt(bytes), summary: summarize(key, value) });
+    rows.push({ key, bytes, size: fmt(bytes), summary: await summarize(key, value) });
   }
   rows.sort((a, b) => b.bytes - a.bytes);
 

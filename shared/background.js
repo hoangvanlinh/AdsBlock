@@ -67,6 +67,8 @@ const {
   RULES_CACHE_TEXT_KEY,
   RULES_CACHE_TIME_KEY,
   RULES_CACHE_TTL_MS,
+  SITE_CONFIG_HOST_CACHE_KEY,
+  SITE_CONFIG_GLOBAL_CACHE_KEY,
   NETWORK_BLOCK_MATCHER_CACHE_KEY,
   MALWARE_PATH_MATCHER_CACHE_KEY,
   RULE_SOURCE_ERRORS_KEY,
@@ -1415,6 +1417,47 @@ const LOCAL_STORAGE_SAFE_LIMIT_BYTES = 9 * 1024 * 1024;
 // case" — skip the write — never as "assume empty." Skipping just means that
 // cold start rebuilds the matcher from scratch, same as if this cache never
 // existed; it never blocks or breaks anything.
+// _writeLocalIfWithinQuota — shared guard for any chrome.storage.local write
+// that could plausibly grow large enough to risk pushing the whole area over
+// quota. Measures the payload's own byte size, checks it against current
+// usage via LocalStorage.getBytesInUse(), and only writes if there's room.
+//
+// `onUnknownBytesInUse` controls what happens when getBytesInUse() itself
+// returns null — API genuinely unavailable, Firefox's PERMANENT state here
+// (see tools/inspect-rule-cache-size.js's own comment), not just an
+// occasional failure:
+//   'skip'  — treat null as "assume worst case, don't risk it". Right for a
+//             pure speed-optimization cache (_saveMatcherCacheToLocal's
+//             matcher caches below): skipping just means a cheap rebuild
+//             next cold start, never blocks or breaks anything.
+//   'write' — attempt the write anyway. Right for setCachedRuleText: a
+//             Firefox user has NO other way to ever populate that cache
+//             (getBytesInUse() is null there forever, not just sometimes),
+//             so 'skip' would permanently disable the one mechanism that
+//             avoids a full remote refetch of every Rule Source on every
+//             cold start — strictly worse than an unguarded write.
+async function _writeLocalIfWithinQuota(payload, logLabel, onUnknownBytesInUse) {
+  try {
+    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload)).length;
+    const bytesInUse = await LocalStorage.getBytesInUse();
+    if (bytesInUse === null) {
+      if (onUnknownBytesInUse === 'skip') {
+        _diagLog('warn', logLabel + ' write skipped — bytesInUse unavailable, assuming worst case', { payloadBytes });
+        return false;
+      }
+      // onUnknownBytesInUse === 'write': fall through, attempt the write.
+    } else if (bytesInUse + payloadBytes > LOCAL_STORAGE_SAFE_LIMIT_BYTES) {
+      _diagLog('warn', logLabel + ' write skipped — would exceed storage.local quota', { bytesInUse, payloadBytes, limit: LOCAL_STORAGE_SAFE_LIMIT_BYTES });
+      return false;
+    }
+    await LocalStorage.set(payload);
+    return true;
+  } catch (e) {
+    _diagLog('error', logLabel + ' write FAILED', { error: e && (e.message || e) });
+    return false;
+  }
+}
+
 async function _loadMatcherCacheFromLocal(storageKey, cacheKey, rehydrateFn) {
   try {
     const { [storageKey]: cached } = await LocalStorage.get(storageKey);
@@ -1423,24 +1466,13 @@ async function _loadMatcherCacheFromLocal(storageKey, cacheKey, rehydrateFn) {
     if (!json) return null;
     return rehydrateFn(JSON.parse(json));
   } catch (e) {
-    console.warn('[AdBlock] local matcher cache read (' + storageKey + ') failed — falling through to a real build:', e);
+    _diagLog('warn', 'local matcher cache read (' + storageKey + ') failed — falling through to a real build', { error: e && (e.message || e) });
     return null;
   }
 }
 async function _saveMatcherCacheToLocal(storageKey, cacheKey, serializedObj) {
-  try {
-    const compressed = await _compressForStorage(JSON.stringify(serializedObj));
-    const payload = { [storageKey]: { key: cacheKey, compressed } };
-    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload)).length;
-    const bytesInUse = await LocalStorage.getBytesInUse();
-    if (bytesInUse === null || bytesInUse + payloadBytes > LOCAL_STORAGE_SAFE_LIMIT_BYTES) {
-      if (DEBUG_LOCAL) console.log('[AdBlock][DEBUG_LOCAL] skipping local matcher cache write (' + storageKey + ') — would risk exceeding storage.local quota', { bytesInUse, payloadBytes });
-      return;
-    }
-    await LocalStorage.set(payload);
-  } catch (e) {
-    console.warn('[AdBlock] local matcher cache write (' + storageKey + ') failed — next restart will just rebuild again:', e);
-  }
+  const compressed = await _compressForStorage(JSON.stringify(serializedObj));
+  await _writeLocalIfWithinQuota({ [storageKey]: { key: cacheKey, compressed } }, 'local matcher cache (' + storageKey + ')', 'skip');
 }
 
 async function getCachedRuleText() {
@@ -1460,13 +1492,11 @@ async function getCachedRuleText() {
 
 async function setCachedRuleText(text) {
   if (!text) return;
-  try {
-    const stored = await _compressForStorage(text);
-    await LocalStorage.set({
-      [RULES_CACHE_TEXT_KEY]: stored,
-      [RULES_CACHE_TIME_KEY]: Date.now(),
-    });
-  } catch {}
+  const stored = await _compressForStorage(text);
+  await _writeLocalIfWithinQuota({
+    [RULES_CACHE_TEXT_KEY]: stored,
+    [RULES_CACHE_TIME_KEY]: Date.now(),
+  }, 'siteRulesCacheText', 'write');
 }
 
 function isFreshRuleCache(entry) {
@@ -2786,6 +2816,7 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap,
 }
 
 async function fetchRemoteRuleText() {
+  const _t0 = DEBUG_LOCAL ? performance.now() : 0;
   const stored = await LocalStorage.get(['ruleSources', 'customRulesUrl', 'customRulesText', 'defaultRuleSourceEnabled', 'defaultRuleSourceOverrides']);
   const sources = stored.ruleSources;
   // priorityUrls holds enabled default sources whose `lang` matches the
@@ -2922,6 +2953,13 @@ async function fetchRemoteRuleText() {
   // failure, so this is a legitimate zero-rules result, not something to
   // paper over with the bundled local rules.
   await setCachedRuleText(merged);
+  if (DEBUG_LOCAL) {
+    _diagLog('log', 'fetchRemoteRuleText timing', {
+      ms: Math.round(performance.now() - _t0),
+      priorityUrlCount: priorityUrls.length, urlCount: urls.length,
+      mergedLength: merged.length,
+    });
+  }
   return merged;
 }
 
@@ -2932,12 +2970,22 @@ async function fetchLocalRuleText() {
 
 // ── Remote rules revalidation (ETag) ──────────────────────────────
 // The 6h TTL alone means an urgent rules fix can take up to 6h to reach
-// users. Instead, a 30-minute alarm revalidates every enabled default
+// users. Instead, a periodic alarm revalidates every enabled default
 // source with If-None-Match: a 304 response costs a few hundred bytes and
 // just extends the cache; only a real content change triggers the full
 // reload pipeline.
+//
+// 2026-09-17: raised from 30 to 120 minutes. This cost scales with the
+// number of enabled Rule Sources (61 default entries, several with more
+// than one url each — dozens of real HTTP round trips per fire), not with
+// how many pages the user actually visits, so it runs unconditionally on
+// this schedule the whole time the browser is open regardless of browsing
+// activity. Filter lists don't typically change more than a few times a
+// day, so 2h still reaches users same-day for an urgent fix while cutting
+// alarm-triggered revalidation 4x (48/day -> 12/day) — well inside the 6h
+// hard-TTL fallback above, which remains the actual safety net either way.
 const RULES_REVALIDATE_ALARM = 'rules-revalidate';
-const RULES_REVALIDATE_PERIOD_MIN = 30;
+const RULES_REVALIDATE_PERIOD_MIN = 120;
 // Both now { [url]: value } maps — one default source's ETag/hash per key,
 // since RULES_REMOTE_URL can hold more than one built-in source.
 const RULES_REMOTE_ETAG_KEY = 'siteRulesRemoteEtag';
@@ -3004,6 +3052,11 @@ async function reloadRules() {
     [RULES_CACHE_TEXT_KEY]: '',
     [RULES_CACHE_TIME_KEY]: 0,
   });
+  // Not required for correctness — _tryFastSiteConfig's own textHash gating
+  // already makes every entry here self-invalidating the moment the text
+  // changes — but avoids orphaned per-host/global entries (computed under an
+  // abandoned hash, never matched again) accumulating in storage forever.
+  await LocalStorage.remove([SITE_CONFIG_HOST_CACHE_KEY, SITE_CONFIG_GLOBAL_CACHE_KEY]);
   DEFAULT_RULES = [];
   MALWARE_RULES = [];
   AD_MAINFRAME_RULES = [];
@@ -3570,12 +3623,22 @@ function _refreshRulesTextInBackground() {
 // fallback). Used by rule-definition loading, GET_RULES_TEXT, and GET_SITE_CONFIG.
 async function getRulesText() {
   const cached = await getCachedRuleText();
-  // Debug build: never serve the cache — fetchRemoteRuleText() itself
-  // already swaps the bundled default entry for the local file when
-  // DEBUG_LOCAL is set (see its own comment), so a plain cache-skip here is
-  // all that's needed for local site-rules.txt edits to take effect on
-  // every reload instead of waiting out the 6h TTL.
-  if (!DEBUG_LOCAL && cached && cached.text) {
+  // 2026-09-17: used to skip this branch entirely whenever DEBUG_LOCAL was
+  // set, specifically so a locally-edited rule/site-rules.txt (swapped in by
+  // fetchRemoteRuleText() below when DEBUG_LOCAL is on — see its own
+  // comment) would take effect on every single call instead of waiting out
+  // the 6h TTL. Real cost, live-reported: DEBUG_LOCAL is meant to be a pure
+  // "show diagnostic logs" flag (see diag-logger.js), not a caching
+  // behavior — but this made it also force a FULL refetch of every enabled
+  // Rule Source (easylist, easyprivacy, badware, ...; several MB total) on
+  // EVERY GET_SITE_CONFIG call, i.e. every new tab, defeating the whole
+  // point of caching for anyone developing with DEBUG_LOCAL on. Caching now
+  // behaves identically regardless of DEBUG_LOCAL; if you're actively
+  // editing rule/site-rules.txt and need the change to land immediately
+  // rather than on the next natural cache refresh, use the dashboard's
+  // "reload rules" action (RULES_CHANGED -> reloadRules()) instead of
+  // relying on this function to always refetch.
+  if (cached && cached.text) {
     // Serve whatever's cached IMMEDIATELY, stale or not — a stale cache is
     // still far more correct than a multi-second visible-ad flash, and the
     // background refresh below (fire-and-forget, not awaited) means the
@@ -3587,9 +3650,8 @@ async function getRulesText() {
     return cached.text;
   }
   // No cache at all yet — e.g. the very first load before anything was ever
-  // cached, or DEBUG_LOCAL's own deliberate cache bypass — nothing to serve
-  // immediately, so (unlike the branch above) a real fetch is unavoidable
-  // right here.
+  // cached — nothing to serve immediately, so (unlike the branch above) a
+  // real fetch is unavoidable right here.
   try {
     return await fetchRemoteRuleText();
   } catch {
@@ -3626,17 +3688,157 @@ let _parsedRulesTextHash = null;
 // SW's own lifetime — repeated calls within one cold start (or one
 // message burst) still only parse once, same as before; only the
 // cross-restart persistence is gone.
+// Timing breakdown (2026-09-17) — live-reported correlation: a much smaller
+// enabled rule set makes insertCSS's transient frame/url-lag errors (see
+// _isTransientInsertCssError's own comment) go away almost entirely, which
+// only makes sense if a bigger rule set measurably lengthens the SW's own
+// cold-start work, extending the window during which a newly-opened tab's
+// content script can race against still-settling browser-side frame/tab
+// state. getRulesText() (fetch+decompress) and parseRuleText() (pure CPU,
+// synchronous, no yield points inside — the one most likely to actually
+// block the event loop and delay other messages like CSS_SET from being
+// handled at all) are timed SEPARATELY here so the real bottleneck is
+// visible instead of guessed at.
 async function getParsedRules() {
   if (_parsedRules) return _parsedRules;
   if (!_parsedRulesPromise) {
     _parsedRulesPromise = (async () => {
+      const tText0 = DEBUG_LOCAL ? performance.now() : 0;
       const text = await getRulesText();
+      const tText1 = DEBUG_LOCAL ? performance.now() : 0;
       _parsedRulesTextHash = _hashText(text);
+      const tParse0 = DEBUG_LOCAL ? performance.now() : 0;
       _parsedRules = parseRuleText(text);
+      const tParse1 = DEBUG_LOCAL ? performance.now() : 0;
+      if (DEBUG_LOCAL) {
+        _diagLog('log', 'getParsedRules timing', {
+          getRulesTextMs: Math.round(tText1 - tText0),
+          parseRuleTextMs: Math.round(tParse1 - tParse0),
+          textLength: text.length,
+          textHash: _parsedRulesTextHash,
+        });
+      }
       return _parsedRules;
     })().finally(() => { _parsedRulesPromise = null; });
   }
   return _parsedRulesPromise;
+}
+
+// ── Per-visited-host GET_SITE_CONFIG cache (2026-09-17) ─────────────
+// getParsedRules() above still re-parses the FULL merged text (~7-10MB,
+// 119k+ lines at real multi-source scale) on every service-worker cold
+// start — MV3 SWs terminate after ~30s idle, so this happens often. But
+// resolveSiteKey()/_getClassifiedGenericSelectors() are pure functions of
+// the parsed object, itself a pure function of the text: given the SAME
+// text, a host's resolved {siteKey, site} answer is always byte-identical
+// to what it was last time. So instead of a time-based TTL, this cache is
+// gated on the rule TEXT'S OWN HASH (_hashText, already used elsewhere in
+// this file, e.g. _parsedRulesTextHash) — a hit is never "probably still
+// correct," it's PROVABLY correct for the exact text currently in effect,
+// with zero risk of ever serving a stale answer.
+//
+// Two separate storage keys (see config.js's own comment on both) because
+// `global` is identical for every host — SITE_CONFIG_GLOBAL_CACHE_KEY holds
+// it ONCE, SITE_CONFIG_HOST_CACHE_KEY holds only the small per-host
+// {siteKey, site} part. Neither is compressed (_compressForStorage) — same
+// precedent as DIRECT_CSS_FASTPATH_KEY/SCRIPTLET_RULES_FASTPATH_KEY, small
+// enough that compression overhead isn't worth it.
+const _SITE_CONFIG_HOST_CACHE_LIMIT = 40; // a few KB/entry uncompressed -> ~150-200KB total, negligible vs LOCAL_STORAGE_SAFE_LIMIT_BYTES
+
+// Same evict-oldest-by-timestamp algorithm as content/site-block.js's own
+// _evictOldestLruEntry (that file's directCssFastPath/scriptletRulesFastPath
+// LRU maps) — reimplemented here rather than shared because background.js
+// (service worker) and site-block.js (isolated-world content script) are
+// separate JS realms with no shared module system in this codebase.
+function _evictOldestLruEntry(map) {
+  let oldestHost = null, oldestTs = Infinity;
+  for (const h in map) {
+    if (!Object.prototype.hasOwnProperty.call(map, h)) continue;
+    const ts = (map[h] && map[h].ts) || 0;
+    if (ts < oldestTs) { oldestTs = ts; oldestHost = h; }
+  }
+  if (oldestHost !== null) delete map[oldestHost];
+}
+
+async function _loadSiteConfigCacheEntry(host) {
+  try {
+    const stored = await LocalStorage.get([SITE_CONFIG_HOST_CACHE_KEY, SITE_CONFIG_GLOBAL_CACHE_KEY]);
+    const hostMap = stored[SITE_CONFIG_HOST_CACHE_KEY];
+    const globalEntry = stored[SITE_CONFIG_GLOBAL_CACHE_KEY];
+    const hostEntry = hostMap && hostMap[host];
+    if (!hostEntry || !globalEntry) return null;
+    return {
+      siteKey: hostEntry.siteKey,
+      site: hostEntry.site,
+      hostTextHash: hostEntry.textHash,
+      global: globalEntry.global,
+      globalTextHash: globalEntry.textHash,
+      gpcSignal: globalEntry.gpcSignal,
+      referrerAnonymization: globalEntry.referrerAnonymization,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Returns a ready-to-send {siteKey, global, site} GET_SITE_CONFIG response
+// ONLY when both the host entry and the shared global entry were computed
+// from the EXACT text currently in effect (textHash match) under the EXACT
+// same privacy-toggle state (gpcSignal/referrerAnonymization, which also
+// influence `global` — see the real resolution path's own comment) — never
+// a guess, always provably correct for right now. Returns null on any miss,
+// letting the caller fall through to the real getParsedRules() path.
+async function _tryFastSiteConfig(host, textHash, gpcSignal, referrerAnonymization) {
+  const entry = await _loadSiteConfigCacheEntry(host);
+  if (!entry) return null;
+  if (entry.hostTextHash !== textHash || entry.globalTextHash !== textHash) return null;
+  if (entry.gpcSignal !== gpcSignal || entry.referrerAnonymization !== referrerAnonymization) return null;
+  return { siteKey: entry.siteKey, global: entry.global, site: entry.site };
+}
+
+async function _saveSiteConfigCacheEntry(host, siteKey, site, global, textHash, gpcSignal, referrerAnonymization) {
+  try {
+    const stored = await LocalStorage.get([SITE_CONFIG_HOST_CACHE_KEY, SITE_CONFIG_GLOBAL_CACHE_KEY]);
+    const hostMap = { ...(stored[SITE_CONFIG_HOST_CACHE_KEY] || {}) };
+    const isNewHost = !Object.prototype.hasOwnProperty.call(hostMap, host);
+    if (isNewHost && Object.keys(hostMap).length >= _SITE_CONFIG_HOST_CACHE_LIMIT) _evictOldestLruEntry(hostMap);
+    hostMap[host] = { siteKey, site, textHash, ts: Date.now() };
+    // 'write' mode, not 'skip': unlike the matcher caches (which can be
+    // MB-scale), this whole cache is capped at ~150-200KB total (40 entries
+    // x a few KB) — low risk even written blind. On Firefox, getBytesInUse()
+    // is PERMANENTLY null (not just occasionally), so 'skip' mode would
+    // silently disable this entire cache, and this whole feature's benefit,
+    // forever — same reasoning as setCachedRuleText's own divergence above.
+    await _writeLocalIfWithinQuota({ [SITE_CONFIG_HOST_CACHE_KEY]: hostMap }, 'siteConfigHostCache', 'write');
+
+    const prevGlobal = stored[SITE_CONFIG_GLOBAL_CACHE_KEY];
+    const globalUnchanged = prevGlobal
+      && prevGlobal.textHash === textHash
+      && prevGlobal.gpcSignal === gpcSignal
+      && prevGlobal.referrerAnonymization === referrerAnonymization;
+    if (!globalUnchanged) {
+      await _writeLocalIfWithinQuota({
+        [SITE_CONFIG_GLOBAL_CACHE_KEY]: { global, textHash, gpcSignal, referrerAnonymization, ts: Date.now() },
+      }, 'siteConfigGlobalCache', 'write');
+    }
+  } catch (e) {
+    _diagLog('warn', 'siteConfigHostCache save FAILED', { host, error: e && (e.message || e) });
+  }
+}
+
+// GET_SITE_CONFIG fires once per FRAME on every navigation — several frames
+// (main + iframes, or several tabs) can resolve concurrently and each queue
+// their own _saveSiteConfigCacheEntry call. Read-modify-write on the SAME
+// hostMap object without serialization would let a slower write clobber a
+// faster one's addition (both read the same stale map before either writes
+// back) — same race _enqueueStatWrite (this file's stats accumulator) exists
+// to prevent, same fix: chain every call onto one promise so writes apply
+// one at a time, each seeing the previous one's result.
+let _siteConfigCacheWriteChain = Promise.resolve();
+function _enqueueSiteConfigCacheSave(...args) {
+  _siteConfigCacheWriteChain = _siteConfigCacheWriteChain
+    .then(() => _saveSiteConfigCacheEntry(...args))
+    .catch(e => _diagLog('warn', 'siteConfigHostCache queued save FAILED', { error: e && (e.message || e) }));
 }
 
 // Resolve hostname against the dynamic [host_patterns] section.
@@ -3842,6 +4044,7 @@ function _dedupeMalwarePriority(config) {
 async function ensureRuleDefinitionsLoaded() {
   if (DEFAULT_RULES.length && MALWARE_RULES.length && AD_MAINFRAME_RULES.length) return;
   if (!_ruleConfigPromise) {
+    const _t0 = DEBUG_LOCAL ? performance.now() : 0;
     _ruleConfigPromise = (async () => {
       const parsed = await getParsedRules();
       const global = parsed.global || {};
@@ -3940,6 +4143,7 @@ async function ensureRuleDefinitionsLoaded() {
       MALWARE_KEYWORDS.splice(0, MALWARE_KEYWORDS.length, ...config.malwarePatterns);
       _ruleGeneration++; // invalidates _ruleFingerprint() — static rule defs just changed
       _diagLog('log', 'ensureRuleDefinitionsLoaded REAL BUILD finished', {
+        ms: DEBUG_LOCAL ? Math.round(performance.now() - _t0) : undefined,
         DEFAULT_RULES: DEFAULT_RULES.length, MALWARE_RULES: MALWARE_RULES.length, AD_MAINFRAME_RULES: AD_MAINFRAME_RULES.length,
         NETWORK_BLOCK_MATCHER: NETWORK_BLOCK_MATCHER.size, HTML_FILTER_MATCHER: HTML_FILTER_MATCHER.size,
         MALWARE_PATH_MATCHER: MALWARE_PATH_MATCHER.size, NETWORK_BLOCK_RULES: NETWORK_BLOCK_RULES.length,
@@ -5201,8 +5405,68 @@ function _frameCssKey(tabId, frameId, slot) {
 // banner with no CSS fallback masking the result — restored the same day.
 // Leaving this disabled by mistake breaks cosmetic hiding on EVERY site, so
 // don't disable it again without a very good reason.)
+//
+// _isTransientInsertCssError/retry loop (2026-09-17) — live-reported: using
+// the REAL sender.frameId (see the message handler below — an earlier
+// attempt at this fix hardcoded frameId to 0, on the theory that this
+// content script's `all_frames:false` manifest entry means it only ever
+// targets "the tab's main frame" and 0 is always valid for that meaning;
+// reverted — Chrome's frame id for that meaning isn't provably always 0 the
+// instant a brand-new navigation's content script runs, and forcing 0
+// regardless of what Chrome actually reported risked applying a guess
+// computed for one document onto a DIFFERENT frame instance that happens to
+// also be id 0 at that moment. Trusting sender.frameId is the honest fix;
+// this retry loop is what actually recovers the transient cases instead),
+// site-block.js's _fastPathDirectStyle() guess (fires essentially at the
+// instant document_start content scripts start running, before
+// GET_SITE_CONFIG's own round trip even begins) can hit two DIFFERENT
+// transient chrome.scripting.insertCSS failures depending on exactly how
+// early it lands:
+//   - "No frame with id X in tab with id Y" — chrome.scripting's own
+//     internal FRAME registry for that exact frame id hadn't caught up yet.
+//     Live-observed with a real but SHORT-LIVED frame id (e.g. 12799) that
+//     never became valid again — a known Chromium quirk where a transient
+//     pre-navigation document can receive its own short-lived frame
+//     identity before the real navigated document (frame id 0, in every
+//     observed case) takes over. Retrying the SAME id here can't recover
+//     that specific case (the id is genuinely gone, not just "not yet
+//     registered") — harmless: the real document's own later 'direct'
+//     CSS_SET carries the REAL frame id and succeeds independently, so
+//     ad-hiding on the actual page is unaffected either way. This retry
+//     still earns its keep for the case where the id Chrome reported IS the
+//     real, final frame, just not registered in chrome.scripting's internal
+//     table microseconds yet — indistinguishable from the dead-transient
+//     case by error message alone, so both are retried the same way.
+//   - "Cannot access a chrome:// URL" — chrome.scripting's own internal
+//     notion of the tab's CURRENT URL hadn't caught up yet, live-confirmed
+//     via the diag log's own `url` field: every occurrence reported the tab
+//     as still "chrome://newtab/" while the CSS being inserted was already
+//     built from a REAL site's cached selectors (the content script's own
+//     location.hostname, always accurate — a page genuinely still on
+//     chrome://newtab/ never runs content scripts at all, so receiving this
+//     message already proves the tab is on a real page). This one DOES
+//     reliably recover on retry against the same frame id — confirmed
+//     live — since it's the SAME real frame the whole time, just Chrome's
+//     own url-tracking metadata lagging, not a different frame instance.
+// Anything else (e.g. a closed tab, invalid CSS) fails a DIFFERENT error
+// message and is deliberately NOT retried, so a genuinely permanent failure
+// still surfaces immediately via _diagLog.
+function _isTransientInsertCssError(e) {
+  const msg = e && (e.message || String(e));
+  if (typeof msg !== 'string') return false;
+  return msg.indexOf('No frame with id') !== -1 || msg.indexOf('Cannot access a chrome://') !== -1;
+}
 async function _insertFrameCss(tabId, frameId, css) {
-  await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
+  const retryDelaysMs = [20, 60, 150];
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await EXT.scripting.insertCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
+      return;
+    } catch (e) {
+      if (attempt >= retryDelaysMs.length || !_isTransientInsertCssError(e)) throw e;
+      await new Promise(resolve => setTimeout(resolve, retryDelaysMs[attempt]));
+    }
+  }
 }
 async function _removeFrameCss(tabId, frameId, css) {
   await EXT.scripting.removeCSS({ target: { tabId, frameIds: [frameId] }, css, origin: 'USER' });
@@ -6437,19 +6701,26 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // path here — so nothing below it should do a fresh
         // chrome.storage.local.get() or rebuild an object that didn't change.
         try {
-          const parsed = await getParsedRules();
           const host = String(msg.host || '').toLowerCase();
+          const { gpcSignal, referrerAnonymization } = _settingsCache;
+          // Fast path (2026-09-17, see _tryFastSiteConfig's own comment):
+          // getRulesText() only decompresses the cached text (~2ms) — no
+          // parse — so a revisited host can skip getParsedRules()'s full
+          // parseRuleText() over the whole merged text entirely on a cold
+          // service-worker start, IF the text hasn't changed since this
+          // host's answer was last computed (hash-gated, never a guess).
+          const text = await getRulesText();
+          const textHash = _hashText(text);
+          const fast = await _tryFastSiteConfig(host, textHash, gpcSignal, referrerAnonymization);
+          if (fast) { sendResponse(fast); break; }
+
+          const parsed = await getParsedRules();
           const siteKey = resolveSiteKey(parsed.host_patterns || {}, host);
           // gpcSignal/referrerAnonymization are chrome.storage privacy
           // toggles, not site-rules.txt keys — synthesized here as flag-style
           // global entries so they ride the same SCRIPTLET_KEYS pipeline as
           // every other MAIN-world scriptlet, with no [global] override path
           // to worry about (see background.js:1305-1345 applyPrivacySettings).
-          // Read from _settingsCache (kept in sync via storage.onChanged, see
-          // its own comment) instead of chrome.storage.local.get() — this
-          // used to be a real per-call storage IPC round-trip on every single
-          // frame/navigation, confirmed 2026-08-23.
-          const { gpcSignal, referrerAnonymization } = _settingsCache;
           // The computed `global` object only actually changes when parsed
           // (a stable reference across calls — see getParsedRules()'s own
           // comment) or these two flags change, so memoize it instead of
@@ -6470,11 +6741,9 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             if (referrerAnonymization) global.hide_document_referrer = ['1'];
             _siteConfigGlobalMemo = { parsed, gpcSignal, referrerAnonymization, global };
           }
-          sendResponse({
-            siteKey,
-            global,
-            site: (siteKey && parsed[siteKey]) || {},
-          });
+          const site = (siteKey && parsed[siteKey]) || {};
+          _enqueueSiteConfigCacheSave(host, siteKey, site, global, textHash, gpcSignal, referrerAnonymization); // fire-and-forget, serialized
+          sendResponse({ siteKey, global, site });
         } catch {
           sendResponse(null);
         }

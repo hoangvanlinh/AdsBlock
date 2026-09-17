@@ -138,15 +138,6 @@ window.__qkv1UnhideAll=function(){
     el.style.removeProperty('overflow');
   });
   _hiddenEls.clear();
-  // content.js's CSS_CLEAR_ALL (sent alongside this call — see
-  // disableCosmeticCss()) only clears chrome.scripting.insertCSS'd slots;
-  // _fastPathDirectStyle()'s guess is a plain DOM <style> node that bypasses
-  // that bookkeeping entirely and needs its own explicit teardown here, or a
-  // paused/disabled site would keep hiding ads via the leftover guess.
-  // _clearFastpathDomStyle is a hoisted function declaration (defined later
-  // in this same file/closure) — safe to call from here regardless of
-  // textual order, same pattern _fastPathDirectStyle() itself relies on.
-  _clearFastpathDomStyle();
 };
 
 function normalizeText(value){
@@ -583,32 +574,53 @@ function _injectDirectStyle(){
   }catch(e){}
 }
 
-// _fastPathDirectStyle — applies the LAST successfully-computed 'direct'
-// CSS for THIS host (from its own last visit — see the LRU map comment near
-// _fpStorage above) as early as possible at content-script start, before
-// loadSite()'s GET_SITE_CONFIG round-trip to background even resolves. That
-// round-trip is fast on a warm service worker but can cost a
-// chrome.storage.session read (cold-started SW) or a full remote rule fetch
-// (no valid parsed-rules cache yet) with no timeout — during which ads
-// would otherwise flash unhidden.
+// _fastPathDirectStyle — restored 2026-09-17 (real-world report: a SECOND
+// tab opened to an already-visited host felt noticeably slower to hide ads
+// than expected — exactly the gap this fast path exists to close). Applies
+// the LAST successfully-computed 'direct' CSS for THIS host (see the LRU map
+// comment near _fpStorage above) as early as possible at content-script
+// start, before loadSite()'s GET_SITE_CONFIG round-trip to background even
+// resolves — that round-trip is fast on a warm service worker but can cost a
+// chrome.storage read (cold-started SW) or a full remote rule fetch (no
+// valid parsed-rules cache yet) with no timeout, during which ads would
+// otherwise flash unhidden.
 //
-// 2026-09-14 briefly collapsed this into a single CSS_FASTPATH_APPLY message
-// (content names the host, background reads its own cache and applies via
-// insertCSS) to cut down on IPC round trips. Reverted 2026-09-15: live A/B
-// testing a plain DOM <style> node (this function's current body) against
-// that message+insertCSS path showed the DOM node measurably faster and
-// smoother — appending a <style> element is fully same-process/synchronous
-// once the storage read resolves, with no cross-process IPC to the browser
-// process and back at all, unlike insertCSS. Trade-off accepted knowingly:
-// this DOES reintroduce a page-visible, document.styleSheets-enumerable
-// <style> node for the brief guess window (exactly what background.js's
-// insertCSS path was originally built to avoid — see its own "Per-frame
-// cosmetic CSS injection" comment) — kept as short-lived as possible by
-// _clearFastpathDomStyle(), called the instant the real selectors land
-// (_injectDirectStyle()) or cosmetic hiding is disabled (__qkv1UnhideAll,
-// below). The REAL, longer-lived 'direct' CSS (_injectDirectStyle(), once
-// GET_SITE_CONFIG resolves) still goes through background/insertCSS as
-// before — only this early, inherently-transient guess uses the DOM node.
+// Deliberately back to the ORIGINAL (pre-2026-09-14) shape — read _fpStorage
+// client-side (already session-first, .local-fallback — see that file's own
+// comment, no change needed there), THEN send the result through
+// _sendCssSlot('direct', css), the EXACT same CSS_SET message/insertCSS path
+// _injectDirectStyle() below uses for the real selectors. Two things this
+// session tried and reverted in between, both explicitly rejected by now:
+// (1) 2026-09-14's CSS_FASTPATH_APPLY message (background does the storage
+// read itself, one round trip instead of two) — removed 2026-09-17, back to
+// this two-round-trip-but-simpler shape by request. (2) a plain
+// document.createElement('style') DOM node applied directly, no background
+// involved at all — faster still, but a page-visible/document.styleSheets-
+// enumerable node; also removed 2026-09-17. This version has NEITHER
+// downside: no new message type in background.js, and no DOM footprint at
+// all — insertCSS is exactly as invisible to the page as the real path.
+// When the REAL selectors land moments later, _injectDirectStyle() just
+// re-sends the SAME 'direct' slot; background's insert-new-before-remove-old
+// reordering (setFrameCss) means this guess-then-real handoff never flashes.
+//
+// _FASTPATH_SEND_DELAY_MS (2026-09-17) — live-reported: this function can
+// fire literally AT document_start, sometimes early enough that the frame
+// it's running in is still a transient pre-navigation document Chrome is
+// about to discard in favor of the real navigated one (confirmed via
+// background.js's own diagnostic log: "No frame with id X in tab with id Y"
+// even after background.js's own retry loop exhausted every attempt over
+// ~230ms — see _isTransientInsertCssError's own comment — proving that
+// specific frame id was genuinely gone, not just slow to register).
+// Retrying harder on the RECEIVING end can't fix a frame that's already
+// discarded; the only lever THIS side has is not sending quite so early.
+// A short deliberate wait here, AFTER the (already async) _fpStorage.get()
+// resolves, gives the real navigation a better chance to have already
+// "won" and settled into its own stable frame before this ever calls
+// _sendCssSlot — trading a few ms off the guess's head start for a higher
+// odds of it actually landing. Harmless either way if it still loses that
+// race: the real 'direct' CSS_SET (once GET_SITE_CONFIG resolves) always
+// follows up independently regardless of whether this guess ever applied.
+const _FASTPATH_SEND_DELAY_MS=5;
 function _fastPathDirectStyle(){
   if(!extValid())return;
   try{
@@ -618,12 +630,14 @@ function _fastPathDirectStyle(){
       if(!entry||!entry.sel||!entry.sel.length)return;
       var css=entry.sel.map(function(s){return _scopedDirectRule(s);}).join('\n\n');
       if(!css)return;
-      try{
+      
+       try{
         var style=document.createElement('style');
         style.textContent=css;
         (document.documentElement||document.head||document.body).appendChild(style);
         _fastpathStyleEl=style;
       }catch(e){}
+      _sendCssSlot('direct',css);
     }).catch(function(){});
   }catch(e){}
 }
