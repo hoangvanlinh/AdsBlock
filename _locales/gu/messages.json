@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "તમે જ્યાંથી આવ્યા હતા તે પેજ પરની ક્લિકે આ જાહેરાત/પોપઅપ નેટવર્કને નવી ટેબમાં ખોલવાનો પ્રયાસ કર્યો. તમે આ ટેબ સુરક્ષિત રીતે બંધ કરી શકો છો."
   },
+  "overlay_focus_title": {
+    "message": "ફોકસ સેશન ચાલુ છે"
+  },
+  "overlay_focus_hint": {
+    "message": "આ સાઇટ તમારી વિક્ષેપ સૂચિમાં છે અને સેશન સમાપ્ત ન થાય ત્યાં સુધી ઢંકાયેલી રહે છે."
+  },
+  "overlay_phase_work": {
+    "message": "ફોકસ"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "વિરામ"
+  },
+  "overlay_phase_longBreak": {
+    "message": "લાંબો વિરામ"
+  },
+  "overlay_limit_title": {
+    "message": "દૈનિક સમય મર્યાદા પૂર્ણ થઈ"
+  },
+  "overlay_limit_hint": {
+    "message": "તમે આજ માટે આ સાઇટનું સમય બજેટ વાપરી નાખ્યું છે. મધ્યરાત્રિ પછી તે ફરીથી ઉપલબ્ધ થશે."
+  },
   "blocked_dontWarn_label": {
     "message": "આ સાઇટ વિશે મને ફરી ચેતવણી ન આપો"
   },

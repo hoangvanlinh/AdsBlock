@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Klikšķis vietnē, no kuras jūs atnācāt, mēģināja atvērt šo reklāmas/uznirstošā loga tīklu jaunā cilnē. Šo cilni var droši aizvērt."
   },
+  "overlay_focus_title": {
+    "message": "Notiek koncentrēšanās sesija"
+  },
+  "overlay_focus_hint": {
+    "message": "Šī vietne ir jūsu novēršanas sarakstā un paliek pārklāta, līdz sesija beidzas."
+  },
+  "overlay_phase_work": {
+    "message": "Koncentrēšanās"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pārtraukums"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Garš pārtraukums"
+  },
+  "overlay_limit_title": {
+    "message": "Sasniegts dienas laika limits"
+  },
+  "overlay_limit_hint": {
+    "message": "Jūs esat izmantojis šodienas laika budžetu šai vietnei. Tā būs pieejama atkal pēc pusnakts."
+  },
   "blocked_dontWarn_label": {
     "message": "Vairs nebrīdināt mani par šo vietni"
   },

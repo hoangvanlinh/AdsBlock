@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Ein Klick auf der Seite, von der Sie kamen, hat versucht, dieses Werbe-/Popup-Netzwerk in einem neuen Tab zu öffnen. Sie können diesen Tab bedenkenlos schließen."
   },
+  "overlay_focus_title": {
+    "message": "Fokus-Sitzung läuft"
+  },
+  "overlay_focus_hint": {
+    "message": "Diese Seite steht auf deiner Ablenkungsliste und bleibt verdeckt, bis die Sitzung endet."
+  },
+  "overlay_phase_work": {
+    "message": "Fokus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pause"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Lange Pause"
+  },
+  "overlay_limit_title": {
+    "message": "Tägliches Zeitlimit erreicht"
+  },
+  "overlay_limit_hint": {
+    "message": "Du hast dein heutiges Zeitbudget für diese Seite aufgebraucht. Sie ist nach Mitternacht wieder verfügbar."
+  },
   "blocked_dontWarn_label": {
     "message": "Nicht erneut vor dieser Website warnen"
   },

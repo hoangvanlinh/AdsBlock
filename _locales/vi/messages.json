@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Một cú click trên trang bạn vừa vào đã cố mở mạng quảng cáo/popup này trong tab mới. Bạn có thể an toàn đóng tab này."
   },
+  "overlay_focus_title": {
+    "message": "Phiên tập trung đang diễn ra"
+  },
+  "overlay_focus_hint": {
+    "message": "Trang này nằm trong danh sách gây xao nhãng của bạn và sẽ bị che cho đến khi phiên kết thúc."
+  },
+  "overlay_phase_work": {
+    "message": "Tập trung"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Nghỉ giải lao"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Nghỉ dài"
+  },
+  "overlay_limit_title": {
+    "message": "Đã đạt giới hạn thời gian hàng ngày"
+  },
+  "overlay_limit_hint": {
+    "message": "Bạn đã dùng hết ngân sách thời gian hôm nay cho trang này. Trang sẽ khả dụng trở lại sau nửa đêm."
+  },
   "blocked_dontWarn_label": {
     "message": "Không cảnh báo tôi về trang này nữa"
   },

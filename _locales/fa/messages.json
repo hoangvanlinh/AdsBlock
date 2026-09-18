@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "کلیک در صفحه‌ای که از آن آمدید تلاش کرد این شبکهٔ آگهی/بازشو را در برگهٔ جدیدی باز کند. می‌توانید این برگه را با خیال راحت ببندید."
   },
+  "overlay_focus_title": {
+    "message": "جلسه تمرکز در حال انجام است"
+  },
+  "overlay_focus_hint": {
+    "message": "این سایت در فهرست حواس‌پرتی شماست و تا پایان جلسه پوشیده می‌ماند."
+  },
+  "overlay_phase_work": {
+    "message": "تمرکز"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "استراحت"
+  },
+  "overlay_phase_longBreak": {
+    "message": "استراحت طولانی"
+  },
+  "overlay_limit_title": {
+    "message": "محدودیت زمانی روزانه به پایان رسید"
+  },
+  "overlay_limit_hint": {
+    "message": "بودجه زمانی امروز برای این سایت تمام شده است. پس از نیمه‌شب دوباره در دسترس خواهد بود."
+  },
   "blocked_dontWarn_label": {
     "message": "دربارهٔ این سایت دیگر به من هشدار نده"
   },

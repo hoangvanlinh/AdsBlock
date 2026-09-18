@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "การคลิกบนหน้าที่คุณมาจากพยายามเปิดเครือข่ายโฆษณา/ป๊อปอัปนี้ในแท็บใหม่ คุณสามารถปิดแท็บนี้ได้อย่างปลอดภัย"
   },
+  "overlay_focus_title": {
+    "message": "เซสชันโฟกัสกำลังดำเนินอยู่"
+  },
+  "overlay_focus_hint": {
+    "message": "เว็บไซต์นี้อยู่ในรายการที่ทำให้ไขว้เขวของคุณ และจะถูกปิดบังไว้จนกว่าเซสชันจะสิ้นสุด"
+  },
+  "overlay_phase_work": {
+    "message": "โฟกัส"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "พัก"
+  },
+  "overlay_phase_longBreak": {
+    "message": "พักยาว"
+  },
+  "overlay_limit_title": {
+    "message": "ถึงขีดจำกัดเวลาต่อวันแล้ว"
+  },
+  "overlay_limit_hint": {
+    "message": "คุณใช้งบประมาณเวลาสำหรับเว็บไซต์นี้ในวันนี้หมดแล้ว จะกลับมาใช้งานได้อีกครั้งหลังเที่ยงคืน"
+  },
   "blocked_dontWarn_label": {
     "message": "อย่าเตือนฉันเกี่ยวกับเว็บไซต์นี้อีก"
   },

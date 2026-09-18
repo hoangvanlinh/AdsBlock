@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Ett klick på sidan du kom från försökte öppna detta annons-/popupnätverk i en ny flik. Du kan tryggt stänga den här fliken."
   },
+  "overlay_focus_title": {
+    "message": "Fokussession pågår"
+  },
+  "overlay_focus_hint": {
+    "message": "Den här webbplatsen finns på din distraktionslista och förblir övertäckt tills sessionen avslutas."
+  },
+  "overlay_phase_work": {
+    "message": "Fokus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Paus"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Lång paus"
+  },
+  "overlay_limit_title": {
+    "message": "Daglig tidsgräns nådd"
+  },
+  "overlay_limit_hint": {
+    "message": "Du har använt dagens tidsbudget för den här webbplatsen. Den blir tillgänglig igen efter midnatt."
+  },
   "blocked_dontWarn_label": {
     "message": "Varna mig inte om denna webbplats igen"
   },

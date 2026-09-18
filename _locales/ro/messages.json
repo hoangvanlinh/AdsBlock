@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Un clic pe pagina de la care ai venit a încercat să deschidă această rețea de reclame/pop-up-uri într-o filă nouă. Poți închide în siguranță această filă."
   },
+  "overlay_focus_title": {
+    "message": "Sesiune de concentrare în desfășurare"
+  },
+  "overlay_focus_hint": {
+    "message": "Acest site se află pe lista ta de distrageri și rămâne acoperit până la finalul sesiunii."
+  },
+  "overlay_phase_work": {
+    "message": "Concentrare"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pauză"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Pauză lungă"
+  },
+  "overlay_limit_title": {
+    "message": "Limita zilnică de timp a fost atinsă"
+  },
+  "overlay_limit_hint": {
+    "message": "Ai epuizat bugetul de timp de azi pentru acest site. Va fi din nou disponibil după miezul nopții."
+  },
   "blocked_dontWarn_label": {
     "message": "Nu mă mai avertiza despre acest site"
   },

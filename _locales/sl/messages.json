@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Klik na strani, s katere prihajate, je poskusil odpreti to oglasno/pojavno omrežje v novem zavihku. Ta zavihek lahko varno zaprete."
   },
+  "overlay_focus_title": {
+    "message": "Seja osredotočenosti v teku"
+  },
+  "overlay_focus_hint": {
+    "message": "To mesto je na vašem seznamu motenj in ostane prekrito do konca seje."
+  },
+  "overlay_phase_work": {
+    "message": "Osredotočenost"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Odmor"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Dolg odmor"
+  },
+  "overlay_limit_title": {
+    "message": "Dosežena dnevna časovna omejitev"
+  },
+  "overlay_limit_hint": {
+    "message": "Porabili ste današnji časovni proračun za to mesto. Spet bo na voljo po polnoči."
+  },
   "blocked_dontWarn_label": {
     "message": "Ne opozori me več za to stran"
   },

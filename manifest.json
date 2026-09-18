@@ -38,7 +38,7 @@
       "matches": [
         "<all_urls>"
       ],
-      "js": ["shared/config.js", "shared/browser-compat.js", "shared/utils.js", "shared/i18n.js", "content/site-rules-loader.js", "shared/diag-logger.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
+      "js": ["shared/config.js", "shared/browser-compat.js", "shared/utils.js", "shared/i18n.js", "content/site-rules-loader.js", "shared/diag-logger.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js", "content/focus-block-overlay.js"],
       "run_at": "document_start",
       "all_frames": false
     }

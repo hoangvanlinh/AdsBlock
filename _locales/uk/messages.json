@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Клік на сторінці, з якої ви прийшли, намагався відкрити цю рекламну/спливаючу мережу в новій вкладці. Цю вкладку можна безпечно закрити."
   },
+  "overlay_focus_title": {
+    "message": "Триває сесія фокусування"
+  },
+  "overlay_focus_hint": {
+    "message": "Цей сайт у вашому списку відволікань і залишається прихованим до завершення сесії."
+  },
+  "overlay_phase_work": {
+    "message": "Фокус"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Перерва"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Довга перерва"
+  },
+  "overlay_limit_title": {
+    "message": "Досягнуто денного ліміту часу"
+  },
+  "overlay_limit_hint": {
+    "message": "Ви вичерпали сьогоднішній бюджет часу для цього сайту. Він знову стане доступним після півночі."
+  },
   "blocked_dontWarn_label": {
     "message": "Більше не попереджати про цей сайт"
   },

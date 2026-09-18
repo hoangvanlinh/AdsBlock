@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "이전 페이지에서의 클릭이 이 광고/팝업 네트워크를 새 탭에서 열려고 시도했습니다. 이 탭은 안전하게 닫아도 됩니다."
   },
+  "overlay_focus_title": {
+    "message": "집중 세션 진행 중"
+  },
+  "overlay_focus_hint": {
+    "message": "이 사이트는 방해 목록에 있으며 세션이 끝날 때까지 가려집니다."
+  },
+  "overlay_phase_work": {
+    "message": "집중"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "휴식"
+  },
+  "overlay_phase_longBreak": {
+    "message": "긴 휴식"
+  },
+  "overlay_limit_title": {
+    "message": "일일 시간 한도에 도달했습니다"
+  },
+  "overlay_limit_hint": {
+    "message": "오늘 이 사이트에 대한 시간 예산을 모두 사용했습니다. 자정 이후에 다시 이용할 수 있습니다."
+  },
   "blocked_dontWarn_label": {
     "message": "이 사이트에 대해 다시 경고하지 않음"
   },

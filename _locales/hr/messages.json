@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Klik na stranici s koje ste došli pokušao je otvoriti ovu oglasnu/skočnu mrežu u novoj kartici. Ovu karticu možete sigurno zatvoriti."
   },
+  "overlay_focus_title": {
+    "message": "Sesija fokusa u tijeku"
+  },
+  "overlay_focus_hint": {
+    "message": "Ova stranica je na vašem popisu ometanja i ostaje prekrivena dok sesija ne završi."
+  },
+  "overlay_phase_work": {
+    "message": "Fokus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Odmor"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Dugi odmor"
+  },
+  "overlay_limit_title": {
+    "message": "Dosegnut dnevni vremenski limit"
+  },
+  "overlay_limit_hint": {
+    "message": "Iskoristili ste današnji vremenski proračun za ovu stranicu. Ponovno će biti dostupna nakon ponoći."
+  },
   "blocked_dontWarn_label": {
     "message": "Ne upozoravaj me ponovno za ovo web-mjesto"
   },

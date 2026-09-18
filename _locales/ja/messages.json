@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "移動元のページでのクリックが、この広告/ポップアップネットワークを新しいタブで開こうとしました。このタブは安全に閉じることができます。"
   },
+  "overlay_focus_title": {
+    "message": "フォーカスセッション進行中"
+  },
+  "overlay_focus_hint": {
+    "message": "このサイトは気が散るサイトのリストに含まれており、セッションが終了するまで非表示のままです。"
+  },
+  "overlay_phase_work": {
+    "message": "フォーカス"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "休憩"
+  },
+  "overlay_phase_longBreak": {
+    "message": "長い休憩"
+  },
+  "overlay_limit_title": {
+    "message": "1日の利用時間の上限に達しました"
+  },
+  "overlay_limit_hint": {
+    "message": "このサイトの本日の利用時間を使い切りました。深夜以降に再び利用できます。"
+  },
   "blocked_dontWarn_label": {
     "message": "このサイトについて今後警告しない"
   },

@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Un clic sur la page d'origine a tenté d'ouvrir ce réseau publicitaire/pop-up dans un nouvel onglet. Vous pouvez fermer cet onglet en toute sécurité."
   },
+  "overlay_focus_title": {
+    "message": "Session de concentration en cours"
+  },
+  "overlay_focus_hint": {
+    "message": "Ce site fait partie de votre liste de distractions et reste masqué jusqu'à la fin de la session."
+  },
+  "overlay_phase_work": {
+    "message": "Concentration"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pause"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Pause longue"
+  },
+  "overlay_limit_title": {
+    "message": "Limite de temps quotidienne atteinte"
+  },
+  "overlay_limit_hint": {
+    "message": "Vous avez épuisé votre budget de temps quotidien pour ce site. Il sera de nouveau disponible après minuit."
+  },
   "blocked_dontWarn_label": {
     "message": "Ne plus m'avertir pour ce site"
   },

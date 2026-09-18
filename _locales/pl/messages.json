@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Kliknięcie na stronie, z której przyszedłeś, próbowało otworzyć tę sieć reklamową/wyskakujące okienko w nowej karcie. Możesz bezpiecznie zamknąć tę kartę."
   },
+  "overlay_focus_title": {
+    "message": "Trwa sesja skupienia"
+  },
+  "overlay_focus_hint": {
+    "message": "Ta strona znajduje się na Twojej liście rozpraszaczy i pozostaje zakryta do końca sesji."
+  },
+  "overlay_phase_work": {
+    "message": "Skupienie"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Przerwa"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Długa przerwa"
+  },
+  "overlay_limit_title": {
+    "message": "Osiągnięto dzienny limit czasu"
+  },
+  "overlay_limit_hint": {
+    "message": "Wykorzystałeś dzisiejszy budżet czasu dla tej strony. Będzie znów dostępna po północy."
+  },
   "blocked_dontWarn_label": {
     "message": "Nie ostrzegaj mnie ponownie o tej witrynie"
   },

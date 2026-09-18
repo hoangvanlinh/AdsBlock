@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Kliknutí na stránce, ze které jste přišli, se pokusilo otevřít tuto reklamní/vyskakovací síť na nové kartě. Tuto kartu můžete bezpečně zavřít."
   },
+  "overlay_focus_title": {
+    "message": "Probíhá soustředěná relace"
+  },
+  "overlay_focus_hint": {
+    "message": "Tento web je na vašem seznamu rozptýlení a zůstává zakrytý, dokud relace neskončí."
+  },
+  "overlay_phase_work": {
+    "message": "Soustředění"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Přestávka"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Dlouhá přestávka"
+  },
+  "overlay_limit_title": {
+    "message": "Dosažen denní časový limit"
+  },
+  "overlay_limit_hint": {
+    "message": "Vyčerpali jste dnešní časový rozpočet pro tento web. Bude opět dostupný po půlnoci."
+  },
   "blocked_dontWarn_label": {
     "message": "Znovu mě u tohoto webu nevarovat"
   },

@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Et klik på siden, du kom fra, forsøgte at åbne dette annonce-/pop op-netværk i et nyt faneblad. Du kan trygt lukke dette faneblad."
   },
+  "overlay_focus_title": {
+    "message": "Fokussession i gang"
+  },
+  "overlay_focus_hint": {
+    "message": "Dette websted er på din distraktionsliste og forbliver skjult, indtil sessionen slutter."
+  },
+  "overlay_phase_work": {
+    "message": "Fokus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pause"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Lang pause"
+  },
+  "overlay_limit_title": {
+    "message": "Daglig tidsgrænse nået"
+  },
+  "overlay_limit_hint": {
+    "message": "Du har brugt dagens tidsbudget for dette websted. Det er tilgængeligt igen efter midnat."
+  },
   "blocked_dontWarn_label": {
     "message": "Advar mig ikke om denne side igen"
   },

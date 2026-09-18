@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Een klik op de pagina waar u vandaan kwam, probeerde dit advertentie-/pop-upnetwerk in een nieuw tabblad te openen. U kunt dit tabblad veilig sluiten."
   },
+  "overlay_focus_title": {
+    "message": "Focussessie bezig"
+  },
+  "overlay_focus_hint": {
+    "message": "Deze site staat op je afleidingslijst en blijft bedekt tot de sessie eindigt."
+  },
+  "overlay_phase_work": {
+    "message": "Focus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pauze"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Lange pauze"
+  },
+  "overlay_limit_title": {
+    "message": "Dagelijkse tijdslimiet bereikt"
+  },
+  "overlay_limit_hint": {
+    "message": "Je hebt je tijdsbudget van vandaag voor deze site opgebruikt. Deze is na middernacht weer beschikbaar."
+  },
   "blocked_dontWarn_label": {
     "message": "Waarschuw me niet opnieuw over deze site"
   },

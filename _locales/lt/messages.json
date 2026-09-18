@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Paspaudimas puslapyje, iš kurio atėjote, bandė atidaryti šį reklamos / iššokančiųjų langų tinklą naujoje kortelėje. Šią kortelę galite saugiai uždaryti."
   },
+  "overlay_focus_title": {
+    "message": "Vyksta susikaupimo sesija"
+  },
+  "overlay_focus_hint": {
+    "message": "Ši svetainė yra jūsų blaškymosi sąraše ir lieka uždengta, kol sesija nesibaigs."
+  },
+  "overlay_phase_work": {
+    "message": "Susikaupimas"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pertrauka"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Ilga pertrauka"
+  },
+  "overlay_limit_title": {
+    "message": "Pasiekta dienos laiko riba"
+  },
+  "overlay_limit_hint": {
+    "message": "Šiai svetainei skirtas šios dienos laiko biudžetas išnaudotas. Ji vėl bus prieinama po vidurnakčio."
+  },
   "blocked_dontWarn_label": {
     "message": "Daugiau neįspėti apie šią svetainę"
   },

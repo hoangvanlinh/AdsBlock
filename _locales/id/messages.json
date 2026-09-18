@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Klik pada halaman asal Anda mencoba membuka jaringan iklan/popup ini di tab baru. Anda dapat menutup tab ini dengan aman."
   },
+  "overlay_focus_title": {
+    "message": "Sesi fokus sedang berlangsung"
+  },
+  "overlay_focus_hint": {
+    "message": "Situs ini ada dalam daftar gangguan Anda dan tetap tertutup hingga sesi berakhir."
+  },
+  "overlay_phase_work": {
+    "message": "Fokus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Istirahat"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Istirahat panjang"
+  },
+  "overlay_limit_title": {
+    "message": "Batas waktu harian tercapai"
+  },
+  "overlay_limit_hint": {
+    "message": "Anda telah menghabiskan anggaran waktu hari ini untuk situs ini. Situs ini akan tersedia lagi setelah tengah malam."
+  },
   "blocked_dontWarn_label": {
     "message": "Jangan peringatkan saya lagi tentang situs ini"
   },

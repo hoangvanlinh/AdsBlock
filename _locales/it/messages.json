@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Un clic sulla pagina di provenienza ha tentato di aprire questa rete di annunci/popup in una nuova scheda. Puoi chiudere questa scheda senza problemi."
   },
+  "overlay_focus_title": {
+    "message": "Sessione di concentrazione in corso"
+  },
+  "overlay_focus_hint": {
+    "message": "Questo sito è nella tua lista delle distrazioni e resta coperto finché la sessione non termina."
+  },
+  "overlay_phase_work": {
+    "message": "Concentrazione"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pausa"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Pausa lunga"
+  },
+  "overlay_limit_title": {
+    "message": "Limite di tempo giornaliero raggiunto"
+  },
+  "overlay_limit_hint": {
+    "message": "Hai esaurito il budget di tempo di oggi per questo sito. Sarà di nuovo disponibile dopo mezzanotte."
+  },
   "blocked_dontWarn_label": {
     "message": "Non avvisarmi più riguardo a questo sito"
   },

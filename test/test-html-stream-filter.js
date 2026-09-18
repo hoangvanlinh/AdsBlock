@@ -36,6 +36,7 @@ const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'shared/scriptlet-a
 const localStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/local-storage.js'), 'utf8');
 const diagLoggerSrc = fs.readFileSync(path.join(ROOT, 'shared/diag-logger.js'), 'utf8');
 const sessionStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/session-storage.js'), 'utf8');
+const focusModeSrc = fs.readFileSync(path.join(ROOT, 'shared/focus-mode.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'shared/background.js'), 'utf8');
 
 let pass = 0, fail = 0;
@@ -177,6 +178,7 @@ const sandbox = {
     else if (name && name.includes('local-storage')) vm.runInContext(localStorageSrc, ctx, { filename: 'local-storage.js' });
     else if (name && name.includes('diag-logger')) vm.runInContext(diagLoggerSrc, ctx, { filename: 'diag-logger.js' });
     else if (name && name.includes('session-storage')) vm.runInContext(sessionStorageSrc, ctx, { filename: 'session-storage.js' });
+    else if (name && name.includes('focus-mode')) vm.runInContext(focusModeSrc, ctx, { filename: 'focus-mode.js' });
     else if (name && name.includes('utils')) vm.runInContext(utilsSrc, ctx, { filename: 'utils.js' });
     else vm.runInContext(configSrc, ctx, { filename: 'config.js' });
   },
@@ -467,6 +469,7 @@ function fakeHeadersDetails(overrides) {
         else if (name && name.includes('local-storage')) vm.runInContext(localStorageSrc, noCapCtx, { filename: 'local-storage.js' });
         else if (name && name.includes('diag-logger')) vm.runInContext(diagLoggerSrc, noCapCtx, { filename: 'diag-logger.js' });
         else if (name && name.includes('session-storage')) vm.runInContext(sessionStorageSrc, noCapCtx, { filename: 'session-storage.js' });
+        else if (name && name.includes('focus-mode')) vm.runInContext(focusModeSrc, noCapCtx, { filename: 'focus-mode.js' });
         else if (name && name.includes('utils')) vm.runInContext(utilsSrc, noCapCtx, { filename: 'utils.js' });
         else vm.runInContext(configSrc, noCapCtx, { filename: 'config.js' });
       },

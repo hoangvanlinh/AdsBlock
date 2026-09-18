@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Kliknutie na stránke, z ktorej ste prišli, sa pokúsilo otvoriť túto reklamnú/vyskakovaciu sieť v novej karte. Túto kartu môžete pokojne zavrieť."
   },
+  "overlay_focus_title": {
+    "message": "Prebieha relácia sústredenia"
+  },
+  "overlay_focus_hint": {
+    "message": "Táto stránka je vo vašom zozname rozptýlení a zostáva zakrytá, kým sa relácia neskončí."
+  },
+  "overlay_phase_work": {
+    "message": "Sústredenie"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Prestávka"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Dlhá prestávka"
+  },
+  "overlay_limit_title": {
+    "message": "Dosiahnutý denný časový limit"
+  },
+  "overlay_limit_hint": {
+    "message": "Vyčerpali ste dnešný časový rozpočet pre túto stránku. Bude opäť dostupná po polnoci."
+  },
   "blocked_dontWarn_label": {
     "message": "Túto stránku už znova neupozorňovať"
   },

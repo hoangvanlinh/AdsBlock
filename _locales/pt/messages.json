@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Um clique na página de onde veio tentou abrir esta rede de anúncios/pop-up numa nova aba. Pode fechar esta aba com segurança."
   },
+  "overlay_focus_title": {
+    "message": "Sessão de foco em andamento"
+  },
+  "overlay_focus_hint": {
+    "message": "Este site está na sua lista de distrações e permanece coberto até o fim da sessão."
+  },
+  "overlay_phase_work": {
+    "message": "Foco"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pausa"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Pausa longa"
+  },
+  "overlay_limit_title": {
+    "message": "Limite diário de tempo atingido"
+  },
+  "overlay_limit_hint": {
+    "message": "Você esgotou o orçamento de tempo de hoje para este site. Ele estará disponível novamente após a meia-noite."
+  },
   "blocked_dontWarn_label": {
     "message": "Não avisar novamente sobre este site"
   },

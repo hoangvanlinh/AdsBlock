@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Un clic en la página desde la que llegaste intentó abrir esta red de anuncios/emergentes en una pestaña nueva. Puedes cerrar esta pestaña con seguridad."
   },
+  "overlay_focus_title": {
+    "message": "Sesión de concentración en curso"
+  },
+  "overlay_focus_hint": {
+    "message": "Este sitio está en tu lista de distracciones y permanece cubierto hasta que termine la sesión."
+  },
+  "overlay_phase_work": {
+    "message": "Concentración"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Descanso"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Descanso largo"
+  },
+  "overlay_limit_title": {
+    "message": "Límite de tiempo diario alcanzado"
+  },
+  "overlay_limit_hint": {
+    "message": "Has agotado el presupuesto de tiempo de hoy para este sitio. Estará disponible de nuevo después de medianoche."
+  },
   "blocked_dontWarn_label": {
     "message": "No volver a advertirme sobre este sitio"
   },

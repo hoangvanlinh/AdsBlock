@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Et klikk på siden du kom fra, forsøkte å åpne dette annonse-/sprettoppnettverket i en ny fane. Du kan trygt lukke denne fanen."
   },
+  "overlay_focus_title": {
+    "message": "Fokusøkt pågår"
+  },
+  "overlay_focus_hint": {
+    "message": "Dette nettstedet er på distraksjonslisten din og forblir tildekket til økten avsluttes."
+  },
+  "overlay_phase_work": {
+    "message": "Fokus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Pause"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Lang pause"
+  },
+  "overlay_limit_title": {
+    "message": "Daglig tidsgrense nådd"
+  },
+  "overlay_limit_hint": {
+    "message": "Du har brukt opp dagens tidsbudsjett for dette nettstedet. Det er tilgjengelig igjen etter midnatt."
+  },
   "blocked_dontWarn_label": {
     "message": "Ikke advar meg om dette nettstedet igjen"
   },

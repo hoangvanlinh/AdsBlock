@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "לחיצה בדף שממנו הגעת ניסתה לפתוח את רשת הפרסום/החלונות הקופצים הזו בכרטיסייה חדשה. אפשר לסגור כרטיסייה זו בבטחה."
   },
+  "overlay_focus_title": {
+    "message": "פעילות מיקוד בעיצומה"
+  },
+  "overlay_focus_hint": {
+    "message": "אתר זה נמצא ברשימת ההסחות שלך ונשאר מכוסה עד לסיום הפעילות."
+  },
+  "overlay_phase_work": {
+    "message": "מיקוד"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "הפסקה"
+  },
+  "overlay_phase_longBreak": {
+    "message": "הפסקה ארוכה"
+  },
+  "overlay_limit_title": {
+    "message": "הגעת למגבלת הזמן היומית"
+  },
+  "overlay_limit_hint": {
+    "message": "ניצלת את תקציב הזמן היומי לאתר זה. הוא יהיה זמין שוב אחרי חצות."
+  },
   "blocked_dontWarn_label": {
     "message": "אל תזהיר אותי שוב לגבי אתר זה"
   },

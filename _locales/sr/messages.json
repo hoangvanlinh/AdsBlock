@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Клик на страници са које сте дошли покушао је да отвори ову рекламну/искачућу мрежу у новом језичку. Овај језичак можете безбедно затворити."
   },
+  "overlay_focus_title": {
+    "message": "Сесија фокуса у току"
+  },
+  "overlay_focus_hint": {
+    "message": "Овај сајт је на вашој листи ометања и остаје прекривен док се сесија не заврши."
+  },
+  "overlay_phase_work": {
+    "message": "Фокус"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Пауза"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Дуга пауза"
+  },
+  "overlay_limit_title": {
+    "message": "Достигнут дневни временски лимит"
+  },
+  "overlay_limit_hint": {
+    "message": "Искористили сте данашњи временски буџет за овај сајт. Поново ће бити доступан после поноћи."
+  },
   "blocked_dontWarn_label": {
     "message": "Немој ме поново упозоравати о овом сајту"
   },

@@ -34,7 +34,7 @@
     "128": "icons/icon128.png"
   },
   "background": {
-    "scripts": ["shared/config.js", "shared/browser-compat.js", "shared/local-storage.js", "shared/diag-logger.js", "shared/session-storage.js", "shared/utils.js", "shared/i18n.js", "shared/scriptlet-alias-map.js", "shared/background.js"],
+    "scripts": ["shared/config.js", "shared/browser-compat.js", "shared/local-storage.js", "shared/diag-logger.js", "shared/session-storage.js", "shared/focus-mode.js", "shared/utils.js", "shared/i18n.js", "shared/scriptlet-alias-map.js", "shared/background.js"],
     "type": "module"
   },
   "content_scripts": [
@@ -51,7 +51,7 @@
       "matches": [
        "<all_urls>"
       ],
-      "js": ["shared/config.js", "shared/browser-compat.js", "shared/utils.js", "shared/i18n.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js"],
+      "js": ["shared/config.js", "shared/browser-compat.js", "shared/utils.js", "shared/i18n.js", "content/site-rules-loader.js", "content/content.js", "content/fastpath-storage.js", "content/site-block.js", "content/element-picker.js", "content/global-scanner.js", "content/rule-editor.js", "content/focus-block-overlay.js"],
       "run_at": "document_start",
       "all_frames": false
     }

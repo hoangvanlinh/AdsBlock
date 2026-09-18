@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Klõps lehel, kust sa tulid, üritas avada selle reklaami-/hüpikvõrgu uuel vahelehel. Selle vahelehe võid ohutult sulgeda."
   },
+  "overlay_focus_title": {
+    "message": "Fookussessioon käib"
+  },
+  "overlay_focus_hint": {
+    "message": "See sait on sinu tähelepanu hajutajate nimekirjas ja jääb kaetuks kuni sessiooni lõpuni."
+  },
+  "overlay_phase_work": {
+    "message": "Fookus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Paus"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Pikk paus"
+  },
+  "overlay_limit_title": {
+    "message": "Päevane ajalimiit täis"
+  },
+  "overlay_limit_hint": {
+    "message": "Oled tänase ajaeelarve selle saidi jaoks ära kasutanud. See on taas saadaval pärast keskööd."
+  },
   "blocked_dontWarn_label": {
     "message": "Ära hoiata mind selle saidi kohta uuesti"
   },

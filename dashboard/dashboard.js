@@ -701,8 +701,6 @@ let focusRemaining = 25 * 60; // seconds
 let focusDuration  = 25 * 60;
 let distractionDomains = [];
 
-const DISTRACTION_DEFAULTS_DASH = ['twitter.com', 'youtube.com', 'reddit.com', 'instagram.com', 'tiktok.com'];
-
 const focusTimerEl = document.querySelector('.focus-timer');
 const focusSubEl   = document.querySelector('.focus-sub');
 
@@ -758,7 +756,7 @@ function startFocusTimer(remaining) {
 // Restore focus state on load
 EXT.storage.local.get(['focusMode', 'focusDuration', 'distractionDomains', 'focusEndTime'], result => {
   // Restore distraction list
-  distractionDomains = result.distractionDomains ?? DISTRACTION_DEFAULTS_DASH;
+  distractionDomains = result.distractionDomains ?? FocusMode.DISTRACTION_DEFAULTS;
   renderDistractionList();
 
   // Restore duration

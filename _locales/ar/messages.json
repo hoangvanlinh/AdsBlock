@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "حاول النقر على الصفحة التي أتيت منها فتح شبكة الإعلان/النافذة المنبثقة هذه في علامة تبويب جديدة. يمكنك إغلاق علامة التبويب هذه بأمان."
   },
+  "overlay_focus_title": {
+    "message": "جلسة تركيز قيد التقدم"
+  },
+  "overlay_focus_hint": {
+    "message": "هذا الموقع ضمن قائمة التشتيت لديك ويظل مخفيًا حتى تنتهي الجلسة."
+  },
+  "overlay_phase_work": {
+    "message": "تركيز"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "استراحة"
+  },
+  "overlay_phase_longBreak": {
+    "message": "استراحة طويلة"
+  },
+  "overlay_limit_title": {
+    "message": "تم الوصول إلى الحد اليومي للوقت"
+  },
+  "overlay_limit_hint": {
+    "message": "لقد استنفدت ميزانية الوقت اليومية لهذا الموقع. سيكون متاحًا مرة أخرى بعد منتصف الليل."
+  },
   "blocked_dontWarn_label": {
     "message": "لا تحذرني مرة أخرى بشأن هذا الموقع"
   },

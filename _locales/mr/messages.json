@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "तुम्ही ज्या पेजवरून आलात तेथील एका क्लिकने हे जाहिरात/पॉपअप नेटवर्क नवीन टॅबमध्ये उघडण्याचा प्रयत्न केला. तुम्ही हा टॅब सुरक्षितपणे बंद करू शकता."
   },
+  "overlay_focus_title": {
+    "message": "फोकस सत्र सुरू आहे"
+  },
+  "overlay_focus_hint": {
+    "message": "ही साइट तुमच्या विचलन यादीत आहे आणि सत्र संपेपर्यंत झाकलेली राहते."
+  },
+  "overlay_phase_work": {
+    "message": "फोकस"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "विश्रांती"
+  },
+  "overlay_phase_longBreak": {
+    "message": "दीर्घ विश्रांती"
+  },
+  "overlay_limit_title": {
+    "message": "दैनंदिन वेळ मर्यादा गाठली"
+  },
+  "overlay_limit_hint": {
+    "message": "तुम्ही आजसाठी या साइटचे वेळ बजेट संपवले आहे. मध्यरात्रीनंतर ते पुन्हा उपलब्ध होईल."
+  },
   "blocked_dontWarn_label": {
     "message": "या साइटबद्दल मला पुन्हा इशारा देऊ नका"
   },

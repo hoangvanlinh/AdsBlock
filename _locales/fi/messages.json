@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Napsautus sivulla, josta tulit, yritti avata tämän mainos-/ponnahdusverkoston uudessa välilehdessä. Voit sulkea tämän välilehden turvallisesti."
   },
+  "overlay_focus_title": {
+    "message": "Keskittymisjakso käynnissä"
+  },
+  "overlay_focus_hint": {
+    "message": "Tämä sivusto on häiriölistallasi ja pysyy peitettynä, kunnes jakso päättyy."
+  },
+  "overlay_phase_work": {
+    "message": "Keskittyminen"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Tauko"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Pitkä tauko"
+  },
+  "overlay_limit_title": {
+    "message": "Päivittäinen aikaraja saavutettu"
+  },
+  "overlay_limit_hint": {
+    "message": "Olet käyttänyt tämän sivuston tämänpäiväisen aikabudjetin. Se on taas käytettävissä keskiyön jälkeen."
+  },
   "blocked_dontWarn_label": {
     "message": "Älä varoita minua tästä sivustosta uudelleen"
   },

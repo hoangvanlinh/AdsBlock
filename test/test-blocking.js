@@ -24,6 +24,7 @@ const scriptletAliasMapSrc = fs.readFileSync(path.join(ROOT, 'shared/scriptlet-a
 const localStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/local-storage.js'), 'utf8');
 const diagLoggerSrc = fs.readFileSync(path.join(ROOT, 'shared/diag-logger.js'), 'utf8');
 const sessionStorageSrc = fs.readFileSync(path.join(ROOT, 'shared/session-storage.js'), 'utf8');
+const focusModeSrc = fs.readFileSync(path.join(ROOT, 'shared/focus-mode.js'), 'utf8');
 const bgSrc = fs.readFileSync(path.join(ROOT, 'shared/background.js'), 'utf8');
 
 // ── chrome stub ───────────────────────────────────────────────────
@@ -36,12 +37,25 @@ const tabsData = new Map();
 const removedTabIds = new Set();
 const tabsCreatedListeners = [];
 const tabsUpdatedListeners = [];
+const tabsActivatedListeners = [];
+const alarmListeners = [];
+const windowFocusChangedListeners = [];
+const runtimeInstalledListeners = [];
+const sentTabMessages = [];
 const storageChangeListeners = [];
 let lastBadgeText;
 const badgeTextByTab = new Map(); // tabId -> last text set FOR that tabId specifically
 const scriptingCalls = []; // { op: 'insert'|'remove', css } — setFrameCss test spy
 
 function _ipcDelay() { return new Promise(r => setTimeout(r, 2)); }
+
+// Fires every registered chrome.alarms.onAlarm listener with { name } —
+// mirrors real Chrome's alarm-fired event shape. Returns once all listeners'
+// (possibly async) handlers have settled, so a test can await it and then
+// immediately assert on whatever storage/DNR side effect the alarm caused.
+async function fireAlarm(name) {
+  for (const fn of alarmListeners) await fn({ name });
+}
 
 function validateDomain(d) {
   // Chrome requires canonicalized lowercase ASCII domains in requestDomains
@@ -169,23 +183,52 @@ const chromeStub = {
   runtime: {
     getURL: p => 'chrome-extension://test/' + p,
     getManifest: () => ({ version: '1.0.35' }),
-    onInstalled: noopEvent,
+    onInstalled: { addListener(fn) { runtimeInstalledListeners.push(fn); } },
     onStartup: noopEvent,
     onMessage: { addListener(fn) { messageListeners.push(fn); } },
   },
-  alarms: { get() { return Promise.resolve(undefined); }, create() {}, clear() {}, onAlarm: noopEvent },
+  // Mutable so tests can simulate alarm.get() returning the scheduled alarm
+  // (background.js's _ensureAlarm() checks this to decide whether to
+  // (re)create). Real listeners are captured below so fireAlarm(name) can
+  // actually invoke background.js's onAlarm handler in tests.
+  alarms: {
+    get() { return Promise.resolve(undefined); },
+    create() {},
+    clear() {},
+    onAlarm: { addListener(fn) { alarmListeners.push(fn); } },
+  },
+  // Mutable so a test can simulate the active tab's { active: true, windowId }
+  // query used by the onFocusChanged handler (shared/background.js) to seed
+  // FocusMode's active-hostname tracking the moment a window gains focus.
+  activeTabQueryResult: null,
   tabs: {
-    async query() { return []; },
+    async query(opts) {
+      if (opts && 'active' in opts) return chromeStub.activeTabQueryResult ? [chromeStub.activeTabQueryResult] : [];
+      // Empty-filter query({}) — used by FocusMode.closeTabsForDomains() to
+      // sweep every open tab — returns everything currently in tabsData,
+      // matching real chrome.tabs.query({})'s "no filter = all tabs".
+      return [...tabsData.entries()].map(([id, data]) => ({ id, ...data }));
+    },
     async get(tabId) {
       if (!tabsData.has(tabId)) throw new Error('No tab with id: ' + tabId);
       return { id: tabId, ...tabsData.get(tabId) };
     },
-    async remove(tabId) { removedTabIds.add(tabId); },
-    sendMessage: async () => {},
-    onActivated: noopEvent,
+    async remove(tabId) { removedTabIds.add(tabId); tabsData.delete(tabId); },
+    // Records every chrome.tabs.sendMessage() call — used to assert on
+    // background.js's various tab-broadcast messages (COSMETIC_TOGGLE,
+    // PRIVACY_TOGGLE, RULES_CHANGED, ...) without a real tab.
+    sendMessage: async (tabId, msg) => { sentTabMessages.push({ tabId, msg }); },
+    onActivated: { addListener(fn) { tabsActivatedListeners.push(fn); } },
     onUpdated: { addListener(fn) { tabsUpdatedListeners.push(fn); } },
     onRemoved: noopEvent,
     onCreated: { addListener(fn) { tabsCreatedListeners.push(fn); } },
+  },
+  // FocusMode's window-focus gating (shared/background.js's onFocusChanged
+  // listener) needs a real windows stub — WINDOW_ID_NONE plus a capturing
+  // onFocusChanged so tests can simulate OS window-focus changes.
+  windows: {
+    WINDOW_ID_NONE: -1,
+    onFocusChanged: { addListener(fn) { windowFocusChangedListeners.push(fn); } },
   },
   scripting: {
     insertCSS: async (opts) => { scriptingCalls.push({ op: 'insert', css: opts.css }); },
@@ -295,6 +338,8 @@ const sandbox = {
       vm.runInContext(diagLoggerSrc, ctx, { filename: 'diag-logger.js' });
     } else if (name && name.includes('session-storage')) {
       vm.runInContext(sessionStorageSrc, ctx, { filename: 'session-storage.js' });
+    } else if (name && name.includes('focus-mode')) {
+      vm.runInContext(focusModeSrc, ctx, { filename: 'focus-mode.js' });
     } else if (name && name.includes('utils')) {
       vm.runInContext(utilsSrc, ctx, { filename: 'utils.js' });
     } else {
@@ -356,6 +401,9 @@ self.__test = {
   _tryFastSiteConfig, _saveSiteConfigCacheEntry, _loadSiteConfigCacheEntry, _evictOldestLruEntry,
   get SITE_CONFIG_HOST_CACHE_LIMIT() { return _SITE_CONFIG_HOST_CACHE_LIMIT; },
   get siteConfigCacheWriteChain() { return _siteConfigCacheWriteChain; },
+  get FocusMode() { return FocusMode; },
+  get focusedWindowId() { return _focusedWindowId; },
+  get ruleInputHashes() { return _ruleInputHashes; },
 };`;
 vm.runInContext(bgSrc + '\n' + exportSnippet, ctx, { filename: 'background.js' });
 const T = sandbox.__test;
@@ -3713,6 +3761,261 @@ function check(name, cond, detail = '') {
   check('buildActiveRulesFromStorage() treats a MISSING enabled key as enabled:true (matches onInstalled\'s own default), not disabled',
     activeAfterClear.enabled === true && activeAfterClear.allRules.length > 0,
     JSON.stringify({ enabled: activeAfterClear.enabled, ruleCount: activeAfterClear.allRules.length }));
+
+  // ── New (2026-09-18): shared/focus-mode.js — Pomodoro cycles, stats/
+  // streak, per-site daily time limits (all NEW logic lives in that one
+  // dedicated file per explicit user request, not grown into this one). ──
+  {
+    const FM = T.FocusMode;
+
+    console.log('\n== New: Pomodoro phase transitions (fireAlarm(\'focus-end\')) ==');
+    await chromeStub.storage.local.clear();
+    await chromeStub.storage.local.set({
+      pomodoroEnabled: true,
+      focusDuration: 25,
+      focusBreakDuration: 5,
+      focusLongBreakDuration: 15,
+      focusCyclesBeforeLongBreak: 4,
+    });
+    await FM.startSession();
+    check('startSession() seeds a fresh work phase at cycle 0',
+      storageData.focusPhase === 'work' && storageData.focusCycleCount === 0,
+      JSON.stringify({ phase: storageData.focusPhase, cycle: storageData.focusCycleCount }));
+
+    const expectedPhases = ['shortBreak', 'work', 'shortBreak', 'work', 'shortBreak', 'work', 'longBreak', 'work'];
+    for (let i = 0; i < expectedPhases.length; i++) {
+      await fireAlarm('focus-end');
+      check(`fire #${i + 1}: phase advances to "${expectedPhases[i]}"`,
+        storageData.focusPhase === expectedPhases[i],
+        `got "${storageData.focusPhase}"`);
+    }
+    check('4 completed WORK phases -> cycleCount lands back at 4 after the long break is reached',
+      storageData.focusCycleCount === 4, storageData.focusCycleCount);
+    check('a completed work phase re-arms focusEndTime for the next phase (still running, not stopped)',
+      typeof storageData.focusEndTime === 'number' && storageData.focusEndTime > Date.now());
+
+    check('exactly 4 work-phase completions were credited to today\'s stats (breaks never credit)',
+      storageData.focusStats && storageData.focusStats[Object.keys(storageData.focusStats).find(k => k !== 'streak')].completed === 4,
+      JSON.stringify(storageData.focusStats));
+
+    console.log('\n== New: single-session (non-Pomodoro) mode ==');
+    await chromeStub.storage.local.clear();
+    await chromeStub.storage.local.set({ pomodoroEnabled: false, focusMode: true });
+    await FM.startSession();
+    const completedBefore = (storageData.focusStats && storageData.focusStats[Object.keys(storageData.focusStats).find(k => k !== 'streak')]?.completed) || 0;
+    await fireAlarm('focus-end');
+    check('single-session mode: one alarm fire fully disables focus (matches the pre-Pomodoro behavior)',
+      storageData.focusMode === false && storageData.focusEndTime === null &&
+      storageData.focusPhase === null && storageData.focusCycleCount === 0,
+      JSON.stringify({ focusMode: storageData.focusMode, focusEndTime: storageData.focusEndTime, phase: storageData.focusPhase, cycle: storageData.focusCycleCount }));
+    const todayKeyNow = Object.keys(storageData.focusStats).find(k => k !== 'streak');
+    check('...and the one session that ran its full course was credited exactly once',
+      storageData.focusStats[todayKeyNow].completed === completedBefore + 1,
+      `before=${completedBefore} after=${storageData.focusStats[todayKeyNow].completed}`);
+
+    console.log('\n== New: session stats / streak accumulation ==');
+    // Local-calendar date keys matching shared/focus-mode.js's own
+    // (non-exported) _dateKey()/_todayKey()/_yesterdayKey() algorithm —
+    // duplicated here for the same reason that file duplicates it from
+    // background.js: no shared module system across this boundary.
+    const pad2 = n => String(n).padStart(2, '0');
+    const dateKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const todayKey = dateKey(new Date());
+    const yesterdayKey = dateKey(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const twoDaysAgoKey = dateKey(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000));
+
+    await chromeStub.storage.local.set({
+      focusStats: { streak: { current: 3, longest: 5, lastCompletedDate: yesterdayKey } },
+    });
+    await FM.recordSessionCompleted();
+    check('a completion the day AFTER the last one extends the streak',
+      storageData.focusStats.streak.current === 4, storageData.focusStats.streak);
+    check('...and "longest" stays at its prior high since 4 < 5',
+      storageData.focusStats.streak.longest === 5, storageData.focusStats.streak.longest);
+    check('...lastCompletedDate advances to today', storageData.focusStats.streak.lastCompletedDate === todayKey);
+
+    await chromeStub.storage.local.set({
+      focusStats: { streak: { current: 7, longest: 7, lastCompletedDate: twoDaysAgoKey } },
+    });
+    await FM.recordSessionCompleted();
+    check('a completion with a GAP (not yesterday) resets the streak to 1, not extends it',
+      storageData.focusStats.streak.current === 1, storageData.focusStats.streak);
+    check('...but "longest" still remembers the prior record',
+      storageData.focusStats.streak.longest === 7, storageData.focusStats.streak.longest);
+
+    await chromeStub.storage.local.set({
+      focusStats: { [todayKey]: { completed: 1 }, streak: { current: 2, longest: 2, lastCompletedDate: todayKey } },
+    });
+    await FM.recordSessionCompleted();
+    check('a SECOND completion on the same day does not double-increment the streak',
+      storageData.focusStats.streak.current === 2, storageData.focusStats.streak.current);
+    check('...but the raw per-day completed count still goes up',
+      storageData.focusStats[todayKey].completed === 2, storageData.focusStats[todayKey].completed);
+
+    console.log('\n== New: per-site daily time limits — tick accumulation + no double-counting ==');
+    await chromeStub.storage.local.clear();
+    await chromeStub.storage.local.set({ siteTimeLimits: { 'youtube.com': 3 } });
+    FM.setWindowFocused(true);
+    FM.setActiveTab('www.youtube.com'); // subdomain — must walk up to the configured "youtube.com" key
+
+    await fireAlarm('focus-site-limit-tick');
+    let spentToday = storageData.siteTimeSpent[todayKey];
+    check('tick #1 attributes exactly 1 minute to the matched registrable domain (subdomain walked up)',
+      spentToday['youtube.com'] === 1, spentToday);
+
+    check('window unfocused: a tick attributes ZERO additional time', await (async () => {
+      FM.setWindowFocused(false);
+      await fireAlarm('focus-site-limit-tick');
+      FM.setWindowFocused(true);
+      return storageData.siteTimeSpent[todayKey]['youtube.com'] === 1;
+    })());
+
+    check('no active tab: a tick attributes ZERO additional time', await (async () => {
+      FM.setActiveTab(null);
+      await fireAlarm('focus-site-limit-tick');
+      FM.setActiveTab('www.youtube.com');
+      return storageData.siteTimeSpent[todayKey]['youtube.com'] === 1;
+    })());
+
+    check('re-activating the SAME domain repeatedly between ticks does not itself add time (only a real tick does)',
+      await (async () => {
+        FM.setActiveTab('www.youtube.com');
+        FM.setActiveTab('www.youtube.com');
+        FM.setActiveTab('www.youtube.com');
+        return storageData.siteTimeSpent[todayKey]['youtube.com'] === 1;
+      })());
+
+    await fireAlarm('focus-site-limit-tick'); // tick #2: spent=2, still under the 3-minute limit
+    check('tick #2: still under budget, not yet exceeded',
+      !(storageData.siteLimitsExceededToday.domains || []).includes('youtube.com'),
+      storageData.siteLimitsExceededToday);
+
+    console.log('\n== New: crossing a site\'s daily limit updates siteLimitsExceededToday (no DNR rebuild anymore — that\'s content/focus-block-overlay.js\'s job now) ==');
+    let callsBefore = updateDynamicRulesCallCount;
+    await fireAlarm('focus-site-limit-tick'); // tick #3: spent=3 -> CROSSES the 3-minute limit
+    check('siteLimitsExceededToday now lists the crossed domain',
+      (storageData.siteLimitsExceededToday.domains || []).includes('youtube.com'),
+      storageData.siteLimitsExceededToday);
+    check('...without triggering any DNR rebuild — siteLimitsExceededToday is no longer a rule input',
+      updateDynamicRulesCallCount === callsBefore, { before: callsBefore, after: updateDynamicRulesCallCount });
+
+    callsBefore = updateDynamicRulesCallCount;
+    await fireAlarm('focus-site-limit-tick'); // tick #4: spent=4, still exceeded, no NEW crossing
+    check('a further tick while still (unchanged) over budget still triggers no DNR rebuild',
+      updateDynamicRulesCallCount === callsBefore, { before: callsBefore, after: updateDynamicRulesCallCount });
+
+    console.log('\n== New: SITE_LIMITS_CHANGED can immediately un-exceed a site (no wait for the next tick) ==');
+    const sendMsg2 = (msg) => new Promise(res => messageListeners[0](msg, {}, res));
+    await chromeStub.storage.local.set({ siteTimeLimits: { 'youtube.com': 100 } }); // raise the limit well above today's spend
+    await sendMsg2({ type: 'SITE_LIMITS_CHANGED' });
+    check('raising the limit above today\'s spend un-exceeds the site immediately',
+      !(storageData.siteLimitsExceededToday.domains || []).includes('youtube.com'),
+      storageData.siteLimitsExceededToday);
+
+    console.log('\n== New: windows.onFocusChanged wires FocusMode.setWindowFocused/setActiveTab ==');
+    await chromeStub.storage.local.clear();
+    FM.setWindowFocused(false);
+    FM.setActiveTab(null);
+    chromeStub.activeTabQueryResult = { id: 1, url: 'https://distracting.example/page', active: true, windowId: 7 };
+    check('windows.onFocusChanged listener registered', windowFocusChangedListeners.length > 0);
+    await windowFocusChangedListeners[0](7);
+    check('gaining focus on a window sets FocusMode\'s active hostname from that window\'s active tab',
+      T.focusedWindowId === 7);
+    check('...via a real onSiteLimitTick() now attributing time to it (indirect proof setActiveTab landed)',
+      await (async () => {
+        await chromeStub.storage.local.set({ siteTimeLimits: { 'distracting.example': 1 } });
+        await fireAlarm('focus-site-limit-tick');
+        const s = storageData.siteTimeSpent[Object.keys(storageData.siteTimeSpent)[0]];
+        return s['distracting.example'] === 1;
+      })());
+    await windowFocusChangedListeners[0](chromeStub.windows.WINDOW_ID_NONE);
+    check('losing focus (WINDOW_ID_NONE) stops further attribution',
+      await (async () => {
+        const before = JSON.stringify(storageData.siteTimeSpent);
+        await fireAlarm('focus-site-limit-tick');
+        return JSON.stringify(storageData.siteTimeSpent) === before;
+      })());
+    chromeStub.activeTabQueryResult = null;
+
+    console.log('\n== New: onInstalled seeds Focus Mode keys without disturbing pre-existing ones ==');
+    await chromeStub.storage.local.clear();
+    await chromeStub.storage.local.set({ focusMode: true, distractionDomains: ['already-customized.example'] });
+    check('onInstalled listener registered', runtimeInstalledListeners.length > 0);
+    await runtimeInstalledListeners[0]();
+    check('a pre-existing focusMode value survives onInstalled (not clobbered back to false)',
+      storageData.focusMode === true);
+    check('a pre-existing customized distractionDomains list survives onInstalled',
+      JSON.stringify(storageData.distractionDomains) === JSON.stringify(['already-customized.example']));
+    check('pomodoroEnabled is freshly seeded (was absent) to its documented default (false)',
+      storageData.pomodoroEnabled === false);
+    check('focusBreakDuration is freshly seeded to FocusMode.DEFAULT_BREAK_MIN',
+      storageData.focusBreakDuration === FM.DEFAULT_BREAK_MIN);
+    check('focusLongBreakDuration is freshly seeded to FocusMode.DEFAULT_LONG_BREAK_MIN',
+      storageData.focusLongBreakDuration === FM.DEFAULT_LONG_BREAK_MIN);
+    check('focusCyclesBeforeLongBreak is freshly seeded to FocusMode.DEFAULT_CYCLES_BEFORE_LONG_BREAK',
+      storageData.focusCyclesBeforeLongBreak === FM.DEFAULT_CYCLES_BEFORE_LONG_BREAK);
+    check('focusDuration is freshly seeded to FocusMode.DEFAULT_FOCUS_DURATION_MIN',
+      storageData.focusDuration === FM.DEFAULT_FOCUS_DURATION_MIN);
+    check('siteTimeLimits is freshly seeded to an empty object',
+      storageData.siteTimeLimits && Object.keys(storageData.siteTimeLimits).length === 0);
+
+    // ── New (2026-09-18): Focus Mode blocking is no longer a DNR rule at
+    // all (dropped buildFocusRules()/buildSiteLimitRules() and the
+    // blocked.html redirect entirely) — replaced by content/focus-block-
+    // overlay.js, a client-side overlay drawn over the real, fully-loaded
+    // page. That's DOM-driven (needs a real document/MutationObserver-style
+    // environment this Node/vm harness doesn't provide), so it isn't
+    // covered here; background.js's own remaining responsibility is just
+    // the FOCUS_PAGE_BLOCKED counting message the overlay sends, and the
+    // tab-close sweep below, both still exercised.
+    console.log('\n== New: starting a focus session closes tabs ALREADY open on the distraction list ==');
+    await chromeStub.storage.local.clear();
+    await chromeStub.storage.local.set({ distractionDomains: ['distract-sweep.example'] });
+    tabsData.set(41001, { url: 'https://www.distract-sweep.example/feed' }); // subdomain — must walk up
+    tabsData.set(41002, { url: 'https://unrelated-site.example/page' });
+    await T.FocusMode.startSession();
+    check('a tab already open on a (subdomain of a) distraction-list domain is closed on session start',
+      removedTabIds.has(41001));
+    check('a tab on an unrelated domain is left alone', !removedTabIds.has(41002) && tabsData.has(41002));
+
+    console.log('\n== New: a site newly crossing its daily limit closes tabs already open on it (only the NEWLY-crossed one) ==');
+    await chromeStub.storage.local.clear();
+    await chromeStub.storage.local.set({ siteTimeLimits: { 'sitea-sweep.example': 2, 'siteb-sweep.example': 2 } });
+    T.FocusMode.setWindowFocused(true);
+    tabsData.set(41101, { url: 'https://sitea-sweep.example/' });
+    tabsData.set(41102, { url: 'https://siteb-sweep.example/' });
+
+    T.FocusMode.setActiveTab('sitea-sweep.example');
+    await fireAlarm('focus-site-limit-tick'); // siteA spent=1, not yet exceeded
+    check('under budget: no sweep yet', !removedTabIds.has(41101));
+    await fireAlarm('focus-site-limit-tick'); // siteA spent=2 -> CROSSES
+    check('siteA crosses its limit -> its already-open tab gets closed', removedTabIds.has(41101));
+    check('...but siteB (unrelated, not yet exceeded) is untouched', !removedTabIds.has(41102) && tabsData.has(41102));
+
+    // Re-open a tab on siteA (simulating the user opening a new one) — it
+    // must NOT be auto-closed just because siteA is STILL (unchanged)
+    // exceeded; only a NEW crossing sweeps. The DNR redirect rule (checked
+    // above) is what actually stops this reopened tab from loading the
+    // real site — the sweep itself is one-time, not a standing enforcement.
+    tabsData.set(41103, { url: 'https://sitea-sweep.example/reopened' });
+    await fireAlarm('focus-site-limit-tick'); // siteA spent=3, still exceeded, no NEW crossing
+    check('a REOPENED tab on an already-(still-)exceeded site is NOT swept — only a fresh crossing triggers a sweep',
+      !removedTabIds.has(41103) && tabsData.has(41103));
+
+    T.FocusMode.setActiveTab('siteb-sweep.example');
+    await fireAlarm('focus-site-limit-tick'); // siteB spent=1
+    await fireAlarm('focus-site-limit-tick'); // siteB spent=2 -> CROSSES (its own first-ever crossing)
+    check('siteB crossing its own limit later sweeps ONLY siteB\'s tab, not the already-handled siteA tabs',
+      removedTabIds.has(41102) && !removedTabIds.has(41103));
+
+    // content/focus-input-guard.js (disabled every text input site-wide
+    // while a session ran) and its FOCUS_MODE-triggered broadcast were
+    // removed entirely (2026-09-19, explicit user request): it couldn't
+    // tell a distraction from legitimate typing (a form, an online class,
+    // a coworker chat), so it blocked real work along with distraction.
+    // Focus Mode blocking is now ONLY content/focus-block-overlay.js,
+    // scoped to actual distraction-list/limit-exceeded sites.
+  }
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

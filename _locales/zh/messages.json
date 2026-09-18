@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "您来源页面上的一次点击试图在新标签页中打开这个广告/弹窗网络。您可以放心关闭此标签页。"
   },
+  "overlay_focus_title": {
+    "message": "专注会话进行中"
+  },
+  "overlay_focus_hint": {
+    "message": "该网站在你的分心网站列表中，会话结束前将保持遮挡状态。"
+  },
+  "overlay_phase_work": {
+    "message": "专注"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "休息"
+  },
+  "overlay_phase_longBreak": {
+    "message": "长休息"
+  },
+  "overlay_limit_title": {
+    "message": "已达到每日时间限制"
+  },
+  "overlay_limit_hint": {
+    "message": "你今天在该网站上的时间预算已用完，将在午夜后恢复可用。"
+  },
   "blocked_dontWarn_label": {
     "message": "不再提醒我此网站"
   },

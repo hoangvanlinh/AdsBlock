@@ -61,6 +61,16 @@ const _diagLog = (level, msg, data) => self.DiagLogger[level](msg, data);
 if (typeof importScripts === 'function' && !self.SessionStorage) {
   importScripts('session-storage.js');
 }
+// focus-mode.js (repo root shared/, same dual-loading story) — must load
+// AFTER local-storage.js (its own storage reads/writes go through
+// self.LocalStorage) and before any of this file's own top-level code
+// touches self.FocusMode. See that file's own header comment for the full
+// design (Pomodoro phase state machine, session stats/streak, per-site
+// daily time-limit tracking) — everything NEW in Focus Mode lives there by
+// explicit request, not piled into this already-large file.
+if (typeof importScripts === 'function' && !self.FocusMode) {
+  importScripts('focus-mode.js');
+}
 const {
   RULES_REMOTE_URL,
   RULES_LOCAL_PATH,
@@ -3015,9 +3025,16 @@ function _hashText(s) {
 // change" check from O(total rule/domain count) per call into O(1) per
 // call, paying the real cost only when an input actually changes.
 const RULE_INPUT_KEYS = [
-  'enabled', 'blockAds', 'blockTrackers', 'blockMalware', 'focusMode',
+  'enabled', 'blockAds', 'blockTrackers', 'blockMalware',
   'pausedDomains', 'allowedDomains', 'rules', 'remoteMalwareDomains',
-  'remoteMalwarePathPatterns', 'remoteMalwareRules', 'distractionDomains',
+  'remoteMalwarePathPatterns', 'remoteMalwareRules',
+  // focusMode/distractionDomains/siteLimitsExceededToday/siteTimeLimits are
+  // deliberately NOT here (removed 2026-09-18): Focus Mode blocking no
+  // longer builds any DNR rule at all — see content/focus-block-overlay.js
+  // and shared/focus-mode.js's own header comment for why (an explicit,
+  // confirmed user choice: an in-page overlay over the real site instead of
+  // a network-level block/redirect). Those keys still exist in storage and
+  // still matter to FocusMode itself, just not to the DNR rule pipeline.
 ];
 let _ruleGeneration = 0; // bumped each time ensureRuleDefinitionsLoaded() actually rebuilds
 const _ruleInputHashes = {};
@@ -4165,7 +4182,6 @@ async function ensureRuleDefinitionsLoaded() {
   await _ruleConfigPromise;
 }
 
-const FOCUS_RULE_ID_START   = 2000;
 const QUERY_STRIP_RULE_ID_START = 3000;
 const NETWORK_REDIRECT_RULE_ID_START = 500000; // for network_redirect_rules
 const NETWORK_BLOCK_RULE_ID_START = 700000;  // for network_block_rules (well clear of NETWORK_REDIRECT_RULE_ID_START's own sequential counter)
@@ -4175,9 +4191,9 @@ const CUSTOM_RULE_ID_START = 200000;         // for user-created rules
 const PAUSE_ALLOW_RULE_ID_START = 300000;    // for pause/allowlist allow-all rules
 
 // ── Stable content-addressed rule IDs (Phase 3a prerequisite) ────────────
-// pauseAllowRules/customBlockRules/focusRules used to assign ids
+// pauseAllowRules/customBlockRules used to assign ids
 // POSITIONALLY (START + array index) over pausedDomains/allowedDomains/
-// rules/distractionDomains — lists whose ORDER can change (an item removed
+// rules — lists whose ORDER can change (an item removed
 // from the middle shifts every later id) even when their CONTENT mostly
 // didn't. That made a real id-level diff (below) meaningless: removing one
 // paused domain would look like "every subsequent paused domain's rule
@@ -4202,7 +4218,6 @@ function _assignStableIds(items, keyFn, idStart, rangeSize) {
   const claimed = new Set();
   return items.map(item => ({ item, id: idStart + _stableIdSlot(keyFn(item), rangeSize, claimed) }));
 }
-const FOCUS_ID_RANGE       = 900;    // FOCUS_RULE_ID_START..+900, buffer before QUERY_STRIP at 3000
 const CUSTOM_ID_RANGE       = 90000; // CUSTOM_RULE_ID_START..+90000, buffer before PAUSE_ALLOW at 300000
 const PAUSE_ALLOW_ID_RANGE  = 190000; // PAUSE_ALLOW_RULE_ID_START..+190000, buffer before NETWORK_REDIRECT at 500000
 
@@ -4368,6 +4383,15 @@ EXT.runtime.onInstalled.addListener(async () => {
     'referrerAnonymization', 'collectStats',
     'blockAds', 'blockTrackers', 'cosmeticFiltering', 'blockMalware',
     'installDate', 'totalBlockedAllTime', 'reviewPromptState',
+    // Focus Mode / Pomodoro / per-site time limits (shared/focus-mode.js) —
+    // seeded here so a pre-update install (which never had these keys) reads
+    // the exact same defaults FocusMode's own DEFAULT_* constants already
+    // fall back to inline everywhere else, closing the gap the ORIGINAL
+    // focusMode/distractionDomains/focusDuration/focusEndTime keys already
+    // had (never seeded at all, only defaulted inline at each read site).
+    'pomodoroEnabled', 'focusBreakDuration', 'focusLongBreakDuration',
+    'focusCyclesBeforeLongBreak', 'distractionDomains', 'focusDuration',
+    'siteTimeLimits',
   ]);
   await LocalStorage.set({
     enabled:                existing.enabled                ?? true,
@@ -4379,6 +4403,13 @@ EXT.runtime.onInstalled.addListener(async () => {
     referrerAnonymization:  existing.referrerAnonymization  ?? true,
     collectStats:           existing.collectStats           ?? true,
     blockAds:               existing.blockAds               ?? true,
+    pomodoroEnabled:            existing.pomodoroEnabled            ?? false,
+    focusBreakDuration:         existing.focusBreakDuration         ?? FocusMode.DEFAULT_BREAK_MIN,
+    focusLongBreakDuration:     existing.focusLongBreakDuration     ?? FocusMode.DEFAULT_LONG_BREAK_MIN,
+    focusCyclesBeforeLongBreak: existing.focusCyclesBeforeLongBreak ?? FocusMode.DEFAULT_CYCLES_BEFORE_LONG_BREAK,
+    distractionDomains:         existing.distractionDomains         ?? FocusMode.DISTRACTION_DEFAULTS,
+    focusDuration:              existing.focusDuration              ?? FocusMode.DEFAULT_FOCUS_DURATION_MIN,
+    siteTimeLimits:             existing.siteTimeLimits             ?? {},
     blockTrackers:          existing.blockTrackers           ?? true,
     cosmeticFiltering:      existing.cosmeticFiltering      ?? true,
     blockMalware:           existing.blockMalware           ?? true,
@@ -4413,7 +4444,7 @@ let _lastRuleHashById = null; // Map<id,hash> from the last successful updateDyn
 // inside buildActiveRulesFromStorage() that don't have their own dedicated
 // function-level memo (buildRemoteMalwareRules() is a plain sync mapper,
 // and pauseAllowRules is built inline) — same pattern as
-// _customBlockRulesMemo/_focusRulesMemo above, keyed off the same
+// _customBlockRulesMemo above, keyed off the same
 // _ruleInputHashes/_sessionAllowedDomainsHash Phase 1a already maintains.
 let _remoteMalwareRulesMemo = { key: undefined, rules: null };
 let _pauseAllowRulesMemo = { key: undefined, rules: null };
@@ -4432,10 +4463,10 @@ async function buildActiveRulesFromStorage() {
   // popup showing "0 network rules loaded" until something explicitly
   // re-writes `enabled` to storage.
   const {
-    enabled = true, pausedDomains = [], allowedDomains = [], focusMode = false,
+    enabled = true, pausedDomains = [], allowedDomains = [],
     blockAds = true, blockTrackers = true, blockMalware = true,
   } = await LocalStorage.get(
-    ['enabled', 'pausedDomains', 'allowedDomains', 'focusMode', 'blockAds', 'blockTrackers', 'blockMalware']
+    ['enabled', 'pausedDomains', 'allowedDomains', 'blockAds', 'blockTrackers', 'blockMalware']
   );
 
   if (!enabled) {
@@ -4519,7 +4550,6 @@ async function buildActiveRulesFromStorage() {
     MALWARE_PATH_MATCHER = new Map();
   }
   const customBlockRules = await buildCustomBlockRules();
-  const focusRules = await buildFocusRules(focusMode);
   const queryStripActive = blockTrackers ? QUERY_STRIP_RULES : [];
   const networkRedirectActive = blockAds ? NETWORK_REDIRECT_RULES : [];
   const networkBlockActive = blockAds ? NETWORK_BLOCK_RULES : [];
@@ -4573,7 +4603,7 @@ async function buildActiveRulesFromStorage() {
   // gambling the whole updateDynamicRules() call on it staying accurate.
   const combinedRules = [
     ...activeRules, ...adMainFrameActive, ...malwareActive, ...remoteActive,
-    ...customBlockRules, ...focusRules, ...pauseAllowRules, ...queryStripActive, ...networkRedirectActive,
+    ...customBlockRules, ...pauseAllowRules, ...queryStripActive, ...networkRedirectActive,
     ...networkBlockActive,
   ];
   const allRules = _trimToDynamicRuleLimits(combinedRules);
@@ -4590,7 +4620,6 @@ async function buildActiveRulesFromStorage() {
       malware: malwareActive.length,
       remoteMalware: remoteActive.length,
       custom: customBlockRules.length,
-      focus: focusRules.length,
       pauseAllow: pauseAllowRules.length,
       queryStrip: queryStripActive.length,
       networkRedirect: networkRedirectActive.length,
@@ -4889,31 +4918,17 @@ async function buildCustomBlockRules() {
   return result;
 }
 
-// ── Focus mode blocking rules ─────────────────────────────────────
-const DISTRACTION_DEFAULTS = ['twitter.com', 'youtube.com', 'reddit.com', 'instagram.com', 'tiktok.com'];
-
-// Phase 2c: same in-memory memoization approach as buildCustomBlockRules()
-// above, keyed by (focusMode, _ruleInputHashes.distractionDomains).
-let _focusRulesMemo = { key: undefined, rules: null };
-async function buildFocusRules(focusMode) {
-  if (!focusMode) return [];
-  const key = focusMode + '|' + _ruleInputHashes.distractionDomains;
-  if (_focusRulesMemo.rules && _focusRulesMemo.key === key) return _focusRulesMemo.rules;
-  const { distractionDomains = DISTRACTION_DEFAULTS } = await LocalStorage.get('distractionDomains');
-  // Stable id (Phase 3a) keyed on the domain itself, not array position.
-  const withIds = _assignStableIds(distractionDomains, domain => domain, FOCUS_RULE_ID_START, FOCUS_ID_RANGE);
-  const result = withIds.map(({ item: domain, id }) => ({
-    id,
-    priority: 2,
-    action:   { type: 'block' },
-    condition: {
-      requestDomains: [domain],
-      resourceTypes:  ['main_frame', 'sub_frame', 'script', 'image', 'xmlhttprequest'],
-    },
-  }));
-  _focusRulesMemo = { key, rules: result };
-  return result;
-}
+// ── Focus mode / per-site daily limits: NO DNR rule at all ────────────
+// Both used to build DNR block+redirect rules here (see git history: the
+// 2026-09-18 redirect-to-blocked.html design). Removed by explicit,
+// confirmed user request: Focus Mode blocking is now a purely client-side
+// overlay drawn ON TOP of the real, fully-loaded page — see
+// content/focus-block-overlay.js — not a network-level block/redirect. The
+// tradeoff (the real site's scripts/trackers/bandwidth all still run
+// underneath the overlay) was explicitly raised and accepted. The default
+// distraction list itself still lives in shared/focus-mode.js
+// (FocusMode.DISTRACTION_DEFAULTS); background.js no longer reads it at
+// all, since it built no rules from it.
 
 // ── Icon badge ────────────────────────────────────────────────────
 // enabled=true shows the ACTIVE TAB's own blocked count (resets per
@@ -5199,6 +5214,14 @@ function _ensureAlarm(name, alarmInfo) {
 }
 _ensureAlarm(RULES_REVALIDATE_ALARM, { periodInMinutes: RULES_REVALIDATE_PERIOD_MIN });
 _ensureAlarm('extension-update-check', { periodInMinutes: 60 * 24 });
+// Per-site daily time-limit tick (shared/focus-mode.js's onSiteLimitTick) —
+// the practical minimum period chrome.alarms allows; see that function's
+// own comment for why this is the resolution floor for this feature, not a
+// tunable knob. Armed unconditionally (not gated on siteTimeLimits being
+// non-empty) since _ensureAlarm() itself is idempotent/cheap and the tick
+// is already a fast no-op whenever no limited site is actually focused.
+_ensureAlarm('focus-site-limit-tick', { periodInMinutes: 1 });
+
 EXT.alarms?.onAlarm.addListener(async (alarm) => {
   if (alarm.name === RULES_REVALIDATE_ALARM) {
     await revalidateRemoteRules();
@@ -5207,10 +5230,53 @@ EXT.alarms?.onAlarm.addListener(async (alarm) => {
     await checkForExtensionUpdate();
   }
   if (alarm.name === 'focus-end') {
-    // Auto-disable focus mode when timer expires
-    await LocalStorage.set({ focusMode: false, focusEndTime: null });
-    await applyNetworkRules();
+    // FocusMode.onPhaseAlarm() (shared/focus-mode.js) owns the full
+    // decision here now: single-session mode disables (same behavior this
+    // handler used to do inline); Pomodoro mode advances to the next
+    // work/break phase and re-arms this SAME alarm name for it — see that
+    // function's own comment. No applyNetworkRules() call here anymore:
+    // focusMode/distractionDomains stopped being DNR rule inputs entirely
+    // once Focus Mode blocking moved to a client-side overlay (content/
+    // focus-block-overlay.js) — a phase change or session end has nothing
+    // left for the DNR pipeline to rebuild.
+    await FocusMode.onPhaseAlarm();
   }
+  if (alarm.name === 'focus-site-limit-tick') {
+    // Same reasoning: siteLimitsExceededToday is no longer a DNR rule
+    // input either, so there is nothing to conditionally rebuild here —
+    // content/focus-block-overlay.js reads this key directly via its own
+    // storage.onChanged listener instead.
+    await FocusMode.onSiteLimitTick();
+  }
+});
+
+// FocusMode needs to know, at all times, which hostname (if any) is
+// currently both visible (active tab) AND actually being looked at (OS
+// window focused). Two signals feed it: this listener (a DIFFERENT window
+// gained/lost OS focus) and tabs.onActivated further down (the active TAB
+// changed WITHIN a window, without the window itself changing focus — e.g.
+// Ctrl+Tab). _focusedWindowId is the shared piece of state that lets
+// tabs.onActivated tell those two cases apart: an activation in some OTHER
+// (background) window must NOT overwrite what the user is actually looking
+// at, or a limited site opened in a background window/tab could get time
+// wrongly attributed to it.
+let _focusedWindowId = null;
+EXT.windows?.onFocusChanged.addListener(async (windowId) => {
+  if (windowId === EXT.windows.WINDOW_ID_NONE) {
+    _focusedWindowId = null;
+    FocusMode.setWindowFocused(false);
+    return;
+  }
+  _focusedWindowId = windowId;
+  FocusMode.setWindowFocused(true);
+  try {
+    const [tab] = await EXT.tabs.query({ active: true, windowId });
+    if (tab && tab.url) {
+      let domain = '';
+      try { domain = new URL(tab.url).hostname; } catch { domain = ''; }
+      FocusMode.setActiveTab(domain);
+    }
+  } catch (e) {}
 });
 
 // ── "Hide element" picker (right-click context menu) ─────────────────
@@ -6196,7 +6262,7 @@ function _getClassifiedGenericSelectors(parsed) {
 // In-memory memo for GET_SITE_CONFIG's computed `global` object — see that
 // handler's own comment. Never persisted; naturally cleared (and correctly
 // recomputed once) on every SW restart, same as every other in-memory memo
-// in this file (_customBlockRulesMemo, _focusRulesMemo, etc.).
+// in this file (_customBlockRulesMemo, _remoteMalwareRulesMemo, etc.).
 let _siteConfigGlobalMemo = { parsed: null, gpcSignal: null, referrerAnonymization: null, global: null };
 
 // GENERIC_SELECTORS_SURVEY's per-batch CSS slot counter (2026-09-15) — see
@@ -6412,25 +6478,43 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'FOCUS_MODE': {
         await LocalStorage.set({ focusMode: msg.enabled });
+        // FocusMode.startSession()/stopSession() (shared/focus-mode.js) own
+        // the actual 'focus-end' alarm arming/clearing now — dashboard.js/
+        // popup.js still compute and write focusEndTime/focusDuration to
+        // storage THEMSELVES before sending this message, unchanged; this
+        // just resets the phase/cycle counters to a fresh work phase and
+        // arms the alarm against whatever endTime is already there (or
+        // clears it on disable) — see that function's own comment.
         if (msg.enabled) {
-          // Set alarm to auto-disable focus when timer expires (even if dashboard is closed)
-          const { focusEndTime } = await LocalStorage.get('focusEndTime');
-          if (focusEndTime) {
-            const delayMs = focusEndTime - Date.now();
-            if (delayMs > 0) {
-              EXT.alarms.create('focus-end', { when: focusEndTime });
-            }
-          }
+          await FocusMode.startSession();
         } else {
-          EXT.alarms.clear('focus-end');
+          await FocusMode.stopSession();
         }
-        await applyNetworkRules();
+        // No applyNetworkRules() — focusMode/distractionDomains are no
+        // longer DNR rule inputs (see content/focus-block-overlay.js).
         sendResponse({ ok: true });
         break;
       }
 
       case 'ALLOWLIST_CHANGED': {
         await applyNetworkRules();
+        sendResponse({ ok: true });
+        break;
+      }
+
+      // Dashboard's per-site time-limit editor (add/remove/edit a limit)
+      // sends this after writing to `siteTimeLimits` directly — same shape
+      // as ALLOWLIST_CHANGED just above. Recomputes
+      // siteLimitsExceededToday WITHOUT attributing any additional time
+      // (see FocusMode.recomputeExceededToday()'s own comment), so e.g.
+      // raising or removing a limit can immediately un-exceed a site
+      // instead of waiting up to a minute for the next tick.
+      case 'SITE_LIMITS_CHANGED': {
+        // No applyNetworkRules() anymore — siteLimitsExceededToday isn't a
+        // DNR rule input (Focus Mode blocking moved to a client-side
+        // overlay, content/focus-block-overlay.js, which reacts to this
+        // key changing via its own storage.onChanged listener instead).
+        await FocusMode.recomputeExceededToday();
         sendResponse({ ok: true });
         break;
       }
@@ -6875,6 +6959,25 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         break;
       }
 
+      case 'FOCUS_PAGE_BLOCKED': {
+        // Sent by content/focus-block-overlay.js once per page load, the
+        // moment it draws its overlay over a distraction-list/limit-
+        // exceeded site — that content script (not a DNR redirect to
+        // blocked.html; there is no network-level block for Focus Mode at
+        // all anymore, see that file's own header comment) is the only
+        // place that knows a block just happened, so it's the only way
+        // these get counted, same reasoning as MALWARE_PAGE_BLOCKED/
+        // AD_POPUP_PAGE_BLOCKED above. Deliberately NOT folded into
+        // dailyStats/domain stats (updateDailyStats's ads/trackers/malware
+        // breakdown has no category that honestly fits a self-imposed
+        // block) — just the per-tab counter so the badge reflects it.
+        const host = String(msg.host || '').toLowerCase();
+        if (!host || !DOMAIN_PATTERN_RE.test(host)) { sendResponse({ ok: false }); break; }
+        _incrementTabBlocked(sender.tab && sender.tab.id, 1);
+        sendResponse({ ok: true });
+        break;
+      }
+
       case 'RESET': {
         await LocalStorage.clear();
         await EXT.declarativeNetRequest.updateDynamicRules({
@@ -6931,10 +7034,20 @@ function updateContextMenuVisibility(domain, enabledOverride) {
   }
 }
 
-EXT.tabs.onActivated.addListener(async ({ tabId }) => {
+EXT.tabs.onActivated.addListener(async ({ tabId, windowId }) => {
   const tab = await EXT.tabs.get(tabId).catch(() => null);
   if (!tab?.url) return;
   updateBadgeForTab(tabId, tab.url);
+  // Covers the case windows.onFocusChanged (above) can't: the ACTIVE TAB
+  // changing WITHIN an already-focused window (e.g. Ctrl+Tab), with no
+  // window-focus event of its own. Only update FocusMode's tracking if this
+  // activation happened in the window that's actually OS-focused right
+  // now — an activation in some background window must never overwrite it.
+  if (windowId === _focusedWindowId) {
+    let domain = '';
+    try { domain = new URL(tab.url).hostname; } catch { domain = ''; }
+    FocusMode.setActiveTab(domain);
+  }
 });
 
 EXT.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
@@ -6947,6 +7060,14 @@ EXT.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
   if (changeInfo.status === 'complete' && tab.url) {
     updateBadgeForTab(tabId, tab.url);
+    // Same gating as onActivated above: a BACKGROUND tab finishing its own
+    // navigation (tab.active === false, or in some other window) must never
+    // overwrite what the user is actually looking at.
+    if (tab.active && tab.windowId === _focusedWindowId) {
+      let domain = '';
+      try { domain = new URL(tab.url).hostname; } catch { domain = ''; }
+      FocusMode.setActiveTab(domain);
+    }
   }
 });
 

@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "আপনি যে পেজ থেকে এসেছেন সেখানে একটি ক্লিক এই বিজ্ঞাপন/পপআপ নেটওয়ার্কটি নতুন ট্যাবে খোলার চেষ্টা করেছিল। আপনি নিরাপদে এই ট্যাবটি বন্ধ করতে পারেন।"
   },
+  "overlay_focus_title": {
+    "message": "ফোকাস সেশন চলছে"
+  },
+  "overlay_focus_hint": {
+    "message": "এই সাইটটি আপনার বিভ্রান্তি তালিকায় আছে এবং সেশন শেষ না হওয়া পর্যন্ত ঢাকা থাকবে।"
+  },
+  "overlay_phase_work": {
+    "message": "ফোকাস"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "বিরতি"
+  },
+  "overlay_phase_longBreak": {
+    "message": "দীর্ঘ বিরতি"
+  },
+  "overlay_limit_title": {
+    "message": "দৈনিক সময়সীমা পূর্ণ হয়েছে"
+  },
+  "overlay_limit_hint": {
+    "message": "আপনি আজকের জন্য এই সাইটের সময় বাজেট শেষ করে ফেলেছেন। মধ্যরাতের পরে এটি আবার উপলব্ধ হবে।"
+  },
   "blocked_dontWarn_label": {
     "message": "এই সাইট সম্পর্কে আর সতর্ক করবেন না"
   },

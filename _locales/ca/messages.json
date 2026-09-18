@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Un clic a la pàgina d'origen ha intentat obrir aquesta xarxa d'anuncis/emergents en una pestanya nova. Pots tancar aquesta pestanya amb seguretat."
   },
+  "overlay_focus_title": {
+    "message": "Sessió de concentració en curs"
+  },
+  "overlay_focus_hint": {
+    "message": "Aquest lloc és a la teva llista de distraccions i es manté cobert fins que acabi la sessió."
+  },
+  "overlay_phase_work": {
+    "message": "Concentració"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Descans"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Descans llarg"
+  },
+  "overlay_limit_title": {
+    "message": "S'ha assolit el límit de temps diari"
+  },
+  "overlay_limit_hint": {
+    "message": "Has esgotat el pressupost de temps d'avui per a aquest lloc. Tornarà a estar disponible després de mitjanit."
+  },
   "blocked_dontWarn_label": {
     "message": "No tornis a avisar-me sobre aquest lloc"
   },

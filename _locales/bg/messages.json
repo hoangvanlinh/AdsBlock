@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Клик на страницата, от която дойдохте, се опита да отвори тази рекламна/изскачаща мрежа в нов раздел. Можете спокойно да затворите този раздел."
   },
+  "overlay_focus_title": {
+    "message": "Сесия на фокус в ход"
+  },
+  "overlay_focus_hint": {
+    "message": "Този сайт е в списъка ви с разсейвания и остава скрит до края на сесията."
+  },
+  "overlay_phase_work": {
+    "message": "Фокус"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Почивка"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Дълга почивка"
+  },
+  "overlay_limit_title": {
+    "message": "Достигнат е дневният лимит на времето"
+  },
+  "overlay_limit_hint": {
+    "message": "Изчерпахте дневния времеви бюджет за този сайт. Ще бъде достъпен отново след полунощ."
+  },
   "blocked_dontWarn_label": {
     "message": "Не ме предупреждавай отново за този сайт"
   },

@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "Egy kattintás azon az oldalon, ahonnan érkezett, megpróbálta megnyitni ezt a hirdetési/előugró hálózatot egy új lapon. Ezt a lapot biztonságosan bezárhatja."
   },
+  "overlay_focus_title": {
+    "message": "Fókuszmunkamenet folyamatban"
+  },
+  "overlay_focus_hint": {
+    "message": "Ez az oldal szerepel a figyelemelterelési listádon, és a munkamenet végéig eltakarva marad."
+  },
+  "overlay_phase_work": {
+    "message": "Fókusz"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Szünet"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Hosszú szünet"
+  },
+  "overlay_limit_title": {
+    "message": "Elérted a napi időkeretet"
+  },
+  "overlay_limit_hint": {
+    "message": "Elhasználtad a mai időkeretet erre az oldalra. Éjfél után újra elérhető lesz."
+  },
   "blocked_dontWarn_label": {
     "message": "Ne figyelmeztessen újra erről a webhelyről"
   },

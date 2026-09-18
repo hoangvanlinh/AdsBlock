@@ -25,6 +25,27 @@
   "blocked_hint_adPopup": {
     "message": "A click on the page you came from tried to open this ad/popup network in a new tab. You can safely close this tab."
   },
+  "overlay_focus_title": {
+    "message": "Focus session in progress"
+  },
+  "overlay_focus_hint": {
+    "message": "This site is on your distraction list and stays covered until the session ends."
+  },
+  "overlay_phase_work": {
+    "message": "Focus"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Break"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Long break"
+  },
+  "overlay_limit_title": {
+    "message": "Daily time limit reached"
+  },
+  "overlay_limit_hint": {
+    "message": "You've used up today's time budget for this site. It's available again after midnight."
+  },
   "blocked_dontWarn_label": {
     "message": "Don't warn me again about this site"
   },

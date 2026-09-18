@@ -23,6 +23,27 @@
   "blocked_hint_adPopup": {
     "message": "Geldiğiniz sayfadaki bir tıklama, bu reklam/pop-up ağını yeni bir sekmede açmaya çalıştı. Bu sekmeyi güvenle kapatabilirsiniz."
   },
+  "overlay_focus_title": {
+    "message": "Odaklanma oturumu sürüyor"
+  },
+  "overlay_focus_hint": {
+    "message": "Bu site dikkat dağıtıcılar listenizde ve oturum bitene kadar kapalı kalır."
+  },
+  "overlay_phase_work": {
+    "message": "Odak"
+  },
+  "overlay_phase_shortBreak": {
+    "message": "Mola"
+  },
+  "overlay_phase_longBreak": {
+    "message": "Uzun mola"
+  },
+  "overlay_limit_title": {
+    "message": "Günlük süre sınırına ulaşıldı"
+  },
+  "overlay_limit_hint": {
+    "message": "Bu site için bugünkü zaman bütçenizi tükettiniz. Gece yarısından sonra tekrar kullanılabilir olacak."
+  },
   "blocked_dontWarn_label": {
     "message": "Bu site hakkında beni bir daha uyarma"
   },
