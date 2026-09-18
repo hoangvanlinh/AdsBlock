@@ -165,6 +165,25 @@
   }
 
   async function evaluate() {
+    // shared/i18n.js installs a manual-language-override wrapper around
+    // EXT.i18n.getMessage() (Settings' language dropdown / auto-detected
+    // content-language, for when the browser's own MENU language —
+    // chrome.i18n's native getUILanguage() resolution — differs from what
+    // the user actually reads, e.g. Chrome menus in English but Settings
+    // set to Vietnamese). That override loads ASYNCHRONOUSLY (a storage
+    // read, sometimes a fetch of the target locale's messages.json) and,
+    // unlike the 3 extension-owned HTML pages, a content script has no
+    // synchronous localStorage cache to paint correctly on the very first
+    // render — see that file's own header comment. Left unawaited here,
+    // this overlay would render once in native/English (whatever
+    // getUILanguage() resolves to) and never get a second pass, since
+    // nothing re-applies text buried inside its closed Shadow DOM the way
+    // i18n.js's own applyI18n() does for plain data-i18n page elements —
+    // live-reported 2026-09-19. Awaiting it here, before the first
+    // getMessage() call anywhere in this file, means every render already
+    // reflects the FINAL resolved language.
+    await (self.EXT_I18N_READY || Promise.resolve());
+
     const s = await readStorage([
       'focusMode', 'distractionDomains', 'focusPhase', 'focusEndTime',
       'siteLimitsExceededToday', 'pausedDomains', 'allowedDomains',
