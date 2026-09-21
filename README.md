@@ -193,12 +193,18 @@ Blocks configurable distraction domains (social media, etc.) with a countdown ti
 
 ## Permissions
 
-| Permission | Why |
-|---|---|
-| `storage` | Save settings, stats, and rules locally |
-| `declarativeNetRequest` | Block network requests (ads, trackers, malware) |
-| `alarms` | Periodic malware list updates |
-| `http://*/*`, `https://*/*` | Content script injection on all pages |
+| Permission | Why | Chrome | Firefox |
+|---|---|:---:|:---:|
+| `storage` | Save settings, stats, and rules locally | ✅ | ✅ |
+| `declarativeNetRequest` | Block network requests (ads, trackers, malware) | ✅ | ✅ |
+| `alarms` | Periodic malware list updates | ✅ | ✅ |
+| `scripting` | Inject cosmetic-hide CSS/JS | ✅ | ✅ |
+| `contextMenus` | Right-click "Pick element to hide" | ✅ | ✅ |
+| `webRequest`, `webRequestBlocking` | Firefox has no `declarativeNetRequest` response-body access, so these are required as a fallback for request-level filtering | ❌ | ✅ |
+| `webRequestFilterResponse` | Firefox-only `filterResponseData` stream filter — strips server-rendered ad markup from the raw HTML response before it's parsed/painted (some sites' ads are server-rendered, so CSS-only hiding can't win that race) | ❌ | ✅ |
+| `http://*/*`, `https://*/*` | Content script injection on all pages | ✅ | ✅ |
+
+Firefox's manifest (`manifest.firefox.json`) declares three extra permissions that Chrome's does not, because Firefox's MV3 `declarativeNetRequest` implementation doesn't yet cover everything Chrome's does — see `manifest.json` vs `manifest.firefox.json` for the exact diff.
 
 ## Contributing
 
