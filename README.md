@@ -200,11 +200,11 @@ Blocks configurable distraction domains (social media, etc.) with a countdown ti
 | `alarms` | Periodic malware list updates | ✅ | ✅ |
 | `scripting` | Inject cosmetic-hide CSS/JS | ✅ | ✅ |
 | `contextMenus` | Right-click "Pick element to hide" | ✅ | ✅ |
-| `webRequest`, `webRequestBlocking` | Firefox has no `declarativeNetRequest` response-body access, so these are required as a fallback for request-level filtering | ❌ | ✅ |
+| `webRequest`, `webRequestBlocking` | Firefox's `declarativeNetRequest` dynamic-rule cap is a flat 5,000 rules shared across *all* rule types, versus Chrome's split 30,000 "safe" (block/allow) + 5,000 "unsafe" (redirect/modifyHeaders) pools — far too low for this extension's full rule set. `webRequestBlocking` is used as an uncapped fallback engine for the rules that would otherwise overflow that budget | ❌ | ✅ |
 | `webRequestFilterResponse` | Firefox-only `filterResponseData` stream filter — strips server-rendered ad markup from the raw HTML response before it's parsed/painted (some sites' ads are server-rendered, so CSS-only hiding can't win that race) | ❌ | ✅ |
 | `http://*/*`, `https://*/*` | Content script injection on all pages | ✅ | ✅ |
 
-Firefox's manifest (`manifest.firefox.json`) declares three extra permissions that Chrome's does not, because Firefox's MV3 `declarativeNetRequest` implementation doesn't yet cover everything Chrome's does — see `manifest.json` vs `manifest.firefox.json` for the exact diff.
+Firefox's manifest (`manifest.firefox.json`) declares three extra permissions that Chrome's does not, because Firefox's `declarativeNetRequest` dynamic-rule quota is much lower than Chrome's — see `manifest.json` vs `manifest.firefox.json` for the exact diff.
 
 ## Contributing
 
