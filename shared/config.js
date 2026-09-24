@@ -41,7 +41,6 @@ self.ADBLOCK_CONFIG = {
     // a toggle independent of blockAds. Still fetched/cached/ETag-revalidated
     // /dashboard-toggleable exactly like every other entry below.
     { name: 'URLhaus Malware Filter', url: 'https://malware-filter.gitlab.io/malware-filter/urlhaus-filter.txt', enable: true, group: "malware", format: "hosts" },
-    { name: 'UBlock Badware Filter', url: 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/badware.txt', enable: false, group: "malware", format: "hosts" },
     { name: 'EasyList', url: 'https://easylist.to/easylist/easylist.txt', enable: true, group: "easylist" },
     // `category: 'tracker'` (background.js's fetchRemoteRuleText/
     // _abpParseFile): this source's bare-domain patterns convert into

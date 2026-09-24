@@ -3407,23 +3407,50 @@ function _resolveRedirectResourceName(name) {
   return REDIRECT_RESOURCE_ALIASES.get(String(name || '').replace(/:\d+$/, ''));
 }
 
-// redirect.url (a fully-resolved chrome.runtime.getURL() call, baked in at
-// rule-BUILD time), NOT redirect.extensionPath (a bare relative path Chrome
-// resolves against the extension's REAL STATIC id at request-match time —
-// confirmed live via DevTools + a purpose-built leak scanner, see
-// [[self-inflicted-fingerprint-markers]]'s 2026-08-07 entries: extensionPath
-// does NOT honor this resource's use_dynamic_url:true manifest entry at
-// all, it always resolves to the permanent id, which a page can read
-// straight off response.url on any redirected request with zero DevTools
-// needed — a strictly worse leak than what dynamic ids exist to prevent).
-// chrome.runtime.getURL() correctly returns the dynamic per-session id;
-// applyNetworkRules() (called from both onInstalled and onStartup) rebuilds
-// every dynamic rule fresh each time it runs, so a freshly-reloaded
-// extension always re-bakes a current id. DO NOT "fix" 307/SecurityError
-// noop.txt failures by switching this back to extensionPath — that trades
-// a staleness bug for a strictly worse, already-diagnosed static-id leak.
+// redirect.extensionPath (2026-09-24 — REVERSES the previous decision
+// documented right here; if you're reading an old copy of this comment or a
+// memory entry that still says "DO NOT use extensionPath", THIS is the
+// up-to-date reasoning, not that one).
+//
+// Previously this used redirect.url (chrome.runtime.getURL(...), baked in
+// at rule-BUILD time) specifically to get the DYNAMIC per-session id
+// use_dynamic_url:true (manifest.json) provides — extensionPath resolves
+// against the extension's REAL STATIC id instead, a real fingerprinting
+// surface (a page can read it straight off response.url on any redirected
+// request, no DevTools needed). That was a deliberate, correct call at the
+// time.
+//
+// Live-reported (2026-09-24), root-caused precisely: chrome.runtime.
+// getURL()'s dynamic id ROTATES ONCE PER REAL BROWSER START. Chrome's
+// dynamic DNR ruleset persists natively across a restart, so whatever this
+// extension last applied — still carrying the PREVIOUS session's now-dead
+// id — is already live the instant the browser launches, before this
+// script has even started running. applyNetworkRules() does correct it
+// (see _ruleFingerprint()'s urlEpoch field, and _patchStaleRedirectIdsEarly()
+// which fixes just this narrow thing as fast as a single declarativeNetRequest
+// round trip allows, no rule-text parsing involved) — but ONLY once this
+// script actually gets to run, and Chrome may restore/reload the tab that
+// was ACTIVE at shutdown (not a lazily-discarded background tab) before the
+// extension's own service worker has even been scheduled. That specific
+// tab's very first request can race ahead of literally anything this
+// script could do, no matter how fast — confirmed live: a background tab
+// on the exact same site, restored lazily and only actually loaded later,
+// never hit this; only the tab that was frontmost at shutdown did, every
+// time. This is not something fixable from extension JS.
+//
+// Real-world precedent for accepting the static-id trade-off specifically
+// for THIS rule type: uBlock Origin's own MV3 ruleset generator
+// (platform/mv3/extension/js/ubo-parser.js, this project's uAssets/uBlock
+// checkout) builds the exact same $redirect= → DNR redirect conversion
+// using extensionPath, not a dynamic-id url — despite ALSO declaring
+// use_dynamic_url:true on the identical resource group in its own
+// manifest.json. The most scrutinized, most attacked ad blocker in
+// existence makes the same call: reliability (correct from millisecond
+// zero, every tab, every restart, no race window at all) over the marginal
+// anti-fingerprinting benefit of a dynamic id, for network-redirect rules
+// specifically.
 function _redirectAction(file) {
-  return { type: 'redirect', redirect: { url: EXT.runtime.getURL(`/web_accessible_resources/${file}`) } };
+  return { type: 'redirect', redirect: { extensionPath: `/web_accessible_resources/${file}` } };
 }
 
 // One invalid domain in requestDomains rejects the whole updateDynamicRules
