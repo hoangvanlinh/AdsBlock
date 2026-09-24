@@ -298,14 +298,27 @@ function _urlFilterToRegExp(urlFilter) {
 // buildNetworkRedirectRules below (previously hand-duplicated in both — the
 // latter's own comment already noted "same domain-vs-path condition split
 // as buildQueryStripRules above" without ever actually extracting it;
-// consolidated here 2026-09-15). A bare domain (no '/') becomes
-// requestDomains; anything with a '/' becomes a `||pattern` urlFilter.
-// Returns null if the pattern is malformed either way — caller should
+// consolidated here 2026-09-15). A pattern that's a CLEAN bare domain (no
+// '/', no other network-pattern syntax) becomes requestDomains; anything
+// else becomes a `||pattern` urlFilter — including a pattern with NO '/' at
+// all, e.g. "static.6cloud.fr^*.mp4" ('^' separator + '*' wildcard, no path
+// segment). Live-confirmed bug (2026-09-24, AdGuard French filter list):
+// this used to gate the urlFilter attempt on pattern.indexOf('/') === -1
+// alone — that '/' check is only a valid SHORTCUT for "definitely not a
+// bare domain," never a reliable test for "definitely IS one." A pattern
+// with '^'/'*' but no '/' failed DOMAIN_PATTERN_RE (correctly — it isn't a
+// domain) and returned null right there, never even attempting the
+// urlFilter path it would have converted to cleanly. Silently dropped the
+// entry as "malformed" when it wasn't. Now DOMAIN_PATTERN_RE decides
+// on its own whether the WHOLE pattern is a clean domain, independent of
+// '/' — an actual bare domain still can't contain '/' anyway, so this
+// changes nothing for the genuinely-a-domain case, only rescues the
+// no-slash-but-not-a-domain case that used to be dropped.
+// Returns null only when NEITHER interpretation works — caller should
 // `continue` past that entry entirely rather than guess at what was meant
 // (same "don't guess, drop it" rule every other builder in this file uses).
 function _buildDomainOrUrlFilterCondition(pattern) {
-  if (pattern.indexOf('/') === -1) {
-    if (!DOMAIN_PATTERN_RE.test(pattern)) return null;
+  if (DOMAIN_PATTERN_RE.test(pattern)) {
     return { requestDomains: [pattern.toLowerCase()] };
   }
   const urlFilter = '||' + pattern;
@@ -6768,11 +6781,26 @@ EXT.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       case 'GET_UPDATE_STATUS': {
         const { updateInfo = {} } = await LocalStorage.get('updateInfo');
+        const currentVersion = EXT.runtime.getManifest().version;
+        // Re-derive `available` from the CURRENT local version against the
+        // cached latestVersion, rather than trusting updateInfo.available
+        // as stored — that boolean was computed by checkForExtensionUpdate()
+        // against whatever local version was active AT THAT TIME (this only
+        // runs for real once/day via maybeCheckForExtensionUpdate()'s TTL,
+        // or on an explicit CHECK_FOR_UPDATE_NOW). Live-reported: after
+        // rebuilding/reloading the extension to a version that already
+        // matches latestVersion, the popup/dashboard kept showing "update
+        // available" for up to a day — the stored boolean simply hadn't
+        // been recomputed since the local version changed. latestVersion
+        // itself staying stale is fine (it's just "what GitHub last had"),
+        // but whether that's actually NEWER than THIS install must always
+        // be current, since the local version can change (a rebuild/reload)
+        // far more often than the once-a-day network check does.
         sendResponse({
           ok: true,
-          currentVersion: EXT.runtime.getManifest().version,
+          currentVersion,
           latestVersion: updateInfo.latestVersion || '',
-          available: !!updateInfo.available,
+          available: updateInfo.latestVersion ? _isNewerVersion(updateInfo.latestVersion, currentVersion) : false,
           lastChecked: updateInfo.lastChecked || 0,
           lastCheckOk: updateInfo.lastCheckOk !== false,
         });

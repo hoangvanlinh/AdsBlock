@@ -539,7 +539,7 @@ function check(name, cond, detail = '') {
       bulkSnippet);
     check('...the script bulk rule still redirects to the generic noop.js placeholder (unchanged behavior)',
       bulkSnippet.some(r => r.condition.resourceTypes && r.condition.resourceTypes[0] === 'script' &&
-        r.action.type === 'redirect' && r.action.redirect.url.includes('noop.js')),
+        r.action.type === 'redirect' && r.action.redirect.extensionPath.includes('noop.js')),
       bulkSnippet);
   }
   {
@@ -551,7 +551,7 @@ function check(name, cond, detail = '') {
     check('a curated domain (doubleclick.net, has its own script stub) still gets its OWN dedicated per-domain script rule',
       curatedSnippet.some(r => r.condition.requestDomains && r.condition.requestDomains.length === 1 &&
         r.condition.requestDomains[0] === 'doubleclick.net' && r.condition.resourceTypes[0] === 'script' &&
-        r.action.redirect && r.action.redirect.url.includes('doubleclick_instream_ad_status.js')),
+        r.action.redirect && r.action.redirect.extensionPath.includes('doubleclick_instream_ad_status.js')),
       curatedSnippet);
     check('...and still gets the full per-type placeholder fan-out for the OTHER resourceTypes (image/xhr/sub_frame/other as separate rules, not collapsed)',
       curatedSnippet.filter(r => r.condition.requestDomains && r.condition.requestDomains.includes('doubleclick.net') && r.condition.resourceTypes[0] !== 'script').length >= 3,
@@ -1409,6 +1409,23 @@ function check(name, cond, detail = '') {
   const rStatus = await send5({ type: 'GET_UPDATE_STATUS' });
   check('GET_UPDATE_STATUS reflects the same cached result without a fresh fetch', rStatus.ok && rStatus.available === true && rStatus.latestVersion === '9.9.9', JSON.stringify(rStatus));
 
+  // Live-reported (2026-09-24): after rebuilding/reloading the extension to
+  // a version that already matches latestVersion, the popup/dashboard kept
+  // showing "update available" — because updateInfo.available was a stale
+  // boolean, computed by checkForExtensionUpdate() back when the local
+  // version was OLDER, and GET_UPDATE_STATUS used to just echo it back
+  // as-is instead of re-deriving it against the CURRENT local version.
+  // maybeCheckForExtensionUpdate()'s once-a-day TTL means that stale flag
+  // could persist far longer than any reasonable rebuild/reload cadence.
+  await chromeStub.storage.local.set({ updateInfo: { lastChecked: Date.now(), available: true, latestVersion: '1.0.35', lastCheckOk: true } });
+  const rStatusSelfCorrect = await send5({ type: 'GET_UPDATE_STATUS' });
+  check('GET_UPDATE_STATUS re-derives `available` from the CURRENT local version instead of trusting a stale stored flag',
+    rStatusSelfCorrect.ok && rStatusSelfCorrect.available === false && rStatusSelfCorrect.latestVersion === '1.0.35',
+    JSON.stringify(rStatusSelfCorrect));
+  // Restore for the sections below, which assume the '9.9.9'/available:true
+  // state CHECK_FOR_UPDATE_NOW left behind above.
+  await chromeStub.storage.local.set({ updateInfo: { lastChecked: Date.now(), available: true, latestVersion: '9.9.9', lastCheckOk: true } });
+
   stubRemoteManifestUnreachable = true;
   const rOffline = await send5({ type: 'CHECK_FOR_UPDATE_NOW' });
   check('a failed fetch is reported (lastCheckOk:false), not silently treated as success', rOffline.ok && rOffline.lastCheckOk === false, JSON.stringify(rOffline));
@@ -2234,7 +2251,7 @@ function check(name, cond, detail = '') {
   const pathRule = builtRedirectRules.find(r => r.condition.urlFilter);
   check('buildNetworkRedirectRules: path pattern -> urlFilter condition + redirect action to the real file',
     !!pathRule && pathRule.condition.urlFilter === '||imasdk.googleapis.com/js/sdkloader/ima3.js' &&
-    pathRule.action.type === 'redirect' && pathRule.action.redirect.url.includes('google-ima.js'),
+    pathRule.action.type === 'redirect' && pathRule.action.redirect.extensionPath.includes('google-ima.js'),
     JSON.stringify(pathRule));
   const domainRule = builtRedirectRules.find(r => r.condition.requestDomains);
   check('buildNetworkRedirectRules: bare domain pattern -> requestDomains condition',
@@ -2265,7 +2282,7 @@ function check(name, cond, detail = '') {
       built[0].condition.requestDomains[0] === 'static.eclick.vn',
       JSON.stringify(built));
     check('redirect action points at the real shipped 1x1.gif placeholder',
-      built[0].action.type === 'redirect' && built[0].action.redirect.url.includes('1x1.gif'),
+      built[0].action.type === 'redirect' && built[0].action.redirect.extensionPath.includes('1x1.gif'),
       JSON.stringify(built[0].action));
 
     // A legacy 2-field entry (no type — either hand-written, or converted
@@ -2817,9 +2834,16 @@ function check(name, cond, detail = '') {
   check('_uiLanguageMatches: getUILanguage="en-US" but navigator.language="vi-VN" -> still matches "vi"',
     T._uiLanguageMatches('vi') === true);
   delete sandbox.navigator.language;
+  // navigator.languages (2026-09-24 — deliberately NOT read anymore):
+  // live-reported (Windows), a user's OS "Preferred languages" list had
+  // picked up extra incidental entries (secondary keyboard layouts etc.)
+  // that had nothing to do with what content they wanted, and this
+  // ANY-candidate-matches consumer auto-enabled a Rule Source for every one
+  // of them at once. Only navigator.language (the single primary signal,
+  // tested above) and EXT.i18n.getUILanguage() are read now.
   sandbox.navigator.languages = ['fr-FR', 'vi'];
-  check('_uiLanguageMatches: a match anywhere in navigator.languages[] (not just index 0) counts',
-    T._uiLanguageMatches('vi') === true);
+  check('_uiLanguageMatches: navigator.languages[] is NOT read at all (only navigator.language/getUILanguage) — no match even though "vi" is in there',
+    T._uiLanguageMatches('vi') === false);
   delete sandbox.navigator.languages;
   check('_uiLanguageMatches: back to getUILanguage-only ("en-US") -> no match, no leftover fallback state',
     T._uiLanguageMatches('vi') === false);

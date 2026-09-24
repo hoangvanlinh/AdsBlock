@@ -106,6 +106,19 @@ function detectStoreUrl(variant) {
 // checking both catches it. chrome.i18n.getUILanguage() works the same way
 // under Firefox's chrome.* alias; navigator exists in the MV3 service
 // worker global too, so no browser/context branch needed.
+// navigator.languages (2026-09-24 — deliberately NOT read here anymore):
+// used to push the WHOLE array in too, not just navigator.language — live-
+// reported (Windows): a user's OS "Preferred languages" list had picked up
+// extra entries over time (secondary keyboard layouts etc., unrelated to
+// what content they actually wanted), and background.js's
+// _autoEnableLangDefaultSources() — an ANY-candidate-matches consumer, not
+// first-match-wins — auto-enabled a Rule Source for EVERY one of them
+// (Vietnam + Thai + France at once from one machine). navigator.languages
+// tends to accumulate more incidental entries on Windows than macOS in
+// practice. Only the single PRIMARY signal (EXT.i18n.getUILanguage(),
+// navigator.language) is used now — still closes the "UI language disagrees
+// with content language" gap this function exists for, just without also
+// picking up every secondary language the OS happens to have installed.
 function langCandidates() {
   var out = [];
   try {
@@ -113,10 +126,7 @@ function langCandidates() {
     if (ui) out.push(ui);
   } catch (e) { /* ignore */ }
   try {
-    if (typeof navigator !== 'undefined') {
-      if (navigator.language) out.push(navigator.language);
-      if (Array.isArray(navigator.languages)) out.push.apply(out, navigator.languages);
-    }
+    if (typeof navigator !== 'undefined' && navigator.language) out.push(navigator.language);
   } catch (e) { /* ignore */ }
   return out;
 }
