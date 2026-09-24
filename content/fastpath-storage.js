@@ -58,15 +58,54 @@ function _withLocalFallback(promise){
   return promise.catch(function(){_sessionKnownBroken=true;return null;});
 }
 
+// _mergeMissingFromLocal (2026-09-24) — a HEALTHY storage.session resolves
+// with no rejection but legitimately EMPTY data right after a full browser
+// restart: storage.session is always wiped on browser close (a browser-level
+// guarantee, true even when the grant itself works fine), unlike
+// storage.local. Without this, every "last-known-good" fast-path guess this
+// LRU map exists to serve (see site-block.js's _fastPathDirectStyle/
+// _fastPathDispatchScriptletRules — the whole point is beating the real
+// GET_SITE_CONFIG round trip on the very first frame after content-script
+// start) was silently thrown away on every single reopen, even for a host
+// visited hundreds of times before — content scripts had to re-learn it from
+// scratch every session. set() below now mirrors every write into .local
+// too (previously .local was ONLY ever touched as the denied-grant fallback,
+// never as a standing shadow copy of a healthy session) specifically so this
+// has something to recover. Backfills only the keys actually missing from
+// the session result — a key session DID have data for is trusted as-is,
+// never overwritten by a possibly-older local copy.
+function _mergeMissingFromLocal(res,keys){
+  if(!_localArea)return Promise.resolve(res);
+  // Same string-or-array normalization chrome.storage.*.get() itself accepts
+  // — callers in this codebase always pass an array, but this stays
+  // consistent with the underlying API contract rather than assuming it.
+  var keyList=Array.isArray(keys)?keys:[keys];
+  var missing=false;
+  for(var i=0;i<keyList.length;i++){if(res[keyList[i]]===undefined){missing=true;break;}}
+  if(!missing)return Promise.resolve(res);
+  return _localArea.get(keys).then(function(localRes){
+    var merged={};
+    for(var k in res)merged[k]=res[k];
+    for(var k2 in localRes)if(merged[k2]===undefined)merged[k2]=localRes[k2];
+    return merged;
+  }).catch(function(){return res;});
+}
+
 window.__qkv1FastpathStorage={
   // Content scripts can inspect this if they ever need to branch on it
   // (e.g. logging/diagnostics) — none currently do, callers just use
   // get()/set() and let the fallback be transparent.
   usingSession:_usingSession,
-  // Smaller LRU cap when falling back to .local: that quota is already
+  // Smaller LRU cap when .local is the ONLY store (session unavailable/
+  // broken all page load, see _sessionKnownBroken): that quota is already
   // measured tight elsewhere in this codebase (siteRulesCacheText alone can
-  // use ~76-87% of the 10MB default) — unlike .session, which mainly only
-  // competes with background.js's own parsedRulesSessionCache for headroom.
+  // use ~76-87% of the 10MB default), unlike .session which — since
+  // background.js's own parsedRulesSessionCache was removed 2026-09-08 for
+  // exceeding IT'S 10MB cap — now has essentially nothing else competing for
+  // room. When session IS healthy, every write below still mirrors into
+  // .local too (see set()) so a revisited host survives a full browser
+  // restart, but capped at the SAME 50 rather than a separate, larger
+  // number — the mirror is a recovery copy, not a second independent cache.
   lruLimit:_usingSession?50:10,
   get:function(keys){
     // Session already proven broken this page load — skip straight to
@@ -77,19 +116,34 @@ window.__qkv1FastpathStorage={
     var p;
     try{p=_area.get(keys);}catch(e){p=Promise.reject(e);}
     return _withLocalFallback(p).then(function(res){
-      if(res!==null)return res;
-      // Session get() rejected (denied grant) — retry once against .local.
-      try{return _localArea.get(keys);}catch(e2){return {};}
+      if(res===null){
+        // Session get() rejected (denied grant) — retry once against .local.
+        try{return _localArea.get(keys);}catch(e2){return {};}
+      }
+      // Session resolved fine — but may be legitimately empty for these
+      // keys right after a browser restart (see _mergeMissingFromLocal's
+      // own comment). Backfill from .local's mirrored copy where needed.
+      return _usingSession?_mergeMissingFromLocal(res,keys):res;
     }).catch(function(){return {};});
   },
   set:function(payload){
     if(_sessionKnownBroken)return _localArea?_localArea.set(payload).catch(function(){}):Promise.resolve();
     if(!_area)return Promise.resolve();
+    // Mirror every write into .local too, fire-and-forget — see
+    // _mergeMissingFromLocal's own comment for why: this is what get()
+    // above actually recovers from after a full browser restart wipes
+    // .session. Only relevant when .session IS the primary area (when it
+    // isn't, _area is already .local and the write below covers it).
+    if(_usingSession&&_localArea){try{_localArea.set(payload).catch(function(){});}catch(e3){}}
     var p;
     try{p=_area.set(payload);}catch(e){p=Promise.reject(e);}
     return _withLocalFallback(p).then(function(res){
       if(res!==null)return res;
       // Session set() rejected (denied grant) — retry once against .local.
+      // (Already mirrored above when _usingSession was true, but this path
+      // only runs when _usingSession is true, so the retry is genuinely
+      // redundant with it — harmless, same payload, and keeps this branch's
+      // own return value/behavior identical to before this change.)
       try{return _localArea.set(payload);}catch(e2){}
     }).catch(function(){});
   }

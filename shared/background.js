@@ -3132,29 +3132,38 @@ async function revalidateRemoteRules() {
     const nextEtags = { ...etags };
     const nextHashes = { ...hashes };
     let changed = false;
-    // Each url revalidated independently — one unreachable/erroring url
-    // (e.g. a region list that moved) must not block the others, whether
-    // it's a whole other source or just another url in the SAME entry's
-    // group (an entry's `url` can be an array — see _entryUrls' own
-    // comment; every url in the group is tracked by its own ETag/hash,
-    // same as if they were separate entries).
-    for (const entry of enabledEntries) {
-      for (const url of _entryUrls(entry)) {
-        try {
-          const etag = etags[url] || '';
-          const res = await fetch(url, {
-            cache: 'no-store',
-            headers: etag ? { 'If-None-Match': etag } : {},
-          });
-          if (res.status === 304) continue; // unchanged
-          if (!res.ok) continue;
-          const text = await res.text();
-          const newHash = _hashText(text);
-          nextEtags[url] = res.headers.get('etag') || '';
-          nextHashes[url] = newHash;
-          if (newHash !== (hashes[url] || '')) changed = true;
-        } catch { /* this url failed — keep checking the rest of the group and other sources */ }
-      }
+    // Each url revalidated independently, IN PARALLEL — same
+    // Promise.all-over-every-url shape fetchRemoteRuleText()'s own
+    // _fetchAndConvertUrls() already uses for the exact same url list. This
+    // used to be a sequential for-loop with an `await fetch()` per url,
+    // which on every single onStartup (i.e. every time the browser reopens)
+    // paid one full network round trip PER enabled source/url, one after
+    // another, before returning — the likely cause of a user-reported slow
+    // reopen once several default sources are enabled (2026-09-24). A
+    // 304/error on one url must still never block
+    // any other, whether it's a whole other source or just another url in
+    // the SAME entry's group (an entry's `url` can be an array — see
+    // _entryUrls' own comment; every url in the group is tracked by its own
+    // ETag/hash, same as if they were separate entries) — Promise.allSettled
+    // (not Promise.all) keeps that guarantee under concurrency too.
+    const allUrls = enabledEntries.flatMap(entry => _entryUrls(entry));
+    const results = await Promise.allSettled(allUrls.map(async (url) => {
+      const etag = etags[url] || '';
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: etag ? { 'If-None-Match': etag } : {},
+      });
+      if (res.status === 304) return null; // unchanged
+      if (!res.ok) return null;
+      const text = await res.text();
+      return { url, etag: res.headers.get('etag') || '', hash: _hashText(text) };
+    }));
+    for (const r of results) {
+      if (r.status !== 'fulfilled' || !r.value) continue; // rejected, 304, or !ok — nothing to record
+      const { url, etag, hash } = r.value;
+      nextEtags[url] = etag;
+      nextHashes[url] = hash;
+      if (hash !== (hashes[url] || '')) changed = true;
     }
     await LocalStorage.set({
       [RULES_REMOTE_ETAG_KEY]: nextEtags,
