@@ -412,6 +412,7 @@ self.__test = {
   get FocusMode() { return FocusMode; },
   get focusedWindowId() { return _focusedWindowId; },
   get ruleInputHashes() { return _ruleInputHashes; },
+  get _rulesTextRefreshInFlight() { return _rulesTextRefreshInFlight; },
 };`;
 vm.runInContext(bgSrc + '\n' + exportSnippet, ctx, { filename: 'background.js' });
 const T = sandbox.__test;
@@ -479,7 +480,21 @@ function makeClassifier(globalCfg) {
 let pass = 0, fail = 0;
 function check(name, cond, detail = '') {
   if (cond) { pass++; console.log(`  PASS  ${name}`); }
-  else { fail++; console.log(`  FAIL  ${name}${detail ? ' — ' + detail : ''}`); }
+  else {
+    fail++;
+    // detail is often a raw parsed-rules section object for debugging a
+    // failure — some of those (e.g. from parseRuleText, which builds them
+    // via Object.create(null)) have no usable toString/Symbol.toPrimitive,
+    // so a plain template-literal coercion (`${detail}`) throws
+    // "Cannot convert object to primitive value" and aborts the WHOLE test
+    // file instead of just recording this one failure. Stringify explicitly
+    // with a fallback instead of relying on implicit coercion.
+    let text = detail;
+    if (detail && typeof detail === 'object') {
+      try { text = JSON.stringify(detail); } catch { text = String(Object.prototype.toString.call(detail)); }
+    }
+    console.log(`  FAIL  ${name}${text ? ' — ' + text : ''}`);
+  }
 }
 
 (async () => {
@@ -1760,13 +1775,17 @@ function check(name, cond, detail = '') {
         (parsedBefore.global.direct_hide_selectors || []).includes('.stale-marker-25ee'),
         parsedBefore.global);
 
-      // Now let the gated fetch actually complete and give the background
-      // .then() chain (fetchRemoteRuleText() -> setCachedRuleText() ->
-      // _parsedRules = null) a moment to run.
+      // Now let the gated fetch actually complete, then await the SAME
+      // background-refresh promise background.js is itself tracking
+      // (fetchRemoteRuleText() -> setCachedRuleText() -> _parsedRules = null)
+      // instead of guessing how many event-loop turns that chain needs. A
+      // fixed couple of setTimeout(0)s here used to pass locally but was
+      // flaky in CI (2026-09-28) once the fetch/convert/cache-write chain
+      // had more real awaits in it than assumed.
+      const refreshPromise = T._rulesTextRefreshInFlight;
       releaseFetch();
       await stubDefaultFetchGate;
-      await new Promise(r => setTimeout(r, 0));
-      await new Promise(r => setTimeout(r, 0));
+      if (refreshPromise) await withTimeout2(refreshPromise, 1000, 'background refresh never settled');
 
       check('background refresh: siteRulesCacheText in storage was actually updated (no longer the stale marker)',
         !JSON.stringify(storageData['siteRulesCacheText']).includes('stale-marker-25ee'),
