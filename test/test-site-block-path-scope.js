@@ -50,7 +50,8 @@ function check(label, cond, extra) {
 // own, already-separately-tested territory) — this harness only cares about
 // _stripPathScope and _rebuildSelectorCache, both pure/synchronous once
 // _config is set.
-function makeSandbox(pathname) {
+function makeSandbox(pathname, storageState) {
+  storageState = storageState || {};
   const listeners = { window: {}, document: {} };
   const fakeEl = () => ({
     classList: { contains: () => false, remove() {} },
@@ -83,7 +84,7 @@ function makeSandbox(pathname) {
   };
   const sentMessages = [];
   const chromeStub = {
-    storage: { local: { get(keys, cb) { cb({}); }, onChanged: { addListener() {} } } },
+    storage: { local: { get(keys, cb) { cb(storageState); }, onChanged: { addListener() {} } } },
     runtime: {
       sendMessage: (msg) => { sentMessages.push(msg); return { catch() {} }; },
       onMessage: { addListener() {} },
@@ -120,7 +121,13 @@ function makeSandbox(pathname) {
   const patched = siteBlockSrc.slice(0, closeIdx) +
     `\nself.__test = { _stripPathScope, _rebuildSelectorCache, flattenSelectors, _injectDirectStyle,
       setConfig: function(c){ _config = c; }, getCachedDirect: function(){ return _cachedDirect; },
-      getCachedDirectStyle: function(){ return _cachedDirectStyle; } };\n` +
+      getCachedDirectStyle: function(){ return _cachedDirectStyle; },
+      sync: sync,
+      setFastpathStyleEl: function(el){ _fastpathStyleEl = el; },
+      getFastpathStyleEl: function(){ return _fastpathStyleEl; },
+      addHiddenEl: function(el){ _hiddenEls.add(el); },
+      getHiddenEls: function(){ return _hiddenEls; },
+      unhideAll: window.__qkv1UnhideAll };\n` +
     siteBlockSrc.slice(closeIdx);
   vm.runInContext(utilsSrc, ctx, { filename: 'utils.js' }); // extValid() lives here now (2026-09-15) — loaded before site-block.js, same as the real manifests
   vm.runInContext(sendCssSrc, ctx, { filename: 'content.js (_sendCss only)' }); // site-block.js's _sendCssSlot aliases this now
@@ -250,6 +257,44 @@ function makeSandbox(pathname) {
     const styleRules = T.getCachedDirectStyle();
     check('...and included, with the marker stripped, when the current path DOES match',
       styleRules.length === 1 && styleRules[0] === '.only-on-images{display: block !important;}', styleRules);
+  }
+
+  console.log('\n== 4. _fastpathStyleEl teardown on pause/disable (2026-09-28) ==');
+  // The guess-only fast-path <style> node bypasses background's CSS_CLEAR_ALL
+  // bookkeeping entirely — sync()'s disabled branch and window.__qkv1UnhideAll
+  // are the only two places left that can tear it down before the real
+  // config (_injectDirectStyle) ever arrives. See site-block.js's own
+  // _fastpathStyleEl comment for the full picture.
+  {
+    const storageState = { enabled: true };
+    const T = makeSandbox('/x', storageState);
+    const fakeStyleEl = { removed: false, remove() { this.removed = true; } };
+    T.setFastpathStyleEl(fakeStyleEl);
+    storageState.enabled = false;
+    T.sync();
+    check('sync()\'s disabled branch (TOGGLE/PAUSE_DOMAIN/COSMETIC_TOGGLE) removes the guess <style> node from the DOM',
+      fakeStyleEl.removed === true);
+    check('...and clears the internal reference so it is never removed twice',
+      T.getFastpathStyleEl() === null);
+  }
+  {
+    const storageState = { enabled: true };
+    const T = makeSandbox('/x', storageState);
+    const fakeStyleEl = { removed: false, remove() { this.removed = true; } };
+    T.setFastpathStyleEl(fakeStyleEl);
+    const fakeHiddenEl = { style: { removeProperty() {} } };
+    T.addHiddenEl(fakeHiddenEl);
+    T.unhideAll();
+    check('window.__qkv1UnhideAll (content.js\'s disableCosmeticCss(), the other content script\'s handler for the same toggle) also removes the guess <style> node',
+      fakeStyleEl.removed === true && T.getFastpathStyleEl() === null);
+    check('...alongside its existing job of clearing JS-hidden elements', T.getHiddenEls().size === 0);
+  }
+  {
+    // Re-enabling must not explode just because there was nothing to clear.
+    const storageState = { enabled: true };
+    const T = makeSandbox('/x', storageState);
+    T.sync();
+    check('sync()\'s enabled branch with no guess node active does not throw', true);
   }
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);

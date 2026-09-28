@@ -138,6 +138,10 @@ window.__qkv1UnhideAll=function(){
     el.style.removeProperty('overflow');
   });
   _hiddenEls.clear();
+  // _clearFastpathDomStyle (function declaration, hoisted — defined further
+  // down this file) tears down the guess-only fast-path <style> node too;
+  // see that function's own comment for why CSS_CLEAR_ALL alone can't reach it.
+  _clearFastpathDomStyle();
 };
 
 function normalizeText(value){
@@ -510,12 +514,18 @@ function _reinjectDirectStyleWithGenerics(){
 // down the moment something better exists: _injectDirectStyle() removes it
 // the instant the real 'direct' CSS is ready (the guess has done its job by
 // then, keeping it around only adds fingerprint surface for the rest of the
-// page's life for zero benefit — see _clearFastpathDomStyle's own comment),
-// and window.__qkv1UnhideAll (content.js's disableCosmeticCss(), pause/
-// disable toggle) also clears it — chrome.scripting.insertCSS's 'direct'
-// slot is cleared via CSS_CLEAR_ALL/removeCSS on that path, but a plain DOM
-// node bypasses that bookkeeping entirely and needs this separate hook or a
-// paused/disabled site would keep hiding ads via the leftover guess forever.
+// page's life for zero benefit — see _clearFastpathDomStyle's own comment).
+// Two more paths also clear it, both reachable BEFORE _injectDirectStyle()
+// ever runs (the narrow window right after document_start, before this
+// frame's first GET_SITE_CONFIG round trip resolves): sync()'s own disabled
+// branch above (this file's TOGGLE/PAUSE_DOMAIN/COSMETIC_TOGGLE handler) and
+// window.__qkv1UnhideAll (content.js's disableCosmeticCss(), the OTHER
+// content script's handler for the same messages). chrome.scripting.
+// insertCSS's 'direct' slot is cleared via CSS_CLEAR_ALL/removeCSS on that
+// path, but a plain DOM node bypasses that bookkeeping entirely and needs
+// these separate hooks or a paused/disabled site could keep hiding ads via
+// the leftover guess until the (already in-flight) real config eventually
+// arrives.
 var _fastpathStyleEl=null;
 function _clearFastpathDomStyle(){
   if(_fastpathStyleEl){
@@ -1177,6 +1187,14 @@ function sync(cb){
     else{
       stopObserver();
       stopPageClassWatch();
+      // The guess-only fast-path <style> node (_fastPathDirectStyle) bypasses
+      // background's CSS_CLEAR_ALL bookkeeping entirely (see
+      // _clearFastpathDomStyle's own comment) — if it's still up when the
+      // user pauses/disables, only this disabled branch (or __qkv1UnhideAll,
+      // content.js's side of the same toggle) will ever clear it; the
+      // enabled branch above already gets it for free via
+      // _injectDirectStyle()'s own unconditional first line.
+      _clearFastpathDomStyle();
       try{window.dispatchEvent(new CustomEvent('__'+_QKV1_TOKEN+'_dis__'));}catch(_e){}
       _scriptletRulesActive=false;
     }

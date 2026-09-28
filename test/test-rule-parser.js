@@ -1,0 +1,12 @@
+'use strict';
+const assert = require('node:assert/strict');
+const { parse } = require('../shared/rule-parser');
+const result = parse('[global]\nselectors = .one | .two\n[global]\nselectors = .two | .three\npattern = a\\|b');
+assert.deepEqual(result.global.selectors, ['.one', '.two', '.three']);
+assert.deepEqual(result.global.pattern, ['a|b']);
+const hostile = parse('[__proto__]\npolluted = yes\n[constructor]\nprototype = value\n[global]\n__proto__ = value');
+assert.equal(Object.prototype.polluted, undefined);
+assert.equal(Object.getPrototypeOf(hostile), null);
+assert.deepEqual(hostile.global.__proto__, ['value']);
+assert.deepEqual(Object.keys(parse('ignored = value\n# comment')), []);
+console.log('PASS parser: duplicate merging, escaped separators, inert prototype keys, comments');

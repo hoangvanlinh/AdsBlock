@@ -1,0 +1,20 @@
+# Stable inputs for engine behavior tests. Not a production blocklist.
+# Keep domains used by positive/negative probes explicit; do not sync with live lists.
+[global]
+ad_network_patterns = doubleclick.net | mgid.com
+tracker_network_patterns = google-analytics.com | analytics.google.com | facebook.com/tr | hotjar.com | mixpanel.com | segment.com | amplitude.com | fullstory.com | clarity.ms | quantserve.com | mouseflow.com
+malware_network_domains = coinhive.com | jsecoin.com | login-microsoft-office.com | your-pc-is-infected.com | adf.ly | sh.st
+
+[host_patterns]
+youtube.com = youtube
+tuoitre.vn = tuoitre
+fibwatch.art = fibwatch
+
+[tuoitre]
+direct_hide_selectors = #LeaderBoardTop
+
+[fibwatch]
+close_popunder_tabs = 1
+
+[youtube]
+direct_hide_selectors = .fixture-youtube-ad

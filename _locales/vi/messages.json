@@ -1125,6 +1125,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 bộ chọn dạng hash tự sinh (không đáng để khớp chung)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "Đã tải $1/$2",
     "placeholders": {
@@ -1204,5 +1213,6 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "Trình đơn"
-  }
+  },
+  "settings_updateFailed": { "message": "Không thể áp dụng thay đổi. Vui lòng thử lại." }
 }

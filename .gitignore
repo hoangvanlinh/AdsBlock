@@ -10,3 +10,6 @@ assets/
 blocklists/
 docs/
 log/
+node_modules/
+playwright-report/
+test-results/

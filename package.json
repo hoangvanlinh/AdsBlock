@@ -1,0 +1,18 @@
+{
+  "name": "gitadblock",
+  "version": "1.0.65",
+  "private": true,
+  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "test": "node tools/run-tests.js",
+    "build": "bash build.sh all",
+    "test:chromium": "node test/browser/smoke-chromium.js",
+    "test:firefox": "node test/browser/smoke-firefox.js"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "5.8.0",
+    "playwright": "1.63.0",
+    "selenium-webdriver": "4.49.0",
+    "terser": "5.51.2"
+  }
+}

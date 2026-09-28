@@ -150,76 +150,28 @@ function updateToggleUI(active, paused = false, allowlisted = false) {
 }
 
 // ── Main toggle ────────────────────────────────
-mainToggle.addEventListener('change', async () => {
+mainToggle.addEventListener('change', () => {
   const on = mainToggle.checked;
-
-  if (on) {
-    // If site was paused, clear the pause first
-    const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
-    const domain = tab?.url ? (() => { try { return new URL(tab.url).hostname; } catch { return ''; } })() : '';
-
-    EXT.storage.local.get(['pausedDomains'], ({ pausedDomains = [] }) => {
-      const wasPaused = domain && pausedDomains.includes(domain);
-      const updatedPaused = wasPaused ? pausedDomains.filter(d => d !== domain) : pausedDomains;
-
-      EXT.storage.local.set({ enabled: true, pausedDomains: updatedPaused });
-      updateToggleUI(true, false);
-      // Wait for background to finish rebuilding declarativeNetRequest rules
-      // before refreshing the rule-count chip — otherwise it re-reads the
-      // stale (pre-toggle) count while applyNetworkRules() is still running.
-      EXT.runtime.sendMessage({ type: 'TOGGLE', enabled: true }, refreshRuleCount);
-
-      if (wasPaused) {
-        pauseSiteBtn.classList.remove('active');
-        pauseSiteLabel.textContent = EXT.i18n.getMessage('popup_action_pause_emoji');
-        EXT.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: false });
-      }
-
-      if (tab?.id) EXT.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: true }).catch(() => {});
-    });
-  } else {
-    EXT.storage.local.set({ enabled: false });
-    updateToggleUI(false);
-    EXT.runtime.sendMessage({ type: 'TOGGLE', enabled: false }, refreshRuleCount);
-    const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id) EXT.tabs.sendMessage(tab.id, { type: 'TOGGLE', enabled: false }).catch(() => {});
-  }
+  return SettingsUI.run(mainToggle, async () => {
+    // Folding the current domain's unpause into the same TOGGLE message
+    // (one storage write + one applyNetworkRules() pass) instead of two
+    // sequential messages — see settings-controller.js's own comment.
+    const domain = on ? await getCurrentDomain() : '';
+    await SettingsUI.send(domain ? { type: 'TOGGLE', enabled: on, domain } : { type: 'TOGGLE', enabled: on });
+    refreshRuleCount();
+  }, loadState);
 });
 
 // ── Pause on site ──────────────────────────────
-pauseSiteBtn.addEventListener('click', async () => {
+pauseSiteBtn.addEventListener('click', () => SettingsUI.run(pauseSiteBtn, async () => {
   const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
   if (!tab?.url) return;
-  let domain = '';
-  try { domain = new URL(tab.url).hostname; } catch { return; }
+  const domain = new URL(tab.url).hostname;
   if (!domain) return;
-
-  EXT.storage.local.get(['pausedDomains'], ({ pausedDomains = [] }) => {
-    const idx = pausedDomains.indexOf(domain);
-    const pausing = idx === -1; // true = we're pausing, false = we're resuming
-    if (pausing) {
-      pausedDomains.push(domain);
-      pauseSiteBtn.classList.add('active');
-      pauseSiteLabel.textContent = EXT.i18n.getMessage('popup_action_resume_emoji');
-    } else {
-      pausedDomains.splice(idx, 1);
-      pauseSiteBtn.classList.remove('active');
-      pauseSiteLabel.textContent = EXT.i18n.getMessage('popup_action_pause_emoji');
-    }
-    EXT.storage.local.set({ pausedDomains });
-    // Tell background to update declarativeNetRequest rules — WAIT for it
-    // to finish before reloading, otherwise the old rules still block.
-    EXT.runtime.sendMessage({ type: 'PAUSE_DOMAIN', domain, paused: pausing }, () => {
-      // Update hero UI to reflect paused/active state
-      mainToggle.checked = !pausing;
-      EXT.storage.local.get('enabled', ({ enabled = true }) => {
-        updateToggleUI(enabled, pausing);
-      });
-      // Reload the tab AFTER rules are updated
-      EXT.tabs.reload(tab.id);
-    });
-  });
-});
+  const { pausedDomains = [] } = await EXT.storage.local.get('pausedDomains');
+  await SettingsUI.send({ type: 'PAUSE_DOMAIN', domain, paused: !pausedDomains.includes(domain) });
+  await EXT.tabs.reload(tab.id);
+}, loadState));
 
 // ── Remove from allowlist ───────────────────────
 document.getElementById('removeAllowlist')?.addEventListener('click', async () => {

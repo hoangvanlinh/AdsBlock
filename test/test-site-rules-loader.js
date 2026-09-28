@@ -14,6 +14,7 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
+const parserSrc = fs.readFileSync(path.join(ROOT, 'shared/rule-parser.js'), 'utf8');
 const utilsSrc = fs.readFileSync(path.join(ROOT, 'shared/utils.js'), 'utf8');
 const src = fs.readFileSync(path.join(ROOT, 'content/site-rules-loader.js'), 'utf8');
 
@@ -105,6 +106,7 @@ sandbox.self.ADBLOCK_CONFIG = {
   RULES_CACHE_TTL_MS: 6 * 60 * 60 * 1000,
 };
 const ctx = vm.createContext(sandbox);
+vm.runInContext(parserSrc, ctx);
 vm.runInContext(utilsSrc, ctx, { filename: 'utils.js' }); // extValid() lives here now (2026-09-15) — loaded before site-rules-loader.js, same as the real manifests
 vm.runInContext(src, ctx, { filename: 'site-rules-loader.js' });
 const loader = sandbox.window.__qkv1Loader;
@@ -128,6 +130,7 @@ sandboxDebug.self = sandboxDebug;
 sandboxDebug.window = sandboxDebug;
 sandboxDebug.self.ADBLOCK_CONFIG = { ...sandbox.self.ADBLOCK_CONFIG, DEBUG_LOCAL: true };
 const ctxDebug = vm.createContext(sandboxDebug);
+vm.runInContext(parserSrc, ctxDebug);
 vm.runInContext(utilsSrc, ctxDebug, { filename: 'utils.js' });
 vm.runInContext(src, ctxDebug, { filename: 'site-rules-loader.js (DEBUG_LOCAL)' });
 const debugLoader = sandboxDebug.window.__qkv1Loader;

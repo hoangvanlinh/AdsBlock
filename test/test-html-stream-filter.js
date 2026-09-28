@@ -167,12 +167,16 @@ async function fetchStub() {
 }
 
 const sandbox = {
+  AbortController,
   console, chrome: chromeStub, fetch: fetchStub,
   setTimeout, clearTimeout, setInterval, clearInterval,
   URL, Date, Math, JSON, Promise, RegExp, Set, Map, Number, String, Object, Array, Error,
   CompressionStream, DecompressionStream, Response, TextEncoder, TextDecoder, btoa, atob, Uint8Array,
   navigator: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0' },
   importScripts(name) {
+    if (['abp-converter.js', 'rule-parser.js', 'rule-fetcher.js', 'settings-controller.js'].includes(name)) {
+      return vm.runInContext(fs.readFileSync(path.join(ROOT, 'shared', name), 'utf8'), ctx, { filename: name });
+    }
     if (name && name.includes('scriptlet-alias-map')) vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 'scriptlet-alias-map.js' });
     else if (name && name.includes('browser-compat')) vm.runInContext(browserCompatSrc, ctx, { filename: 'browser-compat.js' });
     else if (name && name.includes('local-storage')) vm.runInContext(localStorageSrc, ctx, { filename: 'local-storage.js' });
@@ -464,6 +468,9 @@ function fakeHeadersDetails(overrides) {
       CompressionStream, DecompressionStream, Response, TextEncoder, TextDecoder, btoa, atob, Uint8Array,
       navigator: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0' },
       importScripts(name) {
+        if (['abp-converter.js', 'rule-parser.js', 'rule-fetcher.js', 'settings-controller.js'].includes(name)) {
+          return vm.runInContext(fs.readFileSync(path.join(ROOT, 'shared', name), 'utf8'), noCapCtx, { filename: name });
+        }
         if (name && name.includes('scriptlet-alias-map')) vm.runInContext(scriptletAliasMapSrc, noCapCtx, { filename: 'scriptlet-alias-map.js' });
         else if (name && name.includes('browser-compat')) vm.runInContext(browserCompatSrc, noCapCtx, { filename: 'browser-compat.js' });
         else if (name && name.includes('local-storage')) vm.runInContext(localStorageSrc, noCapCtx, { filename: 'local-storage.js' });

@@ -1,5 +1,5 @@
 // Harness: run the real background.js in Node with stubbed chrome APIs,
-// build DNR rules from the real rule/site-rules.txt, then verify
+// build DNR rules from a stable fixture, then verify
 // tracker/malware blocking + stats counting behavior.
 'use strict';
 const fs = require('fs');
@@ -7,7 +7,8 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = require("path").join(__dirname, "..");
-const rulesText = fs.readFileSync(path.join(ROOT, 'rule/site-rules.txt'), 'utf8');
+const bundledRulesText = fs.readFileSync(path.join(ROOT, 'rule/site-rules.txt'), 'utf8');
+const rulesText = fs.readFileSync(path.join(__dirname, 'fixtures/blocking-rules.txt'), 'utf8');
 const configSrc = fs.readFileSync(path.join(ROOT, 'shared/config.js'), 'utf8');
 const browserCompatSrc = fs.readFileSync(path.join(ROOT, 'shared/browser-compat.js'), 'utf8');
 // utils.js: background.js's _candidateUILanguages() (which _uiLanguageMatches
@@ -150,9 +151,9 @@ const chromeStub = {
       updateDynamicRulesCallCount++;
       await _ipcDelay();
       const removeSet = new Set(removeRuleIds);
-      dynamicRules = dynamicRules.filter(r => !removeSet.has(r.id));
+      const remainingRules = dynamicRules.filter(r => !removeSet.has(r.id));
       // Validate like Chrome would (whole call rejects on any invalid rule)
-      const seen = new Set(dynamicRules.map(r => r.id));
+      const seen = new Set(remainingRules.map(r => r.id));
       for (const r of addRules) {
         if (!Number.isInteger(r.id) || r.id < 1) throw new Error(`Rule id invalid: ${r.id}`);
         if (seen.has(r.id)) throw new Error(`Duplicate rule id: ${r.id}`);
@@ -166,13 +167,16 @@ const chromeStub = {
         if (c.urlFilter && /[^\x00-\x7F]/.test(c.urlFilter)) {
           throw new Error(`Rule ${r.id}: non-ascii urlFilter "${c.urlFilter}"`);
         }
+        for (const header of r.action.requestHeaders || []) {
+          if (['append', 'set'].includes(header.operation) && !header.value) throw new Error('value is required for operations append/set');
+        }
         if (c.regexFilter) { new RegExp(c.regexFilter); }
         if (r.action?.redirect?.regexSubstitution && !c.regexFilter) {
           throw new Error(`Rule ${r.id}: regexSubstitution requires regexFilter`);
         }
       }
       if (seen.size > 30000) throw new Error(`Dynamic rule limit exceeded: ${seen.size}`);
-      dynamicRules.push(...addRules.map(r => JSON.parse(JSON.stringify(r))));
+      dynamicRules = [...remainingRules, ...addRules.map(r => JSON.parse(JSON.stringify(r)))];
     },
   },
   i18n: {
@@ -245,7 +249,7 @@ const chromeStub = {
   },
 };
 
-// fetch stub: serve the real local rules file for both remote + local URLs
+// fetch stub: serve the stable engine fixture for both remote + local URLs
 // Mutable so tests can simulate "update available" / "offline" / "no
 // update" scenarios against checkForExtensionUpdate() without needing a
 // real network call.
@@ -316,6 +320,7 @@ async function fetchStub(url) {
 
 // ── load background.js in sandbox ─────────────────────────────────
 const sandbox = {
+  AbortController,
   console, chrome: chromeStub, fetch: fetchStub,
   setTimeout, clearTimeout, setInterval, clearInterval,
   URL, Date, Math, JSON, Promise, RegExp, Set, Map, Number, String, Object, Array, Error,
@@ -328,6 +333,9 @@ const sandbox = {
   // stubTimeZone so tests can simulate different browser timezones.
   Intl: { DateTimeFormat: () => ({ resolvedOptions: () => ({ timeZone: stubTimeZone }) }) },
   importScripts(name) {
+    if (['abp-converter.js', 'rule-parser.js', 'rule-fetcher.js', 'settings-controller.js'].includes(name)) {
+      return vm.runInContext(fs.readFileSync(path.join(ROOT, 'shared', name), 'utf8'), ctx, { filename: name });
+    }
     if (name && name.includes('scriptlet-alias-map')) {
       vm.runInContext(scriptletAliasMapSrc, ctx, { filename: 'scriptlet-alias-map.js' });
     } else if (name && name.includes('browser-compat')) {
@@ -429,13 +437,17 @@ function wouldBlock(rules, url, type) {
   if (!matches.length) return { blocked: false };
   matches.sort((a, b) => (b.priority || 1) - (a.priority || 1));
   const top = matches[0];
-  let redirectTo = null;
+  let redirectTo = top.action.redirect?.url || null;
+  if (top.action.type === 'redirect' && top.action.redirect?.extensionPath) {
+    redirectTo = chromeStub.runtime.getURL(top.action.redirect.extensionPath.replace(/^\//, ''));
+  }
   if (top.action.type === 'redirect' && top.action.redirect?.regexSubstitution) {
     const m = url.match(new RegExp(top.condition.regexFilter));
     redirectTo = top.action.redirect.regexSubstitution
       .replace(/\\(\d)/g, (_, n) => (n === '0' ? m[0] : m[Number(n)] || ''));
   }
-  // A main_frame redirect to the extension warning page = navigation intercepted
+  // Blocking or redirecting to a local stub/warning page prevents the original request.
+  // A redirect to a remote URL is not counted as blocked.
   const intercepted = top.action.type === 'block' ||
     (redirectTo && redirectTo.startsWith('chrome-extension://'));
   return { blocked: !!intercepted, by: top.id, action: top.action.type, redirectTo };
@@ -477,6 +489,19 @@ function check(name, cond, detail = '') {
     remoteMalwareDomains: ['evil-remote-domain.com', 'phish-remote.net'],
   });
 
+  console.log('\n== Fixture and bundled-rule smoke checks ==');
+  const bundled = T.parseRuleText(bundledRulesText);
+  check('bundled rules parse and map YouTube to its section',
+    T.resolveSiteKey(bundled.host_patterns, 'www.youtube.com') === 'youtube');
+  check('every bundled host mapping refers to an existing section',
+    Object.values(bundled.host_patterns).flat().every(key => bundled[key] && Object.keys(bundled[key]).length > 0));
+  const localRedirect = [{ id: 1, action: { type: 'redirect', redirect: { extensionPath: '/web_accessible_resources/noop.js' } }, condition: { requestDomains: ['tracker.example'] } }];
+  check('simulator recognizes local resource redirects',
+    wouldBlock(localRedirect, 'https://tracker.example/a.js', 'script').blocked &&
+    wouldBlock(localRedirect, 'https://tracker.example/a.js', 'script').redirectTo === 'chrome-extension://test/web_accessible_resources/noop.js');
+  check('simulator does not treat a remote redirect as blocking',
+    !wouldBlock([{ ...localRedirect[0], action: { type: 'redirect', redirect: { url: 'https://remote.example/a.js' } } }], 'https://tracker.example/a.js', 'script').blocked);
+
   console.log('\n== 0. Concurrent applyNetworkRules() calls at fresh-install time don\'t race ==');
   // Regression test for "Rule with id N does not have a unique ID." — real
   // trigger: onInstalled/onStartup fires applyNetworkRules(),
@@ -501,7 +526,7 @@ function check(name, cond, detail = '') {
   const idsAfterRace = dynamicRules.map(r => r.id);
   check('no duplicate rule ids after concurrent calls', new Set(idsAfterRace).size === idsAfterRace.length);
 
-  console.log('\n== 1. Rule building from real rule/site-rules.txt ==');
+  console.log('\n== 1. Rule building from stable engine fixture ==');
   await T.ensureRuleDefinitionsLoaded();
   const parsed = T.parseRuleText(rulesText);
   const g = parsed.global || {};
@@ -850,7 +875,7 @@ function check(name, cond, detail = '') {
   console.log('\n== 18. close_popunder_tabs: opener-hostname-keyed tab auto-close (uBO-style) ==');
   check('tabs.onCreated listener registered', tabsCreatedListeners.length > 0);
   const onTabCreated = tabsCreatedListeners[0];
-  // [fibwatch] (real rule/site-rules.txt) has close_popunder_tabs = 1.
+  // [fibwatch] (test fixture) has close_popunder_tabs = 1.
   tabsData.set(9001, { url: 'https://fibwatch.art/watch/awarapan-2-2026_x.html' });
   await onTabCreated({ id: 9101, openerTabId: 9001 });
   await T.statsChain;
@@ -932,7 +957,7 @@ function check(name, cond, detail = '') {
   check('marker block is gone once no hosts remain', !crt3.includes('Auto-generated by "Hide element"'), crt3);
 
   // Regression test: picking an element on a host that ALREADY has a
-  // [sitekey] section in the base rule/site-rules.txt (e.g. tuoitre.vn ->
+  // [sitekey] section in the engine fixture (e.g. tuoitre.vn ->
   // [tuoitre]) must merge the selector into that EXISTING section, not mint
   // a second, colliding [host_patterns] entry — resolveSiteKey always takes
   // the first match, so a second entry for the same host is silently
@@ -1105,7 +1130,7 @@ function check(name, cond, detail = '') {
 
   // Regression parity with SAVE_ELEMENT_RULE's own 20c test: declining a
   // popup from a site that's ALREADY curated (youtube.com -> [youtube] in
-  // the base rule/site-rules.txt) must reuse that existing sitekey, not
+  // the engine fixture) must reuse that existing sitekey, not
   // mint a second colliding entry.
   await send5({ type: 'SAVE_NO_WINDOW_OPEN_RULE', openerHost: 'youtube.com', adHost: 'some-ad-network.example' });
   const { customRulesText: nwoCrtYoutube } = await chromeStub.storage.local.get('customRulesText');
@@ -3004,6 +3029,33 @@ function check(name, cond, detail = '') {
     afterTzOnly && afterTzOnly['https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn_ublock.txt'] === true,
     afterTzOnly);
 
+  // Africa/Algiers -> ['ar', 'kab'], which (via config.js's real lang tags)
+  // matches BOTH the dedicated Arabic list AND the unrelated France/Belgium
+  // list — an ambiguous, timezone-only ("no real language-preference
+  // signal") match across two DISTINCT entries. This is the same "one
+  // signal silently enables several unrelated Rule Sources" pattern the
+  // 2026-09-24 langCandidates() fix closed for navigator.languages — the
+  // timezone fallback must stay silent (enable nothing) rather than guess,
+  // since it can't tell which of the two the user actually wants.
+  stubUILanguage = 'en-US';
+  stubTimeZone = 'Africa/Algiers';
+  await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} });
+  await T._autoEnableLangDefaultSources();
+  const { defaultRuleSourceOverrides: afterAmbiguousTz = {} } = await chromeStub.storage.local.get('defaultRuleSourceOverrides');
+  check('_autoEnableLangDefaultSources: an ambiguous timezone-only match (2+ distinct entries, no language-preference backing) auto-enables NOTHING',
+    Object.keys(afterAmbiguousTz).length === 0, afterAmbiguousTz);
+
+  // But a REAL language-preference signal ('ar') is trusted even though it
+  // also happens to match both entries — it's a deliberate choice, not a
+  // location guess, so the ambiguity guard above must not apply to it.
+  stubUILanguage = 'ar';
+  stubTimeZone = 'America/Los_Angeles';
+  await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} });
+  await T._autoEnableLangDefaultSources();
+  const { defaultRuleSourceOverrides: afterRealArabicUI = {} } = await chromeStub.storage.local.get('defaultRuleSourceOverrides');
+  check('_autoEnableLangDefaultSources: a real "ar" UI-language match still auto-enables (not blocked by the timezone ambiguity guard)',
+    afterRealArabicUI['https://easylist-downloads.adblockplus.org/Liste_AR.txt'] === true, afterRealArabicUI);
+
   await chromeStub.storage.local.set({ defaultRuleSourceOverrides: {} }); // leave state clean for any later section
   stubUILanguage = 'en-US';
   stubTimeZone = 'America/Los_Angeles';
@@ -3708,7 +3760,7 @@ function check(name, cond, detail = '') {
     const referrerRule = dynamicRules.find(r => r.id === T.REFERRER_RULE_ID);
     check('applyReferrerAnonymization(true) adds a Referer modifyHeaders rule with the right value/condition',
       !!referrerRule && referrerRule.action.requestHeaders[0].header === 'Referer' &&
-      referrerRule.action.requestHeaders[0].value === '' && referrerRule.condition.domainType === 'thirdParty',
+      referrerRule.action.requestHeaders[0].operation === 'remove' && !('value' in referrerRule.action.requestHeaders[0]) && referrerRule.condition.domainType === 'thirdParty',
       referrerRule);
 
     await T.applyGpcHeader(true);
@@ -4040,6 +4092,61 @@ function check(name, cond, detail = '') {
     // Focus Mode blocking is now ONLY content/focus-block-overlay.js,
     // scoped to actual distraction-list/limit-exceeded sites.
   }
+
+  console.log('\n== Settings error propagation through real message handler ==');
+  const originalSet = chromeStub.storage.local.set;
+  chromeStub.storage.local.set = async () => { throw new Error('simulated quota failure'); };
+  const saveFailure = await send({ type: 'TOGGLE', enabled: false });
+  check('TOGGLE reports storage errors to the caller', saveFailure.ok === false && /quota/.test(saveFailure.error));
+  chromeStub.storage.local.set = originalSet;
+  await chromeStub.storage.local.set({ enabled: true });
+  await T.applyNetworkRules();
+  const beforeFailure = JSON.stringify(dynamicRules);
+  const originalUpdate = chromeStub.declarativeNetRequest.updateDynamicRules;
+  chromeStub.declarativeNetRequest.updateDynamicRules = async () => { throw new Error('simulated DNR failure'); };
+  const applyFailure = await send({ type: 'TOGGLE', enabled: false });
+  check('TOGGLE reports DNR errors and restores enabled state', applyFailure.ok === false && /DNR/.test(applyFailure.error) && storageData.enabled === true);
+  check('failed DNR application preserves existing rules', JSON.stringify(dynamicRules) === beforeFailure);
+  chromeStub.declarativeNetRequest.updateDynamicRules = originalUpdate;
+  check('TOGGLE can be retried successfully', (await send({ type: 'TOGGLE', enabled: false })).ok === true);
+  await send({ type: 'TOGGLE', enabled: true });
+
+  // notify() must broadcast the SAME message type/payload content.js and
+  // site-block.js's listeners actually key off (not a collapsed
+  // RULES_CHANGED for everything) — otherwise disableCosmeticCss() (the
+  // only path that un-hides already-hidden elements) never fires when
+  // protection is turned off/paused/cosmetic-filtering is disabled.
+  sentTabMessages.length = 0;
+  await send({ type: 'TOGGLE', enabled: false });
+  check('TOGGLE broadcasts a real TOGGLE message (not RULES_CHANGED) with the enabled flag',
+    sentTabMessages.some(m => m.msg.type === 'TOGGLE' && m.msg.enabled === false));
+  await send({ type: 'TOGGLE', enabled: true });
+
+  sentTabMessages.length = 0;
+  await send({ type: 'PAUSE_DOMAIN', domain: 'notify-test.example', paused: true });
+  check('PAUSE_DOMAIN broadcasts a real PAUSE_DOMAIN message with domain/paused',
+    sentTabMessages.some(m => m.msg.type === 'PAUSE_DOMAIN' && m.msg.domain === 'notify-test.example' && m.msg.paused === true));
+  await send({ type: 'PAUSE_DOMAIN', domain: 'notify-test.example', paused: false });
+
+  sentTabMessages.length = 0;
+  await send({ type: 'SET_BLOCKING', setting: 'cosmeticFiltering', value: false });
+  check('cosmeticFiltering SET_BLOCKING broadcasts COSMETIC_TOGGLE with the new value',
+    sentTabMessages.some(m => m.msg.type === 'COSMETIC_TOGGLE' && m.msg.enabled === false));
+  await send({ type: 'SET_BLOCKING', setting: 'cosmeticFiltering', value: true });
+
+  await send({ type: 'SET_PRIVACY', setting: 'gpcSignal', value: true });
+  await send({ type: 'TOGGLE', enabled: false });
+  await send({ type: 'TOGGLE', enabled: true });
+  check('privacy header survives protection off/on and a full rule rebuild', dynamicRules.some(rule => rule.id === T.GPC_RULE_ID));
+  await send({ type: 'SET_PRIVACY', setting: 'gpcSignal', value: false });
+  await T.reloadRules();
+  check('disabled privacy header stays absent after rule reload', !dynamicRules.some(rule => rule.id === T.GPC_RULE_ID));
+
+  await send({ type: 'TOGGLE', enabled: false });
+  await send({ type: 'SET_BLOCKING', setting: 'cosmeticFiltering', value: false });
+  await runtimeInstalledListeners[0]({ reason: 'update' });
+  check('extension update does not re-enable privacy rules while protection is off', dynamicRules.length === 0);
+  check('extension update preserves the saved cosmetic filtering preference', storageData.cosmeticFiltering === false);
 
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);

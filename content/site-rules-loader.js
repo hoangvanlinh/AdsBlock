@@ -20,35 +20,7 @@ var CACHE_KEY_TEXT=_CFG.RULES_CACHE_TEXT_KEY;
 var CACHE_KEY_TIME=_CFG.RULES_CACHE_TIME_KEY;
 var CACHE_TTL_MS=_CFG.RULES_CACHE_TTL_MS;
 
-function parseRules(text){
-  var out={},section=null;
-  var lines=(text||'').split(/\r?\n/);
-  for(var i=0;i<lines.length;i++){
-    var line=lines[i].trim();
-    if(!line||line[0]==='#'||line[0]===';')continue;
-    if(line[0]==='['&&line[line.length-1]===']'){
-      section=line.slice(1,-1).trim().toLowerCase();
-      if(section&&!out[section])out[section]={};
-      continue;
-    }
-    if(!section)continue;
-    var eq=line.indexOf('=');
-    if(eq===-1)continue;
-    var key=line.slice(0,eq).trim().toLowerCase();
-    var value=line.slice(eq+1).trim();
-    if(!key)continue;
-    // '\\|' escapes a literal '|' inside a value (kept in sync with background.js).
-    var newVals=value?value.split(/(?<!\\)\|/).map(function(part){return part.trim().replace(/\\\|/g,'|');}).filter(Boolean):[];
-    if(out[section][key]&&out[section][key].length){
-      // Merge: append values not already present (supports multiple source files)
-      var seen=new Set(out[section][key]);
-      newVals.forEach(function(v){if(!seen.has(v)){seen.add(v);out[section][key].push(v);}});
-    }else{
-      out[section][key]=newVals;
-    }
-  }
-  return out;
-}
+var parseRules = self.RuleParser.parse;
 
 function mergeDefaults(defaults, overrides){
   var cfg={},key;

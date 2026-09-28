@@ -165,11 +165,13 @@ function syncProtectionUI(enabled) {
   }
 }
 
-globalToggle?.addEventListener('change', () => {
-  EXT.storage.local.set({ enabled: globalToggle.checked });
-  syncProtectionUI(globalToggle.checked);
-  EXT.runtime.sendMessage({ type: 'TOGGLE', enabled: globalToggle.checked });
-});
+globalToggle?.addEventListener('change', () => SettingsUI.run(globalToggle,
+  () => SettingsUI.send({ type: 'TOGGLE', enabled: globalToggle.checked }),
+  async () => {
+    const { enabled = true } = await EXT.storage.local.get('enabled');
+    globalToggle.checked = enabled;
+    syncProtectionUI(enabled);
+  }));
 
 /* ── Load overview stats ──────────────────────── */
 function loadOverviewStats() {
@@ -892,8 +894,9 @@ function loadBlockingSettings() {
 
 for (const { id, key } of blockingToggles) {
   document.getElementById(id)?.addEventListener('change', (e) => {
-    EXT.storage.local.set({ [key]: e.target.checked });
-    EXT.runtime.sendMessage({ type: 'SET_BLOCKING', setting: key, value: e.target.checked });
+    SettingsUI.run(e.target,
+      () => SettingsUI.send({ type: 'SET_BLOCKING', setting: key, value: e.target.checked }),
+      async () => { e.target.checked = (await EXT.storage.local.get(key))[key] ?? true; });
   });
 }
 
@@ -919,7 +922,9 @@ function loadPrivacySettings() {
 
 for (const { id, key } of privacyToggles) {
   document.getElementById(id)?.addEventListener('change', (e) => {
-    EXT.runtime.sendMessage({ type: 'SET_PRIVACY', setting: key, value: e.target.checked });
+    SettingsUI.run(e.target,
+      () => SettingsUI.send({ type: 'SET_PRIVACY', setting: key, value: e.target.checked }),
+      async () => { e.target.checked = (await EXT.storage.local.get(key))[key] ?? true; });
   });
 }
 
@@ -1156,7 +1161,8 @@ function _makeSourceRow({ label, title, checked, onToggle, onRemove, error, stat
       (stats.unmappedScriptlet ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsUnmappedScriptlet', [String(stats.unmappedScriptlet)]) : '') +
       (stats.complexNetwork ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsComplexNetwork', [String(stats.complexNetwork)]) : '') +
       (stats.dedupSkipped ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsDedupSkipped', [String(stats.dedupSkipped)]) : '') +
-      (stats.unrecognized ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsUnrecognized', [String(stats.unrecognized)]) : '');
+      (stats.unrecognized ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsUnrecognized', [String(stats.unrecognized)]) : '') +
+      (stats.lowValueHash ? '\n' + EXT.i18n.getMessage('dashboard_ruleSource_statsLowValueHash', [String(stats.lowValueHash)]) : '');
     // Always show as "converted/total" (even at 100%, e.g. "26866/26866
     // loaded") rather than collapsing to a bare total when nothing was
     // skipped — so a fully-clean source is visibly confirmed as such, not

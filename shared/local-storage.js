@@ -106,5 +106,16 @@ function _keysLabel(keys) {
   try { return Object.keys(keys).join(','); } catch (e) { return String(keys); }
 }
 
-self.LocalStorage = { get: get, set: set, remove: remove, clear: clear, getBytesInUse: getBytesInUse };
+// User-requested mutations need failures to reach the message/UI caller.
+// Keep the tolerant methods above for best-effort caches and telemetry.
+async function required(op, ...args) {
+  if (!_localArea) throw new Error('Local storage is unavailable');
+  return _localArea[op](...args);
+}
+self.LocalStorage = {
+  getRequired: keys => required('get', keys),
+  setRequired: payload => required('set', payload),
+  removeRequired: keys => required('remove', keys),
+  clearRequired: () => required('clear'),
+  get: get, set: set, remove: remove, clear: clear, getBytesInUse: getBytesInUse };
 })();

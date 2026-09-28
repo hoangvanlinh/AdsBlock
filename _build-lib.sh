@@ -5,27 +5,12 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # All build output (dist*/, zips, obfuscated src exports) lives under here
 # instead of cluttering the project root.
-BUILD_ROOT="$PROJECT_DIR/build"
+BUILD_ROOT="${ADBLOCK_BUILD_ROOT:-$PROJECT_DIR/build}"
 
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
-
-# JavaScript obfuscator options
-OBFUSCATOR_OPTS=(
-    --compact true
-    --control-flow-flattening true
-    --control-flow-flattening-threshold 0.5
-    --dead-code-injection true
-    --dead-code-injection-threshold 0.2
-    --string-array true
-    --string-array-encoding rc4
-    --string-array-threshold 0.75
-    --rename-globals false
-    --self-defending false
-    --identifier-names-generator hexadecimal
-)
 
 # JS files to obfuscate (or copy when obfuscation is disabled)
 JS_FILES=(
@@ -38,21 +23,27 @@ JS_FILES=(
     "blocked/blocked.js"
 )
 
-# Ensure javascript-obfuscator is available
+# Builds use only lockfile-installed tools. Never install global dependencies.
+OBFUSCATOR="$PROJECT_DIR/node_modules/.bin/javascript-obfuscator"
+TERSER="$PROJECT_DIR/node_modules/.bin/terser"
 ensure_obfuscator() {
-    if [[ "$OBFUSCATE" == "true" ]] && ! command -v javascript-obfuscator &> /dev/null; then
-        echo -e "${YELLOW}Installing javascript-obfuscator globally...${NC}"
-        npm install -g javascript-obfuscator
+    if [[ "$OBFUSCATE" == "true" && ! -x "$OBFUSCATOR" ]]; then
+        echo "Missing local javascript-obfuscator. Run npm ci." >&2
+        exit 1
     fi
 }
-
-# Ensure terser is available (used by strip_debug_artifacts, NOT the
-# obfuscation pipeline above — see that function's comment for why).
 ensure_terser() {
-    if [[ "$DEBUG" != "true" ]] && ! command -v terser &> /dev/null; then
-        echo -e "${YELLOW}Installing terser globally...${NC}"
-        npm install -g terser
+    if [[ "$DEBUG" != "true" && ! -x "$TERSER" ]]; then
+        echo "Missing local terser. Run npm ci." >&2
+        exit 1
     fi
+}
+validate_build_args() {
+    for value in "$OBFUSCATE" "$EXPORT_OBFUSCATED_SRC" "$DEBUG"; do
+        [[ "$value" == true || "$value" == false ]] || { echo "Expected true or false, got: $value" >&2; exit 1; }
+    done
+    ensure_obfuscator
+    ensure_terser
 }
 
 # Copy all static (non-JS) files into a destination directory.
@@ -70,6 +61,9 @@ copy_static_files() {
     # tags. scripts/convert-uassets.js and convert-regions.js also require()
     # scriptlet-alias-map.js offline from shared/ directly — scripts/ itself is
     # dev-only tooling, never copied here.
+    for module in abp-converter rule-parser rule-fetcher settings-controller settings-ui; do
+        cp "$PROJECT_DIR/shared/$module.js" "$DEST/shared/"
+    done
     cp "$PROJECT_DIR/shared/config.js" "$DEST/shared/"
     cp "$PROJECT_DIR/shared/browser-compat.js" "$DEST/shared/"
     cp "$PROJECT_DIR/shared/local-storage.js" "$DEST/shared/"
@@ -125,19 +119,16 @@ copy_static_files() {
     fi
 }
 
-# Obfuscate (or copy) all JS_FILES into DEST.
+# Optionally obfuscate already-copied and patched JS_FILES in DEST.
 # Usage: process_js_files <DEST_DIR>
 process_js_files() {
     local DEST="$1"
     for js in "${JS_FILES[@]}"; do
         if [[ "$OBFUSCATE" == "true" ]]; then
             echo "  Obfuscating $js..."
-            javascript-obfuscator "$PROJECT_DIR/$js" \
-                --output "$DEST/$js" \
-                "${OBFUSCATOR_OPTS[@]}"
+            node "$PROJECT_DIR/tools/obfuscate-file.js" "$DEST/$js"
         else
-            echo "  Copying $js (no obfuscation)..."
-            cp "$PROJECT_DIR/$js" "$DEST/$js"
+            echo "  Keeping $js (no obfuscation)..."
         fi
     done
 }
@@ -147,25 +138,14 @@ process_js_files() {
 # build — checked-in source only ever has the placeholder, never the value
 # any shipped build actually uses. Runs unconditionally (every build, debug
 # or not) since the placeholder isn't a functional value on its own — must
-# run AFTER copy_static_files/process_js_files, which is what actually
-# populates DEST from source.
+# run after copying source and BEFORE obfuscation can encode the placeholder.
 # Usage: substitute_qkv1_token <DEST_DIR>
 substitute_qkv1_token() {
-    local DEST="$1"
-    local token
-    token=$(openssl rand -hex 12 2>/dev/null || node -e "console.log(require('crypto').randomBytes(12).toString('hex'))")
-    while IFS= read -r -d '' js; do
-        sed -i '' "s/__QKV1_BUILD_TOKEN__/${token}/g" "$js" 2>/dev/null || true
-    done < <(find "$DEST" -name '*.js' -print0)
+    node "$PROJECT_DIR/tools/patch-build.js" "$1" token "$BUILD_TOKEN"
 }
 
-# Patch DEBUG_LOCAL flag in config.js inside DEST — config.js is the single
-# source read by both the content rule loader and the background DNR builder.
-# Usage: patch_debug <DEST_DIR>
 patch_debug() {
-    local DEST="$1"
-    sed -i '' 's/DEBUG_LOCAL: false/DEBUG_LOCAL: true/' \
-        "$DEST/shared/config.js" 2>/dev/null || true
+    node "$PROJECT_DIR/tools/patch-build.js" "$1" debug
 }
 
 # Strip every comment and console.* call from every shipped .js file — run
@@ -196,14 +176,15 @@ strip_debug_artifacts() {
         # takes effect via --format's sub-options). Without it, terser's
         # default compact single-line output reads as "obfuscated" even
         # though nothing but comments/console calls were removed.
-        if terser "$js" \
+        if "$TERSER" "$js" \
             --compress "defaults=false,drop_console=true" \
             --format "beautify=true,comments=false" \
-            -o "$tmp" 2>/dev/null; then
+            -o "$tmp"; then
             mv "$tmp" "$js"
         else
-            echo -e "${YELLOW}  Warning: terser failed on $js — left as-is.${NC}"
+            echo "terser failed on $js; refusing to package incomplete output" >&2
             rm -f "$tmp"
+            return 1
         fi
     done < <(find "$DEST" -name '*.js' -print0)
 }
@@ -213,7 +194,8 @@ strip_debug_artifacts() {
 create_zip() {
     local SRC_DIR="$1"
     local ZIP_PATH="$2"
-    cd "$SRC_DIR"
-    zip -r "$ZIP_PATH" . -x "*.DS_Store"
-    cd "$PROJECT_DIR"
+    local TEMP_ZIP="$ZIP_PATH.tmp.zip"
+    rm -f "$TEMP_ZIP"
+    (cd "$SRC_DIR" && zip -r "$TEMP_ZIP" . -x "*.DS_Store")
+    mv "$TEMP_ZIP" "$ZIP_PATH"
 }

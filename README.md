@@ -84,10 +84,13 @@ Available on Chrome, Firefox, and Edge:
 ## Build
 
 ```bash
-# Build a single target (with obfuscation by default)
-./build-chrome.sh          # → dist/  +  adblock-extension.zip
-./build-firefox.sh         # → dist-firefox/  +  adblock-extension-firefox.zip
-./build-edge.sh            # → dist-edge/  +  adblock-extension-edge.zip
+# Node.js 22+ (CI uses Node.js 24), npm, bash and zip are required.
+npm ci --ignore-scripts
+
+# Build a single target (readable production JavaScript by default)
+./build-chrome.sh          # → build/dist/  +  build/adblock-extension.zip
+./build-firefox.sh         # → build/dist-firefox/  +  build/adblock-extension-firefox.zip
+./build-edge.sh            # → build/dist-edge/  +  build/adblock-extension-edge.zip
 
 # Or use the orchestrator
 ./build.sh chrome          # Chrome only
@@ -101,7 +104,7 @@ Available on Chrome, Firefox, and Edge:
 | # | Name | Default | Description |
 |---|------|---------|-------------|
 | 1 | `target` | `chrome` | `chrome` \| `firefox` \| `edge` \| `all` *(orchestrator only)* |
-| 2 | `obfuscate` | `true` | Obfuscate JS with `javascript-obfuscator` |
+| 2 | `obfuscate` | `false` | Obfuscate JS with `javascript-obfuscator` |
 | 3 | `export_obfuscated_src` | `false` | Export obfuscated source tree to `src-obfuscated[-target]/` |
 | 4 | `debug` | `false` | Patch `DEBUG_LOCAL=true` in the rules loader (loads local file instead of remote) |
 
@@ -111,6 +114,30 @@ Available on Chrome, Firefox, and Edge:
 ./build.sh all false false true    # All targets, no obfuscation, DEBUG_LOCAL=true
 ./build-chrome.sh true true        # Chrome, obfuscated + export source tree
 ```
+
+Builds use the exact local tool versions in `package-lock.json`; they never install global packages. Token/debug patching works on macOS and Linux. Packaging fails on syntax errors, missing manifest/HTML assets, unresolved tokens, or an incorrect debug flag. Every ZIP is recreated so removed files cannot linger. A random bridge token is generated per build, so archives are not byte-for-byte identical.
+
+**Validation:**
+
+```bash
+npm test                       # all Node suites, including build regressions
+npm run build                  # validate and package all three targets
+npx --no-install playwright install chromium
+npm run test:chromium           # isolated Chromium profile and local fixture server
+npm run test:firefox            # Firefox + Selenium; driver downloaded if needed
+```
+
+Set `FIREFOX_BINARY` if Firefox is not on the default path. Browser tests use temporary copies of the release builds with rule-source endpoints replaced by local fixtures. They verify actual network blocking, per-site pause/resume, protection and privacy toggles, cosmetic filtering and SPA updates. Chromium additionally checks visible storage-error feedback and service-worker restart. These tests do not certify blocking on live websites. CI runs Node/build checks on Linux and macOS and both browser smoke suites on Linux.
+
+**Runtime boundaries:**
+
+- `shared/abp-converter.js`: ABP/uBO conversion with injected I/O and validators.
+- `shared/rule-parser.js`: one native-format parser for background and content fallback.
+- `shared/rule-fetcher.js`: at most 4 concurrent downloads, a 15-second timeout, and a 12 MiB limit per decoded response. Last successful nonempty sources are retained in a bounded CacheStorage cache (64 MiB / 80 entries); disabled sources are not merged. An unavailable cache does not discard fresh downloads.
+- `shared/settings-controller.js`: serialized protection/blocking/privacy changes, strict storage errors, and rollback when application fails.
+- `shared/settings-ui.js`: pending controls and visible failure feedback, shared by popup/dashboard.
+
+Source errors remain visible in the dashboard when a cached copy is used. Cache eviction, unavailable CacheStorage, or a first-ever failed download can still leave a source without a fallback. The existing merged/local fallback remains available for total source failure.
 
 **Run the Firefox build in dev mode:**
 
@@ -161,9 +188,9 @@ Uses Chrome's `declarativeNetRequest` API to block ad/tracker/malware requests a
 
 ### Cosmetic Filtering
 
-Injects CSS (`content.css`) and JS (`content.js`) at `document_start` to hide ad elements in the DOM. All selectors are scoped to `html.adblock-on` so toggling protection is instant without a page reload. A `MutationObserver` watches for dynamically injected ad elements (SPA pages, infinite scroll).
+Injects CSS through `scripting.insertCSS` and runs `content.js` at `document_start` to hide ad elements in the DOM. All selectors are scoped to `html.adblock-on` so toggling protection is instant without a page reload. A `MutationObserver` watches for dynamically injected ad elements (SPA pages, infinite scroll).
 
-`content.js` also injects `scriptlets.js` into the **MAIN world** — the same JavaScript context as page scripts — so scriptlets can proxy native browser APIs (`window.open`, `EventTarget.prototype.addEventListener`, `Location.prototype.href`, etc.) before any ad script runs.
+The manifest injects `scriptlets.js` into the **MAIN world** — the same JavaScript context as page scripts — so scriptlets can proxy native browser APIs (`window.open`, `EventTarget.prototype.addEventListener`, `Location.prototype.href`, etc.) before any ad script runs.
 
 ### YouTube Ad Blocking
 

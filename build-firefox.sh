@@ -3,11 +3,13 @@ set -e
 source "$(dirname "$0")/_build-lib.sh"
 
 # === Firefox Build ===
-# Usage: ./build-firefox.sh [obfuscate=true] [export_obfuscated_src=false] [debug=false]
+# Usage: ./build-firefox.sh [obfuscate=false] [export_obfuscated_src=false] [debug=false]
 
-OBFUSCATE="${1:-true}"
+OBFUSCATE="${1:-false}"
 EXPORT_OBFUSCATED_SRC="${2:-false}"
 DEBUG="${3:-false}"
+validate_build_args
+BUILD_TOKEN=$(node -e "process.stdout.write(require('crypto').randomBytes(12).toString('hex'))")
 
 BUILD_DIR="$BUILD_ROOT/dist-firefox"
 ZIP_PATH="$BUILD_ROOT/adblock-extension-firefox.zip"
@@ -23,24 +25,18 @@ ensure_obfuscator
 
 echo -e "${YELLOW}[Firefox][2/4] Copying static files...${NC}"
 copy_static_files "$BUILD_DIR" "$PROJECT_DIR/manifest.firefox.json"
-[[ "$EXPORT_OBFUSCATED_SRC" == "true" ]] && copy_static_files "$OBFUSCATED_SRC_DIR" "$PROJECT_DIR/manifest.firefox.json"
 
 echo -e "${YELLOW}[Firefox][3/4] Processing JS files...${NC}"
-process_js_files "$BUILD_DIR"
-[[ "$EXPORT_OBFUSCATED_SRC" == "true" ]] && process_js_files "$OBFUSCATED_SRC_DIR"
-
+for js in "${JS_FILES[@]}"; do cp "$PROJECT_DIR/$js" "$BUILD_DIR/$js"; done
 substitute_qkv1_token "$BUILD_DIR"
-[[ "$EXPORT_OBFUSCATED_SRC" == "true" ]] && substitute_qkv1_token "$OBFUSCATED_SRC_DIR"
-
-if [[ "$DEBUG" == "true" ]]; then
-  echo -e "${YELLOW}[Firefox][3.5/4] Patching DEBUG_LOCAL=true...${NC}"
-  patch_debug "$BUILD_DIR"
-else
-  echo -e "${YELLOW}[Firefox][3.5/4] Stripping comments/console from shipped JS...${NC}"
-  strip_debug_artifacts "$BUILD_DIR"
+if [[ "$DEBUG" == "true" ]]; then patch_debug "$BUILD_DIR"; fi
+process_js_files "$BUILD_DIR"
+if [[ "$DEBUG" != "true" ]]; then strip_debug_artifacts "$BUILD_DIR"; fi
+node "$PROJECT_DIR/tools/validate-build.js" "$BUILD_DIR" "$DEBUG"
+if [[ "$EXPORT_OBFUSCATED_SRC" == "true" ]]; then
+  cp -R "$BUILD_DIR/." "$OBFUSCATED_SRC_DIR/"
 fi
 
-echo -e "${YELLOW}[Firefox][4/4] Creating ZIP...${NC}"
 create_zip "$BUILD_DIR" "$ZIP_PATH"
 
 echo -e "${GREEN}✅ Firefox build complete!${NC}"
