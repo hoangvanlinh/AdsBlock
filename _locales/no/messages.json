@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 automatisk genererte hash-lignende selektorer (ikke verdt å matche generisk)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2 lastet inn",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "Meny"
+  },
+  "settings_updateFailed": {
+    "message": "Kunne ikke bruke endringen. Prøv igjen."
   }
 }

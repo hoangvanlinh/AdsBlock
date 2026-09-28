@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 selectors amb aspecte de hash generats automàticament (no val la pena fer-los coincidir de manera genèrica)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2 carregades",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "Menú"
+  },
+  "settings_updateFailed": {
+    "message": "No s'ha pogut aplicar el canvi. Torneu-ho a provar."
   }
 }

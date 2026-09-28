@@ -1125,6 +1125,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 automātiski ģenerēti hash veida selektori (nav vērts vispārīgi saskaņot)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2 ielādēti",
     "placeholders": {
@@ -1204,5 +1213,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "Izvēlne"
+  },
+  "settings_updateFailed": {
+    "message": "Neizdevās lietot izmaiņas. Lūdzu, mēģiniet vēlreiz."
   }
 }

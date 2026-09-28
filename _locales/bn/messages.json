@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 স্বয়ংক্রিয়ভাবে তৈরি হ্যাশ-সদৃশ নির্বাচক (সাধারণভাবে মেলানোর যোগ্য নয়)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2 লোড হয়েছে",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "মেনু"
+  },
+  "settings_updateFailed": {
+    "message": "পরিবর্তনটি প্রয়োগ করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
   }
 }

@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 സ്വയമേവ സൃഷ്ടിച്ച ഹാഷ് പോലുള്ള സെലക്ടറുകൾ (പൊതുവായി പൊരുത്തപ്പെടുത്താൻ യോഗ്യമല്ല)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2 ലോഡ് ചെയ്തു",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "മെനു"
+  },
+  "settings_updateFailed": {
+    "message": "മാറ്റം പ്രയോഗിക്കാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക."
   }
 }

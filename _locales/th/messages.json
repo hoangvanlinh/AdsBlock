@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 ตัวเลือกที่คล้ายแฮชซึ่งสร้างขึ้นอัตโนมัติ (ไม่คุ้มที่จะจับคู่แบบทั่วไป)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "โหลดแล้ว $1/$2",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "เมนู"
+  },
+  "settings_updateFailed": {
+    "message": "ไม่สามารถใช้การเปลี่ยนแปลงได้ โปรดลองอีกครั้ง"
   }
 }

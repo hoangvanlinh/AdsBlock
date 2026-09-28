@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1개의 자동 생성된 해시 형태 선택자 (일반적으로 매칭할 가치 없음)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2 로드됨",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "메뉴"
+  },
+  "settings_updateFailed": {
+    "message": "변경 사항을 적용할 수 없습니다. 다시 시도해 주세요."
   }
 }

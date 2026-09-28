@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 件の自動生成されたハッシュ状セレクター(汎用的にマッチさせる価値なし)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2件を読み込み済み",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "メニュー"
+  },
+  "settings_updateFailed": {
+    "message": "変更を適用できませんでした。もう一度お試しください。"
   }
 }

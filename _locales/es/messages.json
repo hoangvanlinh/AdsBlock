@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 selectores tipo hash generados automáticamente (no vale la pena buscarlos de forma genérica)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2 cargadas",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "Menú"
+  },
+  "settings_updateFailed": {
+    "message": "No se pudo aplicar el cambio. Inténtalo de nuevo."
   }
 }

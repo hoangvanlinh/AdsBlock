@@ -1127,6 +1127,15 @@
       }
     }
   },
+  "dashboard_ruleSource_statsLowValueHash": {
+    "message": "$1 selettori simili a hash generati automaticamente (non conviene abbinarli in modo generico)",
+    "placeholders": {
+      "1": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
   "dashboard_ruleSource_loadedPartial": {
     "message": "$1/$2 caricate",
     "placeholders": {
@@ -1206,5 +1215,8 @@
   },
   "dashboard_nav_toggle_title": {
     "message": "Menu"
+  },
+  "settings_updateFailed": {
+    "message": "Impossibile applicare la modifica. Riprova."
   }
 }
