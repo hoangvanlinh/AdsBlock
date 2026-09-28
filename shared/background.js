@@ -1941,11 +1941,23 @@ let _sessionAllowedDomainsHash = '';
 function _hashValue(v) {
   return _hashText(JSON.stringify(v === undefined ? null : v));
 }
+// Both of these initial reads are fire-and-forget at module load, racing
+// against real writes: e.g. a test (or the dashboard) that writes 'rules'
+// via storage.local.set() immediately after the service worker starts can
+// have EXT.storage.onChanged already record the fresh hash below BEFORE
+// this get() resolves — its own snapshot was taken from storage as it stood
+// before that write, so an unconditional assignment here would then
+// clobber the fresh hash back to stale, silently freezing
+// buildCustomBlockRules()'s memo (and friends) on stale input forever until
+// the key changes AGAIN. Only filling in keys onChanged hasn't already
+// touched keeps "last write wins" instead of "whichever resolves last wins".
 LocalStorage.get(RULE_INPUT_KEYS).then(r => {
-  for (const key of RULE_INPUT_KEYS) _ruleInputHashes[key] = _hashValue(r[key]);
+  for (const key of RULE_INPUT_KEYS) {
+    if (!(key in _ruleInputHashes)) _ruleInputHashes[key] = _hashValue(r[key]);
+  }
 }).catch(() => {});
 SessionStorage.get('sessionAllowedDomains').then(r => {
-  _sessionAllowedDomainsHash = _hashValue(r.sessionAllowedDomains);
+  if (!_sessionAllowedDomainsHash) _sessionAllowedDomainsHash = _hashValue(r.sessionAllowedDomains);
 });
 EXT.storage.onChanged.addListener((changes, area) => {
   if (area === 'session') {
@@ -1979,6 +1991,26 @@ async function reloadRules() {
   _ruleConfigPromise = null;
   _parsedRules = null;
   abpConverter.reset();
+  // Force a real rebuild of every _ruleInputHashes-memoized tier
+  // (buildCustomBlockRules/remoteMalwareRules/pauseAllowRules), rather than
+  // trusting that _ruleInputHashes has already caught up with whatever
+  // storage write triggered this reload. reloadRules() IS the "something
+  // changed, rebuild for real" signal — but _ruleInputHashes is only kept
+  // current by a storage.onChanged broadcast, which is a SEPARATE async
+  // event from whatever runtime message (e.g. the dashboard's own
+  // RULES_CHANGED, sent right after its own storage.local.set() resolves)
+  // led here, with no ordering guarantee between the two. If onChanged for
+  // that write hasn't been delivered to this script yet when this runs,
+  // the memo's hash comparison can still match its LAST-built value and
+  // skip rebuilding — silently serving whatever `rules`/remote-malware/
+  // pause-allow list was active before the change that just triggered this
+  // reload (live-reported as a freshly-added custom block rule not taking
+  // effect until a SECOND reload). Resetting `.rules` to null here makes
+  // each tier's own falsy-`.rules` check force a fresh read no matter what
+  // _ruleInputHashes currently says.
+  _customBlockRulesMemo = { hash: undefined, rules: null };
+  _remoteMalwareRulesMemo = { key: undefined, rules: null };
+  _pauseAllowRulesMemo = { key: undefined, rules: null };
   const result = await applyNetworkRules();
   if (result?.ok === false) throw new Error(result.error);
   const tabs = await EXT.tabs.query({});

@@ -3736,6 +3736,43 @@ function check(name, cond, detail = '') {
     check('both new cache keys are gone after reloadRules()',
       !cleared[HOST_KEY] && !cleared[GLOBAL_KEY], cleared);
 
+    console.log('\n== New: reloadRules() forces a real rebuild of the _ruleInputHashes-memoized tiers even if storage.onChanged for the triggering write hasn\'t been delivered yet (2026-09-28) ==');
+    // Real-world race this defends against: the dashboard writes a new
+    // custom `rules` entry via ITS OWN storage.local.set() call, then sends
+    // the RULES_CHANGED runtime message that lands here — two independent
+    // async browser events with no ordering guarantee between them. If this
+    // script's OWN storage.onChanged listener (which is all that keeps
+    // _ruleInputHashes.rules current — see its own comment) hasn't fired
+    // yet by the time reloadRules() runs, buildCustomBlockRules()'s memo
+    // would otherwise still match its LAST-built hash and skip rebuilding,
+    // silently keeping the OLD custom rule active instead of the new one
+    // (live-reported via the Firefox browser smoke test intermittently
+    // failing "network rule blocks a real request").
+    await chromeStub.storage.local.set({
+      rules: [{ active: true, action: 'block', type: 'keyword', pattern: '/race-prime-marker.js' }],
+    });
+    await T.reloadRules();
+    check('setup: the FIRST custom rule is actually live after a normal reloadRules()',
+      dynamicRules.some(r => r.condition.urlFilter === '/race-prime-marker.js'),
+      dynamicRules.map(r => r.condition && r.condition.urlFilter));
+
+    // Simulate the race directly: mutate the REAL backing storage object
+    // (what a fresh get() would see) WITHOUT going through .set() — i.e.
+    // without firing storage.onChanged — so _ruleInputHashes.rules stays
+    // stuck at the OLD rule's hash exactly like a not-yet-delivered
+    // onChanged broadcast would leave it.
+    storageData.rules = [{ active: true, action: 'block', type: 'keyword', pattern: '/race-new-marker.js' }];
+    await T.reloadRules();
+    check('reloadRules() picks up the NEW rule even though _ruleInputHashes never saw it change',
+      dynamicRules.some(r => r.condition.urlFilter === '/race-new-marker.js'),
+      dynamicRules.map(r => r.condition && r.condition.urlFilter));
+    check('...and the stale rule is gone, not left alongside the new one',
+      !dynamicRules.some(r => r.condition.urlFilter === '/race-prime-marker.js'),
+      dynamicRules.map(r => r.condition && r.condition.urlFilter));
+
+    await chromeStub.storage.local.set({ rules: [] });
+    await T.reloadRules();
+
     console.log('\n== New: _writeLocalIfWithinQuota branches (setCachedRuleText/matcher-cache guard) ==');
     const realGetBytesInUse = chromeStub.storage.local.getBytesInUse;
 
