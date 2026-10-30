@@ -53,6 +53,15 @@ async function getCurrentDomain() {
   catch { return ''; }
 }
 
+// Same pattern as background.js's DOMAIN_PATTERN_RE, which rejects the
+// whole TOGGLE/PAUSE_DOMAIN message on a mismatch. getCurrentDomain() also
+// returns hostnames like "newtab"/"extensions" (chrome:// pages), localhost
+// and bare IPs — none of which can be paused, so never send them.
+const PAUSABLE_DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
+function isPausableDomain(domain) {
+  return !!domain && PAUSABLE_DOMAIN_RE.test(domain);
+}
+
 // ── Load data from storage ─────────────────────
 // Split into fetch (async, no DOM writes) + apply (sync, DOM writes only) —
 // see the "Init" section's own comment further down for why: batching every
@@ -157,7 +166,7 @@ mainToggle.addEventListener('change', () => {
     // (one storage write + one applyNetworkRules() pass) instead of two
     // sequential messages — see settings-controller.js's own comment.
     const domain = on ? await getCurrentDomain() : '';
-    await SettingsUI.send(domain ? { type: 'TOGGLE', enabled: on, domain } : { type: 'TOGGLE', enabled: on });
+    await SettingsUI.send(isPausableDomain(domain) ?{ type: 'TOGGLE', enabled: on, domain } : { type: 'TOGGLE', enabled: on });
     refreshRuleCount();
   }, loadState);
 });
@@ -167,7 +176,7 @@ pauseSiteBtn.addEventListener('click', () => SettingsUI.run(pauseSiteBtn, async 
   const [tab] = await EXT.tabs.query({ active: true, currentWindow: true });
   if (!tab?.url) return;
   const domain = new URL(tab.url).hostname;
-  if (!domain) return;
+  if (!isPausableDomain(domain)) return;
   const { pausedDomains = [] } = await EXT.storage.local.get('pausedDomains');
   await SettingsUI.send({ type: 'PAUSE_DOMAIN', domain, paused: !pausedDomains.includes(domain) });
   await EXT.tabs.reload(tab.id);

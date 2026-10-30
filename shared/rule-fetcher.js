@@ -1,7 +1,9 @@
 // Bounded downloads and last-good raw source cache, independent of rule conversion.
 (function (root) {
   function create({ fetch: fetchImpl = root.fetch.bind(root), cacheStorage = root.caches,
-                    timeoutMs = 15000, maxBytes = 12 * 1024 * 1024, concurrency = 4,
+                    // maxBytes counts DECODED bytes: URLhaus alone was 12.4 MiB
+                    // (≈1.5 MB brotli on the wire) on 2026-10-30 and still growing.
+                    timeoutMs = 15000, maxBytes = 32 * 1024 * 1024, concurrency = 4,
                     cacheBytes = 64 * 1024 * 1024, maxEntries = 80 } = {}) {
     let active = 0;
     const waiting = [];
