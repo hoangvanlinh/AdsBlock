@@ -1331,6 +1331,32 @@ function sendRules(rules) {
   check('hide_document_referrer on: document.referrer now reads back the page\'s own origin',
     sandbox.document.referrer === 'https://test.example.com/', sandbox.document.referrer);
 
+  console.log('\n== 18. Facebook renamed sponsored marker (qrz_ctx_seg / SposnoredDaat, 2026-10-30) ==');
+
+  // Trimmed from a real captured news_feed stream chunk ("Gemination Eatery
+  // & Bar" ad): th_dat_spo became qrz_ctx_seg, __typename SponsoredData became
+  // the scrambled "SposnoredDaat", ad_id became lbl_adv_iden. Organic stories
+  // in the same capture ship qrz_ctx_seg: null. The gate keys on a child
+  // object carrying client_token rather than on any of those rotating names.
+  const fbChunk = (qrz) => JSON.stringify({
+    label: 'CometNewsFeed_viewerConnection$stream$CometNewsFeed_viewer_news_feed',
+    path: ['viewer', 'news_feed', 'edges', 1],
+    data: {
+      sposnsor_new_distac_action: 0, is_ad_eligible_for_ad_pod: false,
+      node: { __typename: 'Story', id: 'S1', post_id: '1', qrz_ctx_seg: qrz, comet_sections: { content: { story: { qrz_ctx_seg: qrz && { lbl_adv_iden: '1202', client_token: 'AI@x' } } } } },
+      cursor: 'c',
+    },
+  });
+  const fbAd = { __typename: 'SposnoredDaat', client_token: 'AI@x', lbl_adv_iden: '1202', brs_filter_setting: 90 };
+  sendRules({ json_edit: ['..node[?.*.client_token]', '..story[?.*.client_token]'] });
+  const fbAdOut = sandbox.JSON.parse(fbChunk(fbAd));
+  check('facebook: ad stream chunk (qrz_ctx_seg with client_token) loses its node',
+    fbAdOut.data && !('node' in fbAdOut.data), JSON.stringify(fbAdOut.data));
+  const fbOrgOut = sandbox.JSON.parse(fbChunk(null));
+  check('facebook: organic stream chunk (qrz_ctx_seg: null) keeps its node',
+    fbOrgOut.data && fbOrgOut.data.node && fbOrgOut.data.node.id === 'S1', JSON.stringify(fbOrgOut.data));
+  sendRules({});
+
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error('HARNESS ERROR:', e); process.exit(2); });

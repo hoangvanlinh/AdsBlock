@@ -1707,7 +1707,19 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap,
       return '';
     }
   });
-  if (urls.length) {
+  await _mergeRuleSourceStatus(urls, sourceErrors, sourceStats);
+  return texts;
+}
+
+// Read-modify-write of the per-url RULE_SOURCE_ERRORS_KEY/RULE_SOURCE_STATS_KEY
+// maps, shared by _fetchAndConvertUrls and _updateRemoteMalwareDomains.
+// Chained so callers running concurrently (fetchRemoteRuleText starts the
+// malware fetch alongside the ABP fetch) never drop each other's entries —
+// this RMW pair is the only thing those two fetch paths actually share.
+let _ruleSourceStatusChain = Promise.resolve();
+function _mergeRuleSourceStatus(urls, sourceErrors, sourceStats) {
+  if (!urls.length) return Promise.resolve();
+  const run = _ruleSourceStatusChain.catch(() => {}).then(async () => {
     const { [RULE_SOURCE_ERRORS_KEY]: existingErrors = {}, [RULE_SOURCE_STATS_KEY]: existingStats = {} } =
       await LocalStorage.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
     const nextErrors = { ...existingErrors };
@@ -1719,8 +1731,9 @@ async function _fetchAndConvertUrls(urls, sharedUsedKeys, sharedDedicatedKeyMap,
       else delete nextStats[url]; // not ABP-format (or fetch failed) — nothing to report for it now
     }
     await LocalStorage.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
-  }
-  return texts;
+  });
+  _ruleSourceStatusChain = run;
+  return run;
 }
 
 async function fetchRemoteRuleText() {
@@ -1839,14 +1852,20 @@ async function fetchRemoteRuleText() {
   // this, not just array order, is what actually makes lang-matched sources
   // win any shared dedup-key or NETWORK_RULE_BUDGET race against the
   // language-agnostic sources fetched in the second phase below.
+  // Malware (format:'hosts') sources share nothing with the ABP phases
+  // below except the RULE_SOURCE_ERRORS_KEY/STATS_KEY write, which
+  // _mergeRuleSourceStatus serializes — so start it now instead of after
+  // both ABP phases. URLhaus alone was a ~13 MB, ~2.8 s download measured
+  // 2026-10-30, previously added on top of the slowest ABP fetch instead of
+  // overlapping it. Settled into a value (not left as a bare promise) so a
+  // throw in the phases below can't leave it as an unhandled rejection;
+  // its own error is still rethrown once it's awaited, same as before.
+  const malwareDone = _updateRemoteMalwareDomains(malwareUrls).then(() => null, error => error);
   const priorityTexts = await _fetchAndConvertUrls(priorityUrls, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget, trackerUrls);
   const texts = await _fetchAndConvertUrls(urls, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget, trackerUrls);
   const convertedFileParts = await Promise.all(fileParts.map(t => _maybeConvertAbpText(t, undefined, sharedAbpKeys, sharedDedicatedDomains, networkRuleBudget)));
-  // Sequential (not Promise.all'd with the fetch above): both this and
-  // _fetchAndConvertUrls independently read-modify-write the shared
-  // RULE_SOURCE_ERRORS_KEY/RULE_SOURCE_STATS_KEY storage keys — running them
-  // concurrently would race and drop whichever one's write lands first.
-  await _updateRemoteMalwareDomains(malwareUrls);
+  const malwareError = await malwareDone;
+  if (malwareError) throw malwareError;
 
   const merged = [...priorityTexts, ...texts, ...convertedFileParts].filter(Boolean).join('\n');
   if (!merged && (priorityUrls.length || urls.length)) {
@@ -4121,19 +4140,7 @@ async function _updateRemoteMalwareDomains(urls) {
   // Same per-URL error/stats bookkeeping fetchRemoteRuleText's own
   // _fetchAndConvertUrls uses, so the dashboard's Rule Source rows show
   // fetch errors/counts for these two sources exactly like any other.
-  if (urls.length) {
-    const { [RULE_SOURCE_ERRORS_KEY]: existingErrors = {}, [RULE_SOURCE_STATS_KEY]: existingStats = {} } =
-      await LocalStorage.get([RULE_SOURCE_ERRORS_KEY, RULE_SOURCE_STATS_KEY]);
-    const nextErrors = { ...existingErrors };
-    const nextStats = { ...existingStats };
-    for (const url of urls) {
-      if (sourceErrors[url]) nextErrors[url] = sourceErrors[url];
-      else delete nextErrors[url];
-      if (sourceStats[url]) nextStats[url] = sourceStats[url];
-      else delete nextStats[url];
-    }
-    await LocalStorage.set({ [RULE_SOURCE_ERRORS_KEY]: nextErrors, [RULE_SOURCE_STATS_KEY]: nextStats });
-  }
+  await _mergeRuleSourceStatus(urls, sourceErrors, sourceStats);
 
   // An empty `urls` (both sources disabled from the dashboard) legitimately
   // clears this to zero, same as a fully-disabled ad Rule Source produces no

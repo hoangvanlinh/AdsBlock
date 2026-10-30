@@ -1968,6 +1968,20 @@ function check(name, cond, detail = '') {
   await chromeStub.storage.local.set({ ruleSources: [], defaultRuleSourceEnabled: true, [T.RULE_SOURCE_ERRORS_KEY]: {} });
   await T.reloadRules(); // leave state clean for any later section
 
+  // fetchRemoteRuleText() now runs the malware (format:'hosts') fetch
+  // concurrently with the ABP fetch (2026-10-30). Both write the same
+  // RULE_SOURCE_ERRORS_KEY map — an unserialized get/set pair would let
+  // whichever write lands last drop the other's entry.
+  await chromeStub.storage.local.set({ [T.RULE_SOURCE_ERRORS_KEY]: {} });
+  await Promise.all([
+    T._fetchAndConvertUrls(['https://example.com/broken-abp.txt']),
+    T._updateRemoteMalwareDomains(['https://example.com/broken-malware.txt']),
+  ]);
+  const { [T.RULE_SOURCE_ERRORS_KEY]: errConcurrent = {} } = await chromeStub.storage.local.get(T.RULE_SOURCE_ERRORS_KEY);
+  check('concurrent ABP + malware fetches: BOTH failures are kept in RULE_SOURCE_ERRORS_KEY',
+    !!errConcurrent['https://example.com/broken-abp.txt'] && !!errConcurrent['https://example.com/broken-malware.txt'], errConcurrent);
+  await chromeStub.storage.local.set({ [T.RULE_SOURCE_ERRORS_KEY]: {} });
+
   console.log('\n== 25k. rpnt/trusted-rpnt now map to trusted_replace_script_text, not replace_node_text (2026-08-22) ==');
 
   // rpnt/trusted-rpnt/replace-node-text are "requires trust" in real uBO

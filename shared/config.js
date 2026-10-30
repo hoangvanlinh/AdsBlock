@@ -40,7 +40,12 @@ self.ADBLOCK_CONFIG = {
     // ad_network_patterns/network_block_rules also preserves blockMalware as
     // a toggle independent of blockAds. Still fetched/cached/ETag-revalidated
     // /dashboard-toggleable exactly like every other entry below.
-    { name: 'URLhaus Malware Filter', url: 'https://malware-filter.gitlab.io/malware-filter/urlhaus-filter.txt', enable: true, group: "malware", format: "hosts" },
+    // domains-online variant (2026-10-30), not the full urlhaus-filter.txt:
+    // the full list is ~13 MB of ~107k path rules (98% on github.com/
+    // raw.githubusercontent.com), each costing its own DNR rule — capped at
+    // REMOTE_MAX_PATH_PATTERNS it used 10,000 of ~18.4k dynamic rules for an
+    // arbitrary ~9% subset. This one is ~31 KB of still-online domains only.
+    { name: 'URLhaus Malware Filter', url: 'https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-domains-online.txt', enable: true, group: "malware", format: "hosts" },
     { name: 'EasyList', url: 'https://easylist.to/easylist/easylist.txt', enable: true, group: "easylist" },
     // `category: 'tracker'` (background.js's fetchRemoteRuleText/
     // _abpParseFile): this source's bare-domain patterns convert into
