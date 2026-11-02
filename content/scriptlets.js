@@ -2968,7 +2968,10 @@
     const safe = safeSelf();
     var lineSeparatorMatch = /\r?\n/.exec(text);
     var sep = (lineSeparatorMatch && lineSeparatorMatch[0]) || '\n';
-    var linesBefore = text.split('\n');
+    // Split on the SAME separator we join with — splitting on '\n' alone
+    // left a trailing '\r' on every CRLF line, and join(sep) then appended
+    // another '\r\n', growing each unedited line by one '\r' per rule pass.
+    var linesBefore = text.split(sep);
     var linesAfter = [];
     for (var i = 0; i < linesBefore.length; i++) {
       var lineBefore = linesBefore[i];

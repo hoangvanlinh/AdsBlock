@@ -1357,6 +1357,41 @@ function sendRules(rules) {
     fbOrgOut.data && fbOrgOut.data.node && fbOrgOut.data.node.id === 'S1', JSON.stringify(fbOrgOut.data));
   sendRules({});
 
+  console.log('\n== 19. Facebook Reels ad (video_feed_unit_feed, SposnoredDaat, 2026-11-02) ==');
+
+  // Trimmed from a real captured /reel/ GraphQL stream (live, 2026-11-02).
+  // GHLRelayJsonParse detects the JSON.parse shim (its "q7z" canary gets
+  // pruned) and falls back to a JS json5 parser, so json_edit never sees
+  // Relay responses — only the XHR text layer (jsonl_edit_xhr) can act.
+  // Reels ad nodes keep the field name sponsored_data but carry
+  // __typename "SposnoredDaat" and NO client_token, so none of the older
+  // gates matched. Organic reels ship sponsored_data: null.
+  const reelLine = (sd) => JSON.stringify({
+    label: 'FBUnifiedVideoContainer_reels$stream$FBUnifiedVideoContainer_video_feed_unit_feed',
+    path: ['viewer', 'video_feed_unit_feed', 'edges', 2],
+    data: {
+      node: { __typename: 'Video', id: 'V1', attachments: [], sponsored_data: sd, brand_safety_data: { brs_content_label: 0 } },
+      cursor: 'c',
+    },
+  });
+  const reelAd = { __typename: 'SposnoredDaat', ad_id: '1202', ad_attachment_type: 'video_ad', is_ad_eligible_for_ad_pod: true, brs_filter_setting: 90 };
+  sendRules({ jsonl_edit_xhr: ['..node[?.*.ad_id]'] });
+  const reelXhr = new sandbox.XMLHttpRequest();
+  reelXhr.open('POST', 'https://www.facebook.com/api/graphql/');
+  reelXhr._fakeResponse = reelLine(reelAd) + '\r\n' + reelLine(null);
+  const reelLines = reelXhr.responseText.split('\r\n').map(l => JSON.parse(l));
+  check('facebook reels: ad stream line loses its node',
+    reelLines[0].data && !('node' in reelLines[0].data), JSON.stringify(reelLines[0].data));
+  check('facebook reels: organic stream line (sponsored_data: null) keeps its node',
+    reelLines[1].data && reelLines[1].data.node && reelLines[1].data.node.id === 'V1', JSON.stringify(reelLines[1].data));
+  sendRules({ jsonl_edit_xhr: ['..node[?.*.ad_id]', '..nomatch[?.x]', '..nomatch2[?.y]'] });
+  const crlfXhr = new sandbox.XMLHttpRequest();
+  crlfXhr.open('POST', 'https://www.facebook.com/api/graphql/');
+  crlfXhr._fakeResponse = reelLine(reelAd) + '\r\n' + reelLine(null) + '\r\n' + reelLine(null);
+  check('jsonl_edit_xhr: CRLF separators preserved exactly across multiple rule passes (no stray \\r)',
+    !/\r\r/.test(crlfXhr.responseText) && crlfXhr.responseText.split('\r\n').length === 3, JSON.stringify(crlfXhr.responseText.slice(-80)));
+  sendRules({});
+
   console.log(`\n== RESULT: ${pass} passed, ${fail} failed ==`);
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.error('HARNESS ERROR:', e); process.exit(2); });
